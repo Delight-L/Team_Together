@@ -4,54 +4,112 @@ import pandas as pd
 # 데이터셋1,2 변환
 
 # 데이터셋1_age_pop 변환 및 복사본 활용
-age_pop_202507 = pd.read_csv(r"data\sample_data\flow_age_pop_202507.csv", sep="|").copy()
-age_pop_202508 = pd.read_csv(r"data\sample_data\flow_age_pop_202508.csv", sep="|").copy()
-age_pop_202509 = pd.read_csv(r"data\sample_data\flow_age_pop_202509.csv", sep="|").copy()
-age_pop_202510 = pd.read_csv(r"data\sample_data\flow_age_pop_202510.csv", sep="|").copy()
-age_pop_202511 = pd.read_csv(r"data\sample_data\flow_age_pop_202511.csv", sep="|").copy()
-age_pop_202512 = pd.read_csv(r"data\sample_data\flow_age_pop_202512.csv", sep="|").copy()
+age_pop_202507 = pd.read_csv(
+    r"data\sample_data\flow_age_pop_202507.csv", sep="|"
+).copy()
+age_pop_202508 = pd.read_csv(
+    r"data\sample_data\flow_age_pop_202508.csv", sep="|"
+).copy()
+age_pop_202509 = pd.read_csv(
+    r"data\sample_data\flow_age_pop_202509.csv", sep="|"
+).copy()
+age_pop_202510 = pd.read_csv(
+    r"data\sample_data\flow_age_pop_202510.csv", sep="|"
+).copy()
+age_pop_202511 = pd.read_csv(
+    r"data\sample_data\flow_age_pop_202511.csv", sep="|"
+).copy()
+age_pop_202512 = pd.read_csv(
+    r"data\sample_data\flow_age_pop_202512.csv", sep="|"
+).copy()
 
 # 데이터셋1_time_pop 변환 및 복사본 활용
-time_pop_202507 = pd.read_csv(r"data\sample_data\flow_time_pop_202507.csv", sep="|").copy()
-time_pop_202508 = pd.read_csv(r"data\sample_data\flow_time_pop_202508.csv", sep="|").copy()
-time_pop_202509 = pd.read_csv(r"data\sample_data\flow_time_pop_202509.csv", sep="|").copy()
-time_pop_202510 = pd.read_csv(r"data\sample_data\flow_time_pop_202510.csv", sep="|").copy()
-time_pop_202511 = pd.read_csv(r"data\sample_data\flow_time_pop_202511.csv", sep="|").copy()
-time_pop_202512 = pd.read_csv(r"data\sample_data\flow_time_pop_202512.csv", sep="|").copy()
+time_pop_202507 = pd.read_csv(
+    r"data\sample_data\flow_time_pop_202507.csv", sep="|"
+).copy()
+time_pop_202508 = pd.read_csv(
+    r"data\sample_data\flow_time_pop_202508.csv", sep="|"
+).copy()
+time_pop_202509 = pd.read_csv(
+    r"data\sample_data\flow_time_pop_202509.csv", sep="|"
+).copy()
+time_pop_202510 = pd.read_csv(
+    r"data\sample_data\flow_time_pop_202510.csv", sep="|"
+).copy()
+time_pop_202511 = pd.read_csv(
+    r"data\sample_data\flow_time_pop_202511.csv", sep="|"
+).copy()
+time_pop_202512 = pd.read_csv(
+    r"data\sample_data\flow_time_pop_202512.csv", sep="|"
+).copy()
 # 중복값 제거
 time_pop_202512 = time_pop_202512.drop_duplicates()
 
 # 데이터셋1_wkdy_pop 변환 및 복사본 활용
-wkdy_pop_202507 = pd.read_csv(r"data\sample_data\flow_wkdy_pop_202507.csv", sep="|").copy()
-wkdy_pop_202508 = pd.read_csv(r"data\sample_data\flow_wkdy_pop_202508.csv", sep="|").copy()
-wkdy_pop_202509 = pd.read_csv(r"data\sample_data\flow_wkdy_pop_202509.csv", sep="|").copy()
-wkdy_pop_202510 = pd.read_csv(r"data\sample_data\flow_wkdy_pop_202510.csv", sep="|").copy()
-wkdy_pop_202511 = pd.read_csv(r"data\sample_data\flow_wkdy_pop_202511.csv", sep="|").copy()
-wkdy_pop_202512 = pd.read_csv(r"data\sample_data\flow_wkdy_pop_202512.csv", sep="|").copy()
+wkdy_pop_202507 = pd.read_csv(
+    r"data\sample_data\flow_wkdy_pop_202507.csv", sep="|"
+).copy()
+wkdy_pop_202508 = pd.read_csv(
+    r"data\sample_data\flow_wkdy_pop_202508.csv", sep="|"
+).copy()
+wkdy_pop_202509 = pd.read_csv(
+    r"data\sample_data\flow_wkdy_pop_202509.csv", sep="|"
+).copy()
+wkdy_pop_202510 = pd.read_csv(
+    r"data\sample_data\flow_wkdy_pop_202510.csv", sep="|"
+).copy()
+wkdy_pop_202511 = pd.read_csv(
+    r"data\sample_data\flow_wkdy_pop_202511.csv", sep="|"
+).copy()
+wkdy_pop_202512 = pd.read_csv(
+    r"data\sample_data\flow_wkdy_pop_202512.csv", sep="|"
+).copy()
 # 중복값 제거
 wkdy_pop_202512 = wkdy_pop_202512.drop_duplicates()
 
-#성연령 유동인구(10세단위) 통합
+# 성연령 유동인구(10세단위) 통합
 age_pop = pd.concat(
-    [age_pop_202507, age_pop_202508, age_pop_202509,
-     age_pop_202510, age_pop_202511, age_pop_202512],
-    ignore_index=True
+    [
+        age_pop_202507,
+        age_pop_202508,
+        age_pop_202509,
+        age_pop_202510,
+        age_pop_202511,
+        age_pop_202512,
+    ],
+    ignore_index=True,
 )
 
-#시간대 유동 통합
+# 시간대 유동 통합
 time_pop = pd.concat(
-    [time_pop_202507, time_pop_202508, time_pop_202509,
-     time_pop_202510, time_pop_202511, time_pop_202512],
-    ignore_index=True
+    [
+        time_pop_202507,
+        time_pop_202508,
+        time_pop_202509,
+        time_pop_202510,
+        time_pop_202511,
+        time_pop_202512,
+    ],
+    ignore_index=True,
 )
 
-#요일별 유동 통합
+# 요일별 유동 통합
 wkdy_pop = pd.concat(
-    [wkdy_pop_202507, wkdy_pop_202508, wkdy_pop_202509,
-     wkdy_pop_202510, wkdy_pop_202511, wkdy_pop_202512],
-    ignore_index=True
+    [
+        wkdy_pop_202507,
+        wkdy_pop_202508,
+        wkdy_pop_202509,
+        wkdy_pop_202510,
+        wkdy_pop_202511,
+        wkdy_pop_202512,
+    ],
+    ignore_index=True,
 )
 
 # 데이터셋2 변환 및 복사본 활용
-sh_data = pd.read_csv(r"data\sample_data\신한카드_빅콘테스트2026_데이터2.txt", sep="\t", encoding="cp949").copy()
+sh_data = pd.read_csv(
+    r"data\sample_data\신한카드_빅콘테스트2026_데이터2.txt", sep="\t", encoding="cp949"
+).copy()
 # ---------------------------------------------------------------------------------------#
+
+#이후 main.py에서 사용할 시 from preprocessing import * 해서 사용
