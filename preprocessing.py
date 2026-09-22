@@ -31,6 +31,27 @@ wkdy_pop_202512 = pd.read_csv(r"data\sample_data\flow_wkdy_pop_202512.csv", sep=
 # 중복값 제거
 wkdy_pop_202512 = wkdy_pop_202512.drop_duplicates()
 
+#성연령 유동인구(10세단위) 통합
+age_pop = pd.concat(
+    [age_pop_202507, age_pop_202508, age_pop_202509,
+     age_pop_202510, age_pop_202511, age_pop_202512],
+    ignore_index=True
+)
+
+#시간대 유동 통합
+time_pop = pd.concat(
+    [time_pop_202507, time_pop_202508, time_pop_202509,
+     time_pop_202510, time_pop_202511, time_pop_202512],
+    ignore_index=True
+)
+
+#요일별 유동 통합
+wkdy_pop = pd.concat(
+    [wkdy_pop_202507, wkdy_pop_202508, wkdy_pop_202509,
+     wkdy_pop_202510, wkdy_pop_202511, wkdy_pop_202512],
+    ignore_index=True
+)
+
 # 데이터셋2 변환 및 복사본 활용
 sh_data = pd.read_csv(r"data\sample_data\신한카드_빅콘테스트2026_데이터2.txt", sep="\t", encoding="cp949").copy()
 # ---------------------------------------------------------------------------------------#
