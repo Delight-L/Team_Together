@@ -1,2 +1,2 @@
-pandas
-pyproj
+pandas==3.0.6
+pyproj==3.8.0
