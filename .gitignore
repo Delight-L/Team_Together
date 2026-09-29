@@ -1,4 +1,6 @@
-.csv
-.pdf
-.xlsx
-.jpg
+*.csv
+*.pdf
+*.xlsx
+*.jpg
+*.geojson
+*.zip
