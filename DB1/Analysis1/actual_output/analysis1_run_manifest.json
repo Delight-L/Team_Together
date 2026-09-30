@@ -1,0 +1,198 @@
+{
+  "analysis_id": "analysis1",
+  "status": "PASS",
+  "data_period": "2025H2",
+  "data_version": "historical_reproduction_v1",
+  "validation": {
+    "status": "PASS",
+    "errors": [],
+    "warnings": []
+  },
+  "metrics": {
+    "n_areas": 22,
+    "n_features": 13,
+    "final_k": 3,
+    "final_cluster_sizes": {
+      "0": 7,
+      "1": 3,
+      "2": 12
+    },
+    "k_metrics": [
+      {
+        "k": 2,
+        "silhouette": 0.27968939445523217,
+        "inertia": 59.80579835362712,
+        "cluster_sizes": "8/14",
+        "has_singleton": false
+      },
+      {
+        "k": 3,
+        "silhouette": 0.28351212306279455,
+        "inertia": 39.46112238447949,
+        "cluster_sizes": "7/3/12",
+        "has_singleton": false
+      },
+      {
+        "k": 4,
+        "silhouette": 0.2336648181682029,
+        "inertia": 31.31226883372399,
+        "cluster_sizes": "11/7/3/1",
+        "has_singleton": true
+      },
+      {
+        "k": 5,
+        "silhouette": 0.1835311283862705,
+        "inertia": 26.313705588498134,
+        "cluster_sizes": "5/7/1/2/7",
+        "has_singleton": true
+      },
+      {
+        "k": 6,
+        "silhouette": 0.19452649646128944,
+        "inertia": 21.523045547571318,
+        "cluster_sizes": "7/1/5/2/2/5",
+        "has_singleton": true
+      }
+    ],
+    "perturbation_stability": [
+      {
+        "k": 2,
+        "noise_sd": 0.05,
+        "mean_ari": 0.9760048510982348,
+        "ari_ge_threshold_rate": 1.0
+      },
+      {
+        "k": 2,
+        "noise_sd": 0.1,
+        "mean_ari": 0.850518397026159,
+        "ari_ge_threshold_rate": 0.864
+      },
+      {
+        "k": 2,
+        "noise_sd": 0.2,
+        "mean_ari": 0.6689952036803384,
+        "ari_ge_threshold_rate": 0.56
+      },
+      {
+        "k": 3,
+        "noise_sd": 0.05,
+        "mean_ari": 0.9945966309982684,
+        "ari_ge_threshold_rate": 0.996
+      },
+      {
+        "k": 3,
+        "noise_sd": 0.1,
+        "mean_ari": 0.9527828604521358,
+        "ari_ge_threshold_rate": 0.9
+      },
+      {
+        "k": 3,
+        "noise_sd": 0.2,
+        "mean_ari": 0.8195150483058197,
+        "ari_ge_threshold_rate": 0.672
+      }
+    ]
+  },
+  "warnings": [],
+  "outputs": {
+    "features": "actual_output\\analysis1_features.csv",
+    "balanced_features": "actual_output\\analysis1_balanced_features.csv",
+    "k_metrics": "actual_output\\analysis1_k_metrics.csv",
+    "stability": "actual_output\\analysis1_perturbation_stability.csv",
+    "clusters": "actual_output\\analysis1_clusters.csv",
+    "profile": "actual_output\\analysis1_cluster_profile.csv",
+    "model_bundle": "actual_output\\analysis1_model_bundle.joblib",
+    "run_manifest": "actual_output\\analysis1_run_manifest.json"
+  },
+  "previous_version": null,
+  "change_summary": {},
+  "requires_human_review": false,
+  "created_at_utc": "2026-09-30T02:24:51.012923+00:00",
+  "methodology": {
+    "final_k": 3,
+    "domains": {
+      "activity": [
+        "activity_intensity"
+      ],
+      "life_activity": [
+        "active_pop_pc1",
+        "active_pop_pc2",
+        "time_structure_pc1",
+        "time_structure_pc2",
+        "weekend_weekday_index"
+      ],
+      "population_household": [
+        "resident_age_pc1",
+        "resident_age_pc2",
+        "foreigner_ratio",
+        "household_structure_pc1",
+        "household_structure_pc2"
+      ],
+      "structural_welfare": [
+        "disability_ratio",
+        "livelihood_recipient_ratio"
+      ]
+    },
+    "domain_weight_rule": "1/sqrt(number_of_features_in_domain)",
+    "interpretation": "regional context; not a social-isolation risk score"
+  },
+  "pca": {
+    "active_pop": {
+      "source_columns": [
+        "male_ratio",
+        "age_10_ratio",
+        "age_20_ratio",
+        "age_30_ratio",
+        "age_40_ratio",
+        "age_50_ratio",
+        "age_60_plus_ratio"
+      ],
+      "explained_variance_ratio": [
+        0.6435986606682166,
+        0.20430561014949608
+      ],
+      "cumulative_explained_variance": 0.8479042708177127
+    },
+    "time_structure": {
+      "source_columns": [
+        "night_ratio",
+        "morning_ratio",
+        "daytime_ratio",
+        "evening_ratio"
+      ],
+      "explained_variance_ratio": [
+        0.6090168784380323,
+        0.3225019073744367
+      ],
+      "cumulative_explained_variance": 0.9315187858124689
+    },
+    "resident_age": {
+      "source_columns": [
+        "resident_ratio_0_19",
+        "resident_ratio_20_29",
+        "resident_ratio_30_39",
+        "resident_ratio_40_49",
+        "resident_ratio_50_64",
+        "resident_ratio_65_plus"
+      ],
+      "explained_variance_ratio": [
+        0.5183885041663053,
+        0.3630234246380683
+      ],
+      "cumulative_explained_variance": 0.8814119288043736
+    },
+    "household_structure": {
+      "source_columns": [
+        "hh_1_ratio",
+        "hh_2_ratio",
+        "hh_3_ratio",
+        "hh_4plus_ratio"
+      ],
+      "explained_variance_ratio": [
+        0.7370731204617166,
+        0.2561170088364824
+      ],
+      "cumulative_explained_variance": 0.993190129298199
+    }
+  }
+}
