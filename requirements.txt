@@ -4,3 +4,5 @@ psycopg2==2.9.13
 dotenv==0.9.9
 SQLAlchemy==2.1.1
 requests==2.34.2
+streamlit==1.64.0
+numpy>=1.26,<3

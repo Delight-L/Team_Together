@@ -19,6 +19,7 @@ def cvt2csv():
     sh_data = pd.read_csv("./data/raw/신한카드_빅콘테스트2026_데이터2.txt", sep="\t", encoding="cp949")
     # ---------------------------------------------------------------------------------------#
 
+    #데이터 정제
     age_pop.to_csv("./data/processed/age_pop.csv", index=False)
     time_pop.to_csv("./data/processed/time_pop.csv", index=False)
     wkdy_pop.to_csv("./data/processed/wkdy_pop.csv", index=False)
