@@ -11,3 +11,6 @@ __pycache__/
 *.txt
 *.geojson
 *.zip
+dashboard/.streamlit/secrets.toml
+.streamlit/secrets.toml
+dashboard/**/*.log

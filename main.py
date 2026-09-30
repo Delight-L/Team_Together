@@ -1,18 +1,53 @@
-import pandas as pd
+"""Team Together 실행 진입점.
+
+대시보드: python main.py 또는 python -m streamlit run main.py
+전처리: python main.py --preprocess
+"""
 from pathlib import Path
-from preprocessing.cleaning import cvt2csv
+import subprocess
+import sys
 
-#전처리 폴더 지정
-PROCESSED = Path(__file__).resolve().parent / "data" / "processed"
-# print(PROCESSED)
+ROOT_DIR = Path(__file__).resolve().parent
 
-#전처리 여부 확인
-if not (PROCESSED / "time_pop.csv").exists():
-    cvt2csv()
 
-#전처리된 데이터
-time_pop = pd.read_csv(PROCESSED / "time_pop.csv", dtype={"BLOCK_CD": str})
-age_pop = pd.read_csv(PROCESSED / "age_pop.csv", dtype={"BLOCK_CD": str})
-wkdy_pop = pd.read_csv(PROCESSED / "wkdy_pop.csv", dtype={"BLOCK_CD": str})
-sh_data = pd.read_csv(PROCESSED / "sh_data.csv", dtype={"BLOCK_CD": str})
+def load_processed_data():
+    """전처리 CSV를 준비하고 읽습니다. 화면용 위험 요인 연결 전 단계입니다."""
+    import pandas as pd
+    from preprocessing.cleaning import cvt2csv
 
+    processed = ROOT_DIR / "data" / "processed"
+    names = ("time_pop", "age_pop", "wkdy_pop", "sh_data")
+    if not all((processed / f"{name}.csv").exists() for name in names):
+        cvt2csv()
+    return {
+        name: pd.read_csv(processed / f"{name}.csv", dtype={"BLOCK_CD": str})
+        for name in names
+    }
+
+
+def main():
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+
+    if get_script_run_ctx(suppress_warning=True) is not None:
+        from dashboard.main import render_app
+
+        render_app()
+        return
+
+    if sys.argv[1:] == ["--preprocess"]:
+        import os
+
+        os.chdir(ROOT_DIR)
+        for name, data in load_processed_data().items():
+            print(f"{name}: {len(data):,}행")
+        return
+
+    # 같은 가상환경의 Streamlit으로 최상위 진입점을 실행합니다.
+    raise SystemExit(subprocess.call([
+        sys.executable, "-m", "streamlit", "run", str(ROOT_DIR / "main.py"),
+        *sys.argv[1:],
+    ], cwd=ROOT_DIR))
+
+
+if __name__ == "__main__":
+    main()

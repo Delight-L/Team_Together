@@ -2,11 +2,11 @@
 // 파트 3. 위험도 추이 그래프
 // ============================================================
 // 여기만 바꾸면 같은 데이터로 꺾은선 / 영역 / 막대를 연습할 수 있습니다.
-// 원본 디자인은 'line'입니다. 다른 종류는 'area' 또는 'bar'로 바꾸세요.
+// 기본 그래프는 'line'입니다. 다른 종류는 'area' 또는 'bar'로 바꾸세요.
 const TREND_CHART_TYPE = 'line';
 
 function chartSVG(series, labels, description) {
-    // SVG 그림 크기와 안쪽 여백. 원본 HTML과 동일한 값입니다.
+    // SVG 그림 크기와 안쪽 여백을 설정합니다.
     const W = 600, H = 220, L = 34, R = 12, T = 12, B = 26;
     const values = series.flatMap(item => item.v).filter(Number.isFinite);
     let min = Math.floor(Math.min(...values, TH[0]) / 10) * 10;
