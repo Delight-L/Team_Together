@@ -1,5 +1,7 @@
 import json
 import os
+import re
+from difflib import SequenceMatcher
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -34,14 +36,49 @@ def get_example_questions() -> list[str]:
     ]
 
 
-def find_region(question: str) -> str | None:
-    for region in load_mock_data().get("regions", {}):
-        if region in question:
-            return region
-    return None
+def normalize_region_name(name: str) -> str:
+    return re.sub(r"\s+", "", name)
 
 
-def explain_region(region: str, result: dict) -> str:
+def resolve_region(question: str) -> tuple[str | None, str | None]:
+    """정확 일치 또는 한글 오타를 보정해 지역명을 찾는다.
+
+    반환값: (실제 지역명, 보정 안내 문장). 유사도가 낮으면 자동 보정하지 않는다.
+    """
+    regions = list(load_mock_data().get("regions", {}))
+    normalized_question = normalize_region_name(question)
+
+    for region in regions:
+        if normalize_region_name(region) in normalized_question:
+            return region, None
+
+    # '논형돈 1동'처럼 문장 안에 쓰인 동 이름 후보를 분리한다.
+    candidates = re.findall(r"[가-힣]+(?:\s*\d+)?동", question)
+    for candidate in candidates:
+        normalized_candidate = normalize_region_name(candidate)
+        scored = sorted(
+            (
+                SequenceMatcher(None, normalized_candidate, normalize_region_name(region)).ratio(),
+                region,
+            )
+            for region in regions
+        )
+        best_score, best_region = scored[-1]
+        second_score = scored[-2][0] if len(scored) > 1 else 0
+
+        # 한두 글자 오타는 보정하되, 다른 후보와 너무 비슷하면 확인을 요청한다.
+        # 첫 글자와 '동'이 같고 다른 후보보다 충분히 유사할 때만 보정한다.
+        same_boundary = (
+            normalized_candidate[0] == normalize_region_name(best_region)[0]
+            and normalized_candidate.endswith("동")
+        )
+        if same_boundary and best_score >= 0.66 and best_score - second_score >= 0.15:
+            return best_region, f"입력하신 **{candidate}**을(를) **{best_region}**으로 이해했습니다."
+
+    return None, None
+
+
+def explain_region(region: str, result: dict, correction_note: str | None = None) -> str:
     change = result["change_pct"]
     relative = result["relative_change_pct"]
     z_score = result["robust_z_score"]
@@ -49,7 +86,9 @@ def explain_region(region: str, result: dict) -> str:
     relative_direction = "더 큰 감소" if relative < 0 else "더 큰 증가"
     threshold = result["threshold"]
 
+    correction = f"{correction_note}\n\n" if correction_note else ""
     return (
+        correction +
         f"### {region} · {result['month']} 분석 결과\n\n"
         f"- **{result['metric']}**: 전월 대비 **{change:+.1f}%** ({direction})\n"
         f"- **전체 중앙값 대비 상대 변화량**: **{relative:+.1f}%p** ({relative_direction})\n"
@@ -62,9 +101,9 @@ def explain_region(region: str, result: dict) -> str:
 
 
 def deterministic_answer(question: str) -> str:
-    region = find_region(question)
+    region, correction_note = resolve_region(question)
     if region:
-        return explain_region(region, get_risk_result(region))
+        return explain_region(region, get_risk_result(region), correction_note)
 
     normalized = question.lower().replace(" ", "")
     if "robustz" in normalized or "zscore" in normalized or "z점수" in normalized:
@@ -99,12 +138,14 @@ def deterministic_answer(question: str) -> str:
     )
 
 
-def build_data_context(region: str | None) -> str:
+def build_data_context(region: str | None, correction_note: str | None = None) -> str:
     if not region:
         return "현재 질문에 연결된 특정 지역은 없습니다."
 
     result = get_risk_result(region)
+    correction = f"입력 보정: {correction_note}\n" if correction_note else ""
     return (
+        correction +
         f"지역: {region}\n"
         f"분석 월: {result['month']}\n"
         f"지표: {result['metric']}\n"
@@ -122,8 +163,8 @@ def answer_with_gemini(question: str, history: list[dict]) -> str:
     from google import genai
     from google.genai import types
 
-    region = find_region(question)
-    data_context = build_data_context(region)
+    region, correction_note = resolve_region(question)
+    data_context = build_data_context(region, correction_note)
     recent_history = "\n".join(
         f"{'사용자' if item['role'] == 'user' else '챗봇'}: {item['content']}"
         for item in history[-6:]
@@ -147,7 +188,8 @@ Robust Z-score는 평소 변화 패턴에서 얼마나 이례적인지, 상대 �
         contents=prompt,
         config=types.GenerateContentConfig(system_instruction=system_instruction),
     )
-    return response.text or "응답을 생성하지 못했습니다. 잠시 후 다시 질문해 주세요."
+    prefix = f"{correction_note}\n\n" if correction_note else ""
+    return prefix + (response.text or "응답을 생성하지 못했습니다. 잠시 후 다시 질문해 주세요.")
 
 
 def answer_question(question: str, history: list[dict] | None = None) -> str:
