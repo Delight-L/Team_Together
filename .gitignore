@@ -1,0 +1,13 @@
+*.csv
+*.pdf
+*.xlsx
+*.jpg
+*.venv/
+__pycache__/
+*.py[cod]
+.tmp/
+*.env
+!.env.example
+*.txt
+*.geojson
+*.zip
