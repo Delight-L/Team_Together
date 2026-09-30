@@ -3,6 +3,7 @@
 지자체별 사회적 고립 위험도를 살펴보는 Streamlit 시연용 대시보드입니다.
 로그인, 지역별 지도·상세 카드, 위험도 추이·순위, 집단별 대응·서비스 추천과 챗봇을 제공합니다.
 화면은 Streamlit Custom Component v2로 구성하며, Python이 CSV 데이터를 읽어 전달합니다.
+`dashboard/isolation-dashboard_260921.html`의 디자인(로그인 화면, 왼쪽 메뉴, 지도·상세 카드, 아래 추이·순위, 오른쪽 챗봇, 색상·글꼴·간격·반응형 배치)을 Streamlit Custom Component v2로 옮겼고, 화면 데이터는 Python이 CSV를 읽어 전달합니다.
 
 ## 실행하기
 
@@ -14,6 +15,7 @@ Python 3.10 이상을 준비한 뒤 저장소를 내려받고 가상환경을 �
 ```bash
 git clone --branch docoup3 --single-branch https://github.com/Delight-L/Team_Together.git
 cd Team_Together
+cd Team_Together/dashboard
 python -m venv .venv
 ```
 
@@ -71,6 +73,17 @@ Windows에서는 `.\.venv\Scripts\python.exe main.py`로도 실행할 수 있습
 | 날짜별 지역 위험 요인 | `dashboard/data/risk_factors.csv` |
 | 지역·성별·연령대 월별 집계 | `dashboard/data/group_signals.json` |
 | 집단별 변화율·서비스 추천·조치 현황 | `dashboard/ui/responses.js` |
+모든 계정·대상자·위험 점수는 시연용입니다. 로그인은 실제 서비스 인증 기능이 아닙니다.
+
+## 구성
+
+| 변경 내용 | 파일 |
+|---|---|
+| Python 실행 흐름 / 데이터 연결 | `dashboard/main.py` — 파트 1~8 |
+| CSV 경로 / 요인 이름 / 기본 가중치 / 기준 점수 | `dashboard/settings.py` |
+| CSV 검사 / 일·월 집계 / Python 위험도 계산 | `dashboard/data_utils.py` |
+| 날짜별 지역 위험 요인 | `dashboard/data/risk_factors.csv` |
+| 대상자 목록 | `dashboard/data/people.csv` |
 | 행정동 지도 경계 | `dashboard/data/map_boundaries.json` |
 | 색상 / 글꼴 / 너비 / 간격 / 카드 배치 | `dashboard/ui/style.css` |
 | 로그인 / 앱 뼈대 / 챗봇 입력 폼 | `dashboard/ui/layout.html` |
@@ -81,6 +94,10 @@ Windows에서는 `.\.venv\Scripts\python.exe main.py`로도 실행할 수 있습
 
 - 화면 디자인과 동작은 **`ui/` 폴더**에서 수정하세요.
 - 실행과 데이터 변경 위치에는 파트별 한국어 주석이 달려 있습니다. 새 데이터와 시각화 변경 방법은 아래 항목을 참고하세요.
+- 원본 디자인 버전을 고칠 때는 **`ui/` 폴더**를 수정하세요.
+- 수업에서 배운 Streamlit 기본 위젯으로 작성한 이전 버전은 `main_native.py`에 보관했고, 그 버전의 Plotly 그래프 코드는 `charts.py`에 있습니다. `charts.py`를 고치면 보관한 기본 위젯 버전에만 적용됩니다.
+- `prepare_design.py`와 `export_html_data.cjs`는 최초 분리·추출에 사용한 도구입니다. 다시 실행하면 수정한 화면 파일 또는 CSV를 덮어쓸 수 있으므로 일상적인 편집 때는 사용하지 마세요.
+- 실행과 데이터 변경 위치에는 파트별 한국어 주석이 달려 있습니다. 새 데이터를 추가하거나 시각화를 바꾸는 방법은 [대시보드 사용안내](dashboard/사용안내.md)를 참고하세요.
 
 ## 데이터 교체
 
@@ -123,6 +140,23 @@ Windows에서는 `.\.venv\Scripts\python.exe main.py`로도 실행할 수 있습
 ## 지도 교체
 
 `map_boundaries.json`은 행정동 경계를 나타내는 SVG 그림 좌표입니다. 위도·경도나 GeoJSON 형식은 아닙니다.
+### 대상자: `data/people.csv`
+
+다음 열을 유지합니다.
+
+```text
+person_id,city,name,age,district,risk_score,reason,status,last_contact
+```
+
+- `person_id`는 중복되지 않는 ID입니다.
+- `risk_score`는 0~100의 개인 점수이며 지역 위험도 가중치와 별도로 관리합니다.
+- `status`는 미배정 / 방문 예정 / 상담 완료 / 모니터링 중 하나입니다.
+- `last_contact`는 최근 접촉 날짜입니다.
+- 현재 목록은 가상의 대상자 64명입니다.
+
+## 지도 교체
+
+`map_boundaries.json`은 원본의 SVG 그림 좌표입니다. 위도·경도나 GeoJSON 형식은 아닙니다.
 
 - 동일한 강남구·춘천시 행정동 자료의 수치를 교체하면 지도를 그대로 사용할 수 있습니다.
 - CSV의 행정동 이름은 지도 데이터의 `n` 값과 정확히 일치해야 합니다.
@@ -135,6 +169,7 @@ Windows에서는 `.\.venv\Scripts\python.exe main.py`로도 실행할 수 있습
 
 ```javascript
 const TREND_CHART_TYPE = 'line'; // 꺾은선 그래프
+const TREND_CHART_TYPE = 'line'; // 원본의 꺾은선
 // 'area'로 변경: 영역 그래프
 // 'bar'로 변경: 지역 평균과 선택 동을 나란히 표시하는 막대
 ```
@@ -180,3 +215,24 @@ const TREND_CHART_TYPE = 'line'; // 꺾은선 그래프
 - `tests/`: 데이터 연결 후 계산·화면 진입을 확인하는 개발용 검증 도구입니다.
 
 `data/risk_factors.csv`, `data/group_signals.json`, `data/map_boundaries.json`은 현재 실행에 필요합니다. 실제 데이터 연결이 완료되기 전에는 유지하세요.
+원본 7개 화면과 지도 선택, 위험 단계 필터, 일·월 전환, 가중치 변경, 챗봇 열기·닫기, 대상자 필터, 메뉴 접기·펴기 동작을 유지했습니다.
+원본처럼 운영체제/브라우저의 밝은·어두운 모드를 따릅니다.
+
+현재 로그인 계정, 대상자, 위험 점수, 예시 로그는 시연용입니다.
+챗봇은 질문 유형을 분류하는 규칙 기반 응답입니다.
+대상자 수정·배정·방문 결과 저장과 실제 인증·DB·AI 연결은 추후 구현할 부분입니다.
+
+## 확인 도구
+
+`dashboard` 폴더에서 실행합니다. 디자인 검증 도구의 JavaScript 계산 비교에는 Node.js가 필요합니다.
+
+```powershell
+# 원본 디자인 버전의 Python 실행, CSS·화면 구조, CSV 계산 연결 확인
+.\.venv\Scripts\python.exe verify_design.py
+
+# 보관한 Streamlit 기본 위젯 버전의 동작 확인
+.\.venv\Scripts\python.exe verify_dashboard.py
+```
+
+`verify_design.py`는 초기 샘플 자료가 원본과 같은 계산 결과를 내는지도 비교합니다.
+실제 자료로 교체하면 이 원본 비교 검사의 기대값도 함께 수정해야 합니다.
