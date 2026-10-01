@@ -29,7 +29,7 @@ export default function(component) {
         root.addEventListener(type, handler);
         listeners.push([type, handler]);
     };
-""" + read_ui("data.js") + read_ui("charts.js") + read_ui("responses.js") + read_ui("dashboard.js") + """
+""" + read_ui("data.js") + read_ui("charts.js") + read_ui("responses.js") + read_ui("workspace.js") + read_ui("dashboard.js") + """
     return () => {
         listeners.forEach(([type, handler]) => root.removeEventListener(type, handler));
         clearTimeout(weightTimer);

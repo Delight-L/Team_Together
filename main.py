@@ -4,6 +4,9 @@
 전처리: python main.py --preprocess
 """
 from pathlib import Path
+from preprocessing.cleaning import cvt2csv
+
+import pandas as pd
 import subprocess
 import sys
 
@@ -12,8 +15,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 
 def load_processed_data():
     """전처리 CSV를 준비하고 읽습니다. 화면용 위험 요인 연결 전 단계입니다."""
-    import pandas as pd
-    from preprocessing.cleaning import cvt2csv
+
 
     processed = ROOT_DIR / "data" / "processed"
     names = ("time_pop", "age_pop", "wkdy_pop", "sh_data")

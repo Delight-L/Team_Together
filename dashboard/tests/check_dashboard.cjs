@@ -36,7 +36,7 @@ assert(checked > 0, '검증할 위험 요인 자료가 없습니다.');
 assert.equal(vm.runInContext("scoreAt('__missing__','__missing__','day',BOOT.endDate,DEFW)", csvContext), null);
 assert.equal(vm.runInContext("scoreOf([10,20,30,40,50],[0,0,0,0,0])", csvContext), null);
 // 함수로 구성해 구문만 검사합니다. 화면 이벤트를 실행하지 않습니다.
-new Function(fs.readFileSync(path.join(ui,'data.js'),'utf8') + fs.readFileSync(path.join(ui,'charts.js'),'utf8') + fs.readFileSync(path.join(ui,'responses.js'),'utf8') + fs.readFileSync(path.join(ui,'dashboard.js'),'utf8'));
+new Function(fs.readFileSync(path.join(ui,'data.js'),'utf8') + fs.readFileSync(path.join(ui,'charts.js'),'utf8') + fs.readFileSync(path.join(ui,'responses.js'),'utf8') + fs.readFileSync(path.join(ui,'workspace.js'),'utf8') + fs.readFileSync(path.join(ui,'dashboard.js'),'utf8'));
 console.log(JSON.stringify({calculationChecks:checked,syntax:'PASS',missingData:'PASS'}));
 
 // 집계 누락·판단 기준·필터·집단별 조치 상태 검증.
