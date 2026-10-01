@@ -2,7 +2,7 @@
 
 const $=s=>root.querySelector(s);
 const ACC=BOOT.accounts;
-const S={user:null,city:Object.keys(GEO)[0],view:'dash',mode:'day',date:fmtD(END),month:MONTHS[MONTHS.length-1],sel:null,band:null,
+const S={user:null,city:Object.keys(GEO)[0],view:'dash',mode:'month',date:fmtD(END),month:MONTHS[MONTHS.length-1],sel:null,band:null,
  side:root.clientWidth>=860,chat:root.clientWidth>=1180,W:DEFW.slice(),logTab:'전체',zoom:false};
 const LOGS=[];
 function stamp(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`}
@@ -54,29 +54,23 @@ function hints(r){const h=[],f=r.f;
 
 // ---------- 왼쪽 메뉴: 그룹·아이콘·표시 이름을 변경할 위치 ----------
 function menuDef(){return [
- {g:'모니터링',items:[['dash','dash','종합 현황'],['analysis','bar','동별 분석']]},
- {g:'대응',items:[['users','users','대응·서비스 추천'],['actions','check','조치 현황']]},
- {g:'설정·운영',items:[['data','db','데이터 연계'],['settings','sliders','위험도 기준'],...(S.user.admin?[['logs','log','접속·조회 로그','관리자']]:[])]}]}
-const TITLES={dash:'종합 현황',analysis:'동별 분석',users:'대응·서비스 추천',actions:'조치 현황',data:'데이터 연계',settings:'위험도 기준',logs:'접속·조회 로그'};
+ {g:'',items:[['dash','dash','대시보드'],['actions','check','위기 관리 보드'],['analysis','bar','지역 탐색'],['users','users','복지 자원 연계'],['reports','log','보고서 작성'],['data','db','데이터 연계 관리']]},
+ {g:'설정·운영',items:[['settings','sliders','위험도 기준'],...(S.user.admin?[['logs','log','접속·조회 로그']]:[])]}]}
+const TITLES={dash:'대시보드',analysis:'지역 탐색',users:'복지 자원 연계',actions:'위기 관리 보드',reports:'보고서 작성',data:'데이터 연계 관리',settings:'위험도 기준',logs:'접속·조회 로그'};
 
 // ---------- 사이드바: 236px 너비, 접으면 64px ----------
 function renderSide(){
- let h=`<div class="sidehead"><button class="iconbtn" data-act="side" aria-label="메뉴 접기/펴기" aria-expanded="${S.side}">${ic('menu')}</button><span class="brand">고립예방 에이전트</span></div><div class="sidenav">`;
+ let h=`<div class="sidehead"><button class="iconbtn" data-act="side" aria-label="메뉴 접기/펴기" aria-expanded="${S.side}">${puzzleIcon()}</button><span class="brand">복지탐정 AI<small>지역의 이야기를 찾아<br>필요한 자원으로 연결합니다.</small></span></div><div class="sidenav">`;
  menuDef().forEach(g=>{h+=`<div class="glabel">${g.g}</div>`;g.items.forEach(m=>{h+=`<button class="mi" data-view="${m[0]}" ${S.view===m[0]?'aria-current="page"':''} title="${m[2]}">${ic(m[1])}<span class="mlabel">${m[2]}</span>${m[3]?`<span class="mtag">${m[3]}</span>`:''}</button>`})});
  h+=`</div><div class="sidefoot">${esc(S.user.org)} · ${esc(S.user.id)}</div>`;$('#side').innerHTML=h;
  $('#app').classList.toggle('collapsed',!S.side)}
 
 // ---------- 상단: 페이지 제목, 지자체 탭, 집계 기준, 챗봇 버튼 ----------
 function renderTop(){const u=S.user;
- let h=`<h1>${TITLES[S.view]}</h1>`;
- const cityView=['dash','analysis','users','actions'].includes(S.view);
- if(!cityView){}
- else if(u.admin)h+=`<div class="tabs" role="tablist" aria-label="지자체 선택">${Object.keys(GEO).map(c=>`<button role="tab" aria-selected="${S.city===c}" data-city="${c}">${c}</button>`).join('')}</div>`;
- else h+=`<span class="pill">${S.city}</span>`;
- h+=`<span class="sp"></span><span class="pill warn" title="화면의 모든 수치는 시연용 샘플입니다">샘플 데이터</span><span class="pill">${['users','actions'].includes(S.view)?esc(R.month)+' 월별 집계':fmtD(END)+' 집계 기준'}</span>
- <button class="btn ghost sm" data-act="chat" aria-pressed="${S.chat}">${ic('chat',16)}에이전트</button>
- <span class="who">${esc(u.name)}</span><button class="iconbtn" data-act="logout" aria-label="로그아웃" title="로그아웃">${ic('out')}</button>`;
- $('#top').innerHTML=h}
+ const month=['users','actions'].includes(S.view)?R.month:S.month;
+ $('#top').innerHTML=`<div class="welcome"><h1>${S.view==='dash'?`${u.admin?'담당자':esc(S.city)+' 담당자'}님,<br>이번 달 <em>복지 미션</em>을 확인하세요.`:TITLES[S.view]}</h1>${S.view!=='dash'?'<small>지역의 변화를 살피고 필요한 지원을 연결합니다.</small>':''}</div><div class="global-controls"><label class="global-select">${ic('log',19)}<select data-global-month aria-label="분석 기준월">${MONTHS.slice().reverse().map(m=>`<option value="${m}" ${m===month?'selected':''}>${m.replace('-','년 ')}월</option>`).join('')}</select></label><label class="global-select">${ic('dash',19)}<select data-global-city aria-label="대상 지자체" ${u.admin?'':'disabled'}>${Object.keys(GEO).map(c=>`<option ${c===S.city?'selected':''}>${c}</option>`).join('')}</select></label><button class="iconbtn mobile-assistant" data-act="chat" aria-label="AI 도우미 열기">${ic('chat')}</button></div>`;
+ $('#assistant-user').innerHTML=`<span class="pill warn">시연 데이터</span><span class="user-avatar">${u.admin?'관':esc(S.city[0])}</span><b>${u.admin?'전체 관리자':esc(S.city)+' 담당자'}</b><button class="iconbtn" data-act="logout" aria-label="로그아웃">${ic('out',18)}</button>`;
+}
 
 // ---------- 조회 조건: 일/월 탭, 기준일, 앞뒤 날짜 이동 ----------
 function ctrlBar(){
@@ -124,13 +118,7 @@ function rankCard(rows){const list=rows.filter(r=>S.band===null||r.b===S.band).s
 
 
 // ---------- 화면 1. 종합 현황: 지도 + 상세 / 아래 추이 + 우선 확인 순위 ----------
-function viewDash(){const rows=snap();if(!S.sel||!rows.find(r=>r.n===S.sel))S.sel=rows.slice().sort((a,b)=>b.s-a.s)[0].n;
- const sel=rows.find(r=>r.n===S.sel);
- return ctrlBar()+`<div class="grid g-map"><section class="card"><header><h2>${S.city} 동별 고립 위험도</h2><span class="hint">${modeLabel()} 기준 · ${periodLabel()}</span></header>
- <div style="padding:12px 18px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">${bandBar(rows)}${zoomBox()?`<button class="zoombtn" data-act="zoom" aria-pressed="${S.zoom}">${S.zoom?'전체 보기':'도심 확대'}</button>`:''}</div><div class="mapbox" id="mapbox">${mapSVG(rows)}</div>
- <div class="foot">행정동 경계: 공개 행정동 경계 데이터(2023.07 기준)를 단순화해 표시했어요. 색은 위험 단계, 숫자는 위험도(0~100)입니다.</div></section>
- <section class="card"><header><h2>선택한 지역</h2></header><div class="cbody" id="detail">${detailHTML(sel)}</div></section></div>
- <div class="grid g-low">${trendCard(rows)}${rankCard(rows)}</div>`}
+function viewDash(){S.mode='month';return viewMissionDash()}
 
 // ---------- 화면 2. 동별 분석: 위험도·요인 기여 누적 막대 표 ----------
 function viewAnalysis(){const rows=snap().sort((a,b)=>b.s-a.s);const tot=S.W.reduce((a,b)=>a+b,0);
@@ -138,11 +126,11 @@ function viewAnalysis(){const rows=snap().sort((a,b)=>b.s-a.s);const tot=S.W.red
 
 // ---------- 화면 5. 데이터 연계: 자료 출처와 반영 지표 ----------
 function viewData(){const rows=[['이동전화 유동인구','대회 제공',FS[0],'활동량 변화'],['카드 결제','대회 제공',FS[1],'소비 활동 변화'],['주민등록 인구·세대','외부 공공데이터',FS[2],'1인 가구 비율'],['주민등록 인구·세대','외부 공공데이터',FS[3],'고령 인구 비율'],['복지 서비스 이용 현황','외부 공공데이터',FS[4],'서비스 미연계 비율']];
- return `<section class="card"><header><h2>데이터 연계 현황</h2><span class="hint">현재 화면은 모두 샘플 값으로 계산돼요</span></header><div class="cbody tblwrap"><table class="tbl"><thead><tr><th>데이터</th><th>구분</th><th>반영 지표</th><th>산출 내용</th><th>상태</th></tr></thead><tbody>${rows.map((r,i)=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td><span class="legend"><span><i style="background:${FC[i]}"></i>${r[2]}</span></span></td><td>${r[3]}</td><td><span class="st">샘플 사용 중</span></td></tr>`).join('')}</tbody></table></div></section>`}
+ return `<section class="card"><header><h2>데이터 연계 관리</h2><span class="hint">현재 화면은 모두 샘플 값으로 계산돼요</span></header><div class="cbody tblwrap"><table class="tbl"><thead><tr><th>데이터</th><th>구분</th><th>반영 지표</th><th>산출 내용</th><th>상태</th></tr></thead><tbody>${rows.map((r,i)=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td><span class="legend"><span><i style="background:${FC[i]}"></i>${r[2]}</span></span></td><td>${r[3]}</td><td><span class="st">샘플 사용 중</span></td></tr>`).join('')}</tbody></table></div></section>`}
 
 // ---------- 화면 6. 위험도 기준: 가중치 슬라이더와 초기화 ----------
 function viewSettings(){const tot=S.W.reduce((a,b)=>a+b,0);
- return `<section class="card"><header><h2>위험도 가중치</h2><button class="btn ghost sm" data-act="resetW">기본값으로</button></header><div class="cbody"><p class="hint" style="margin-top:0">위험도 = 5개 요인 값(0~100)의 가중 평균이에요. 값을 바꾸면 종합 현황의 지도·순위·추이에 바로 반영돼요.</p>
+ return `<section class="card"><header><h2>위험도 가중치</h2><button class="btn ghost sm" data-act="resetW">기본값으로</button></header><div class="cbody"><p class="hint" style="margin-top:0">위험도 = 5개 요인 값(0~100)의 가중 평균이에요. 값을 바꾸면 대시보드의 지도·순위·변화에 바로 반영돼요.</p>
  ${FS.map((n,i)=>`<div class="sl"><label for="w${i}"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${FC[i]};margin-right:6px"></span>${n}</label><input id="w${i}" type="range" min="0" max="40" step="1" value="${S.W[i]}" data-w="${i}"><span class="num" id="wv${i}">${S.W[i]} (${Math.round(S.W[i]/tot*100)}%)</span></div>`).join('')}
  <div class="note"><p><b>위험 단계 기준</b> (위험도 점수)</p><p>양호 ${TH[0]} 미만 · 주의 ${TH[0]}~${TH[1]-0.1} · 위험 ${TH[1]}~${TH[2]-0.1} · 심각 ${TH[2]} 이상</p></div></div></section>`}
 
@@ -151,8 +139,8 @@ function viewLogs(){if(!S.user.admin)return '<div class="empty">관리자만 볼
  const tabs=['전체','접속','조회','질의','설정'];const list=LOGS.filter(l=>S.logTab==='전체'||l.type===S.logTab);
  return `<section class="card"><header><h2>접속·조회 로그</h2><span class="hint">모든 지자체 담당자의 이력 · 최신순</span></header><div class="cbody"><div class="row"><div class="tabs" role="group" aria-label="로그 종류">${tabs.map(t=>`<button data-logtab="${t}" aria-pressed="${S.logTab===t}">${t}</button>`).join('')}</div><span class="hint">${list.length}건</span></div>
  <div class="tblwrap"><table class="tbl"><thead><tr><th>일시</th><th>계정</th><th>소속</th><th>구분</th><th>내용</th><th>결과</th></tr></thead><tbody>${list.map(l=>`<tr><td class="num">${l.t}</td><td>${esc(l.id)}</td><td>${esc(l.org)}</td><td>${l.type}</td><td>${esc(l.detail)}</td><td>${l.ok?'성공':'<span class="up">실패</span>'}</td></tr>`).join('')}</tbody></table></div></div></section>`}
-function renderPage(){const v={dash:viewDash,analysis:viewAnalysis,users:viewUsers,actions:viewActions,data:viewData,settings:viewSettings,logs:viewLogs}[S.view];$('#page').innerHTML=['dash','analysis'].includes(S.view)&&!snap().length?ctrlBar()+'<div class="empty">선택한 기간의 자료가 없어요. 다른 날짜를 선택해 주세요.</div>':v();updateCtx()}
-function render(){renderSide();renderTop();renderPage();$('#app').classList.toggle('nochat',!S.chat);$('#chat').classList.toggle('open',S.chat)}
+function renderPage(){if(S.view==='dash'||S.view==='reports')S.mode='month';if(S.view==='users')MISSION.done.add(1);const v={dash:viewDash,analysis:viewAnalysis,users:viewUsers,actions:viewActions,data:viewData,settings:viewSettings,logs:viewLogs,reports:viewReports}[S.view];$('#page').innerHTML=['dash','analysis'].includes(S.view)&&!snap().length?ctrlBar()+'<div class="empty">선택한 기간의 자료가 없어요. 다른 날짜를 선택해 주세요.</div>':v();updateCtx();updateAssistant()}
+function render(){if(S.view==='dash'||S.view==='reports')S.mode='month';renderSide();renderTop();renderPage();$('#app').classList.toggle('nochat',!S.chat);$('#chat').classList.toggle('open',S.chat)}
 function updateCtx(){if(['users','actions'].includes(S.view)){$('#ctx').textContent=`보는 중: ${S.city} · ${R.month} · 지역·성별·연령대`;return;}$('#ctx').textContent=`보는 중: ${S.city} · ${modeLabel()} · ${periodLabel()}${S.view==='dash'&&S.sel?' · '+S.sel:''}`}
 
 /* ---- 챗봇 (시연용 규칙 기반) ---- */
@@ -180,14 +168,14 @@ function login(e){e.preventDefault();const org=$('#lorg').value,id=$('#lid').val
  const a=ACC.find(x=>x.id===id&&x.pw===pw);
  if(!a){err.textContent='아이디 또는 비밀번호가 맞지 않아요.';log('접속','로그인 실패 (아이디/비밀번호 불일치)',false,{id:id||'-',org});return}
  if(a.org!==org){err.textContent='선택한 소속과 계정이 맞지 않아요.';log('접속','로그인 실패 (소속 불일치)',false,{id:a.id,org});return}
- S.user=a;S.city=a.admin?Object.keys(GEO)[0]:a.org;S.view='dash';S.sel=null;log('접속','로그인');
+ S.user=a;S.city=a.admin?Object.keys(GEO)[0]:a.org;S.view='dash';S.mode='month';S.sel=null;log('접속','로그인');
  $('#login').hidden=true;$('#app').hidden=false;render();if(!$('#msgs').children.length)addMsg(`${a.name}님, 안녕하세요. 동별 위험도, 상승 지역, 위험 요인을 물어보세요.`,'bot')}
 
 // ---------- 로그아웃: 앱을 숨기고 로그인 화면으로 돌아가기 ----------
-function logout(){log('접속','로그아웃');S.user=null;R.statuses={};R.selected=null;R.district='전체';R.gender='전체';R.age='전체';R.priority='전체';$('#app').hidden=true;$('#login').hidden=false;$('#lpw').value='';$('#lerr').textContent='';$('#msgs').innerHTML=''}
+function logout(){log('접속','로그아웃');S.user=null;MISSION.done.clear();MISSION.reviewed.clear();MISSION.zoom=1;R.statuses={};R.selected=null;R.district='전체';R.gender='전체';R.age='전체';R.priority='전체';$('#app').hidden=true;$('#login').hidden=false;$('#lpw').value='';$('#lerr').textContent='';$('#msgs').innerHTML=''}
 
 // ---------- 지도·순위 클릭: 선택 동을 기억한 뒤 상세·추이를 다시 그리기 ----------
-function pick(u){S.sel=u;log('조회',`${S.city} ${u} 상세`);renderPage()}
+function pick(u){S.sel=u;MISSION.done.add(0);MISSION.reviewed.add(reviewKey(u));log('조회',`${S.city} ${u} 상세`);renderPage()}
 // 파트 8. 클릭 동작: 메뉴·지도·필터·로그아웃을 한곳에서 처리합니다.
 listen('click',e=>{const t=e.target;let el;
  if(el=t.closest('[data-demo]')){const [o,i,p]=el.dataset.demo.split('|');$('#lorg').value=o;$('#lid').value=i;$('#lpw').value=p;return}
@@ -228,3 +216,5 @@ $('#csend').addEventListener('submit',e=>{e.preventDefault();send($('#cin').valu
 
 /* 로그인 화면 배경: 실제 경계 실루엣 */
 $('#lmaps').innerHTML=Object.keys(GEO).map(c=>{const g=GEO[c];return `<svg viewBox="0 0 ${g.w} ${g.h}" aria-hidden="true">${g.units.map(u=>`<path d="${u.d}"/>`).join('')}</svg>`}).join('');
+
+$('#assistant-mascot').innerHTML=detectiveSVG();

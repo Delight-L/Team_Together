@@ -28,7 +28,7 @@ def render_app():
     # ============================================================
     # 2. 화면 설정 — 전체 너비·높이 사용
     # ============================================================
-    st.set_page_config(page_title="고립예방 에이전트 · 지자체 대시보드", layout="wide", initial_sidebar_state="collapsed")
+    st.set_page_config(page_title="복지탐정 AI · 지역 복지 미션", layout="wide", initial_sidebar_state="collapsed")
 
     # 화면 내부는 ui/style.css가 담당합니다. 여기서는 Streamlit 바깥 여백만 제거합니다.
     st.html("""

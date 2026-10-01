@@ -4,7 +4,7 @@ from pathlib import Path
 # __file__은 이 파일의 위치입니다. 다른 폴더에서 실행해도 데이터를 찾습니다.
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-APP_TITLE = "고립예방 에이전트"
+APP_TITLE = "복지탐정 AI"
 
 # 데이터 교체: 아래 경로를 바꾸거나, data 폴더의 CSV 내용을 교체하세요.
 RISK_FILE = DATA_DIR / "risk_factors.csv"
