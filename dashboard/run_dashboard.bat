@@ -1,4 +1,4 @@
 @echo off
-cd /d "%~dp0"
-"%~dp0.venv\Scripts\python.exe" -m streamlit run "%~dp0main.py"
+cd /d "%~dp0.."
+"%~dp0..\.venv\Scripts\python.exe" "%~dp0..\main.py"
 pause

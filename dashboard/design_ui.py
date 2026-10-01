@@ -1,6 +1,6 @@
-"""원본 디자인을 표시하는 Streamlit Custom Component v2.
+"""대시보드를 표시하는 Streamlit Custom Component v2.
 
-Python: CSV 읽기·검사 / HTML·CSS·JS: 원본 화면과 사용자 동작.
+Python: CSV 읽기·검사 / HTML·CSS·JS: 화면과 사용자 동작.
 main.py에서 전달한 데이터만 사용하며 새로운 샘플 수치를 만들지 않습니다.
 """
 import hashlib
@@ -29,7 +29,7 @@ export default function(component) {
         root.addEventListener(type, handler);
         listeners.push([type, handler]);
     };
-""" + read_ui("data.js") + read_ui("charts.js") + read_ui("dashboard.js") + """
+""" + read_ui("data.js") + read_ui("charts.js") + read_ui("responses.js") + read_ui("detection.js") + read_ui("dashboard.js") + """
     return () => {
         listeners.forEach(([type, handler]) => root.removeEventListener(type, handler));
         clearTimeout(weightTimer);
@@ -39,13 +39,13 @@ export default function(component) {
 """
 
 _DASHBOARD = st.components.v2.component(
-    "isolation_original_design",
+    "isolation_dashboard",
     html=read_ui("layout.html"), css=read_ui("style.css"), js=JAVASCRIPT,
-    isolate_styles=True,  # 원본 CSS를 Streamlit 본체의 스타일과 분리합니다.
+    isolate_styles=True,  # 대시보드 CSS를 Streamlit 본체의 스타일과 분리합니다.
 )
 
 
 def render_dashboard(payload):
     payload = dict(payload)
     payload["version"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
-    return _DASHBOARD(data=payload, key="original_dashboard", width="stretch", height="content")
+    return _DASHBOARD(data=payload, key="isolation_dashboard", width="stretch", height="content")

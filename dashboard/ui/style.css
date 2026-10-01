@@ -1,4 +1,4 @@
-/* 색·너비·카드·폰트: 원본 HTML의 CSS와 동일합니다. */
+/* 대시보드의 색·너비·카드·폰트를 설정합니다. */
 
 .dashboard-root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
  --bg:#EDF0F3;--surface:#FFFFFF;--surface2:#F5F7F9;--ink:#1B2733;--muted:#5B6A78;--line:#D8DEE4;--accent:#1F6F8B;--accent-ink:#FFFFFF;
@@ -207,5 +207,32 @@ svg{display:block}
 }
 
 
-/* Streamlit 안에서도 원본처럼 화면 높이를 가득 채웁니다. */
+/* Streamlit 안에서 화면 높이를 가득 채웁니다. */
 .dashboard-root{width:100%;height:100dvh;overflow:hidden;position:relative;}
+
+/* 지역·집단 대응 화면 */
+.response-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin:4px 0 16px}
+.response-heading h2{font-size:22px;letter-spacing:-.5px;margin:4px 0 8px;line-height:1.5}
+.response-heading p{color:var(--muted);margin:0;font-size:13px}
+.response-eyebrow{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.4px}
+.response-notice{padding:12px 16px;border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--surface);border-radius:6px;color:var(--muted);font-size:13px;margin-bottom:16px}
+.response-filters{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:20px 0}
+.response-filters label,.response-status label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
+.response-filters select,.response-status select{height:36px;min-width:112px;border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:0 10px;color:var(--ink)}
+.response-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.response-metrics .card{padding:16px;display:flex;flex-direction:column;gap:6px}
+.response-metrics strong{font-size:30px;font-weight:700}.response-metrics small{font-size:12px;font-weight:400;color:var(--muted);margin-left:8px}
+.signal-tag{display:inline-block;border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600;white-space:nowrap}
+.signal-tag.p0{background:var(--b3);color:var(--l3)}.signal-tag.p1{background:var(--b1);color:var(--l1)}.signal-tag.p2{background:var(--b0);color:var(--l0)}.signal-tag.p3{background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.response-list{margin-bottom:20px}.response-list td{padding:13px 12px}.response-selected{background:var(--surface2)}
+.response-sub{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.response-summary{font-size:15px;margin:0 0 18px;line-height:1.8}.response-detail{scroll-margin-top:16px}
+.response-section-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:22px;gap:8px}.response-section-title h3{font-size:15px}
+.service-suggestion{display:flex;gap:16px;border:1px solid var(--line);padding:18px;border-radius:8px;margin-bottom:12px;background:var(--surface2)}
+.service-index{font-size:23px;color:var(--accent);font-weight:700}.service-suggestion h4{font-size:15px;margin:0 0 7px}.service-suggestion p{margin:0 0 12px;font-size:13px}
+.service-suggestion dl{display:grid;grid-template-columns:125px 1fr;gap:5px;font-size:12px;margin:0 0 10px}.service-suggestion dt{color:var(--muted)}.service-suggestion dd{margin:0}
+.response-rules{font-size:12px;color:var(--muted);padding:12px 0}.response-rules summary{cursor:pointer;font-weight:600}.response-rules p{max-width:85ch}
+.response-status{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:16px;margin-top:12px}
+.response-task{text-align:left;display:block;width:100%}.response-task .signal-tag{margin:8px 0}
+@media(max-width:1050px){.response-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.response-heading{flex-direction:column}}
+@media(max-width:550px){.response-heading h2{font-size:19px}.response-filters label{flex:1 1 40%}.service-suggestion{padding:12px;gap:10px}.service-suggestion dl{grid-template-columns:1fr}.response-metrics .card{padding:12px}}
