@@ -3,6 +3,7 @@
 화면을 바꾸지 않고 자료만 바꾸려면 이 파일과 settings.py를 수정하세요.
 CSV 한 행은 '하루 / 지자체 / 행정동 / 5개 위험 요인'입니다.
 """
+
 import json
 
 import numpy as np
