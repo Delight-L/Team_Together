@@ -1,15 +1,15 @@
 <!-- 로그인 / 앱 셸 / 오른쪽 챗봇 화면 구조 -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
-<div class="dashboard-root" id="dashboard-root">
+<div class="dashboard-root" id="dashboard-root" data-theme="light">
 
 <div id="login" class="login">
   <div class="lhero">
     <div style="position:relative">
       <h1>고립 위험이 커지는 동네를<br>매일 먼저 확인합니다</h1>
-      <p>유동인구·소비 변화와 공공데이터를 합쳐 동별 사회적 고립 위험도를 계산하고, 방문·상담이 필요한 곳부터 좁혀 보는 담당자용 화면이에요.</p>
+      <p>에이전트가 분석한 지역별 변화 근거를 확인하고, 실제 복지사업을 검토한 뒤 결과 보고서를 작성하는 담당자 업무 화면입니다.</p>
     </div>
     <div class="lmaps" id="lmaps"></div>
-    <div class="lnote">로그인은 시연용입니다 · 실측 변화·대응 화면은 2024–2025년 원본 집계를 사용합니다</div>
+    <div class="lnote">저장된 분석 결과 확인 → 사업 검토 → 결과 보고</div>
   </div>
   <div class="lform">
     <form class="lcard" id="lform" autocomplete="off" novalidate>
@@ -32,16 +32,16 @@
 <div id="app" class="shell" hidden>
   <nav id="side" class="side" aria-label="주 메뉴"></nav>
   <div class="mainwrap"><header id="top" class="top"></header><main id="page" class="page"></main></div>
-  <aside id="chat" class="chat" aria-label="고립예방 에이전트 챗봇">
-    <header><h2>고립예방 에이전트<small>현재 화면 자료 기준 · 규칙 기반 응답</small></h2><button class="iconbtn" data-act="chatclose" aria-label="챗봇 닫기"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
-    <div class="ctx" id="ctx"></div>
-    <div class="msgs" id="msgs" aria-live="polite"></div>
-    <div class="chips">
-      <button data-chip="가장 위험한 동은?">가장 위험한 동은?</button>
-      <button data-chip="지난주보다 오른 동은?">오른 동은?</button>
-      <button data-chip="선택한 동 위험 요인은?">선택한 동 요인</button>
+  <aside id="chat" class="chat" aria-label="복지탐정 AI 분석 도우미">
+    <div id="assistant-user" class="assistant-user"></div>
+    <div class="assistant-panel">
+      <div class="assistant-hero"><div id="assistant-mascot"></div><div><h2>복지탐정 AI</h2><p>분석 근거를 확인하고<br>사업 연결과 보고를 진행하세요.</p></div><button class="iconbtn assistant-close" data-act="chatclose" aria-label="챗봇 닫기">×</button></div>
+      <div class="assistant-shortcuts"><button data-view="analysis">지역 분석</button><button data-view="users">사업 매칭 검토</button><button data-view="reports">보고서 작성</button></div>
+      <div class="ctx" id="ctx"></div>
+      <div class="assistant-scroll"><div id="assistant-context"></div><div class="msgs" id="msgs" aria-live="polite"></div></div>
+      <div id="mission-progress" class="mission-progress"></div>
+      <form class="cin" id="csend"><input id="cin" type="text" placeholder="왜 이 결과가 나왔는지 질문하세요." aria-label="질문 입력"><button class="btn sm" type="submit" aria-label="질문 보내기">➤</button></form>
     </div>
-    <form class="cin" id="csend"><input id="cin" type="text" placeholder="예: 역삼동 상태 알려줘" aria-label="질문 입력"><button class="btn sm" style="height:40px" type="submit">보내기</button></form>
   </aside>
 </div>
 <div id="tip" class="tip" hidden></div>

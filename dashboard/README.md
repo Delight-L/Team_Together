@@ -1,108 +1,114 @@
-# Team Together 대시보드 작업 현황
+# Team Together 대시보드
 
-강남구의 **지역·집단 단위 활동·소통 변화**를 살피고, 변화가 나타난 동에 대해 2025년 지원사업 계획을 검토하는 담당자용 Streamlit 대시보드입니다. 개인의 고립 여부를 판정하지 않습니다.
+Python이 CSV·JSON을 읽고, Streamlit Custom Component v2에 전달합니다. 화면 표시와 클릭·필터·점수 계산은 `ui/`의 JavaScript가 담당합니다. 화면의 지역 점수와 집단별 자료는 시연용이며 실제 위험분석 CSV가 자동으로 연결되는 구조는 아닙니다.
 
-## 현재 구현된 흐름
+## 실행
 
-```text
-2024·2025년 동별 월간 집계
-  → 같은 동의 전년 동월 변화 탐지
-  → 2025년 정책 문서의 지역·기간·신호 대조
-  → 사업 후보와 제외 이유·문서 쪽수 표시
-  → 담당자 현장 확인
-  → 같은 동·월의 2025년 결과보고 실적 확보 후 대조
-```
+Windows에서는 프로젝트 최상위의 `setup_team.bat`를 한 번 실행한 뒤 `run_team.bat`에서 1번을 선택합니다. 권장 Python은 현재 검증에 사용한 3.13입니다.
 
-마지막 결과보고 실적 대조 단계는 자료를 기다리고 있습니다. 현재 화면의 `검증자료 대기`는 실적이 0이라는 뜻이 아닙니다.
-
-## 지금까지 반영한 작업
-
-| 단계 | 구현 내용 | 현재 상태 |
-|---|---|---|
-| 동별 변화 탐지 | 2024년과 2025년의 같은 동·같은 달을 비교해 소통 적음, 평일·휴일 외출 적음, 결합 비율 변화를 표시 | 2025년 12개월 × 비교 가능한 21개 동 |
-| 탐지 단계 | 소통·외출·결합 지표의 동시 악화를 확인하고 결합 비율 변화 기준으로 `우선 검토`, `전년 동월 변화`, `조건 미충족` 구분 | 현장 확인 순서이며 개인 판정 또는 모델 정확도가 아님 |
-| 정책 계획 연결 | 강남구 2025년 공식 계획의 `세곡동행`, `스마트 안부확인`, `동별 사회관계망 형성사업`을 동·월·변화 신호와 대조 | 252개 동·월 × 3개 사업 = 756개 판정, 후보 31건 |
-| 근거 표시 | 사업 후보 및 제외 이유와 문서명·PDF 쪽수, 담당 기관, 확인 절차 표시 | 계획 근거이며 운영·접수·효과는 미확인 |
-| 대시보드 | `실측 변화 탐지` 화면과 `대응·서비스 추천` 아래 실측 영역 추가 | 기존 시연용 폼은 상단에 유지 |
-| 챗봇 | 선택한 동·월 또는 질문에 적힌 동·월의 탐지 값, 사업 근거·제외 이유, 검증자료 상태 설명 | 규칙 기반 자료 안내. 외부 AI 모델이나 복지사업 DB 조회는 연결 전 |
-| 결과보고 실적 | 2025년 동·월별 실적 입력 구조와 가져오기 도구 준비 | 실제 실적 0/252건 확보, 화면에는 `검증자료 대기` 표시 |
-
-`개포3동`은 원본 0값과 행정동 명칭·코드 확인 전까지 실측 탐지에서 제외했습니다. 2025년 12월은 21개 동 모두에서 통화·이동 감소가 나타나 공통 원인 확인이 필요합니다.
-
-## 자료의 시점과 해석
-
-| 자료 | 화면에서 쓰는 곳 | 해석 |
-|---|---|---|
-| `dashboard/data/two_year_dong_metrics.json` | 실측 변화 탐지·대응 | 2024~2025년 동별 원본 집계 재계산. 전년 동월 비교에 사용 |
-| `dashboard/data/gangnam_policy_plans_2025.json` | 관련 지원사업 | 2025년 정책 문서의 **계획**. 실제 운영이나 개인 자격을 보증하지 않음 |
-| `dashboard/data/policy_recommendation_audit_2025.json` | 사업 후보·제외 근거 | 252개 동·월과 사업 3개를 전수 대조한 결과 |
-| `dashboard/data/validation_actuals_2025.json` | 결과보고 실적 대조 | 현재 `records`가 비어 있음. 2025년 같은 동·월의 실적을 받은 뒤 입력 |
-| `dashboard/data/risk_factors.csv`, `group_signals.json` | 종합 현황·동별 분석 및 대응 화면 상단 | **2026년 화면 시연용 집계**. 2025년 실측 탐지와 합산하지 않음 |
-
-정책 카드의 추천은 **현장 검토 후보**입니다. 2025년 계획 문서의 수치나 2026년 보도자료를 2025년 동별 실적처럼 사용하지 않습니다. 현재 자료만으로 탐지 정확도나 사업 효과를 계산할 수 없습니다.
-
-## 저장소에서 실행하기
-
-Python 3.10 이상이 필요합니다. 저장소 최상위(`Team_Together`)에서 다음 명령을 실행합니다.
-
-Windows PowerShell:
+터미널에서는 프로젝트 최상위에서 실행합니다.
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r dashboard\requirements.txt
-.\.venv\Scripts\python.exe main.py
+python main.py
 ```
 
-macOS / Linux:
+처음 실행할 때 가상환경에 패키지를 설치해야 합니다. 전체 팀원 실행·수정 안내는 [팀원 안내](../docs/팀원_실행_안내.md)를 참고하세요.
 
-```bash
-python3 -m venv .venv
-./.venv/bin/python -m pip install -r dashboard/requirements.txt
-./.venv/bin/python main.py
-```
+## 현재 사용하는 파일
 
-브라우저에서 `http://localhost:8501`을 엽니다. 로그인 화면의 `강남구 · gangnam01 / demo1234` 시연 계정을 선택해 들어갈 수 있습니다. 로그인 기능과 계정은 시연용입니다. Windows의 `dashboard/run_dashboard.bat`도 저장소 최상위 `.venv`를 만든 뒤 사용할 수 있습니다.
+| 바꾸려는 내용 | 파일 |
+| --- | --- |
+| 데이터 연결·화면 전달 자료 | `main.py`의 `render_app()` |
+| 자료 경로·요인 이름·가중치·색·시연 계정 | `settings.py` |
+| CSV·JSON 읽기와 유효성 검사 | `data_utils.py` |
+| Streamlit에 HTML·CSS·JS 등록 | `design_ui.py` |
+| 일·월 평균과 점수 계산 | `ui/data.js` |
+| 그래프 크기·축·종류 | `ui/charts.js` |
+| 메뉴·지도·로그인·필터·챗봇 클릭 | `ui/dashboard.js` |
+| 집단별 변화율·우선순위·서비스 유형·조치 상태 | `ui/responses.js` |
+| 월별 요약·업무 지도·미션·보고서 초안 | `ui/workspace.js` |
+| 색·글꼴·간격·배치 | `ui/style.css` |
+| 로그인·앱·챗봇의 HTML 뼈대 | `ui/layout.html` |
 
-최상위 `main.py`는 기본 실행 시 대시보드를 열고, `python main.py --preprocess` 실행 시 팀의 기존 전처리 CSV를 준비합니다. 대시보드 의존성은 `dashboard/requirements.txt`에 있습니다.
+JavaScript의 `BOOT`는 Python이 넘긴 자료입니다. `S`는 현재 지역·월·선택 동·가중치, `R`은 집단별 대응 필터·조치 상태를 기억합니다. 짧은 이름의 뜻은 해당 파일 위쪽 주석에 적었습니다.
 
-## 주요 파일
+## 위험 요인 CSV 교체
 
-| 경로 | 역할 |
-|---|---|
-| `main.py`, `dashboard/main.py` | 실행 진입점과 데이터 로딩 |
-| `dashboard/detection_data.py` | 전년 동월 변화 및 탐지 단계 계산 |
-| `dashboard/policy_data.py`, `dashboard/recommendation_audit.py` | 2025년 사업 계획 로딩과 후보·제외 판정 생성 |
-| `dashboard/validation_data.py`, `dashboard/import_validation.py` | 결과보고 실적 검사와 입력표 가져오기 |
-| `dashboard/ui/detection.js` | 실측 탐지·사업 검토 화면과 실측 챗봇 답변 |
-| `dashboard/ui/dashboard.js`, `layout.html`, `style.css` | 메뉴·화면·챗봇 조작과 디자인 |
-| `dashboard/data/policy_recommendation_audit_2025.md` | 사업 판정 결과 요약 |
-| `dashboard/tests/check_dashboard.py`, `check_dashboard.cjs` | 계산·화면 진입·자료 누락 처리 확인 |
+`data/risk_factors.csv`의 열을 유지합니다.
 
-## 결과보고 자료가 도착하면
+| 열 | 뜻 |
+| --- | --- |
+| `date` | 날짜, YYYY-MM-DD |
+| `city` | 지자체 |
+| `district` | 행정동 |
+| `flow` | 유동인구 감소 점수 |
+| `card` | 카드 결제 감소 점수 |
+| `single` | 1인 가구 비율/점수 |
+| `elder` | 고령 인구 비율/점수 |
+| `welfare` | 복지 연계 공백 점수 |
 
-1. **2025년, 같은 행정동·같은 월**의 발굴·상담·방문·서비스 연계 실적만 입력합니다. 문서번호, 기준월, 단위(명/가구), 중복 처리 기준을 함께 기록합니다.
-2. 저장소 밖에 보관한 `2025_동별_검증입력_청구대응표.xlsx`에 수치를 적고 저장소 최상위에서 다음을 실행합니다.
+한 행은 하루·지자체·행정동 하나이고 같은 조합은 중복할 수 없습니다. 다섯 요인은 빈칸 없이 0~100의 숫자로 준비합니다. 원래 인구수·결제액을 그대로 점수 열에 넣지 않습니다.
 
-   ```powershell
-   .\.venv\Scripts\python.exe -m dashboard.import_validation "C:\자료경로\2025_동별_검증입력_청구대응표.xlsx"
-   ```
+점수는 다섯 요인의 가중 평균입니다. 월별 값은 관측된 날짜의 평균이며, 일별 비교는 7일 전, 월별 비교는 전월입니다. 비교 자료가 없으면 0점 대신 자료 없음으로 표시합니다. 가중치 변경은 현재 화면에서만 유지되며 새로고침하면 기본값으로 돌아갑니다.
 
-3. `dashboard/data/validation_actuals_2025.json`에 반영된 내용을 확인한 뒤 대시보드를 다시 실행합니다. 여러 달의 합계는 임의로 월별 배분하지 않고, 빈칸을 0으로 바꾸지 않습니다.
+## 집단별 대응 JSON
 
-원본 결과보고서와 실적이 채워진 엑셀은 현재 Git 브랜치에 넣지 않았습니다. 검증 입력 도구는 같은 동·월을 찾지 못하거나 출처 정보가 빠진 경우 가져오기를 중단합니다.
+`data/group_signals.json`은 `isDemo: true`인 가상 집계입니다. 행에는 `month`, `city`, `district`, `gender`, `age`, `flow`, `card`, `sampleCount`, `observedDays`가 있습니다. `flow`와 `card`는 일평균 명·건이며 점수 CSV와 다른 자료입니다.
 
-## 다음 작업
+시연 기준은 다음과 같습니다.
 
-1. 실측 화면에서 담당자가 남기는 **검토 상태, 현장 확인 결과, 사업 연계 여부, 메모, 확인 날짜**를 저장하고 다시 볼 수 있게 하기.
-2. 공개청구 결과보고서가 오면 위 입력표로 같은 동·월의 실적을 확인해 반영하기.
-3. 실적 확보 범위와 자료의 한계를 표시하며 탐지 결과와 실적을 나란히 검토하기.
+- 두 지표 모두 15% 이상 감소: 우선 확인
+- 하나라도 10% 이상 감소: 확인 필요
+- 그 외: 관찰
+- 전월 자료 없음·전월 값 0·지표 누락·관측 규모 30 미만·월 집계 미완료: 판단 보류
 
-## 확인
+변화율은 `(당월 일평균 - 전월 일평균) / 전월 일평균 × 100`입니다. 성별·연령대는 집단을 구분하는 값이며 그 자체로 점수를 높이지 않습니다. 지역 전체 대비 변화와 장기 지속성은 아직 판단에 반영하지 않습니다.
 
-저장소 최상위에서 다음 검사를 실행합니다. JavaScript 검사에는 Node.js가 필요합니다.
+복지 자원 연계 화면은 서비스 유형을 제안합니다. 실제 사업·기관·이용 조건은 아직 연결되지 않았습니다. 조치 상태는 현재 화면에서만 유지됩니다.
+
+## 지도·그래프·업무 공간
+
+`data/map_boundaries.json`은 SVG 그림 좌표이며 위도·경도나 GeoJSON이 아닙니다. CSV의 동 이름은 지도 경계의 `n` 값과 일치해야 합니다. 새 지자체를 추가하면 지도 경계와 시연 계정 소속도 함께 추가합니다.
+
+`ui/charts.js`의 `TREND_CHART_TYPE`을 `line`, `area`, `bar`로 변경하면 추이 그래프 종류를 바꿀 수 있습니다.
+
+업무 공간의 신규 상승·지속 상승은 전전월·전월·당월 점수로 계산합니다. 검토 대기는 위험·심각 단계 중 현재 세션에서 지도 상세를 확인하지 않은 지역입니다. 보고서는 현재 지역·월의 텍스트 초안이며, 외부 기관 전달이나 실제 AI 생성 기능은 아닙니다.
+
+## 보관용·초기 추출 도구
+
+`main_native.py`는 이전 Streamlit 기본 위젯 화면입니다. `charts.py`, `legacy_data.py`, `data/people.csv`는 이 보관용 화면에 사용합니다. 현재 화면 수정에는 필요하지 않습니다.
 
 ```powershell
-.\.venv\Scripts\python.exe dashboard\tests\check_dashboard.py
+python -m streamlit run dashboard/main_native.py
 ```
 
-마지막 반영 시 Python 진입점, JavaScript 문법, 계산 40,420건 및 자료 누락 처리가 통과했습니다.
+`prepare_design.py`와 `export_html_data.cjs`는 초기 HTML 분리·데이터 추출 도구입니다. 다시 실행하면 현재 파일을 덮어쓸 수 있습니다. `prepare_design.py`는 `--overwrite`를 지정한 경우에만 덮어씁니다. 일반 수정은 `ui/`에서 합니다.
+
+## 개발용 검증
+
+프로젝트 최상위에서 실행합니다. JavaScript 검증에는 Node.js가 필요합니다. 대시보드 일반 실행에는 Node.js가 필요하지 않습니다.
+
+```powershell
+python dashboard/tests/check_dashboard.py
+python dashboard/verify_design.py
+python dashboard/verify_dashboard.py
+```
+
+첫 검사는 CSV 계산·자료 누락·집단 필터·서비스 보류·조치 상태와 JavaScript 문법을 검사합니다. 두 번째는 원본 공식과 계산을 비교하고 현재 HTML의 연결 요소를 검사합니다. 세 번째는 보관용 화면의 로그인·메뉴·가중치·챗봇 등을 검사합니다. 브라우저의 실제 시각적 모양까지 확인하는 검사는 아닙니다.
+
+
+## 현재 공무원 업무 흐름
+
+분석·챗봇 질의 → 사업 매칭 검토 → 보고서 저장의 3단계입니다. 연결 승인 단계는 없습니다.
+
+대시보드에서 우선 확인 지역을 선택하면 저장된 분석과 근거가 표시됩니다. 추가 질문은 선택 사항이며 질의 또는 근거 확인 후 사업 검토로 이동합니다. DB2 사업의 연관 근거와 상세 조건을 보고 적합/보류/부적합 및 검토 사유를 기록합니다. 검토 결과 저장 후 바로 Word 보고서를 생성할 수 있습니다. 최종 확인 후 보고서 파일을 저장해야 전체 업무가 완료됩니다.
+
+기존 사업 검토 기록은 이어서 사용하며 이전 승인 기록은 legacy_connections에 보존합니다. 보고서 작성 시점과 검토 내역이 달라지면 보고서를 다시 생성해야 저장할 수 있습니다. 보고서 파일과 완료 상태는 같은 SQLite 트랜잭션으로 저장합니다.
+
+DB1 미연결 시 저장소 예제 행동자료를 분석한 시연 모드를 사용합니다. 사업은 [시연 사업]으로 표시한 가상 조건입니다. 시연 기록은 demo: 담당자 키로 실제 기록과 분리되고 보고서에는 기관 제출 불가 표시가 들어갑니다. 실제 연결 후에는 DB1/DB2 데이터를 사용합니다.
+
+보고서는 기관 지정 양식이 제공되기 전 내부 기본 양식입니다. 분석 근거·질의·사업 조건·검토 결과·담당자 최종 의견을 포함합니다. 승인자나 승인 사유는 요구하지 않습니다.
+
+기록과 파일은 dashboard/data/mission_records.sqlite3에 저장됩니다. 실행은 프로젝트의 run_dashboard.cmd를 사용하세요.
+
+검증: `python -m unittest dashboard.tests.test_missions dashboard.tests.test_workflow_dialogs -q` 및 `node dashboard/tests/check_workflow.cjs`.

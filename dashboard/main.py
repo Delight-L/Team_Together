@@ -16,14 +16,17 @@ r"""사회적 고립 위험도를 살펴보는 Streamlit 대시보드.
 # ============================================================
 import streamlit as st
 from dashboard.settings import (
-    APP_TITLE, RISK_FILE, MAP_FILE, FACTORS, GROUP_FILE,
-    DEFAULT_WEIGHTS, FACTOR_COLORS, THRESHOLDS, DEMO_ACCOUNTS,
+    APP_TITLE,
+    RISK_FILE,
+    MAP_FILE,
+    FACTORS,
+    GROUP_FILE,
+    DEFAULT_WEIGHTS,
+    FACTOR_COLORS,
+    THRESHOLDS,
+    DEMO_ACCOUNTS,
 )
 from dashboard.data_utils import load_risk_data, load_boundaries
-from dashboard.detection_data import METRICS, load_detection_rows
-from dashboard.policy_data import POLICY_FILE, load_policy_plans
-from dashboard.validation_data import VALIDATION_FILE, load_validation_rows
-from dashboard.recommendation_audit import AUDIT_FILE, build_audit, load_recommendation_audit
 from dashboard.design_ui import render_dashboard
 
 
@@ -32,7 +35,11 @@ def render_app():
     # ============================================================
     # 2. 화면 설정 — 전체 너비·높이 사용
     # ============================================================
-    st.set_page_config(page_title="고립예방 에이전트 · 지자체 대시보드", layout="wide", initial_sidebar_state="collapsed")
+    st.set_page_config(
+        page_title="복지탐정 AI · 분석·사업 검토·보고",
+        layout="wide",
+        initial_sidebar_state="collapsed",
+    )
 
     # 화면 내부는 ui/style.css가 담당합니다. 여기서는 Streamlit 바깥 여백만 제거합니다.
     st.html("""
@@ -46,7 +53,6 @@ def render_app():
     </style>
     """)
 
-
     # ============================================================
     # 3. CSV 읽기 — 기존 파일을 교체하면 화면 데이터도 변경
     # ============================================================
@@ -54,17 +60,10 @@ def render_app():
         risk_data = load_risk_data(RISK_FILE, RISK_FILE.stat().st_mtime_ns)
         group_data = load_boundaries(GROUP_FILE, GROUP_FILE.stat().st_mtime_ns)
         geometry = load_boundaries(MAP_FILE, MAP_FILE.stat().st_mtime_ns)
-        detection = load_detection_rows(str(METRICS), METRICS.stat().st_mtime_ns)
-        policy_plans = load_policy_plans(str(POLICY_FILE), POLICY_FILE.stat().st_mtime_ns)
-        validation = load_validation_rows(str(VALIDATION_FILE), VALIDATION_FILE.stat().st_mtime_ns)
-        recommendation_audit = load_recommendation_audit(str(AUDIT_FILE), AUDIT_FILE.stat().st_mtime_ns)
-        if recommendation_audit != build_audit(detection, policy_plans):
-            raise ValueError("사업 연결 검토표가 현재 탐지·계획 자료와 다릅니다. 검토표를 다시 생성해 주세요.")
     except (OSError, ValueError, KeyError) as error:
         st.error(f"자료를 읽지 못했습니다: {error}")
         st.info("data 폴더와 README.md의 열 설명을 확인해 주세요.")
         st.stop()
-
 
     # ============================================================
     # 4. 날짜 범위 / 지도 자료 준비
@@ -73,12 +72,17 @@ def render_app():
     end_date = risk_data["date"].max().strftime("%Y-%m-%d")
     months = sorted(risk_data["date"].dt.strftime("%Y-%m").unique().tolist())
     cities = risk_data["city"].unique().tolist()
-    missing_cities = [city for city in cities if city not in geometry]
+    missing_cities = []
+    for city in cities:
+        if city not in geometry:
+            missing_cities.append(city)
     if missing_cities:
         st.error("지도 경계 자료가 없는 지자체: " + ", ".join(missing_cities))
         st.stop()
-    geometry = {city: geometry[city] for city in cities}
-
+    selected_geometry = {}
+    for city in cities:
+        selected_geometry[city] = geometry[city]
+    geometry = selected_geometry
 
     # ============================================================
     # 5. 날짜별 요인 → 화면 자료로 변환
@@ -88,37 +92,53 @@ def render_app():
     risk_rows["date"] = risk_rows["date"].dt.strftime("%Y-%m-%d")
     risk_records = risk_rows.values.tolist()
 
-
     # ============================================================
     # 6. 지역·성별·연령대 월별 자료는 group_signals.json에서 전달합니다.
     # ============================================================
 
-
     # ============================================================
     # 7. 기본 가중치 / 요인 이름 / 시연 계정
     # ============================================================
-    accounts = [
-        {
-            "id": account_id, "pw": account["password"], "org": account["org"],
-            "name": "전체 관리자" if account["admin"] else f"{account['org']} 복지정책과 담당자",
-            "admin": account["admin"],
-        }
-        for account_id, account in DEMO_ACCOUNTS.items()
-    ]
-    payload = {
-        "title": APP_TITLE, "geometry": geometry, "riskRows": risk_records,
-        "detection": detection,
-        "policyPlans": policy_plans,
-        "validation": validation,
-        "recommendationAudit": recommendation_audit,
-        "groupSignals": group_data, "startDate": start_date, "endDate": end_date,
-        "months": months, "factorNames": list(FACTORS.values()),
-        "factorShortNames": ["유동인구", "카드 결제", "1인 가구", "고령 인구", "복지 연계"],
-        "factorColors": FACTOR_COLORS,
-        "weights": [DEFAULT_WEIGHTS[key] for key in FACTORS],
-        "thresholds": THRESHOLDS, "accounts": accounts,
-    }
+    accounts = []
+    for account_id, account in DEMO_ACCOUNTS.items():
+        if account["admin"]:
+            display_name = "전체 관리자"
+        else:
+            display_name = f"{account['org']} 복지정책과 담당자"
+        accounts.append(
+            {
+                "id": account_id,
+                "pw": account["password"],
+                "org": account["org"],
+                "name": display_name,
+                "admin": account["admin"],
+            }
+        )
 
+    factor_weights = []
+    for key in FACTORS:
+        factor_weights.append(DEFAULT_WEIGHTS[key])
+    payload = {
+        "title": APP_TITLE,
+        "geometry": geometry,
+        "riskRows": risk_records,
+        "groupSignals": group_data,
+        "startDate": start_date,
+        "endDate": end_date,
+        "months": months,
+        "factorNames": list(FACTORS.values()),
+        "factorShortNames": [
+            "유동인구",
+            "카드 결제",
+            "1인 가구",
+            "고령 인구",
+            "복지 연계",
+        ],
+        "factorColors": FACTOR_COLORS,
+        "weights": factor_weights,
+        "thresholds": THRESHOLDS,
+        "accounts": accounts,
+    }
 
     # ============================================================
     # 8. 대시보드 표시
@@ -126,4 +146,27 @@ def render_app():
     # layout.html: 로그인·메뉴·챗봇 뼈대 / style.css: 색·간격·카드 배치
     # dashboard.js: 화면 생성·지도 클릭 / charts.js: 추이 그래프
     # data.js: 날짜 조회·월평균·위험 점수 계산
-    render_dashboard(payload)
+    from dashboard.pipeline import load_dashboard_data
+    from dashboard.operations import handle_request
+
+    try:
+        db_data = load_dashboard_data()
+    except Exception:
+        db_data = {
+            "connected": False,
+            "runs": [],
+            "assessment": [],
+            "signals": [],
+            "alerts": [],
+            "activity": [],
+        }
+    if not db_data.get("connected"):
+        from dashboard.demo import load_demo_analysis
+        db_data = load_demo_analysis()
+    from dashboard.missions import load_all
+    payload["missions"] = load_all()
+    payload["db1"] = db_data
+    payload["notice"] = st.session_state.get("operation_notice", "")
+    result = render_dashboard(payload)
+    next_report = st.session_state.pop("next_workflow_report", None)
+    handle_request(next_report | {"action": "report"} if next_report else result.get("request"), db_data)
