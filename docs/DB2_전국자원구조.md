@@ -131,3 +131,4 @@ SELECT requested_region, started_at, status, processed_count, reported_total,
        start_page, last_page, requested_all_pages
 FROM db2.collection_runs ORDER BY started_at DESC;
 ```
+
