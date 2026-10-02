@@ -1,4 +1,5 @@
 """파트 1. 자주 바꾸는 설정을 한곳에 모았습니다."""
+
 from pathlib import Path
 
 # __file__은 이 파일의 위치입니다. 다른 폴더에서 실행해도 데이터를 찾습니다.
@@ -14,8 +15,10 @@ MAP_FILE = DATA_DIR / "map_boundaries.json"
 # 왼쪽은 CSV 열 이름, 오른쪽은 화면에 표시할 이름입니다.
 # 모든 요인은 '값이 클수록 위험'인 0~100 점수로 준비합니다.
 FACTORS = {
-    "flow": "유동인구 감소", "card": "카드 결제 감소",
-    "single": "1인 가구 비율", "elder": "고령 인구 비율",
+    "flow": "유동인구 감소",
+    "card": "카드 결제 감소",
+    "single": "1인 가구 비율",
+    "elder": "고령 인구 비율",
     "welfare": "복지 연계 공백",
 }
 DEFAULT_WEIGHTS = {"flow": 25, "card": 25, "single": 20, "elder": 15, "welfare": 15}

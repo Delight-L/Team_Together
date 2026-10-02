@@ -1,13 +1,17 @@
 """보관한 Streamlit 기본 위젯 버전(main_native.py)의 동작 검사 도구."""
+
 import os
 from pathlib import Path
 import tempfile
+import sys
 
 import pandas as pd
 from streamlit.testing.v1 import AppTest
 
-from settings import RISK_FILE, DEFAULT_WEIGHTS, FACTORS, PAGES
-from data_utils import load_risk_data, make_snapshot, calculate_scores, risk_level
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from dashboard.settings import RISK_FILE, DEFAULT_WEIGHTS, FACTORS
+from dashboard.data_utils import load_risk_data
+from dashboard.legacy_data import PAGES, make_snapshot, calculate_scores, risk_level
 
 os.chdir(Path(__file__).resolve().parent)
 
@@ -28,16 +32,33 @@ def login(account):
 # 1. 계산 검증: 경계 점수, 가중 평균, 월평균, 비교 자료 누락.
 data = load_risk_data(RISK_FILE, RISK_FILE.stat().st_mtime_ns)
 city = data[data.city.eq("강남구")]
-assert [risk_level(v) for v in [41.9, 42, 51.9, 52, 59.9, 60]] == ["양호", "주의", "주의", "위험", "위험", "심각"]
+assert [risk_level(v) for v in [41.9, 42, 51.9, 52, 59.9, 60]] == [
+    "양호",
+    "주의",
+    "주의",
+    "위험",
+    "위험",
+    "심각",
+]
 snapshot = make_snapshot(city, "일", "2026-09-20", DEFAULT_WEIGHTS)
 raw = city[city.date.eq(pd.Timestamp("2026-09-20"))].set_index("district")
 for _, row in snapshot.iterrows():
-    expected = sum(raw.loc[row.district, key] * weight for key, weight in DEFAULT_WEIGHTS.items()) / 100
+    expected = (
+        sum(
+            raw.loc[row.district, key] * weight
+            for key, weight in DEFAULT_WEIGHTS.items()
+        )
+        / 100
+    )
     assert abs(row.score - expected) < 1e-10
 monthly = make_snapshot(city, "월", "2026-09", DEFAULT_WEIGHTS)
 sample = monthly.iloc[0]
-observed = city[city.district.eq(sample.district) & city.date.dt.strftime("%Y-%m").eq("2026-09")]
-expected_month = sum(observed[key].mean() * weight for key, weight in DEFAULT_WEIGHTS.items()) / 100
+observed = city[
+    city.district.eq(sample.district) & city.date.dt.strftime("%Y-%m").eq("2026-09")
+]
+expected_month = (
+    sum(observed[key].mean() * weight for key, weight in DEFAULT_WEIGHTS.items()) / 100
+)
 assert abs(sample.score - expected_month) < 1e-10
 assert make_snapshot(city, "일", "2025-08-01", DEFAULT_WEIGHTS).delta.isna().all()
 try:
@@ -125,4 +146,6 @@ for account, city_name in [("gangnam01", "강남구"), ("chuncheon01", "춘천�
     healthy(scoped)
     assert scoped.session_state.user is None
 
-print("PASS: calculations, data validation, login, 7 menus, 2 cities, periods, charts, weights, chat, people filters, logout")
+print(
+    "PASS: calculations, data validation, login, 7 menus, 2 cities, periods, charts, weights, chat, people filters, logout"
+)

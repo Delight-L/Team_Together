@@ -1,0 +1,205 @@
+// 버튼 요청만 Python으로 보냅니다. 무거운 계산과 DB 반영은 서버가 담당합니다.
+function requestOperation(action) {
+  const snapshot = {
+    state: { ...S, user: S.user ? { id: S.user.id } : null },
+    responses: R,
+    logs: LOGS,
+    mission: { done: [...MISSION.done], reviewed: [...MISSION.reviewed] },
+  };
+  setStateValue("ui_state", snapshot);
+  setTriggerValue("request", {
+    action,
+    user: S.user ? { id: S.user.id, org: S.user.org } : null,
+    city: S.city,
+    month: S.month,
+    district: S.sel,
+  });
+}
+
+function restoreUI() {
+  const saved = BOOT.savedUI;
+  if (!saved?.state?.user) return;
+  Object.assign(S, saved.state);
+  S.user = ACC.find((account) => account.id === saved.state.user.id);
+  if (!S.user) return;
+  Object.assign(R, saved.responses || {});
+  LOGS.push(...(saved.logs || []));
+  MISSION.done = new Set(saved.mission?.done || []);
+  MISSION.reviewed = new Set(saved.mission?.reviewed || []);
+  $("#login").hidden = true;
+  $("#app").hidden = false;
+  render();
+}
+
+function analysisMonths() {
+  return [
+    ...new Set((BOOT.db1?.assessment || []).map((row) => row["기준연월"])),
+  ].sort();
+}
+
+function actualAnswer(question) {
+  if (S.city !== "강남구")
+    return "현재 DB1에 연결된 월별 분석은 강남구 자료입니다.";
+  let rows = (BOOT.db1?.assessment || []).filter(
+    (row) => row["기준연월"] === S.month,
+  );
+  const named = rows.find((row) => question.includes(row["행정동명"]));
+  const district = named?.["행정동명"] || S.sel;
+  if (district) rows = rows.filter((row) => row["행정동명"] === district);
+  if (!rows.length) return "선택한 지역·월의 반영된 분석 자료가 없습니다.";
+  const signals = rows.filter((row) => row.is_risk_signal);
+  if (!signals.length)
+    return `${S.month} ${district || S.city}: 탐지 기준을 통과한 변화 후보가 없습니다. 비교 이력 부족 ${rows.filter((row) => !row.has_enough_history).length}건은 판단 보류입니다. 개인의 고립 없음 판정이 아닙니다.`;
+  return (
+    `${S.month} ${district || S.city} · 저장된 분석 결과\n` +
+    signals
+      .slice(0, 4)
+      .map((row) => row.explanation + " " + (row.context_note || ""))
+      .join("\n") +
+    "\n서비스 유형은 검토 제안이며 실제 기관·이용 조건을 확인해야 합니다."
+  );
+}
+
+function viewActualOverview() {
+  const all = S.city === "강남구" ? BOOT.db1?.assessment || [] : [];
+  const rows = all.filter((row) => row["기준연월"] === S.month);
+  const signals = rows.filter((row) => row.is_risk_signal);
+  const names = [...new Set(rows.map((row) => row["행정동명"]))];
+  const candidates = [...new Set(signals.map((row) => row["행정동명"]))];
+  const previousMonth = analysisMonths()
+    .filter((month) => month < S.month)
+    .at(-1);
+  const previous = all.filter((row) => row["기준연월"] === previousMonth);
+  const comparable =
+    previous.some((row) => row.has_enough_history) &&
+    rows.some((row) => row.has_enough_history);
+  const previousCount = new Set(
+    previous.filter((row) => row.is_risk_signal).map((row) => row["행정동명"]),
+  ).size;
+  const difference = candidates.length - previousCount;
+  const pending = new Set(
+    rows.filter((row) => !row.has_enough_history).map((row) => row["행정동명"]),
+  ).size;
+  const ranking = candidates
+    .map((name) => ({
+      name,
+      evidence: signals.filter((row) => row["행정동명"] === name),
+    }))
+    .sort(
+      (a, b) =>
+        b.evidence.length - a.evidence.length ||
+        a.name.localeCompare(b.name, "ko"),
+    )
+    .slice(0, 3);
+  const geometry = GEO[S.city];
+  const map = geometry.units
+    .map((unit) => {
+      const count = signals.filter((row) => row["행정동명"] === unit.n).length;
+      const color = !names.includes(unit.n)
+        ? "#ccd2dd"
+        : count > 1
+          ? "#fa5672"
+          : count
+            ? "#ffbc68"
+            : "#edf4ff";
+      return `<path d="${unit.d}" fill="${color}" class="mission-district" data-overview-district="${esc(unit.n)}" role="button" tabindex="0" aria-label="${esc(unit.n)} 상세 분석"><title>${esc(unit.n)} · 후보 ${count}개</title></path><text class="actual-map-label" x="${unit.cx}" y="${unit.cy}" text-anchor="middle">${esc(unit.n)}</text>`;
+    })
+    .join("");
+  const latest = (BOOT.db1?.runs || []).find((run) => run.kind === "monthly");
+  return `<div class="overview-intro"><h2>${esc(S.city)} 이번 달 한눈에 보기</h2><span class="hint">${esc(S.month)} · 최근 월별 자료 반영 ${esc(latest?.created_at?.slice(0, 10) || "없음")}</span></div>
+  <div class="overview-metrics">${[
+    ["확인 후보 지역", `${candidates.length}곳`, `${names.length}개 동 분석`],
+    [
+      "전월 대비 후보 지역",
+      comparable ? `${difference > 0 ? "+" : ""}${difference}곳` : "비교 보류",
+      comparable ? `${previousMonth} 대비` : "이전 월 비교 이력 부족",
+    ],
+    ["포착된 변화 지표", `${signals.length}건`, "담당자 확인이 필요한 변화"],
+    ["자료·이력 확인 필요", `${pending}곳`, "일부 지표의 판단 보류"],
+  ]
+    .map(
+      ([title, value, note]) =>
+        `<section class="card overview-metric"><span>${title}</span><strong>${value}</strong><small>${note}</small></section>`,
+    )
+    .join("")}</div>
+  <div class="overview-grid"><section class="card"><header><h2>전체 지역 현황</h2><span class="pill">DB1 분석</span></header><div class="cbody"><div class="actual-map overview-map"><svg viewBox="0 0 ${geometry.w} ${geometry.h}" aria-label="전체 지역 요약 지도">${map}</svg></div><p class="hint">연한 파랑: 후보 없음 · 주황: 1개 · 분홍: 2개 이상 · 회색: 자료 없음<br>지역을 누르면 상세 분석으로 이동합니다.</p></div></section>
+  <section class="card"><header><h2>먼저 확인할 지역</h2></header><div class="cbody overview-priorities">${
+    ranking
+      .map(
+        (item, index) =>
+          `<button class="overview-region" data-overview-district="${esc(item.name)}"><span>${index + 1}</span><div><b>${esc(item.name)}</b><p>${esc(
+            item.evidence
+              .slice(0, 2)
+              .map((row) => row.metric_label)
+              .join(" · "),
+          )}</p><small>변화 후보 ${item.evidence.length}개 · 상세 근거 확인 →</small></div></button>`,
+      )
+      .join("") || "<p>현재 기준을 통과한 변화 후보가 없습니다.</p>"
+  }<p class="hint">후보 지표 수를 기준으로 정렬했습니다. 개인의 위험도 순위와 구분합니다.</p><div class="overview-next"><b>다음 업무</b><button class="btn ghost" data-view="analysis">지역별 근거 확인</button><button class="btn ghost" data-view="actions">후속 업무 보드 보기</button><button class="btn" data-operation="report">검토 보고서 작성</button><small class="hint">후속 업무 보드는 시연 자료입니다.</small></div></div></section></div>`;
+}
+
+listen("click", (event) => {
+  const target = event.target.closest("[data-overview-district]");
+  if (!target) return;
+  S.sel = target.dataset.overviewDistrict;
+  S.view = "analysis";
+  render();
+});
+function viewActualAnalysis() {
+  const all = (BOOT.db1?.assessment || []).filter(
+    (row) => row["기준연월"] === S.month,
+  );
+  const rows = S.city === "강남구" ? all : [];
+  const signals = rows.filter((row) => row.is_risk_signal);
+  const names = [...new Set(rows.map((row) => row["행정동명"]))];
+  const counts = new Map(
+    names.map((name) => [
+      name,
+      signals.filter((row) => row["행정동명"] === name).length,
+    ]),
+  );
+  const enough = rows.filter((row) => row.has_enough_history).length;
+  const geometry = GEO[S.city];
+  const map = geometry.units
+    .map((unit) => {
+      const count = counts.get(unit.n);
+      const color =
+        count === undefined
+          ? "#ccd2dd"
+          : count > 1
+            ? "#fa5672"
+            : count === 1
+              ? "#ffbc68"
+              : "#edf4ff";
+      return `<path d="${unit.d}" fill="${color}" class="mission-district ${unit.n === S.sel ? "is-selected" : ""}" data-u="${esc(unit.n)}" tabindex="0" role="button" aria-label="${esc(unit.n)} 변화 후보 ${count ?? "자료 없음"}"><title>${esc(unit.n)} · ${count === undefined ? "자료 없음" : count + "개 지표 후보"}</title></path><text class="actual-map-label" x="${unit.cx}" y="${unit.cy}" text-anchor="middle">${esc(unit.n)}</text>`;
+    })
+    .join("");
+  const selected = S.sel
+    ? rows.filter((row) => row["행정동명"] === S.sel)
+    : rows.filter((row) => row.is_risk_signal || !row.has_enough_history);
+  const detail = selected
+    .map(
+      (row) =>
+        `<tr><td>${esc(row["행정동명"])}</td><td>${esc(row.metric_label)}</td><td>${row.change_pct === null ? "자료 없음" : row.change_pct.toFixed(1) + "%"}</td><td>${row.relative_change_pp === null ? "자료 없음" : row.relative_change_pp.toFixed(1) + "%p"}</td><td>${row.risk_robust_z === null ? "산출 불가" : row.risk_robust_z.toFixed(2)}</td><td>${!row.has_enough_history ? "판단 보류" : row.is_risk_signal ? "확인 후보" : "기준 미해당"}</td></tr>`,
+    )
+    .join("");
+  return `<section class="card"><header><h2>반영된 월별 변화 분석</h2><span class="pill">DB1 · ${esc(S.month)}</span></header><div class="cbody"><p>변화 후보 <b>${signals.length}건</b> · 후보 지역 <b>${[...counts.values()].filter((count) => count > 0).length}곳</b> · 과거 비교 가능한 지표 <b>${enough}/${rows.length}</b></p><p class="hint">0~100 시연 점수와 구분한 분석 결과입니다. 회색: 자료 없음 · 연한 파랑: 후보 없음 · 주황: 1개 지표 후보 · 분홍: 2개 이상. 이력 부족은 아래 표에서 판단 보류로 표시합니다.</p><div class="actual-map"><svg viewBox="0 0 ${geometry.w} ${geometry.h}" role="group" aria-label="DB1 변화 후보 지도">${map}</svg></div><label>상세 지역 <select data-actual-district><option value="">전체 지역</option>${names.map((name) => `<option ${name === S.sel ? "selected" : ""}>${esc(name)}</option>`).join("")}</select></label><div class="tblwrap"><table class="tbl"><thead><tr><th>동</th><th>지표</th><th>전월 변화</th><th>상대 변화</th><th>Robust Z</th><th>판정</th></tr></thead><tbody>${detail || '<tr><td colspan="6">선택 지역·월의 반영 자료가 없습니다.</td></tr>'}</tbody></table></div><details><summary>적용 분석 기준</summary><p>위험 방향 상대 변화 5%p 이상과 Robust Z-score 2.5 이상을 모두 통과해야 후보입니다. 과거 변화 3회가 필요하며 MAD가 0이면 판단을 보류합니다. 후보 없음은 개인의 고립 없음 판정이 아닙니다.</p></details></div></section>`;
+}
+
+listen("click", (event) => {
+  const button = event.target.closest("[data-operation]");
+  if (button && S.user) requestOperation(button.dataset.operation);
+});
+listen("change", (event) => {
+  if (event.target.matches("[data-source]")) {
+    S.source = event.target.value;
+    const months = S.source === "db1" ? analysisMonths() : MONTHS;
+    S.month = months.at(-1) || MONTHS.at(-1);
+    S.sel = null;
+    render();
+  }
+  if (event.target.matches("[data-actual-district]")) {
+    S.sel = event.target.value || null;
+    renderPage();
+  }
+});
