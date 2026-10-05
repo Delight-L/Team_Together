@@ -37,6 +37,7 @@ def render_app():
     # ============================================================
     st.set_page_config(
         page_title="복지탐정 AI · 분석·사업 검토·보고",
+        page_title="복지탐정 AI · 지역 복지 미션",
         layout="wide",
         initial_sidebar_state="collapsed",
     )
@@ -170,3 +171,7 @@ def render_app():
     result = render_dashboard(payload)
     next_report = st.session_state.pop("next_workflow_report", None)
     handle_request(next_report | {"action": "report"} if next_report else result.get("request"), db_data)
+    payload["db1"] = db_data
+    payload["notice"] = st.session_state.get("operation_notice", "")
+    result = render_dashboard(payload)
+    handle_request(result.get("request"), db_data)

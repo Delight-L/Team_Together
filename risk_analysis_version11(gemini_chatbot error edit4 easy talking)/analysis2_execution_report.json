@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "files": {
+    "gangnam_analysis2_detection_2022_2025.csv": {
+      "exists": true,
+      "path": "C:\\Users\\user\\Desktop\\agent\\risk_analysis_version5(risk_detection_core deleted)\\Analysis2\\outputs\\gangnam_analysis2_detection_2022_2025.csv",
+      "rows": 770,
+      "columns": 55,
+      "missing_columns": []
+    },
+    "gangnam_analysis2_evidence_card_2022_2025.csv": {
+      "exists": true,
+      "path": "C:\\Users\\user\\Desktop\\agent\\risk_analysis_version5(risk_detection_core deleted)\\Analysis2\\outputs\\gangnam_analysis2_evidence_card_2022_2025.csv",
+      "rows": 35,
+      "columns": 29,
+      "missing_columns": []
+    }
+  }
+}

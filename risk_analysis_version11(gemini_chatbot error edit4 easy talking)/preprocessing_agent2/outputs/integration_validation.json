@@ -1,0 +1,55 @@
+{
+  "status": "PASS",
+  "shape": [
+    1056,
+    23
+  ],
+  "numeric_max_absolute_differences": {
+    "행정동코드": 0.0,
+    "call_contacts": 1.0658141036401503e-14,
+    "text_contacts": 3.552713678800501e-15,
+    "weekday_move_count": 2.1316282072803006e-14,
+    "weekend_move_count": 8.881784197001252e-15,
+    "weekday_move_distance": 9.094947017729282e-13,
+    "weekend_move_distance": 3.979039320256561e-13,
+    "weekday_count_est_ratio": 5.551115123125783e-16,
+    "weekday_distance_est_ratio": 7.771561172376096e-16,
+    "weekend_count_est_ratio": 6.661338147750939e-16,
+    "weekend_distance_est_ratio": 4.440892098500626e-16,
+    "comm_low_rate": 1.1102230246251565e-16,
+    "weekday_outing_low_rate": 1.942890293094024e-16,
+    "weekend_outing_low_rate": 1.1102230246251565e-16,
+    "rain_days": 0.0,
+    "rainfall_mm": 0.0,
+    "snow_days": 0.0,
+    "days_in_month": 0.0,
+    "weekday_days": 0.0,
+    "weekend_days": 0.0
+  },
+  "original_analysis2_validation": {
+    "status": "PASS",
+    "n_rows": 1056,
+    "n_areas": 22,
+    "n_months": 48,
+    "duplicate_keys": 0,
+    "missing_total": 0,
+    "infinite_count": 0,
+    "errors": [],
+    "warnings": []
+  },
+  "downstream_analysis_shape": [
+    1056,
+    64
+  ],
+  "downstream_signals": {
+    "any_signal": 35,
+    "communication_signal": 10,
+    "mobility_signal": 26,
+    "combined_signal": 1
+  },
+  "evidence_card_shape": [
+    35,
+    29
+  ],
+  "comparison": "Original 23-column CSV; all numeric columns atol=1e-8, rtol=0; text and booleans exact."
+}

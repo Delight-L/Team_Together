@@ -4,6 +4,7 @@ from io import BytesIO
 
 
 def build_report(context, rows, author, department, opinion, source_note, workflow=None):
+def build_report(context, rows, author, department, opinion, source_note):
     from docx import Document
     from docx.shared import Cm, Pt
     from docx.oxml import OxmlElement
@@ -25,6 +26,9 @@ def build_report(context, rows, author, department, opinion, source_note, workfl
     document.add_paragraph(("[시연·기관 제출 불가] " if workflow and workflow.get("is_demo") else "") + "지역 분석 및 복지사업 검토 결과 보고서", "Title")
     document.add_paragraph(
         "저장된 지역 분석과 담당자의 복지사업 적합성 검토 결과를 정리합니다. 적합·보류·부적합 판단과 검토 근거를 기록합니다."
+    document.add_paragraph("지역 활동 변화 및 지원 검토 보고서", "Title")
+    document.add_paragraph(
+        "지역 집계자료의 변화 신호를 확인하고 후속 검토 사항을 정리한 담당자 검토용 초안입니다. 개인의 고립 여부를 판정하거나 기관 연계를 확정하는 문서가 아닙니다."
     )
     table = document.add_table(rows=0, cols=2)
     table.style = "Table Grid"
@@ -32,6 +36,7 @@ def build_report(context, rows, author, department, opinion, source_note, workfl
         ("작성 부서 및 작성자", f"{department} / {author}"),
         ("작성일", datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d")),
         ("대상 지역 및 기간", f"{context['city']} / {context.get('district', '')} / {context['month']}"),
+        ("대상 지역 및 기간", f"{context['city']} / {context['month']}"),
         ("자료 및 분석 버전", source_note),
     ]
     for label, value in metadata:
@@ -57,6 +62,9 @@ def build_report(context, rows, author, department, opinion, source_note, workfl
                 f"{row['change_pct']:+.1f}%" if row.get("change_pct") is not None else "자료 없음",
                 f"{row['relative_change_pp']:+.1f}%p" if row.get("relative_change_pp") is not None else "자료 없음",
                 f"{row['risk_robust_z']:.2f}" if row.get("risk_robust_z") is not None else "판단 보류",
+                f"{row['change_pct']:+.1f}%",
+                f"{row['relative_change_pp']:+.1f}%p",
+                f"{row['risk_robust_z']:.2f}",
             ]
             for cell, value in zip(cells, values):
                 cell.text = value
@@ -112,6 +120,7 @@ def build_report(context, rows, author, department, opinion, source_note, workfl
             properties.append(OxmlElement("w:cantSplit"))
     footer = section.footer.paragraphs[0]
     footer.text = "지역 분석 및 사업 검토 결과  |  기관 지정 양식 확정 전 내부 기본 양식"
+    footer.text = "담당자 검토용 초안  |  최종 확인 후 사용"
     buffer = BytesIO()
     document.save(buffer)
     return buffer.getvalue()

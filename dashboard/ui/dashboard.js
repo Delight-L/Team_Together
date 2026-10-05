@@ -6,6 +6,7 @@ const S = {
   // 화면 상태: sel=선택 동, W=가중치, band=강조할 위험 단계.
   user: null,
   source: "db1",
+  source: BOOT.db1?.assessment?.length ? "db1" : "demo",
   city: Object.keys(GEO)[0],
   view: "dash",
   mode: "month",
@@ -154,6 +155,11 @@ function menuDef() {
         ["users", "users", "사업 매칭 검토"],
         ["reports", "log", "보고서 작성"],
         ...(S.user.admin ? [["data", "db", "데이터 관리"]] : []),
+        ["actions", "check", "위기 관리 보드"],
+        ["analysis", "bar", "지역 탐색"],
+        ["users", "users", "복지 자원 연계"],
+        ["reports", "log", "보고서 작성"],
+        ["data", "db", "데이터 연계 관리"],
       ],
     },
     {
@@ -167,6 +173,9 @@ const TITLES = {
   analysis: "분석 근거 확인",
   users: "사업 매칭 검토",
   actions: "업무 현황",
+  analysis: "지역 탐색",
+  users: "복지 자원 연계",
+  actions: "위기 관리 보드",
   reports: "보고서 작성",
   data: "데이터 연계 관리",
   logs: "활동 이력",
@@ -192,6 +201,13 @@ function renderTop() {
   const month = S.month;
   $("#top").innerHTML =
     `<div class="welcome"><h1>${S.view === "dash" ? `${u.admin ? "담당자" : esc(S.city) + " 담당자"}님,<br>이번 달 <em>복지 미션</em>을 확인하세요.` : TITLES[S.view]}</h1>${S.view !== "dash" ? "<small>지역의 변화를 살피고 필요한 지원을 연결합니다.</small>" : ""}</div><div class="global-controls"><label class="global-select">${ic("log", 19)}<select data-global-month aria-label="분석 기준월">${(S.source === "db1" ? (analysisMonths().length ? analysisMonths() : MONTHS) : MONTHS)
+  const month = ["users", "actions"].includes(S.view) ? R.month : S.month;
+  $("#top").innerHTML =
+    `<div class="welcome"><h1>${S.view === "dash" ? `${u.admin ? "담당자" : esc(S.city) + " 담당자"}님,<br>이번 달 <em>복지 미션</em>을 확인하세요.` : TITLES[S.view]}</h1>${S.view !== "dash" ? "<small>지역의 변화를 살피고 필요한 지원을 연결합니다.</small>" : ""}</div><div class="global-controls"><label class="global-select">${ic("log", 19)}<select data-global-month aria-label="분석 기준월">${(S.source ===
+      "db1" && !["users", "actions"].includes(S.view)
+      ? analysisMonths()
+      : MONTHS
+    )
       .slice()
       .reverse()
       .map(
@@ -210,6 +226,10 @@ function renderTop() {
   if (S.view === "dash") $("#top h1").textContent = "지역 현황 요약";
   $("#assistant-user").innerHTML =
     `<span class="pill">${BOOT.db1?.isDemo ? "시연 모드 · 업무 테스트" : S.source === "db1" ? "저장된 분석 결과" : "시연 데이터"}</span><span class="user-avatar">${u.admin ? "관" : esc(S.city[0])}</span><b>${u.admin ? "전체 관리자" : esc(S.city) + " 담당자"}</b>`;
+      )}</select></label><select data-source aria-label="조회 데이터"><option value="demo" ${S.source === "demo" ? "selected" : ""}>시연 점수</option><option value="db1" ${S.source === "db1" ? "selected" : ""}>DB1 분석 결과</option></select><button class="btn assistant-toggle" data-act="chat" aria-label="분석 도우미 열기" aria-expanded="${S.chat}">${ic("chat")} 분석 도우미</button></div>`;
+  if (S.view === "dash") $("#top h1").textContent = "지역 현황 요약";
+  $("#assistant-user").innerHTML =
+    `<span class="pill warn">시연 데이터</span><span class="user-avatar">${u.admin ? "관" : esc(S.city[0])}</span><b>${u.admin ? "전체 관리자" : esc(S.city) + " 담당자"}</b>`;
 }
 
 // ---------- 조회 조건: 일/월 탭, 기준일, 앞뒤 날짜 이동 ----------
@@ -408,6 +428,15 @@ function renderPage() {
     data: viewData,
     logs: viewLogs,
     reports: workflowReportView,
+  if (S.view === "users") MISSION.done.add(1);
+  const v = {
+    dash: viewDash,
+    analysis: viewAnalysis,
+    users: viewUsers,
+    actions: viewActions,
+    data: viewData,
+    logs: viewLogs,
+    reports: viewReports,
   }[S.view];
   $("#page").innerHTML =
     S.source !== "db1" &&
@@ -430,6 +459,11 @@ function render() {
   $("#chat").classList.toggle("open", S.chat);
 }
 function updateCtx() {
+  if (["users", "actions"].includes(S.view)) {
+    $("#ctx").textContent =
+      `보는 중: ${S.city} · ${R.month} · 지역·성별·연령대`;
+    return;
+  }
   $("#ctx").textContent =
     `보는 중: ${S.city} · ${modeLabel()} · ${periodLabel()}${S.view === "dash" && S.sel ? " · " + S.sel : ""}`;
 }
@@ -503,6 +537,15 @@ function send(q) {
   }
   $("#cin").value="";
   requestOperation("question", {question:q});
+  q = q.trim();
+  if (!q) return;
+  addMsg(q, "me");
+  log("질의", q);
+  const inp = $("#cin");
+  inp.value = "";
+  setTimeout(() => {
+    addMsg(answer(q), "bot");
+  }, 380);
 }
 
 /* ---- 로그인/이벤트 ---- */
@@ -572,6 +615,11 @@ function logout() {
 // ---------- 지도·순위 클릭: 선택 동을 기억한 뒤 상세·추이를 다시 그리기 ----------
 function pick(u) {
   openRegionAnalysis(u);
+  S.sel = u;
+  MISSION.done.add(0);
+  MISSION.reviewed.add(reviewKey(u));
+  log("조회", `${S.city} ${u} 상세`);
+  renderPage();
 }
 // 파트 8. 클릭 동작: 메뉴·지도·필터·로그아웃을 한곳에서 처리합니다.
 listen("click", (e) => {
@@ -661,6 +709,10 @@ listen("click", (e) => {
     R.district = el.dataset.gotoUsers;
     R.selected = null;
     openRegionAnalysis(S.sel);
+    R.district = el.dataset.gotoUsers;
+    R.selected = null;
+    S.view = "users";
+    render();
     return;
   }
   if ((el = t.closest("[data-logtab]"))) {

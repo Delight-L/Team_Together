@@ -42,6 +42,14 @@
       <div id="mission-progress" class="mission-progress"></div>
       <form class="cin" id="csend"><input id="cin" type="text" placeholder="왜 이 결과가 나왔는지 질문하세요." aria-label="질문 입력"><button class="btn sm" type="submit" aria-label="질문 보내기">➤</button></form>
     </div>
+      <div class="assistant-hero"><div id="assistant-mascot"></div><div><h2>복지탐정 AI</h2><p>지역 분석부터 복지 자원 연계까지<br>함께 살펴보겠습니다.</p></div><button class="iconbtn assistant-close" data-act="chatclose" aria-label="챗봇 닫기">×</button></div>
+      <div class="assistant-shortcuts"><button data-view="analysis">지역 분석</button><button data-view="users">복지 자원 추천</button><button data-view="reports">보고서 작성</button></div>
+      <div class="ctx" id="ctx"></div>
+      <div class="assistant-scroll"><div id="assistant-context"></div><div class="msgs" id="msgs" aria-live="polite"></div></div>
+      <div id="mission-progress" class="mission-progress"></div>
+      <form class="cin" id="csend"><input id="cin" type="text" placeholder="궁금한 내용을 입력하세요." aria-label="질문 입력"><button class="btn sm" type="submit" aria-label="질문 보내기">➤</button></form>
+    </div>
+    <section class="resource-collection"><h3>나의 복지 자원 카드 <small>검토할 서비스 유형</small></h3><div class="resource-tiles"><button data-view="users"><span class="resource-art art-community">♧</span><b>사회참여·교류</b></button><button data-view="users"><span class="resource-art art-counsel">☏</span><b>생활·복지 상담</b></button><button data-view="actions"><span class="resource-art art-home">⌂</span><b>지역 현황 확인</b></button></div></section>
   </aside>
 </div>
 <div id="tip" class="tip" hidden></div>
