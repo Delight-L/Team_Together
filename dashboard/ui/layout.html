@@ -6,10 +6,10 @@
   <div class="lhero">
     <div style="position:relative">
       <h1>고립 위험이 커지는 동네를<br>매일 먼저 확인합니다</h1>
-      <p>유동인구·소비 변화와 공공데이터를 합쳐 동별 사회적 고립 위험도를 계산하고, 방문·상담이 필요한 곳부터 좁혀 보는 담당자용 화면이에요.</p>
+      <p>에이전트가 분석한 지역별 변화 근거를 확인하고, 실제 복지사업을 검토한 뒤 결과 보고서를 작성하는 담당자 업무 화면입니다.</p>
     </div>
     <div class="lmaps" id="lmaps"></div>
-    <div class="lnote">시연용 화면 · 모든 수치는 샘플 데이터입니다</div>
+    <div class="lnote">저장된 분석 결과 확인 → 사업 검토 → 결과 보고</div>
   </div>
   <div class="lform">
     <form class="lcard" id="lform" autocomplete="off" novalidate>
@@ -35,6 +35,13 @@
   <aside id="chat" class="chat" aria-label="복지탐정 AI 분석 도우미">
     <div id="assistant-user" class="assistant-user"></div>
     <div class="assistant-panel">
+      <div class="assistant-hero"><div id="assistant-mascot"></div><div><h2>복지탐정 AI</h2><p>분석 근거를 확인하고<br>사업 연결과 보고를 진행하세요.</p></div><button class="iconbtn assistant-close" data-act="chatclose" aria-label="챗봇 닫기">×</button></div>
+      <div class="assistant-shortcuts"><button data-view="analysis">지역 분석</button><button data-view="users">사업 매칭 검토</button><button data-view="reports">보고서 작성</button></div>
+      <div class="ctx" id="ctx"></div>
+      <div class="assistant-scroll"><div id="assistant-context"></div><div class="msgs" id="msgs" aria-live="polite"></div></div>
+      <div id="mission-progress" class="mission-progress"></div>
+      <form class="cin" id="csend"><input id="cin" type="text" placeholder="왜 이 결과가 나왔는지 질문하세요." aria-label="질문 입력"><button class="btn sm" type="submit" aria-label="질문 보내기">➤</button></form>
+    </div>
       <div class="assistant-hero"><div id="assistant-mascot"></div><div><h2>복지탐정 AI</h2><p>지역 분석부터 복지 자원 연계까지<br>함께 살펴보겠습니다.</p></div><button class="iconbtn assistant-close" data-act="chatclose" aria-label="챗봇 닫기">×</button></div>
       <div class="assistant-shortcuts"><button data-view="analysis">지역 분석</button><button data-view="users">복지 자원 추천</button><button data-view="reports">보고서 작성</button></div>
       <div class="ctx" id="ctx"></div>

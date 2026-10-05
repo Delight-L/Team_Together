@@ -36,6 +36,7 @@ def render_app():
     # 2. 화면 설정 — 전체 너비·높이 사용
     # ============================================================
     st.set_page_config(
+        page_title="복지탐정 AI · 분석·사업 검토·보고",
         page_title="복지탐정 AI · 지역 복지 미션",
         layout="wide",
         initial_sidebar_state="collapsed",
@@ -160,6 +161,16 @@ def render_app():
             "alerts": [],
             "activity": [],
         }
+    if not db_data.get("connected"):
+        from dashboard.demo import load_demo_analysis
+        db_data = load_demo_analysis()
+    from dashboard.missions import load_all
+    payload["missions"] = load_all()
+    payload["db1"] = db_data
+    payload["notice"] = st.session_state.get("operation_notice", "")
+    result = render_dashboard(payload)
+    next_report = st.session_state.pop("next_workflow_report", None)
+    handle_request(next_report | {"action": "report"} if next_report else result.get("request"), db_data)
     payload["db1"] = db_data
     payload["notice"] = st.session_state.get("operation_notice", "")
     result = render_dashboard(payload)

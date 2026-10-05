@@ -120,6 +120,17 @@ function viewReports() {
   return `<section class="card report-card"><header><h2>지역 검토 보고서</h2><button class="btn sm" data-operation="report">Word 초안 작성</button></header><div class="cbody"><p class="hint">선택한 지역·월의 데이터를 바탕으로 작성한 검토용 초안입니다.</p><pre>${esc(reportText())}</pre></div></section>`;
 }
 function updateAssistant() {
+  if (!S.user) return;
+  const item = currentMission();
+  const evidence = item.analysis_evidence || [];
+  $("#assistant-context").innerHTML = `<div class="assistant-answer"><b>${esc(S.sel || "지역을 먼저 선택하세요")}</b><p>${esc(S.month)} · 저장된 분석 근거로 설명합니다.</p>${evidence.filter(r=>r.is_risk_signal).slice(0,3).map(r=>`<p>${esc(r.explanation || r.metric_label)}</p>`).join("")}${S.sel?'<button class="btn sm wide" data-question="왜 이 지역이 우선 확인 후보인가요?">왜 이 결과가 나왔나요?</button>':'<p>대시보드의 우선 확인 지역을 누르면 분석 결과가 열립니다.</p>'}</div>`;
+  $("#msgs").innerHTML = (item.questions || []).map(q=>`<div class="m me">${esc(q.question)}</div><div class="m bot">${esc(q.answer)}<small>${esc(q.mode || "근거 설명")}</small></div>`).join("");
+  $("#mission-progress").innerHTML = workflowProgress(item);
+}
+function workflowProgress(item) {
+  const labels = ["분석·질의", "사업 검토", "보고서 완료"];
+  const completed = [1,2,3].filter(step=>item.done.includes(step)).length;
+  return `<div class="progress-title"><b>${puzzleIcon()} ${item.workflow_complete?"업무 완료":item.done.includes(2)?"사업 검토 완료 · 보고 대기":"지역별 업무 진행"}</b><span>${completed} / 3</span></div><div class="puzzle-track">${labels.map((label,i)=>`<span class="${item.done.includes(i+1)?"earned":""}">${puzzleIcon()}<small>${label}</small></span>`).join("")}</div><small>${esc(S.sel || "지역 선택 대기")} · ${esc(S.month)}</small>`;
   const target = $("#assistant-context");
   if (!target || !S.user) return;
   const rows = snap(),
@@ -184,4 +195,41 @@ listen("change", (e) => {
     MISSION.zoom = 1;
     render();
   }
+});
+
+function currentMission() {
+  const key = JSON.stringify([(BOOT.db1?.isDemo ? "demo:" : "") + S.user?.id, S.city, S.sel, S.month]);
+  return BOOT.missions?.[key] || {done:[], reviews:[], connections:[], questions:[]};
+}
+function missionRecordsView() {
+  const item = currentMission();
+  if (!S.sel) return `<section class="card"><header><h2>사업 매칭 검토</h2></header><div class="cbody"><p>먼저 대시보드에서 우선 확인 지역을 선택하세요.</p><button class="btn" data-view="dash">우선 확인할 지역 보기</button></div></section>`;
+  return `<section class="card"><header><h2>${esc(S.sel)} · 사업 매칭 검토</h2></header><div class="cbody">${workflowProgress(item)}<p>저장된 분석 결과와 실제 DB2 사업의 연관 근거를 확인하고, 사업 이용 조건과 적합성을 검토하고 결과를 기록합니다.</p><button class="btn" data-candidates="${esc(S.sel)}" ${item.done.includes(1)?"":"disabled"}>분석 결과에 맞는 DB2 사업 검토</button> <button class="btn ghost" data-view="analysis">분석 근거 다시 보기</button>${!item.done.includes(1)?'<p class="hint">분석 화면에서 근거 확인을 먼저 완료하세요.</p>':""}<h3>사업 매칭 검토 기록</h3>${item.reviews.map(r=>`<div class="workflow-record"><b>${esc(r.name)}</b> · ${esc(r.decision)}<p>${esc(r.note)}</p></div>`).join("") || '<p class="hint">아직 검토 기록이 없습니다.</p>'}${item.done.includes(2)?`<div class="note">${item.workflow_complete?"보고서 저장까지 업무 완료":"사업 검토 완료 · 최종 보고서를 작성하세요"}</div><button class="btn" data-operation="report">${item.workflow_complete?"최종 보고서 조회":"사업 검토 보고서 작성"}</button>`:""}</div></section>`;
+}
+function workflowReportView() {
+  const item=currentMission();
+  return `<section class="card"><header><h2>사업 검토 결과 보고서</h2></header><div class="cbody"><p>${esc(S.sel || "지역 선택 필요")} · ${esc(S.month)}</p>${workflowProgress(item)}<p>분석 근거, 추가 질의, 사업 매칭 판단, 사업 검토 결과와 판단 근거를 Word 보고서에 담습니다.</p><p class="hint">기관 지정 양식 확정 전 내부 기본 양식을 사용합니다. 최종 확인 후 파일을 저장해야 업무가 완료됩니다.</p><button class="btn" data-operation="report" ${item.done.includes(2)?"":"disabled"}>${item.workflow_complete?"저장된 보고서 내려받기":"양식에 맞춰 보고서 작성"}</button>${!item.done.includes(2)?'<p class="hint">사업 검토 기록을 먼저 저장하세요.</p>':""}</div></section>`;
+}
+function workflowBoard() {
+  const items=Object.entries(BOOT.missions || {}).filter(([key])=>{const [user,city,,month]=JSON.parse(key);return user===(BOOT.db1?.isDemo?"demo:":"")+S.user.id && city===S.city && month===S.month;});
+  return `<section class="card"><header><h2>지역별 업무 현황</h2></header><div class="cbody"><table class="tbl"><thead><tr><th>지역</th><th>진행</th><th>상태</th><th>다음 작업</th></tr></thead><tbody>${items.map(([key,item])=>`<tr><td>${esc(JSON.parse(key)[2])}</td><td>${[1,2,3].filter(step=>item.done.includes(step)).length}/3</td><td>${item.workflow_complete?"업무 완료":item.done.includes(2)?"보고서 대기":"분석·검토 중"}</td><td><button class="btn sm" data-resume-region="${esc(JSON.parse(key)[2])}">이어서 진행</button></td></tr>`).join("") || '<tr><td colspan="4">진행 중인 업무가 없습니다. 대시보드에서 지역을 선택하세요.</td></tr>'}</tbody></table></div></section>`;
+}
+function openRegionAnalysis(district) {
+  S.sel=district;
+  S.view="analysis";
+  S.chat=true;
+  const item=currentMission();
+  if (S.source === "db1" && !item.done.includes(0)) requestOperation("open_analysis");
+  else render();
+}
+listen("click", (event) => {
+  if (!S.user) return;
+  const candidate=event.target.closest("[data-candidates]");
+  if(candidate){S.sel=candidate.dataset.candidates || S.sel;requestOperation("candidates");}
+  const confirm=event.target.closest("[data-confirm-evidence]");
+  if(confirm) requestOperation("confirm_evidence");
+  const question=event.target.closest("[data-question]");
+  if(question) send(question.dataset.question);
+  const resume=event.target.closest("[data-resume-region]");
+  if(resume){S.sel=resume.dataset.resumeRegion;const item=currentMission();S.view=item.done.includes(2)?"reports":item.done.includes(1)?"users":"analysis";render();}
 });

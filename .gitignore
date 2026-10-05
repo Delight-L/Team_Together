@@ -14,3 +14,6 @@ __pycache__/
 dashboard/.streamlit/secrets.toml
 .streamlit/secrets.toml
 dashboard/**/*.log
+
+# 담당자 업무 기록은 저장소에 포함하지 않습니다.
+dashboard/data/mission_records.sqlite3*

@@ -95,6 +95,47 @@ def upload_dialog(request):
                 )
 
 
+@st.dialog("사업 검토 결과 보고서", width="large")
+def report_dialog(request, db_data):
+    import hashlib
+    from dashboard.missions import load_all, identity, load_report, save_event, review_revision
+    if not request.get("district"):
+        st.info("보고할 지역을 먼저 선택하세요.")
+        return
+    item = load_all().get(identity(request), {})
+    if 2 not in item.get("done", []):
+        st.info("사업 검토 기록 저장 후 보고서를 작성할 수 있습니다.")
+        return
+    context = {"city":request["city"],"district":request["district"],"month":request["month"]}
+    st.write(f"{context['city']} · {context['district']} · {context['month']}")
+    if item.get("is_demo"):
+        st.warning("시연 보고서입니다. 기관 제출용 문서가 아닙니다.")
+    st.caption("내부 기본 양식: 분석 근거 · 질의 · 사업 조건 및 매칭 검토 · 사업 검토 내역 · 최종 의견. 기관 지정 양식은 제공 후 반영할 수 있습니다.")
+    if item.get("workflow_complete"):
+        st.success("보고서 저장 완료 · 업무 완료")
+        document = load_report(request)
+        if document:
+            st.download_button("저장된 최종 보고서 내려받기",document,file_name=item["report"]["filename"],mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        return
+    department = st.text_input("작성 부서", value=f"{context['city']} 복지정책과")
+    author = st.text_input("작성자", value=request["user"]["id"])
+    opinion = st.text_area("최종 보고 의견 및 후속 사항", height=130)
+    fields = (identity(request),review_revision(item),department,author,opinion)
+    ready = all(v.strip() for v in [department,author,opinion])
+    if st.button("양식에 맞춰 보고서 생성", type="primary", disabled=not ready):
+        document = build_report(context,item["analysis_evidence"],author,department,opinion,item.get("analysis_source","저장된 DB1 분석"),workflow=item)
+        st.session_state.report_draft = {"fields":fields,"document":document}
+    draft = st.session_state.get("report_draft")
+    if draft and draft["fields"] == fields:
+        document = draft["document"]
+        filename = ("시연_" if item.get("is_demo") else "") + f"사업검토보고_{context['city']}_{context['district']}_{context['month']}.docx"
+        st.download_button("생성된 Word 보고서 확인",document,file_name=filename,mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        confirmed = st.checkbox("생성된 보고서와 사업 검토 내역을 최종 확인했습니다")
+        if st.button("최종 보고서 저장 및 업무 완료",type="primary",disabled=not confirmed):
+            save_event(request,3,{"sha256":hashlib.sha256(document).hexdigest(),"filename":filename,"author":author,"department":department,"opinion":opinion,"confirmed":confirmed,"review_id":review_revision(item),"_document":document})
+            st.session_state.operation_notice = "최종 보고서를 저장했습니다. 이 지역의 업무가 완료되었습니다."
+            st.session_state.pop("report_draft",None)
+            st.rerun(scope="app")
 @st.dialog("Word 보고서 초안", width="large")
 def report_dialog(request, db_data):
     context = {"city": request.get("city", "강남구"), "month": request.get("month", "")}
@@ -136,6 +177,42 @@ def report_dialog(request, db_data):
 def handle_request(request, db_data):
     if not request:
         return
+    request = dict(request, workflow_mode="demo" if db_data.get("isDemo") else "live")
+    from dashboard.missions import load_all, identity, save_event
+    from dashboard.workflow import selected_evidence, explain_question
+    if request.get("action") == "candidates":
+        from dashboard.service_dialog import candidates_dialog
+        candidates_dialog(request)
+    elif request.get("action") == "open_analysis":
+        rows = selected_evidence(request, db_data)
+        try:
+            if not rows or not db_data.get("runId"):
+                raise ValueError("선택 지역의 실제 DB1 분석 결과가 없습니다.")
+            run = next((r for r in db_data.get("runs",[]) if r["run_id"] == db_data["runId"]),{})
+            save_event(request,0,{"run_id":db_data["runId"],"evidence":rows,"source_note":f"{run.get('source_name','DB1')} / {run.get('period','')} / 분석 버전 {db_data['runId']}"})
+        except ValueError as error:
+            st.session_state.operation_notice = str(error)
+        st.rerun()
+    elif request.get("action") == "confirm_evidence":
+        try:
+            save_event(request,1,{"confirmed":True})
+        except ValueError as error:
+            st.session_state.operation_notice = str(error)
+        st.rerun()
+    elif request.get("action") == "question":
+        question = str(request.get("question", "")).strip()
+        item = load_all().get(identity(request),{}) if request.get("district") else {}
+        if item.get("workflow_complete"):
+            st.session_state.operation_notice = "완료된 업무의 질의 기록은 변경할 수 없습니다. 저장된 보고서를 확인하세요."
+        elif not question or not item.get("analysis_evidence"):
+            st.session_state.operation_notice = "분석 지역을 먼저 선택하고 질문을 입력하세요."
+        else:
+            answer, mode = explain_question(question,item["analysis_evidence"],item.get("questions"))
+            save_event(request,1,{"question":question,"answer":answer,"mode":mode})
+        st.rerun()
+    elif request.get("action") == "upload":
+        upload_dialog(request)
+    elif request.get("action") == "report":
     if request.get("action") == "upload":
         upload_dialog(request)
     elif request.get("action") == "report":

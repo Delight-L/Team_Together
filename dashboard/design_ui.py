@@ -23,21 +23,29 @@ export default function(component) {
     const root = parentElement.querySelector('#dashboard-root');
     if (!root) return;
     if (root.dataset.version === BOOT.version) return;
+    if (root._dashboardCleanup) root._dashboardCleanup();
     root.dataset.version = BOOT.version;
     let weightTimer;
     const listeners = [];
     const listen = (type, handler) => {
-        root.addEventListener(type, handler);
-        listeners.push([type, handler]);
+        const activeHandler = (event) => {
+            if (root.dataset.version === BOOT.version) handler(event);
+        };
+        root.addEventListener(type, activeHandler);
+        listeners.push([type, activeHandler]);
     };
 """
 
 JAVASCRIPT_END = """
+    const cleanup = () => {
     return () => {
         listeners.forEach(([type, handler]) => root.removeEventListener(type, handler));
         clearTimeout(weightTimer);
-        delete root.dataset.version;
+        if (root.dataset.version === BOOT.version) delete root.dataset.version;
+        if (root._dashboardCleanup === cleanup) delete root._dashboardCleanup;
     };
+    root._dashboardCleanup = cleanup;
+    return cleanup;
 }
 """
 

@@ -3,6 +3,7 @@
 from io import BytesIO
 
 
+def build_report(context, rows, author, department, opinion, source_note, workflow=None):
 def build_report(context, rows, author, department, opinion, source_note):
     from docx import Document
     from docx.shared import Cm, Pt
@@ -22,6 +23,9 @@ def build_report(context, rows, author, department, opinion, source_note):
         style._element.rPr.rFonts.set(qn("w:eastAsia"), "맑은 고딕")
         style.font.size = Pt(11 if name == "Normal" else 15 if name == "Title" else 12)
         style.paragraph_format.space_after = Pt(7)
+    document.add_paragraph(("[시연·기관 제출 불가] " if workflow and workflow.get("is_demo") else "") + "지역 분석 및 복지사업 검토 결과 보고서", "Title")
+    document.add_paragraph(
+        "저장된 지역 분석과 담당자의 복지사업 적합성 검토 결과를 정리합니다. 적합·보류·부적합 판단과 검토 근거를 기록합니다."
     document.add_paragraph("지역 활동 변화 및 지원 검토 보고서", "Title")
     document.add_paragraph(
         "지역 집계자료의 변화 신호를 확인하고 후속 검토 사항을 정리한 담당자 검토용 초안입니다. 개인의 고립 여부를 판정하거나 기관 연계를 확정하는 문서가 아닙니다."
@@ -31,6 +35,7 @@ def build_report(context, rows, author, department, opinion, source_note):
     metadata = [
         ("작성 부서 및 작성자", f"{department} / {author}"),
         ("작성일", datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d")),
+        ("대상 지역 및 기간", f"{context['city']} / {context.get('district', '')} / {context['month']}"),
         ("대상 지역 및 기간", f"{context['city']} / {context['month']}"),
         ("자료 및 분석 버전", source_note),
     ]
@@ -54,6 +59,9 @@ def build_report(context, rows, author, department, opinion, source_note):
             cells = evidence.add_row().cells
             values = [
                 f"{row['행정동명']}\n{row['metric_label']}",
+                f"{row['change_pct']:+.1f}%" if row.get("change_pct") is not None else "자료 없음",
+                f"{row['relative_change_pp']:+.1f}%p" if row.get("relative_change_pp") is not None else "자료 없음",
+                f"{row['risk_robust_z']:.2f}" if row.get("risk_robust_z") is not None else "판단 보류",
                 f"{row['change_pct']:+.1f}%",
                 f"{row['relative_change_pp']:+.1f}%p",
                 f"{row['risk_robust_z']:.2f}",
@@ -86,11 +94,32 @@ def build_report(context, rows, author, department, opinion, source_note):
         "상대 변화량은 동의 전월 변화율에서 같은 달 동 중앙값을 뺀 값입니다. 위험 방향 상대 변화 5%p 이상과 Robust Z-score 2.5 이상을 함께 적용합니다. 과거 변화 3회를 사용하며, MAD가 0이거나 이력이 부족하면 후보 판단을 보류합니다."
     )
     document.add_paragraph(source_note)
+    if workflow:
+        document.add_heading("6 분석 근거 확인 및 추가 질의", level=1)
+        document.add_paragraph("근거 확인일: " + workflow.get("evidence_reviewed_at", "미확인"))
+        for question in workflow.get("questions", []):
+            document.add_paragraph("질문: " + question["question"])
+            document.add_paragraph("답변: " + question.get("answer", ""))
+        if not workflow.get("questions"):
+            document.add_paragraph("추가 질의 없음 · 담당자가 분석 근거를 확인함")
+        document.add_heading("7 복지사업 매칭 검토", level=1)
+        for review in workflow.get("reviews", []):
+            document.add_paragraph(f"사업: {review['name']} / 판단: {review['decision']}")
+            document.add_paragraph("검토 근거: " + review["note"])
+            document.add_paragraph("공식 출처: " + str(review.get("source_url") or "별도 확인"))
+            snapshot = review.get("service_snapshot", {})
+            for label, field in [("지원 대상", "target_text"), ("자격 조건", "eligibility_text"), ("거주 조건", "residency_text")]:
+                document.add_paragraph(label + ": " + str(snapshot.get(field) or "별도 확인"))
+        document.add_heading("8 보고 및 담당자 최종 확인", level=1)
+        document.add_paragraph(f"작성 부서: {department} / 작성자: {author}")
+        document.add_paragraph("보고 내용 및 후속 사항: " + opinion)
+        document.add_paragraph("보고서 저장 후 대시보드 업무 완료로 처리됩니다. 기관 제출·공문 발송은 별도 확인합니다.")
     for table in document.tables:
         for row in table.rows:
             properties = row._tr.get_or_add_trPr()
             properties.append(OxmlElement("w:cantSplit"))
     footer = section.footer.paragraphs[0]
+    footer.text = "지역 분석 및 사업 검토 결과  |  기관 지정 양식 확정 전 내부 기본 양식"
     footer.text = "담당자 검토용 초안  |  최종 확인 후 사용"
     buffer = BytesIO()
     document.save(buffer)
