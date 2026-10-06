@@ -6,12 +6,6 @@
 
 ---
 
-## 팀원 빠른 실행
-
-Windows에서는 처음 한 번 `setup_team.bat`로 패키지를 준비한 뒤, `run_team.bat`를 더블클릭하고 작업 번호를 선택합니다. 입력 경로와 코드 수정 위치는 [팀원 실행·수정 안내](docs/팀원_실행_안내.md)에 정리했습니다.
-
-`python main.py`는 대시보드, `python main.py --preprocess-analysis1`은 지역 유형 전처리입니다. 위험분석은 `python main.py --risk --input "월별행동.csv"`, 설명 챗봇은 `python main.py --chatbot`으로 실행합니다. 지역 유형 전처리 결과와 월별 위험분석 입력은 서로 다른 자료입니다.
-
 ## 1. 프로젝트 개요
 
 본 프로젝트는 개인의 사회적 고립 여부를 직접 판단하는 것이 아니라, **지역 × 인구집단 단위에서 관찰되는 행동 및 사회적 맥락의 변화로부터 사회적 고립과 관련될 수 있는 위험신호를 탐지**하는 것을 목표로 합니다.
@@ -505,7 +499,43 @@ flowchart LR
 
 ## 실행
 
-Python 3.13 환경에서 `python -m pip install -r requirements.txt`로 준비합니다.
+### 가상환경 설정 (Windows)
+
+이 프로젝트는 **Python 3.13 환경에서 검증**했습니다. Python 3.13을 설치한 뒤, 터미널에서 `main.py`와 `requirements.txt`가 있는 프로젝트 루트로 이동합니다. 전역 Python과 프로젝트의 패키지가 섞이지 않도록 `.venv` 가상환경을 사용합니다.
+
+**처음 한 번 — PowerShell에서 환경 생성 및 패키지 설치**
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python --version
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+`python --version`이 `Python 3.13.x`로 표시되는지 확인합니다. 이미 Python 3.13으로 만든 `.venv`가 있다면 생성 단계는 생략합니다. `py -3.13`을 찾지 못하면 Python 3.13 설치 여부를 먼저 확인합니다.
+
+**이후 실행 — 새 터미널을 열 때마다 활성화**
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python main.py
+```
+
+작업이 끝나면 `deactivate`로 가상환경을 종료합니다. 가상환경 활성화는 현재 터미널에만 적용됩니다. CMD를 사용하는 경우 활성화 명령은 `.venv\Scripts\activate.bat`입니다.
+
+PowerShell에서 활성화가 차단되거나 활성화 없이 실행하려면 가상환경의 Python을 직접 지정할 수 있습니다.
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe main.py
+```
+
+`.venv/` 폴더 자체는 Git에 올리지 않습니다. 각 팀원이 자신의 컴퓨터에서 생성하고, 루트 `requirements.txt`로 패키지를 설치합니다. 패키지 목록이 변경되면 같은 설치 명령을 다시 실행합니다.
+
+### 실행 명령
+
+아래 명령은 가상환경을 활성화한 상태에서 실행합니다.
 
 ```powershell
 python main.py
