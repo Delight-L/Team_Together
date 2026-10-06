@@ -25,12 +25,12 @@ def main():
     if arguments[:1] == ["--chatbot"]:
         script = ROOT_DIR / "chatbot" / "app.py"
         raise SystemExit(subprocess.call([sys.executable, "-m", "streamlit", "run", str(script), *arguments[1:]], cwd=ROOT_DIR))
-    from streamlit.runtime.scriptrunner import get_script_run_ctx
-    if get_script_run_ctx(suppress_warning=True) is not None:
-        from dashboard.main import render_app
-        render_app()
+    if arguments[:1] != ["--streamlit"]:
+        from webapp.server import main as serve_react
+        serve_react(arguments)
         return
-    raise SystemExit(subprocess.call([sys.executable, "-m", "streamlit", "run", str(ROOT_DIR / "main.py"), *arguments], cwd=ROOT_DIR))
+    # React가 기본 실행입니다. 비교용 Streamlit은 별도 시작 파일로 실행합니다.
+    raise SystemExit(subprocess.call([sys.executable, "-m", "streamlit", "run", str(ROOT_DIR / "streamlit_app.py"), *arguments[1:]], cwd=ROOT_DIR))
 
 if __name__ == "__main__":
     main()

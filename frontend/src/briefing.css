@@ -1,0 +1,1191 @@
+/* 화면 개편 스타일. 기존 업무/보고서 CSS는 유지하고 브리핑 관련 클래스만 확장합니다. */
+.app-shell {
+  --nav-width: 194px;
+  --assistant-width: 330px;
+  grid-template-columns: var(--nav-width) minmax(0, 1fr);
+}
+.app-shell.with-chat {
+  grid-template-columns: var(--nav-width) minmax(0, 1fr) var(--assistant-width);
+}
+.app-shell.nav-collapsed {
+  --nav-width: 72px;
+}
+.app-shell.chat-view.with-chat {
+  grid-template-columns: var(--nav-width) minmax(0, 0.9fr) minmax(340px, 1fr);
+}
+.sidebar > .logo-toggle {
+  padding: 0;
+  margin: 0 6px 15px;
+  justify-content: center;
+  height: 118px;
+  width: calc(100% - 12px);
+}
+.logo-toggle .brand-logo {
+  width: 145px;
+  max-width: 100%;
+}
+.logo-toggle:hover {
+  background: #f5f8ff;
+}
+.logo-toggle .bomi-face {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: transparent;
+  padding: 2px;
+}
+.nav-collapsed .sidebar {
+  padding: 18px 8px 14px;
+}
+.nav-collapsed .sidebar > .logo-toggle {
+  height: 55px;
+  margin: 0 0 25px;
+  width: 100%;
+}
+.nav-collapsed .sidebar > button {
+  justify-content: center;
+  padding: 13px 7px;
+}
+.nav-collapsed .sidebar > button > span,
+.nav-collapsed .workspace-tag,
+.nav-collapsed .nav-label,
+.nav-collapsed .sidebar-bottom > div {
+  display: none;
+}
+.nav-collapsed .sidebar-bottom {
+  justify-content: center;
+}
+.nav-collapsed .sidebar-bottom > button {
+  margin: 0;
+}
+/* PNG 대기 상태는 정지합니다. 움직임은 Bomi 컴포넌트가 조건부로 넣는 GIF만 담당합니다. */
+.bomi img,
+.bomi.thinking img {
+  animation: none;
+}
+.bomi.thinking .bomi-halo {
+  background: #d7eaff;
+}
+.briefing-shell .main-content {
+  background: radial-gradient(ellipse at 0 0, #fffaf5, transparent 70%), #f7f8fc;
+}
+.briefing-shell .page-heading h1 {
+  font-size: clamp(20px, 1.7vw, 29px);
+  line-height: 1.35;
+  color: #132846;
+  letter-spacing: -1px;
+}
+.page-heading h1 em {
+  font-style: normal;
+  color: #1766ed;
+}
+.briefing-shell .page-heading .eyebrow {
+  display: none;
+}
+.briefing-shell .page-heading p {
+  margin-top: 7px;
+}
+.briefing-v2 {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 108px minmax(0, 1fr) 109px;
+  gap: 14px;
+}
+.mission-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.mission-kpi {
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #edeef5;
+  background: white;
+  box-shadow: 0 5px 18px #4c506a04;
+  overflow: hidden;
+}
+.mission-kpi.rose {
+  background: linear-gradient(125deg, #fff, #fff7fa);
+  color: #f8406b;
+}
+.mission-kpi.orange {
+  background: linear-gradient(125deg, #fff, #fffaf2);
+  color: #ed8c25;
+}
+.mission-kpi.sky {
+  background: linear-gradient(125deg, #fff, #f6faff);
+  color: #2475ed;
+}
+.mission-kpi-icon {
+  border-radius: 50%;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #ffe5ed;
+}
+.orange .mission-kpi-icon {
+  background: #fff0d9;
+}
+.sky .mission-kpi-icon {
+  background: #e4efff;
+}
+.mission-kpi > div > span {
+  font-size: 11px;
+  font-weight: 700;
+}
+.mission-kpi strong {
+  display: block;
+  font-size: 31px;
+  line-height: 1.3;
+  letter-spacing: -1px;
+  margin-top: 4px;
+}
+.mission-kpi strong small {
+  font-size: 11px;
+  margin-left: 4px;
+  letter-spacing: 0;
+}
+.mission-kpi p {
+  color: #9da7b8;
+  font-size: 8px;
+  margin-top: 5px;
+}
+.mission-kpi-note {
+  position: absolute;
+  right: 12px;
+  bottom: 19px;
+  font-size: 8px;
+  border-radius: 12px;
+  padding: 4px 7px;
+  background: #ffe9ef;
+}
+.orange .mission-kpi-note {
+  background: #fff0dc;
+}
+.sky .mission-kpi-note {
+  background: #eaf2ff;
+}
+.mission-map-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-color: #eeeae2;
+}
+.mission-map-card > header {
+  padding: 12px 17px;
+  flex-shrink: 0;
+}
+.mission-map-card > header > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.mission-map-card h2 {
+  font-size: 14px;
+}
+.mission-map-card h2 strong {
+  color: #2468dc;
+  margin-left: 3px;
+}
+.map-folder {
+  display: grid;
+  place-items: center;
+  color: #e7ad56;
+  border-radius: 7px;
+  background: #fff2de;
+  width: 32px;
+  height: 29px;
+}
+.mission-map-content {
+  flex: 1;
+  min-height: 0;
+  margin: 0 7px 7px;
+  border-radius: 11px;
+  overflow: hidden;
+  position: relative;
+  background: #f0f2e8;
+}
+.mission-map {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: radial-gradient(ellipse, #eff2e9, #e8ecdf);
+}
+.mission-scene {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.map-tools {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 9px #39514714;
+  background: white;
+}
+.map-tools button {
+  width: 29px;
+  height: 29px;
+  font-size: 19px;
+  color: #52687c;
+  display: grid;
+  place-items: center;
+  border-bottom: 1px solid #edf0f3;
+}
+.map-tools button:last-child {
+  border-bottom: 0;
+}
+.map-tools button:hover {
+  background: #edf4ff;
+}
+.mission-district {
+  cursor: pointer;
+  outline: none;
+}
+.mission-district path {
+  stroke: #ffffffe6;
+  stroke-width: 2.1;
+  stroke-linejoin: round;
+  transition:
+    fill 0.2s,
+    stroke 0.2s;
+}
+.mission-district:hover path,
+.mission-district:focus-visible path {
+  stroke: #2869e2;
+  stroke-width: 4;
+  filter: brightness(1.05);
+}
+.mission-district.selected path {
+  stroke: #174899;
+  stroke-width: 3;
+}
+.mission-district text {
+  font-size: 12px;
+  font-weight: 600;
+  fill: #55634e;
+  pointer-events: none;
+}
+.mission-district.selected text {
+  fill: white;
+}
+.mission-pin {
+  cursor: pointer;
+  outline: none;
+}
+.mission-pin:focus-visible rect,
+.mission-pin:hover rect {
+  stroke: #2563eb;
+  stroke-width: 2;
+}
+.scene-note {
+  position: absolute;
+  bottom: 35px;
+  left: 12px;
+  font-size: 8px;
+  background: #ffffffb3;
+  color: #819077;
+  border-radius: 5px;
+  padding: 3px 5px;
+  pointer-events: none;
+}
+.mission-legend {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #ffffffed;
+  padding: 9px 10px;
+  border-top: 1px solid #e6eae0;
+}
+.mission-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 8px;
+  color: #7e8b9b;
+}
+.mission-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+}
+.mission-legend .rose {
+  background: #ff527b;
+}
+.mission-legend .orange {
+  background: #ff9b35;
+}
+.mission-legend .sky {
+  background: #4f9cf8;
+}
+.mission-legend .quiet {
+  background: #cddbcf;
+}
+/* REGION INSIGHT는 지도 카드 내부의 비모달 팝오버입니다. 페이지 전환/화면 차단이 없습니다. */
+.region-insight {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  right: 12px;
+  bottom: 38px;
+  width: 288px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #fffffff5;
+  border: 1px solid #e3eaf6;
+  border-radius: 15px;
+  box-shadow: 0 8px 30px #24446126;
+  backdrop-filter: blur(12px);
+  padding: 14px;
+  animation: insight-arrive 0.22s ease-out;
+}
+.region-insight > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.region-insight h2 {
+  font-size: 18px;
+  margin-top: 4px;
+}
+.region-insight .eyebrow {
+  font-size: 8px;
+  color: #5890c7;
+}
+.insight-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 10px;
+  margin-bottom: 9px;
+}
+.insight-summary small {
+  font-size: 8px;
+  color: #9ba9bc;
+}
+.status-tag {
+  display: inline-flex;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 9px;
+  font-weight: 600;
+  background: #f1f5f6;
+  color: #819392;
+  white-space: nowrap;
+}
+.status-tag.rose {
+  background: #fff0f4;
+  color: #f34771;
+}
+.status-tag.orange {
+  background: #fff2e0;
+  color: #dc8424;
+}
+.status-tag.sky {
+  background: #eaf3ff;
+  color: #3577d8;
+}
+.insight-count {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 11px;
+  background: #f6f9ff;
+  border-radius: 9px;
+  margin-bottom: 10px;
+}
+.insight-count strong {
+  font-size: 24px;
+  color: #2563eb;
+}
+.insight-count small {
+  font-size: 11px;
+  margin-left: 4px;
+}
+.insight-count span {
+  color: #89a0bf;
+  font-size: 9px;
+}
+.region-insight .table-scroll {
+  flex: 1;
+  min-height: 0;
+  scrollbar-width: thin;
+}
+.region-insight table {
+  font-size: 9px;
+}
+.region-insight th,
+.region-insight td {
+  padding: 9px 4px;
+}
+.region-insight .badge {
+  font-size: 7px;
+  padding: 3px 4px;
+}
+.region-insight > .hint {
+  padding: 9px 0;
+  font-size: 8px;
+  line-height: 1.7;
+}
+.insight-actions {
+  display: grid;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.insight-actions button {
+  font-size: 9px;
+  padding: 9px 7px;
+  gap: 6px;
+}
+.insight-open .mission-map .mission-scene {
+  width: calc(100% - 268px);
+}
+.mission-highlights {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.mission-highlights > header {
+  padding: 12px 17px 8px;
+}
+.mission-highlights h2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+}
+.mission-highlights h2 svg {
+  color: #ec9539;
+}
+.mission-highlights > header > span {
+  font-size: 8px;
+  color: #a1acbc;
+}
+.highlight-grid {
+  display: flex;
+  align-items: stretch;
+  gap: 9px;
+  padding: 0 12px 12px;
+  flex: 1;
+  min-height: 0;
+}
+.highlight-grid > button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid #f4e9ed;
+  background: #fff9fb;
+  border-radius: 10px;
+  text-align: left;
+  color: #f54a77;
+}
+.highlight-grid > button.sky {
+  color: #287af2;
+  background: #f7faff;
+  border-color: #e6effd;
+}
+.highlight-grid > button.orange {
+  color: #f29129;
+  background: #fffbf5;
+  border-color: #f6edde;
+}
+.change-symbol {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffe8ee;
+  flex-shrink: 0;
+}
+.sky .change-symbol {
+  background: #e9f2ff;
+}
+.orange .change-symbol {
+  background: #fff0dd;
+}
+.highlight-grid span {
+  display: block;
+  font-size: 8px;
+  color: #798ca7;
+  white-space: nowrap;
+}
+.highlight-grid strong {
+  font-size: 20px;
+  letter-spacing: -0.7px;
+  margin-top: 3px;
+  display: block;
+}
+.highlight-grid > button > svg {
+  width: 42px;
+  margin-left: auto;
+  opacity: 0.7;
+}
+.highlight-grid .hint {
+  padding: 8px;
+  font-size: 10px;
+}
+/* 지역 현황은 지도 복제 대신 검색 가능한 비교 표와 평면 경계 지도를 제공합니다. */
+.regional-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.13fr) minmax(270px, 1fr);
+  gap: 15px;
+  flex: 1;
+  min-height: 0;
+}
+.region-directory,
+.directory-map {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.region-directory h2 > span {
+  font-size: 10px;
+  color: #8ca2bf;
+  font-weight: 400;
+  margin-left: 4px;
+}
+.directory-filters {
+  display: flex;
+  gap: 6px;
+  padding: 2px 14px 14px;
+}
+.directory-filters input {
+  flex: 1;
+  min-width: 70px;
+}
+.directory-filters input,
+.directory-filters select {
+  font-size: 9px;
+  padding: 8px;
+  border-radius: 8px;
+}
+.directory-filters select {
+  max-width: 95px;
+}
+.directory-table {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+}
+.directory-table table {
+  font-size: 10px;
+}
+.directory-table th,
+.directory-table td {
+  padding: 11px 8px;
+}
+.directory-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.directory-table tr.selected td {
+  background: #eff5ff;
+}
+.directory-table .text-button {
+  font-size: 9px;
+  padding: 0;
+}
+.district-link {
+  font-weight: 600;
+  font-size: 10px;
+  padding: 0;
+  color: #4b658e;
+}
+.region-directory > footer {
+  padding: 12px 14px;
+  font-size: 8px;
+  color: #99a7bb;
+  border-top: 1px solid #edf2f8;
+}
+.directory-map-body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.directory-map .mission-map {
+  background: radial-gradient(ellipse, #f2f7ff, white);
+}
+.directory-map .scene-note {
+  bottom: 10px;
+}
+.directory-map > footer {
+  padding: 12px 16px;
+  font-size: 9px;
+}
+.directory-map .region-insight {
+  width: calc(100% - 24px);
+  max-width: 320px;
+  bottom: 12px;
+}
+@keyframes insight-arrive {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (min-width: 1600px) {
+  .app-shell {
+    --nav-width: 212px;
+    --assistant-width: 360px;
+  }
+  .app-shell.nav-collapsed {
+    --nav-width: 76px;
+  }
+  .briefing-v2 {
+    grid-template-rows: 124px minmax(0, 1fr) 120px;
+    gap: 18px;
+  }
+  .mission-kpi {
+    padding: 20px;
+    gap: 16px;
+  }
+  .mission-kpi strong {
+    font-size: 37px;
+  }
+  .mission-kpi > div > span {
+    font-size: 13px;
+  }
+  .mission-kpi p {
+    font-size: 10px;
+  }
+  .region-insight {
+    width: 320px;
+    padding: 18px;
+  }
+  .insight-open .mission-map .mission-scene {
+    width: calc(100% - 305px);
+  }
+  .region-insight table {
+    font-size: 10px;
+  }
+  .region-insight td,
+  .region-insight th {
+    padding: 12px 5px;
+  }
+  .highlight-grid span {
+    font-size: 10px;
+  }
+  .highlight-grid strong {
+    font-size: 24px;
+  }
+}
+@media (max-width: 1350px) {
+  .app-shell {
+    --nav-width: 166px;
+    --assistant-width: 292px;
+  }
+  .sidebar > .logo-toggle {
+    height: 100px;
+  }
+  .mission-kpi {
+    padding: 12px;
+    gap: 8px;
+  }
+  .mission-kpi-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .mission-kpi-icon svg {
+    width: 22px;
+  }
+  .mission-kpi-note {
+    font-size: 7px;
+    right: 8px;
+    bottom: 18px;
+  }
+  .mission-kpi strong {
+    font-size: 28px;
+  }
+  .mission-kpi > div > span {
+    font-size: 10px;
+  }
+  .mission-kpi p {
+    font-size: 7px;
+  }
+  .region-insight {
+    width: 262px;
+  }
+  .insight-open .mission-map .mission-scene {
+    width: calc(100% - 240px);
+  }
+  .highlight-grid > button {
+    padding: 8px;
+    gap: 7px;
+  }
+  .highlight-grid > button > svg {
+    width: 30px;
+  }
+  .change-symbol {
+    width: 28px;
+    height: 28px;
+  }
+  .change-symbol svg {
+    width: 17px;
+  }
+}
+@media (max-height: 800px) {
+  .briefing-v2 {
+    grid-template-rows: 95px minmax(0, 1fr) 98px;
+    gap: 12px;
+  }
+  .mission-kpi {
+    padding: 12px;
+  }
+  .mission-kpi strong {
+    font-size: 28px;
+  }
+  .mission-kpi p {
+    font-size: 7px;
+  }
+  .region-insight {
+    top: 9px;
+    right: 9px;
+    bottom: 35px;
+    padding: 10px;
+  }
+  .region-insight h2 {
+    font-size: 15px;
+  }
+  .insight-count {
+    display: none;
+  }
+  .insight-summary {
+    margin-top: 6px;
+    margin-bottom: 6px;
+  }
+  .region-insight th,
+  .region-insight td {
+    padding: 7px 4px;
+  }
+  .region-insight > .hint {
+    display: none;
+  }
+  .insight-actions button {
+    padding: 7px;
+    font-size: 8px;
+  }
+  .mission-highlights > header {
+    padding: 10px 14px 7px;
+  }
+  .highlight-grid {
+    padding-bottom: 10px;
+  }
+  .sidebar > .logo-toggle {
+    height: 105px;
+  }
+  .mission-map-card > header {
+    padding: 10px 14px;
+  }
+}
+@media (max-width: 1100px) {
+  .app-shell {
+    --nav-width: 166px;
+    --assistant-width: 300px;
+  }
+  .app-shell.nav-collapsed {
+    --nav-width: 64px;
+  }
+  .with-chat .main-wrap,
+  .chat-view .main-wrap {
+    margin-right: 0;
+  }
+  .chat-panel {
+    position: static;
+    width: auto;
+    box-shadow: none;
+  }
+  .chat-view.with-chat {
+    grid-template-columns: var(--nav-width) minmax(0, 0.9fr) minmax(300px, 1fr);
+  }
+  .app-shell:not(.nav-collapsed) .sidebar > button > span {
+    display: inline;
+  }
+  .app-shell:not(.nav-collapsed) .workspace-tag {
+    display: flex;
+  }
+  .app-shell:not(.nav-collapsed) .nav-label {
+    display: block;
+  }
+  .app-shell:not(.nav-collapsed) .sidebar-bottom > div {
+    display: block;
+  }
+  .sidebar > .logo-toggle .brand-logo {
+    width: 130px;
+  }
+  .sidebar > .logo-toggle .bomi-face {
+    width: 43px;
+  }
+  .briefing-shell .page-heading h1 {
+    font-size: 20px;
+  }
+  .mission-kpi-note {
+    display: none;
+  }
+  .mission-kpi p {
+    display: none;
+  }
+  .mission-kpi-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .mission-kpi > div > span {
+    font-size: 9px;
+  }
+  .highlight-grid > button > svg {
+    display: none;
+  }
+  .regional-overview {
+    grid-template-columns: minmax(0, 1fr) minmax(230px, 1fr);
+  }
+  .region-insight {
+    width: 245px;
+  }
+  .insight-open .mission-map .mission-scene {
+    width: calc(100% - 210px);
+  }
+}
+@media (max-width: 850px) {
+  .app-shell,
+  .app-shell.with-chat,
+  .app-shell.chat-view.with-chat {
+    --nav-width: 64px;
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+  .app-shell:not(.nav-collapsed) .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 190px;
+    z-index: 8;
+    box-shadow: 12px 0 40px #20324e1a;
+  }
+  .chat-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 7;
+    width: min(350px, 85vw);
+    box-shadow: -8px 0 40px #28447114;
+  }
+  .chat-panel.expanded {
+    width: min(520px, 85vw);
+  }
+  .regional-overview {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(200px, 0.8fr);
+  }
+  .directory-map .region-insight {
+    width: 270px;
+    max-width: calc(100% - 24px);
+  }
+  .briefing-shell .page-heading {
+    flex-wrap: nowrap;
+  }
+  .briefing-shell .page-heading h1 {
+    font-size: 19px;
+  }
+}
+@media (max-width: 600px) {
+  .app-shell,
+  .app-shell.with-chat,
+  .app-shell.chat-view.with-chat {
+    --nav-width: 52px;
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+  .nav-collapsed .sidebar {
+    padding: 12px 4px;
+  }
+  .nav-collapsed .sidebar > .logo-toggle {
+    margin-bottom: 18px;
+  }
+  .logo-toggle .bomi-face {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+  .briefing-shell .page-heading {
+    flex-wrap: wrap;
+  }
+  .briefing-shell .page-heading h1 {
+    font-size: 19px;
+  }
+  .briefing-v2 {
+    grid-template-rows: 78px minmax(0, 1fr) 95px;
+    gap: 9px;
+  }
+  .mission-kpis {
+    gap: 6px;
+  }
+  .mission-kpi {
+    padding: 8px;
+  }
+  .mission-kpi-icon {
+    display: none;
+  }
+  .mission-kpi > div > span {
+    font-size: 9px;
+  }
+  .mission-kpi strong {
+    font-size: 26px;
+  }
+  .mission-kpi strong small {
+    font-size: 9px;
+  }
+  .mission-map-card > header {
+    padding: 10px;
+  }
+  .mission-map-card h2 {
+    font-size: 10px;
+  }
+  .map-folder {
+    width: 24px;
+    height: 24px;
+  }
+  .mission-map-card > header .pill {
+    font-size: 7px;
+    padding: 3px;
+  }
+  .mission-map-card > header > div {
+    gap: 5px;
+  }
+  .mission-map-content {
+    margin: 0 4px 4px;
+  }
+  .mission-legend {
+    gap: 8px;
+    padding: 8px 3px;
+  }
+  .mission-legend span {
+    font-size: 7px;
+  }
+  .scene-note {
+    font-size: 6px;
+    left: 5px;
+    bottom: 31px;
+  }
+  .map-tools {
+    left: 7px;
+    top: 7px;
+  }
+  .map-tools button {
+    width: 23px;
+    height: 23px;
+  }
+  .region-insight {
+    left: 6px;
+    right: 6px;
+    top: 6px;
+    bottom: 31px;
+    width: auto;
+    padding: 10px;
+  }
+  .insight-open .mission-map .mission-scene {
+    width: 100%;
+  }
+  .region-insight h2 {
+    font-size: 14px;
+  }
+  .region-insight table {
+    font-size: 8px;
+  }
+  .region-insight th,
+  .region-insight td {
+    padding: 6px 3px;
+  }
+  .insight-actions {
+    display: flex;
+    gap: 5px;
+  }
+  .insight-actions button {
+    flex: 1;
+    min-width: 0;
+    font-size: 7px;
+    padding: 7px 3px;
+  }
+  .insight-actions svg {
+    display: none;
+  }
+  .region-insight > .hint {
+    font-size: 7px;
+  }
+  .mission-highlights > header {
+    padding: 9px 10px 7px;
+  }
+  .mission-highlights h2 {
+    font-size: 11px;
+  }
+  .mission-highlights > header > span {
+    display: none;
+  }
+  .highlight-grid {
+    gap: 5px;
+    padding: 0 7px 7px;
+  }
+  .highlight-grid > button {
+    padding: 6px;
+  }
+  .change-symbol {
+    display: none;
+  }
+  .highlight-grid span {
+    font-size: 7px;
+    white-space: normal;
+  }
+  .highlight-grid strong {
+    font-size: 18px;
+  }
+  .directory-filters {
+    flex-wrap: wrap;
+    padding: 0 10px 10px;
+  }
+  .directory-filters input {
+    width: 100%;
+    flex-basis: 100%;
+  }
+  .directory-table th,
+  .directory-table td {
+    font-size: 8px;
+    padding: 8px 5px;
+  }
+  .directory-table .status-tag {
+    font-size: 7px;
+  }
+  .directory-map > footer {
+    font-size: 8px;
+  }
+  .directory-map .region-insight {
+    width: calc(100% - 12px);
+    max-width: none;
+    bottom: 6px;
+  }
+  .region-directory > footer {
+    font-size: 7px;
+    padding: 8px 10px;
+  }
+  .nav-collapsed .sidebar > .logo-toggle .bomi-face {
+    width: 38px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .region-insight {
+    animation: none;
+  }
+}
+/* 기본 안내 버튼은 항상 접근 가능하고, 자유 대화 입력과 비용 경로를 분리합니다. */
+.chat-topics {
+  margin: 0 16px 10px;
+  padding: 10px;
+  border: 1px solid #e0ebff;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #eff7ff, #fbfdff);
+  flex-shrink: 0;
+}
+.topic-tabs,
+.topic-buttons {
+  display: grid;
+  gap: 5px;
+}
+.topic-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 10px;
+}
+.chat-topics button {
+  border: 1px solid #dce8ff;
+  border-radius: 6px;
+  background: white;
+  padding: 7px 3px;
+  font-size: 9px;
+  color: #234369;
+}
+.topic-tabs button.active {
+  background: #dfedff;
+  color: #1d67df;
+}
+.chat-topics b {
+  display: block;
+  font-size: 12px;
+}
+.chat-topics small {
+  display: block;
+  margin: 4px 0 8px;
+  font-size: 9px;
+  color: #6c8bad;
+}
+.topic-buttons {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.free-chat-note {
+  font-size: 9px;
+  color: #6b819e;
+  margin-bottom: 7px;
+}
+.chat-topics ~ .chat-messages .suggestions {
+  display: none;
+}
+.mission-district .district-side {
+  stroke: #72906f;
+  stroke-width: 2;
+}
+.mission-district.selected .district-side {
+  fill: #234ea8;
+}
+.mission-scene {
+  background: linear-gradient(145deg, #e2edd6, #faf6df);
+}
+@media (max-height: 800px) {
+  .chat-intro {
+    padding: 8px 12px;
+    min-height: 75px;
+  }
+  .chat-intro .bomi {
+    width: 65px;
+    height: 65px;
+  }
+  .chat-topics {
+    margin: 0 12px 7px;
+    padding: 8px;
+  }
+  .chat-topics small {
+    margin: 3px 0 5px;
+  }
+}

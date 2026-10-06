@@ -11,6 +11,13 @@ __pycache__/
 *.txt
 *.geojson
 *.zip
+
+# React dependencies/build output and local workflow database
+node_modules/
+.pnpm-store/
+frontend/dist/
+db/runtime/*.sqlite3*
+!ci/bomi-face.png
 dashboard/.streamlit/secrets.toml
 .streamlit/secrets.toml
 dashboard/**/*.log

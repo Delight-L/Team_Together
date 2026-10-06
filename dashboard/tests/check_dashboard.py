@@ -23,7 +23,7 @@ from dashboard.common import (
 from dashboard.common import load_risk_data, load_boundaries
 
 # 브라우저를 열지 않고 Python 코드와 컴포넌트 등록에 오류가 없는지 확인합니다.
-app = AppTest.from_file(str(DASHBOARD_DIR.parent / "main.py"), default_timeout=30).run()
+app = AppTest.from_file(str(DASHBOARD_DIR.parent / "streamlit_app.py"), default_timeout=30).run()
 assert not app.exception, [item.message for item in app.exception]
 assert not app.error, [item.value for item in app.error]
 

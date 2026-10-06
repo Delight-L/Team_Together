@@ -1,6 +1,6 @@
 # 복지탐정 대시보드
 
-루트에서 `python main.py`로 실행합니다. 시연 계정은 로그인 화면에서 선택할 수 있습니다.
+이 폴더는 비교용 기존 Streamlit 화면입니다. React 브랜치에서는 루트에서 `python main.py --streamlit`로 실행합니다. 기본 React 실행은 [React 안내](../README_REACT.md)를 확인하세요. 시연 계정은 로그인 화면에서 선택할 수 있습니다.
 
 | 변경 대상 | 파일 |
 | --- | --- |

@@ -1,5 +1,7 @@
 # 사회적 고립 위험신호 탐지 AI Agent
 
+> **React 브랜치 실행:** 이 브랜치의 기본 화면은 React입니다. `frontend`에서 의존성 설치 및 빌드 후 `python main.py`로 실행합니다. [React 실행 안내](README_REACT.md)와 [팀원 수정·오류 확인 가이드](docs/React_팀원_수정_가이드.md)를 먼저 확인하세요. 기존 Streamlit 비교 실행은 `python main.py --streamlit`입니다.
+
 > **2026 빅콘테스트 · AI데이터 활용 분야**
 >
 > 통신·소비·공공데이터를 활용하여 지역 및 인구집단 단위의 사회적 고립 위험신호를 탐지하고, AI Agent를 통해 적절한 복지자원과 지원 방안을 연결하는 시스템
