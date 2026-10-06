@@ -3,9 +3,35 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 from streamlit.testing.v1 import AppTest
-from dashboard import missions
+from db import mission_store as missions
 
 class DialogTests(unittest.TestCase):
+    def test_csv_analysis_open_saves_real_evidence_and_source(self):
+        from db.analysis_repository import load_analysis2_data
+        from dashboard.dialogs import handle_request
+        data = load_analysis2_data()
+        self.assertEqual(data["runId"], data["runs"][0]["run_id"])
+        row = data["assessment"][-1]
+        request = {"action":"open_analysis", "user":{"id":"gangnam01"}, "city":"강남구",
+                   "district":row["행정동명"], "month":row["기준연월"]}
+        with tempfile.TemporaryDirectory() as folder, patch.object(missions,"STORE",Path(folder)/"workflow.db"), patch("streamlit.rerun"):
+            handle_request(request, data)
+            item = missions.load_all()[missions.identity(request)]
+            self.assertEqual(item["analysis_run_id"], data["runId"])
+            self.assertIn(data["runs"][0]["source_name"], item["analysis_source"])
+            self.assertTrue(item["analysis_evidence"])
+            self.assertEqual(item["done"], [0])
+
+    def test_legacy_run_without_id_does_not_crash(self):
+        from dashboard.dialogs import handle_request
+        request = {"action":"open_analysis", "user":{"id":"gangnam01"}, "city":"강남구",
+                   "district":"삼성1동", "month":"2025-12"}
+        data = {"runId":"legacy-run", "runs":[{"kind":"monthly"}],
+                "assessment":[{"행정동명":"삼성1동", "기준연월":"2025-12"}]}
+        with tempfile.TemporaryDirectory() as folder, patch.object(missions,"STORE",Path(folder)/"workflow.db"), patch("streamlit.rerun"):
+            handle_request(request, data)
+            self.assertEqual(missions.load_all()[missions.identity(request)]["analysis_run_id"], "legacy-run")
+
     def test_review_then_report_through_forms(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(missions,"STORE",Path(folder)/"workflow.db"):
             request={"user":{"id":"gangnam01"},"city":"강남구","district":"역삼1동","month":"2025-12"}
@@ -14,7 +40,7 @@ class DialogTests(unittest.TestCase):
             missions.save_event(request,1,{"confirmed":True})
             source = """
 import streamlit as st
-import dashboard.service_dialog as dialog
+import dashboard.dialogs as dialog
 request={"user":{"id":"gangnam01"},"city":"강남구","district":"역삼1동","month":"2025-12"}
 service={"source_id":"test","region_id":"gangnam","external_id":"test-1","name":"테스트 전용 교류사업","target_text":"주민","source_url":"https://example.org/test"}
 dialog.match_services=lambda *args: [{"service":service,"key":"test-service","reasons":[{"category":"교류","metrics":["유동인구 감소"],"service_terms":["교류"]}],"score":1}]
@@ -31,7 +57,7 @@ dialog.candidates_dialog(request)
             self.assertIn(2,item["done"])
             self.assertFalse(item["workflow_complete"])
             report_source = """
-from dashboard.operations import report_dialog
+from dashboard.dialogs import report_dialog
 request={"user":{"id":"gangnam01"},"city":"강남구","district":"역삼1동","month":"2025-12"}
 report_dialog(request,{})
 """

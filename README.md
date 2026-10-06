@@ -6,12 +6,6 @@
 
 ---
 
-## 팀원 빠른 실행
-
-Windows에서는 처음 한 번 `setup_team.bat`로 패키지를 준비한 뒤, `run_team.bat`를 더블클릭하고 작업 번호를 선택합니다. 입력 경로와 코드 수정 위치는 [팀원 실행·수정 안내](docs/팀원_실행_안내.md)에 정리했습니다.
-
-`python main.py`는 대시보드, `python main.py --preprocess-analysis1`은 지역 유형 전처리입니다. 위험분석은 `python main.py --risk --input "월별행동.csv"`, 설명 챗봇은 `python main.py --chatbot`으로 실행합니다. 지역 유형 전처리 결과와 월별 위험분석 입력은 서로 다른 자료입니다.
-
 ## 1. 프로젝트 개요
 
 본 프로젝트는 개인의 사회적 고립 여부를 직접 판단하는 것이 아니라, **지역 × 인구집단 단위에서 관찰되는 행동 및 사회적 맥락의 변화로부터 사회적 고립과 관련될 수 있는 위험신호를 탐지**하는 것을 목표로 합니다.
@@ -259,16 +253,16 @@ Supervisor
 
 ### 주요 Agent
 
-**Risk / Isolation Analysis Agent**  
+**Risk / Isolation Analysis Agent**
 DB1의 위험신호 및 분석 결과를 조회하고 위험신호의 내용을 정리합니다.
 
-**Context Analysis Agent**  
+**Context Analysis Agent**
 인구·사회·지역 데이터를 함께 확인하여 위험신호가 나타난 지역과 집단의 맥락을 분석합니다.
 
-**Resource Search Agent**  
+**Resource Search Agent**
 DB2에서 조건에 맞는 복지시설·프로그램·기관·서비스를 검색합니다.
 
-**Intervention Recommendation Agent**  
+**Intervention Recommendation Agent**
 분석된 지원 필요성과 DB2의 자원을 연결하여 가능한 지원 방안을 제시합니다.
 
 ---
@@ -329,7 +323,7 @@ AI Agent의 결과가 단순한 LLM 생성 문장이 아니라 **DB1의 분석 �
 
 - [대시보드 실행 및 구성 안내](dashboard/README.md): 지역·집단별 변화 확인과 서비스 연계 흐름 시연
 
-수정본은 별도 HTML 프로토타입입니다. DB 적재와 실제 기관 연계는 아직 구현되지 않았으며, 종합/동별 분석 화면의 점수와 일·주 추이는 가상값입니다. 기존 DB·API Word 문서는 이전 초안으로, 원천 및 대응 구조는 v0.2를 우선 참고합니다.
+현재는 Streamlit Custom Component v2 화면입니다. DB1 결과 검사·반영과 DB2 사업 후보 조회, 업무 기록과 Word 보고서 저장을 지원합니다. 실제 기관 연락 및 자동 지원 승인은 구현하지 않았습니다. 시연 점수와 Analysis2 결과를 데이터 모드로 구분합니다.
 
 ---
 
@@ -429,7 +423,7 @@ DB1 / DB2 업데이트
 15. 정기 데이터 갱신 / 모니터링
 ```
 
-> **핵심 개발 원칙: Agent부터 만들지 않는다.**  
+> **핵심 개발 원칙: Agent부터 만들지 않는다.**
 > 먼저 데이터 → Feature → 분석 → 위험신호의 근거를 확립한 후 AI Agent를 연결합니다.
 
 ---
@@ -447,65 +441,133 @@ DB1 / DB2 업데이트
 
 ---
 
-## 13. Repository Structure
+## 13. 현재 코드 구조
 
 ```text
-project-root/
-│
-├── data/
-│   ├── raw/
-│   ├── processed/
-│   └── external/
-│
-├── db/
-│   ├── db1/
-│   └── db2/
-│
-├── preprocessing/
-│   ├── cleaning/
-│   └── feature_engineering/
-│
-├── analysis/
-│   ├── eda/
-│   ├── statistics/
-│   └── ml_dl/
-│
-├── agents/
-│   ├── supervisor/
-│   ├── risk_analysis/
-│   ├── context_analysis/
-│   ├── resource_search/
-│   └── intervention/
-│
-├── dashboard/
-├── pipeline/
-│   ├── collection/
-│   ├── validation/
-│   └── scheduler/
-│
-├── notebooks/
-├── docs/
-├── requirements.txt
-├── README.md
-└── .gitignore
+main.py                       실행 명령 라우팅
+dashboard/
+  main.py                     화면 데이터 조립
+  common.py                   설정·자료 검사·분석 근거 선택 공통 함수
+  design_ui.py                Custom Component 등록
+  dialogs.py                  업로드·사업 검토·보고 대화상자
+  report.py                   Word 문서 생성
+  ui/                         HTML·CSS·JS 화면과 지도
+  tools/                      오프라인 검증·이전 시연 계산
+  tests/                      계산·업무 흐름 검증
+chatbot/                      로컬 안내와 선택적 AI 호출
+agents/                       지역·위험 분석·사업 매칭
+preprocessing/                지역 유형·행동자료 전처리
+db/                           연결·분석 저장소·업무 기록
+ci/                           브랜드 원본과 보미 이미지
+docs/                         설계·운영 문서
 ```
 
----
+공유 설정과 자료 검사 함수는 `dashboard.common`에서 가져옵니다. DB 조회·저장은 `db`, AI 설명은 `chatbot.service`, 사업 매칭은 `agents.service_matching`이 담당합니다.
 
-## 14. Project Status
+## 14. 구현 현황과 현재 업무 흐름
 
-현재 프로젝트는 **DB1의 원천 데이터와 외부 공공데이터를 확인하고, 실제 분석 가능한 Feature와 분석 단위를 확정하는 단계**입니다.
+앞의 전체 아키텍처와 Agent 역할은 목표 설계이며, 모든 ML/DL 모델과 Supervisor가 구현된 상태를 뜻하지 않습니다. 현재 실행 경로는 다음과 같습니다.
 
-향후 데이터 구조가 확정되면
+```mermaid
+flowchart LR
+ A[원천 자료] --> B[전처리]
+ B --> C[Analysis2 통계 탐지]
+ C --> D[DB1 결과 검사·반영]
+ D --> E[종합 브리핑·지역 지도]
+ E --> F[지역 상세 팝업]
+ F --> G[담당자 근거 확인]
+ G --> H[DB2 사업 조건 검토]
+ H --> I[Word 보고서 저장]
+ G --> J[선택적 AI 질의]
+ J --> G
+```
 
-**EDA → Feature Engineering → ML/DL 분석 → 위험신호 정의 → DB 저장 → AI Agent 연동**
-
-순으로 개발을 진행합니다.
-
----
+지도 높이는 장식이며 위험도 수치가 아닙니다. 지역 클릭은 저장된 근거를 보여주고, 팝업의 업무 시작 버튼부터 업무 기록을 생성합니다. 과거 비교 이력이 부족하면 판단을 보류합니다. 기본 메뉴·지도·브리핑·로컬 안내는 LLM 토큰을 소비하지 않습니다. AI 호출을 켜고 질의를 전송한 경우에만 모델 호출을 시도합니다.
 
 ## 15. Team
 
 **SeSAC 08 최종프로젝트**
 
 사회적 고립 예방 및 대응을 위한 AI Agent 개발
+
+---
+
+## 현재 실행 및 운영 안내
+
+
+지역·인구집단의 행동 변화 근거를 확인하고 복지사업 검토와 보고로 연결하는 Streamlit 대시보드입니다. 개인의 사회적 고립을 판정하지 않습니다.
+
+## 실행
+
+### 가상환경 설정 (Windows)
+
+이 프로젝트는 **Python 3.13 환경에서 검증**했습니다. Python 3.13을 설치한 뒤, 터미널에서 `main.py`와 `requirements.txt`가 있는 프로젝트 루트로 이동합니다. 전역 Python과 프로젝트의 패키지가 섞이지 않도록 `.venv` 가상환경을 사용합니다.
+
+**처음 한 번 — PowerShell에서 환경 생성 및 패키지 설치**
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python --version
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+`python --version`이 `Python 3.13.x`로 표시되는지 확인합니다. 이미 Python 3.13으로 만든 `.venv`가 있다면 생성 단계는 생략합니다. `py -3.13`을 찾지 못하면 Python 3.13 설치 여부를 먼저 확인합니다.
+
+**이후 실행 — 새 터미널을 열 때마다 활성화**
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python main.py
+```
+
+작업이 끝나면 `deactivate`로 가상환경을 종료합니다. 가상환경 활성화는 현재 터미널에만 적용됩니다. CMD를 사용하는 경우 활성화 명령은 `.venv\Scripts\activate.bat`입니다.
+
+PowerShell에서 활성화가 차단되거나 활성화 없이 실행하려면 가상환경의 Python을 직접 지정할 수 있습니다.
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe main.py
+```
+
+`.venv/` 폴더 자체는 Git에 올리지 않습니다. 각 팀원이 자신의 컴퓨터에서 생성하고, 루트 `requirements.txt`로 패키지를 설치합니다. 패키지 목록이 변경되면 같은 설치 명령을 다시 실행합니다.
+
+### 실행 명령
+
+아래 명령은 가상환경을 활성화한 상태에서 실행합니다.
+
+```powershell
+python main.py
+python main.py --chatbot
+python main.py --chatbot-cli
+python main.py --analysis --no-download
+python main.py --preprocess-analysis1 --raw-dir "원본폴더"
+python main.py --preprocess --no-download
+python main.py --risk --input "월별행동.csv"
+```
+
+대시보드는 보관된 version11 Analysis2 결과를 읽습니다. `--analysis`는 전처리와 Analysis2를 다시 실행합니다. `--risk --input`은 기존 v1 월별 입력 분석을 유지한 별도 도구입니다. DB2 사업 조회에는 루트 `.env`의 DB 연결 설정이 필요합니다. 키와 개인 업로드 자료는 커밋하지 않습니다.
+
+## 폴더 안내
+
+| 폴더 | 역할 |
+| --- | --- |
+| `dashboard/` | 화면, 컴포넌트, 업무 대화상자, 보고서 |
+| `chatbot/` | 시작 메뉴, 근거 설명, 데이터 질의, 독립 실행 화면 |
+| `agents/` | Analysis2, v1 분석 도구, 복지사업 매칭 |
+| `preprocessing/` | 지역 유형·월별 행동 자료 전처리 |
+| `db/` | 공통 PostgreSQL 연결, 로컬 SQLite 업무 기록 |
+| `ci/` | 브랜드 가이드, 투명 로고·캐릭터, 컬러 팔레트 |
+| `docs/` | 사용자 안내와 변경 이력 |
+| `external/` | 공모전 참고 자료 |
+
+## 화면과 AI 동작
+
+브랜드 기본색은 `#2563EB`, 보조색은 `#60A5FA`, 연결 강조색은 `#10B981`, 텍스트는 `#1E293B`입니다. 지도는 원래 행정 경계를 유지하며 마우스·키보드로 지역을 강조합니다. 장식 높이는 분석 수치가 아닙니다.
+
+챗봇 메뉴 선택, 저장된 결과 확인, 기본 근거 안내는 AI를 호출하지 않습니다. ‘AI 에이전트 사용’을 켠 뒤 질문을 보낼 때만 호출을 허용합니다. 서버도 명시적인 호출 조건을 확인하며, Gemini 설정이 없으면 규칙 기반 안내를 제공합니다. `.env`의 `GEMINI_API_KEY`, `GEMINI_MODEL`로 연결합니다.
+
+이전 `dashboard/data/mission_records.sqlite3`가 있으면 최초 실행 시 `db/runtime/`로 복사 이관하며 원본을 보존합니다.
+
+[화면 수정 안내](dashboard/README.md) · [정리 및 검증 기록](docs/2026-10-06_대시보드_정리.md)

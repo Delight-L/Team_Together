@@ -5,8 +5,9 @@ function puzzleIcon() {
   return '<svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M12 4a4 4 0 1 1 8 0v3h5a3 3 0 0 1 3 3v4h-3a4 4 0 1 0 0 8h3v5a3 3 0 0 1-3 3h-5v-3a4 4 0 1 0-8 0v3H7a3 3 0 0 1-3-3v-5H1a4 4 0 0 1 0-8h3v-4a3 3 0 0 1 3-3h5z"/></svg>';
 }
 function detectiveSVG() {
-  return `<svg viewBox="0 0 170 150" role="img" aria-label="복지탐정 AI 로봇"><defs><linearGradient id="robot-shell" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#a6c6ed"/></linearGradient><linearGradient id="robot-face" x2="0" y2="1"><stop stop-color="#122c51"/><stop offset="1" stop-color="#07182f"/></linearGradient></defs><ellipse cx="84" cy="141" rx="54" ry="6" fill="#a4c4ed" opacity=".3"/><path d="M48 140q3-43 35-44t38 44" fill="#537cb5"/><path d="M64 109l20 15 18-15-6 31H70z" fill="#e7f1ff"/><rect x="28" y="51" width="111" height="64" rx="30" fill="url(#robot-shell)" stroke="#8fadd4" stroke-width="2"/><rect x="22" y="70" width="15" height="27" rx="7" fill="#809fcc"/><rect x="130" y="70" width="15" height="27" rx="7" fill="#809fcc"/><rect x="41" y="61" width="87" height="43" rx="20" fill="url(#robot-face)"/><ellipse cx="63" cy="80" rx="6" ry="9" fill="#4ddcff"/><ellipse cx="105" cy="80" rx="6" ry="9" fill="#4ddcff"/><path d="M76 91q8 7 16 0" fill="none" stroke="#8deaff" stroke-width="3" stroke-linecap="round"/><path d="M42 53Q46 16 83 14q37 2 43 39" fill="#b8875b" stroke="#84542f" stroke-width="2"/><path d="M79 16L65 51M88 16l16 35" fill="none" stroke="#e3bd91" stroke-width="4"/><path d="M33 54q50-16 102 0l-6 7q-43-7-88 1z" fill="#805336"/><circle cx="85" cy="13" r="6" fill="#8d5b33"/><circle cx="131" cy="111" r="18" fill="#b8e5ff" fill-opacity=".65" stroke="#d8ad71" stroke-width="7"/><path d="M143 126l12 18" stroke="#94683e" stroke-width="10" stroke-linecap="round"/><path d="M122 104l12-6" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>`;
+  return `<img class="brand-character" src="${BOOT.brand?.character || ''}" alt="복지탐정 보미"/>`;
 }
+
 function missionRows() {
   return snap()
     .slice()
@@ -123,7 +124,7 @@ function updateAssistant() {
   if (!S.user) return;
   const item = currentMission();
   const evidence = item.analysis_evidence || [];
-  $("#assistant-context").innerHTML = `<div class="assistant-answer"><b>${esc(S.sel || "지역을 먼저 선택하세요")}</b><p>${esc(S.month)} · 저장된 분석 근거로 설명합니다.</p>${evidence.filter(r=>r.is_risk_signal).slice(0,3).map(r=>`<p>${esc(r.explanation || r.metric_label)}</p>`).join("")}${S.sel?'<button class="btn sm wide" data-question="왜 이 지역이 우선 확인 후보인가요?">왜 이 결과가 나왔나요?</button>':'<p>대시보드의 우선 확인 지역을 누르면 분석 결과가 열립니다.</p>'}</div>`;
+  $("#assistant-context").innerHTML = chatMenu() + `<div class="assistant-answer"><b>${esc(S.sel || "지역을 먼저 선택하세요")}</b><p>${esc(S.month)} · 저장된 분석 근거로 설명합니다.</p>${evidence.filter(r=>r.is_risk_signal).slice(0,3).map(r=>`<p>${esc(r.explanation || r.metric_label)}</p>`).join("")}${S.sel?'<button class="btn sm wide" data-question="왜 이 지역이 우선 확인 후보인가요?">왜 이 결과가 나왔나요?</button>':'<p>대시보드의 우선 확인 지역을 누르면 분석 결과가 열립니다.</p>'}</div>`;
   $("#msgs").innerHTML = (item.questions || []).map(q=>`<div class="m me">${esc(q.question)}</div><div class="m bot">${esc(q.answer)}<small>${esc(q.mode || "근거 설명")}</small></div>`).join("");
   $("#mission-progress").innerHTML = workflowProgress(item);
 }
