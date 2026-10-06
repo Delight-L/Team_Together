@@ -4,6 +4,7 @@ from pathlib import Path
 from dataclasses import replace
 from .schemas import AnswerResult, Evidence
 from .guardrails import validate_input, OUT_OF_SCOPE
+from .content_moderation import InputModerator
 from .intent_parser import parse_intent, looks_like_reason_followup
 from .repository import DataRepository
 from .query_service import execute
@@ -16,15 +17,18 @@ from .llm_intent_resolver import IntentResolver
 from .query_planner import complete_and_validate
 
 class Chatbot:
- def __init__(self, project_root: Path, model: str="gemini-2.5-flash-lite", intent_resolver=None):
+ def __init__(self, project_root: Path, model: str="gemini-2.5-flash-lite", intent_resolver=None, moderator=None):
   self.project_root=project_root
   self.repo=DataRepository(project_root); self.model=model
   self.memory=ConversationMemory()
+  self.moderator=moderator if moderator is not None else InputModerator(project_root)
   self.intent_resolver=intent_resolver or IntentResolver(project_root,model,self.repo.available_period())
  def answer(self, question: str) -> AnswerResult:
   # 1. 인풋 필터링
   guard=validate_input(question)
   if not guard.allowed: return AnswerResult(guard.message, Evidence("입력 안내",guard.message))
+  guard=self.moderator.check(question.strip())
+  if not guard.allowed: return AnswerResult(guard.message, Evidence("입력 안전 안내",guard.message))
   # 2. 목적 체크와 메뉴 필터링
   intent=self.intent_resolver.resolve(question,self.repo.districts(),self.memory)
   # 직전 결과가 지역 목록이고 현재 질문에 동 이름이 없으면, 자연스러운
