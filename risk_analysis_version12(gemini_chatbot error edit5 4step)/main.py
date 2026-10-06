@@ -37,17 +37,6 @@ def verify_analysis2():
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--no-download", action="store_true")
-    p.add_argument(
-        "--persist-db",
-        action="store_true",
-        help="완료된 Analysis1·Analysis2 결과를 team_together PostgreSQL에 저장합니다.",
-    )
-    p.add_argument(
-        "--db-env",
-        type=Path,
-        default=BASE.parent / ".env.team_together",
-        help="PostgreSQL 접속 정보 파일 경로입니다.",
-    )
     args = p.parse_args()
 
     a1 = BASE / "preprocessing_agent1"
@@ -66,14 +55,7 @@ def main():
     report.write_text(json.dumps(verification, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[검증] Analysis2: {verification['status']}")
     print(f"[보고서] {report}")
-    if verification["status"] != "PASS":
-        return 1
-    if args.persist_db:
-        from database.postgres import persist_current_outputs
-
-        summary = persist_current_outputs(args.db_env)
-        print("[PostgreSQL 저장]", json.dumps(summary, ensure_ascii=False))
-    return 0
+    return 0 if verification["status"] == "PASS" else 1
 
 if __name__ == "__main__":
     raise SystemExit(main())
