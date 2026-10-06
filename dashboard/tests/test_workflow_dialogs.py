@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 from streamlit.testing.v1 import AppTest
-from dashboard import missions
+from db import mission_store as missions
 
 class DialogTests(unittest.TestCase):
     def test_review_then_report_through_forms(self):
@@ -14,7 +14,7 @@ class DialogTests(unittest.TestCase):
             missions.save_event(request,1,{"confirmed":True})
             source = """
 import streamlit as st
-import dashboard.service_dialog as dialog
+import dashboard.dialogs as dialog
 request={"user":{"id":"gangnam01"},"city":"강남구","district":"역삼1동","month":"2025-12"}
 service={"source_id":"test","region_id":"gangnam","external_id":"test-1","name":"테스트 전용 교류사업","target_text":"주민","source_url":"https://example.org/test"}
 dialog.match_services=lambda *args: [{"service":service,"key":"test-service","reasons":[{"category":"교류","metrics":["유동인구 감소"],"service_terms":["교류"]}],"score":1}]
@@ -31,7 +31,7 @@ dialog.candidates_dialog(request)
             self.assertIn(2,item["done"])
             self.assertFalse(item["workflow_complete"])
             report_source = """
-from dashboard.operations import report_dialog
+from dashboard.dialogs import report_dialog
 request={"user":{"id":"gangnam01"},"city":"강남구","district":"역삼1동","month":"2025-12"}
 report_dialog(request,{})
 """

@@ -6,8 +6,8 @@
 import pandas as pd
 import streamlit as st
 
-from dashboard.data_utils import require_columns, check_numbers
-from dashboard.settings import BASE_DIR, FACTORS, THRESHOLDS
+from dashboard.common import require_columns, check_numbers
+from dashboard.common import BASE_DIR, FACTORS, THRESHOLDS
 
 PEOPLE_FILE = BASE_DIR / "data" / "people.csv"
 DATA_LABEL = "시연용 샘플 데이터"

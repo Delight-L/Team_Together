@@ -5,7 +5,7 @@ from pathlib import Path
 import streamlit as st
 
 
-VALIDATION_FILE = Path(__file__).with_name("data") / "validation_actuals_2025.json"
+VALIDATION_FILE = Path(__file__).resolve().parents[1] / "data" / "validation_actuals_2025.json"
 ACTUAL_FIELDS = (
     "surveyTarget", "surveyCompleted", "newlyFound", "highRisk", "midRisk",
     "lowRisk", "contactAttempts", "counseling", "visits", "supportNeeded",

@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from dashboard import missions
-from dashboard.workflow import match_services, explain_question
+from db import mission_store as missions
+from dashboard.common import match_services, explain_question
 from dashboard.report import build_report
 from io import BytesIO
 from docx import Document

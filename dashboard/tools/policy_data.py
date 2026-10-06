@@ -5,7 +5,7 @@ from pathlib import Path
 import streamlit as st
 
 
-POLICY_FILE = Path(__file__).with_name("data") / "gangnam_policy_plans_2025.json"
+POLICY_FILE = Path(__file__).resolve().parents[1] / "data" / "gangnam_policy_plans_2025.json"
 
 # 동·월 집계로 확인할 수 있는 범위만 연결한다. 연령·소득·개인 상태가
 # 필요한 사업은 이 단계에서 자동 후보로 만들지 않는다.

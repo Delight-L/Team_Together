@@ -1,7 +1,7 @@
 // 독립적인 화면 함수 검증. 브라우저나 실제 업무 저장소를 조작하지 않습니다.
 const fs=require('fs'), path=require('path'), vm=require('vm'), assert=require('assert/strict');
 const nodes=new Map();
-const root={clientWidth:1400,querySelector(selector){if(!nodes.has(selector))nodes.set(selector,{innerHTML:'',value:'',hidden:false,children:[],style:{},classList:{toggle(){},add(){},remove(){}},appendChild(){},insertAdjacentHTML(){}});return nodes.get(selector);}};
+const root={clientWidth:1400,querySelector(selector){if(!nodes.has(selector))nodes.set(selector,{innerHTML:'',value:'',hidden:false,children:[],style:{},classList:{toggle(){},add(){},remove(){}},appendChild(){},insertAdjacentHTML(){},showModal(){this.open=true},close(){this.open=false}});return nodes.get(selector);}};
 const row={행정동명:'역삼1동',기준연월:'2025-12',metric_label:'유동인구 감소',is_risk_signal:true,has_enough_history:true,change_pct:-20,relative_change_pp:-10,risk_robust_z:3,explanation:'유동인구 감소 확인 후보'};
 const BOOT={geometry:{강남구:{w:100,h:100,units:[{n:'역삼1동',d:'M0 0',cx:0,cy:0}]}},riskRows:[],startDate:'2025-01-01',endDate:'2025-12-31',months:['2025-12'],factorNames:[],factorShortNames:[],factorColors:[],weights:[25,25,20,15,15],thresholds:[25,50,75],accounts:[{id:'gangnam01',org:'강남구',admin:false}],missions:{},db1:{connected:true,runId:'run-1',assessment:[row],runs:[]}};
 const triggered=[];
@@ -16,6 +16,11 @@ const key=JSON.stringify(['gangnam01','강남구','역삼1동','2025-12']);
 BOOT.missions[key]={workflow_version:2,done:[0],analysis_evidence:[row],analysis_run_id:'run-1',reviews:[],connections:[],questions:[]};
 assert(run('viewActualAnalysis()').includes('분석 근거 확인 완료'));
 const before=triggered.length;
+run('showRegionPreview("역삼1동")');
+assert.equal(triggered.length,before,"팝업 조회는 서버 요청이 없어야 합니다");
+assert(nodes.get("#region-dialog").open);
+assert(nodes.get("#region-dialog-content").innerHTML.includes("상세 분석·업무 시작"));
+assert(run("viewBriefing()").includes("신규 확인 후보"));
 run('S.agentEnabled=false; send("왜 후보인가요?")');
 assert.equal(triggered.length,before,'기본 질문은 서버/AI 요청을 보내면 안 됩니다');
 assert(run('chatMenu()').includes('무엇을 도와드릴까요?'));

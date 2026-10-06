@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import streamlit as st
 from chatbot.service import explain_question
-from dashboard.pipeline import load_analysis2_data
+from db.analysis_repository import load_analysis2_data
 
 st.set_page_config(page_title="복지탐정 AI", layout="centered")
 st.title("무엇을 도와드릴까요?")

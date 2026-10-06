@@ -150,7 +150,8 @@ function menuDef() {
     {
       g: "",
       items: [
-        ["dash", "dash", "대시보드"],
+        ["dash", "dash", "종합 브리핑"],
+        ["regions", "bar", "지역 현황"],
         ["actions", "check", "업무 현황"],
         ["analysis", "bar", "분석 근거 확인"],
         ["users", "users", "사업 매칭 검토"],
@@ -165,7 +166,8 @@ function menuDef() {
   ];
 }
 const TITLES = {
-  dash: "대시보드",
+  dash: "종합 브리핑",
+  regions: "지역 현황",
   analysis: "분석 근거 확인",
   users: "사업 매칭 검토",
   actions: "업무 현황",
@@ -209,7 +211,7 @@ function renderTop() {
       .join(
         "",
       )}</select></label>${u.admin ? `<select data-source aria-label="조회 데이터"><option value="db1" ${S.source === "db1" ? "selected" : ""}>DB1 분석 결과</option><option value="demo" ${S.source === "demo" ? "selected" : ""}>시연 점수 (업무 승인 불가)</option></select>` : ""}<button class="btn assistant-toggle" data-act="chat" aria-label="분석 도우미 열기" aria-expanded="${S.chat}">${ic("chat")} 분석 도우미</button></div>`;
-  if (S.view === "dash") $("#top h1").textContent = "지역 현황 요약";
+  if (S.view === "dash") $("#top h1").textContent = `${S.city} 담당자님, 이번 달 복지 미션을 확인하세요.`;
   $("#assistant-user").innerHTML =
     `<span class="pill">${BOOT.db1?.isDemo ? "시연 모드 · 업무 테스트" : S.source === "db1" ? "저장된 분석 결과" : "시연 데이터"}</span><span class="user-avatar">${u.admin ? "관" : esc(S.city[0])}</span><b>${u.admin ? "전체 관리자" : esc(S.city) + " 담당자"}</b>`;
 }
@@ -404,6 +406,7 @@ function renderPage() {
 
   const v = {
     dash: viewDash,
+    regions: viewActualOverview,
     analysis: viewAnalysis,
     users: missionRecordsView,
     actions: workflowBoard,
@@ -418,7 +421,7 @@ function renderPage() {
       ? ctrlBar() +
         '<div class="empty">선택한 기간의 자료가 없어요. 다른 날짜를 선택해 주세요.</div>'
       : S.source === "db1" && ["dash", "analysis"].includes(S.view)
-        ? (S.view === "dash" ? viewActualOverview() : viewActualAnalysis())
+        ? (S.view === "dash" ? viewBriefing() : viewActualAnalysis())
         : v();
   updateCtx();
   updateAssistant();
@@ -540,6 +543,7 @@ function login(e) {
     return;
   }
   S.user = a;
+  S.chat = true;
   S.city = a.admin ? Object.keys(GEO)[0] : a.org;
   S.view = "dash";
   S.mode = "month";
@@ -597,6 +601,8 @@ listen("click", (e) => {
   if ((el = t.closest("[data-view]"))) {
     if (el.dataset.view === "logs" && !S.user.admin) return;
     S.view = el.dataset.view;
+    if(S.view === "regions") {S.chat=false;S.source="db1";}
+    if(S.view === "dash") S.chat=true;
     log("조회", TITLES[S.view] + " 화면");
     render();
     return;
@@ -738,14 +744,7 @@ $("#csend").onsubmit = (e) => {
   send($("#cin").value);
 };
 
-/* 로그인 화면 배경: 실제 경계 실루엣 */
-$("#lmaps").innerHTML = Object.keys(GEO)
-  .map((c) => {
-    const g = GEO[c];
-    return `<svg viewBox="0 0 ${g.w} ${g.h}" aria-hidden="true">${g.units.map((u) => `<path d="${u.d}"/>`).join("")}</svg>`;
-  })
-  .join("");
-
 $("#assistant-mascot").innerHTML = detectiveSVG();
+$("#login-bomi").innerHTML = detectiveSVG();
 
 restoreUI();

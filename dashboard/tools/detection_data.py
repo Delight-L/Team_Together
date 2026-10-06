@@ -6,7 +6,7 @@ from statistics import median
 import streamlit as st
 
 
-METRICS = Path(__file__).with_name("data") / "two_year_dong_metrics.json"
+METRICS = Path(__file__).resolve().parents[1] / "data" / "two_year_dong_metrics.json"
 FIELDS = ("low_comm", "low_weekday", "low_holiday", "low_both", "contacts", "weekday_moves", "holiday_moves")
 
 

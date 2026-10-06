@@ -1,5 +1,5 @@
 """Match saved signals to welfare resource descriptions."""
-from dashboard.missions import service_candidates, service_key
+from db.mission_store import service_candidates, service_key
 
 MATCH_RULES = [
     ("사회참여·교류", ["유동", "외출", "활동", "집체류", "연락"], ["사회참여", "교류", "모임", "고립", "안부", "방문", "문화", "여가"]),

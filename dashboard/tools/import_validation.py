@@ -1,6 +1,6 @@
 """검증입력 엑셀의 확인된 2025년 동·월 실적을 대시보드 JSON으로 가져온다.
 
-실행: python -m dashboard.import_validation <2025_동별_검증입력_청구대응표.xlsx>
+실행: python -m dashboard.tools.import_validation <2025_동별_검증입력_청구대응표.xlsx>
 """
 import argparse
 import json
@@ -9,8 +9,8 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
-from dashboard.detection_data import METRICS
-from dashboard.validation_data import ACTUAL_FIELDS, VALIDATION_FILE
+from dashboard.tools.detection_data import METRICS
+from dashboard.tools.validation_data import ACTUAL_FIELDS, VALIDATION_FILE
 
 
 HEADERS = (

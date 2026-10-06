@@ -4,16 +4,15 @@
 
 <div id="login" class="login">
   <div class="lhero">
-    <div style="position:relative">
-      <h1>고립 위험이 커지는 동네를<br>매일 먼저 확인합니다</h1>
-      <p>에이전트가 분석한 지역별 변화 근거를 확인하고, 실제 복지사업을 검토한 뒤 결과 보고서를 작성하는 담당자 업무 화면입니다.</p>
-    </div>
-    <div class="lmaps" id="lmaps"></div>
-    <div class="lnote">저장된 분석 결과 확인 → 사업 검토 → 결과 보고</div>
+    <div class="login-brand">WELFIND · 복지탐정</div>
+    <div class="login-copy"><span class="login-eyebrow">지역의 작은 변화를 발견하는 파트너</span><h1>보미와 함께,<br>더 따뜻한 복지를<br>시작해요.</h1><p>보이지 않는 고립의 신호를 먼저 찾아<br>필요한 지원으로 연결합니다.</p></div>
+    <div id="login-bomi" class="login-bomi"></div>
+    <div class="login-bubble">안녕하세요, 보미예요!<br>이번 달 우리 동네를 함께 살펴볼까요?</div>
+    <div class="lnote">발견하기 &nbsp; → &nbsp; 분석하기 &nbsp; → &nbsp; 연결하기</div>
   </div>
   <div class="lform">
     <form class="lcard" id="lform" autocomplete="off" novalidate>
-      <h2>담당자 로그인</h2>
+      <span class="login-eyebrow">복지탐정 업무 공간</span><h2>반갑습니다, 담당자님</h2>
       <p class="sub">소속을 선택하고 계정으로 로그인하세요.</p>
       <label class="fld"><span>소속</span><select id="lorg"><option value="">소속 선택</option><option>강남구</option><option>춘천시</option><option>전체 관리자</option></select></label>
       <label class="fld"><span>아이디</span><input id="lid" type="text" autocomplete="username"></label>
@@ -44,6 +43,7 @@
     </div>
   </aside>
 </div>
+<dialog id="region-dialog" class="region-dialog" aria-labelledby="region-dialog-title"><div id="region-dialog-content"></div></dialog>
 <div id="tip" class="tip" hidden></div>
 
 </div>

@@ -3,7 +3,7 @@ r"""사회적 고립 위험도를 살펴보는 Streamlit 대시보드.
 실행: 프로젝트 최상위에서 python -m streamlit run main.py
 
 수정 위치
-  데이터: data/*.csv / settings.py / data_utils.py
+  데이터: data/*.csv / common.py
   색·여백·배치: ui/style.css / ui/layout.html
   그래프 종류: ui/charts.js, ui/dashboard.js의 mapSVG·detailHTML·viewAnalysis
   메뉴·화면·클릭: ui/dashboard.js
@@ -15,7 +15,7 @@ r"""사회적 고립 위험도를 살펴보는 Streamlit 대시보드.
 # 1. 라이브러리와 설정 가져오기
 # ============================================================
 import streamlit as st
-from dashboard.settings import (
+from dashboard.common import (
     APP_TITLE,
     RISK_FILE,
     MAP_FILE,
@@ -26,15 +26,12 @@ from dashboard.settings import (
     THRESHOLDS,
     DEMO_ACCOUNTS,
 )
-from dashboard.data_utils import load_risk_data, load_boundaries
+from dashboard.common import load_risk_data, load_boundaries
 from dashboard.design_ui import render_dashboard
 
 
 def render_app():
     """최상위 진입점에서 호출하는 대시보드 화면."""
-    # ============================================================
-    # 2. 화면 설정 — 전체 너비·높이 사용
-    # ============================================================
     st.set_page_config(
         page_title="복지탐정 AI · 분석·사업 검토·보고",
         #page_title="복지탐정 AI · 지역 복지 미션",
@@ -54,9 +51,6 @@ def render_app():
     </style>
     """)
 
-    # ============================================================
-    # 3. CSV 읽기 — 기존 파일을 교체하면 화면 데이터도 변경
-    # ============================================================
     try:
         risk_data = load_risk_data(RISK_FILE, RISK_FILE.stat().st_mtime_ns)
         group_data = load_boundaries(GROUP_FILE, GROUP_FILE.stat().st_mtime_ns)
@@ -66,9 +60,6 @@ def render_app():
         st.info("data 폴더와 README.md의 열 설명을 확인해 주세요.")
         st.stop()
 
-    # ============================================================
-    # 4. 날짜 범위 / 지도 자료 준비
-    # ============================================================
     start_date = risk_data["date"].min().strftime("%Y-%m-%d")
     end_date = risk_data["date"].max().strftime("%Y-%m-%d")
     months = sorted(risk_data["date"].dt.strftime("%Y-%m").unique().tolist())
@@ -85,21 +76,12 @@ def render_app():
         selected_geometry[city] = geometry[city]
     geometry = selected_geometry
 
-    # ============================================================
-    # 5. 날짜별 요인 → 화면 자료로 변환
-    # ============================================================
     # 화면에서 가중치를 바꿀 때 이 원자료로 새로운 위험도를 계산합니다.
     risk_rows = risk_data[["date", "city", "district", *FACTORS]].copy()
     risk_rows["date"] = risk_rows["date"].dt.strftime("%Y-%m-%d")
     risk_records = risk_rows.values.tolist()
 
-    # ============================================================
-    # 6. 지역·성별·연령대 월별 자료는 group_signals.json에서 전달합니다.
-    # ============================================================
 
-    # ============================================================
-    # 7. 기본 가중치 / 요인 이름 / 시연 계정
-    # ============================================================
     accounts = []
     for account_id, account in DEMO_ACCOUNTS.items():
         if account["admin"]:
@@ -141,22 +123,19 @@ def render_app():
         "accounts": accounts,
     }
 
-    # ============================================================
-    # 8. 대시보드 표시
-    # ============================================================
     # layout.html: 로그인·메뉴·챗봇 뼈대 / style.css: 색·간격·카드 배치
     # dashboard.js: 화면 생성·지도 클릭 / charts.js: 추이 그래프
     # data.js: 날짜 조회·월평균·위험 점수 계산
-    from dashboard.pipeline import load_analysis2_data
-    from dashboard.operations import handle_request
+    from db.analysis_repository import load_analysis2_data
+    from dashboard.dialogs import handle_request
 
     try:
         db_data = load_analysis2_data()
     except (OSError, ValueError) as error:
         st.error(f"version11 분석 결과를 읽지 못했습니다: {error}")
-        st.info("version11 폴더에서 python main.py --no-download를 실행해 결과 CSV를 생성하세요.")
+        st.info("루트에서 python main.py --analysis --no-download를 실행해 결과 CSV를 생성하세요.")
         st.stop()
-    from dashboard.missions import load_all
+    from db.mission_store import load_all
     payload["missions"] = load_all()
     payload["db1"] = db_data
     payload["notice"] = st.session_state.get("operation_notice", "")

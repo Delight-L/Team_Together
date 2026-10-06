@@ -1,6 +1,6 @@
 """동·월별 탐지 결과와 공식 2025년 사업 계획의 연결 근거를 전수 기록한다.
 
-실행: python -m dashboard.recommendation_audit
+실행: python -m dashboard.tools.recommendation_audit
 """
 import json
 from collections import Counter
@@ -8,12 +8,12 @@ from pathlib import Path
 
 import streamlit as st
 
-from dashboard.detection_data import METRICS, load_detection_rows
-from dashboard.policy_data import POLICY_FILE, load_policy_plans
+from dashboard.tools.detection_data import METRICS, load_detection_rows
+from dashboard.tools.policy_data import POLICY_FILE, load_policy_plans
 
 
-AUDIT_FILE = Path(__file__).with_name("data") / "policy_recommendation_audit_2025.json"
-SUMMARY_FILE = Path(__file__).with_name("data") / "policy_recommendation_audit_2025.md"
+AUDIT_FILE = Path(__file__).resolve().parents[1] / "data" / "policy_recommendation_audit_2025.json"
+SUMMARY_FILE = Path(__file__).resolve().parents[1] / "data" / "policy_recommendation_audit_2025.md"
 
 
 def decision(row: dict, plan: dict) -> dict:

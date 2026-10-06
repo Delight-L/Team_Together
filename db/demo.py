@@ -5,7 +5,7 @@ import streamlit as st
 
 @st.cache_data(show_spinner=False)
 def load_demo_analysis():
-    from dashboard.pipeline import monthly_upload, records, DETECTION_FILE
+    from db.analysis_repository import monthly_upload, records, DETECTION_FILE
     source = DETECTION_FILE
     content = source.read_bytes()
     prepared = monthly_upload(content, source.name)

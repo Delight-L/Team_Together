@@ -5,7 +5,7 @@ function puzzleIcon() {
   return '<svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M12 4a4 4 0 1 1 8 0v3h5a3 3 0 0 1 3 3v4h-3a4 4 0 1 0 0 8h3v5a3 3 0 0 1-3 3h-5v-3a4 4 0 1 0-8 0v3H7a3 3 0 0 1-3-3v-5H1a4 4 0 0 1 0-8h3v-4a3 3 0 0 1 3-3h5z"/></svg>';
 }
 function detectiveSVG() {
-  return `<img class="brand-character" src="${BOOT.brand?.character || ''}" alt="복지탐정 캐릭터"/>`;
+  return `<img class="brand-character" src="${BOOT.brand?.character || ''}" alt="복지탐정 보미"/>`;
 }
 
 function missionRows() {

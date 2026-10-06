@@ -5,7 +5,7 @@ import sqlite3
 from pathlib import Path
 from datetime import datetime
 
-LEGACY_STORE = Path(__file__).resolve().parent / "data" / "mission_records.sqlite3"
+LEGACY_STORE = Path(__file__).resolve().parents[1] / "dashboard" / "data" / "mission_records.sqlite3"
 STORE = Path(__file__).resolve().parents[1] / "db" / "runtime" / "mission_records.sqlite3"
 STEPS = ["분석 확인", "근거 검토·질의", "사업 매칭 검토", "보고서 완료"]
 WORKFLOW_VERSION = 3
@@ -114,7 +114,7 @@ def save_event(request, step, record=None):
 def service_candidates(city):
     """DB2의 검토된 이용 범위로 조회. 게시 지역을 이용 자격으로 간주하지 않습니다."""
     from sqlalchemy import text
-    from dashboard.pipeline import get_engine
+    from db.analysis_repository import get_engine
     region = {"강남구": "gangnam", "춘천시": "chuncheon"}.get(city)
     if not region:
         return []
