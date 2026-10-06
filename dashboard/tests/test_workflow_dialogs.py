@@ -6,6 +6,32 @@ from streamlit.testing.v1 import AppTest
 from db import mission_store as missions
 
 class DialogTests(unittest.TestCase):
+    def test_csv_analysis_open_saves_real_evidence_and_source(self):
+        from db.analysis_repository import load_analysis2_data
+        from dashboard.dialogs import handle_request
+        data = load_analysis2_data()
+        self.assertEqual(data["runId"], data["runs"][0]["run_id"])
+        row = data["assessment"][-1]
+        request = {"action":"open_analysis", "user":{"id":"gangnam01"}, "city":"강남구",
+                   "district":row["행정동명"], "month":row["기준연월"]}
+        with tempfile.TemporaryDirectory() as folder, patch.object(missions,"STORE",Path(folder)/"workflow.db"), patch("streamlit.rerun"):
+            handle_request(request, data)
+            item = missions.load_all()[missions.identity(request)]
+            self.assertEqual(item["analysis_run_id"], data["runId"])
+            self.assertIn(data["runs"][0]["source_name"], item["analysis_source"])
+            self.assertTrue(item["analysis_evidence"])
+            self.assertEqual(item["done"], [0])
+
+    def test_legacy_run_without_id_does_not_crash(self):
+        from dashboard.dialogs import handle_request
+        request = {"action":"open_analysis", "user":{"id":"gangnam01"}, "city":"강남구",
+                   "district":"삼성1동", "month":"2025-12"}
+        data = {"runId":"legacy-run", "runs":[{"kind":"monthly"}],
+                "assessment":[{"행정동명":"삼성1동", "기준연월":"2025-12"}]}
+        with tempfile.TemporaryDirectory() as folder, patch.object(missions,"STORE",Path(folder)/"workflow.db"), patch("streamlit.rerun"):
+            handle_request(request, data)
+            self.assertEqual(missions.load_all()[missions.identity(request)]["analysis_run_id"], "legacy-run")
+
     def test_review_then_report_through_forms(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(missions,"STORE",Path(folder)/"workflow.db"):
             request={"user":{"id":"gangnam01"},"city":"강남구","district":"역삼1동","month":"2025-12"}

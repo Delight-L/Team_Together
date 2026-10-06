@@ -150,7 +150,7 @@ def handle_request(request, db_data):
         try:
             if not rows or not db_data.get("runId"):
                 raise ValueError("선택 지역의 실제 DB1 분석 결과가 없습니다.")
-            run = next((r for r in db_data.get("runs",[]) if r["run_id"] == db_data["runId"]),{})
+            run = next((r for r in db_data.get("runs",[]) if r.get("run_id") == db_data["runId"]),{})
             save_event(request,0,{"run_id":db_data["runId"],"evidence":rows,"source_note":f"{run.get('source_name','DB1')} / {run.get('period','')} / 분석 버전 {db_data['runId']}"})
         except ValueError as error:
             st.session_state.operation_notice = str(error)

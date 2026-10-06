@@ -108,12 +108,13 @@ def load_analysis2_data():
 def _load_analysis2_data(modified_ns):
     """DB 적재 없이 version11의 저장된 분석 결과를 읽습니다."""
     prepared = monthly_upload(DETECTION_FILE.read_bytes(), DETECTION_FILE.name)
+    run_id = "analysis2-" + str(modified_ns)
     return {
         "connected": True, "isDemo": False, "source": "Analysis2 CSV",
-        "runId": "analysis2-" + str(DETECTION_FILE.stat().st_mtime_ns),
+        "runId": run_id,
         "assessment": records(prepared["assessment"]),
         "signals": records(prepared["signals"]), "alerts": records(prepared["alerts"]),
-        "activity": [], "runs": [{"kind": "monthly", "source_name": str(DETECTION_FILE),
+        "activity": [], "runs": [{"run_id": run_id, "kind": "monthly", "source_name": str(DETECTION_FILE),
             "period": prepared["period"], "created_at": "CSV 결과", "rule_version": "analysis2-v11"}],
     }
 
