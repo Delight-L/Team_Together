@@ -20,24 +20,24 @@ from common.config import (
 BASE_DIR = Path(__file__).resolve().parents[1]
 
 INPUT_PATH = (
-    BASE_DIR / "gangnam_analysis2_feature_table_2022_2025.csv"
+    BASE_DIR / "data/reference/gangnam_analysis2_feature_table_2022_2025.csv"
 )
 
 CONTEXT_PATH = (
     BASE_DIR
-    / "reference"
+    / "data/reference"
     / "gangnam_analysis1_final_region_typology_2025H2.csv"
 )
 
 DETECTION_REFERENCE_PATH = (
     BASE_DIR
-    / "reference"
+    / "data/reference"
     / "gangnam_analysis2_detection_2022_2025.csv"
 )
 
 EVIDENCE_REFERENCE_PATH = (
     BASE_DIR
-    / "reference"
+    / "data/reference"
     / "gangnam_analysis2_evidence_card_2022_2025.csv"
 )
 
@@ -56,6 +56,8 @@ def compare_with_reference(actual, reference):
     numeric_columns = reference.select_dtypes(
         include=np.number
     ).columns
+    for column in numeric_columns:
+        np.testing.assert_allclose(actual[column],reference[column],atol=2e-12,rtol=1e-13,equal_nan=True,err_msg=column)
 
     other_columns = [
         col

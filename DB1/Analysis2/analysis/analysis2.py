@@ -299,10 +299,9 @@ def attach_signal_status(df: pd.DataFrame) -> pd.DataFrame:
     ).reset_index(drop=True)
 
     previous_signal = (
-        result.groupby(AREA_CODE_COLUMN)["any_signal"]
-        .shift(1)
-        .fillna(False)
-        .astype(bool)
+    result.groupby(AREA_CODE_COLUMN)["any_signal"]
+    .shift(1)
+    .eq(True)
     )
 
     result["signal_status"] = pd.NA
@@ -366,6 +365,8 @@ def attach_analysis1_context(
         right_on="adm_cd",
         validate="many_to_one",
     )
+    if result[["cluster","cluster_type"]].isna().any().any():
+        raise ValueError("Analysis1 Context is incomplete for Analysis2 area codes")
 
     return result
 

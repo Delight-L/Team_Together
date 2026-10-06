@@ -229,6 +229,12 @@ def validate_analysis2_input(df: pd.DataFrame) -> dict:
     # 최종 상태
     # --------------------------------------------------
 
+    if not errors:
+        from data.monthly_validation import validate_history
+        try:
+            validate_history(data)
+        except ValueError as exc:
+            errors.append(str(exc))
     status = "PASS" if not errors else "FAIL"
 
     return {

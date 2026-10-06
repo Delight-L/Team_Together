@@ -58,7 +58,7 @@ class Analysis1Config:
         }
     )
 
-    output_dir: Path = Path("data/results/analysis1")
+    output_dir: Path = Path("outputs/analysis1")
 
 
 CONFIG = Analysis1Config()

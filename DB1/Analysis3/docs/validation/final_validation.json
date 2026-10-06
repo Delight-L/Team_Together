@@ -1,0 +1,16 @@
+{
+  "tests": {
+    "Analysis1": 9,
+    "Analysis2": 16,
+    "Analysis3": 25,
+    "common_db": 6,
+    "total": 56
+  },
+  "existing_analysis1_analysis2_unchanged": true,
+  "integrity": "ok",
+  "integrated_rows": 132,
+  "detail_rows": 3960,
+  "signal_context_rows": 30,
+  "deployment_hashes_verified": true,
+  "actual_2026_data": false
+}

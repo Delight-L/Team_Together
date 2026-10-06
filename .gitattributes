@@ -1,0 +1,3 @@
+# Preserve delivered database, fixtures, exports and historical snapshots exactly.
+DB1/** -text
+archive/DB1_before_20261006/** -text

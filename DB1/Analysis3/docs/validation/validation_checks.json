@@ -1,0 +1,49 @@
+{
+  "a1_input": {
+    "rows": 22,
+    "unchanged": true
+  },
+  "a1_context": {
+    "rows": 22,
+    "unchanged": true
+  },
+  "a1_region_baseline": {
+    "rows": 22,
+    "unchanged": true
+  },
+  "a1_region_feature": {
+    "rows": 286,
+    "unchanged": true
+  },
+  "a1_change_detection": {
+    "rows": 0,
+    "unchanged": true
+  },
+  "a1_change_feature": {
+    "rows": 0,
+    "unchanged": true
+  },
+  "a2_feature": {
+    "rows": 1056,
+    "unchanged": true
+  },
+  "a2_detection": {
+    "rows": 132,
+    "unchanged": true
+  },
+  "a2_evidence": {
+    "rows": 1,
+    "unchanged": true
+  },
+  "db1_run": {
+    "rows": 7,
+    "unchanged": true
+  },
+  "samsung1_2025Q4": {
+    "compared_cells": 30,
+    "below_prior_min_cells": 15,
+    "above_prior_max_cells": 3
+  },
+  "details": 30,
+  "source_db_sha256": "90ff035c077f77c7130f0f405b5b4b65ed9fc4fe9d3503b4fff2fe5f532ebeb7"
+}

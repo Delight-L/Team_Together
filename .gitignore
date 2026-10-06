@@ -9,3 +9,21 @@ __pycache__/
 *.pyc
 DB1/Analysis1/docs/
 DB1/Analysis2/docs/
+# Current DB1: versioned fixtures, references, exports, docs and database
+!DB1/**/*.csv
+!DB1/**/*.xlsx
+!DB1/**/*.txt
+!DB1/Analysis1/docs/
+!DB1/Analysis1/docs/**
+!DB1/Analysis2/docs/
+!DB1/Analysis2/docs/**
+# Historical DB1 material is retained byte-for-byte
+!archive/DB1_before_20261006/**
+# Runtime-only files remain local
+DB1/**/__pycache__/
+DB1/**/.pytest_cache/
+DB1/**/*.pyc
+DB1/**/*.tmp
+DB1/outputs/db1.sqlite-wal
+DB1/outputs/db1.sqlite-shm
+DB1/outputs/db1.sqlite-journal
