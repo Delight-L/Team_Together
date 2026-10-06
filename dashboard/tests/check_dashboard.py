@@ -11,7 +11,7 @@ DASHBOARD_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(DASHBOARD_DIR.parent))
 
 from streamlit.testing.v1 import AppTest
-from dashboard.settings import (
+from dashboard.common import (
     BASE_DIR,
     RISK_FILE,
     MAP_FILE,
@@ -20,7 +20,7 @@ from dashboard.settings import (
     FACTOR_COLORS,
     THRESHOLDS,
 )
-from dashboard.data_utils import load_risk_data, load_boundaries
+from dashboard.common import load_risk_data, load_boundaries
 
 # 브라우저를 열지 않고 Python 코드와 컴포넌트 등록에 오류가 없는지 확인합니다.
 app = AppTest.from_file(str(DASHBOARD_DIR.parent / "main.py"), default_timeout=30).run()

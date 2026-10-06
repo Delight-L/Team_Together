@@ -63,14 +63,8 @@ assert.equal(
   null,
 );
 // 함수로 구성해 구문만 검사합니다. 화면 이벤트를 실행하지 않습니다.
-new Function(
-  fs.readFileSync(path.join(ui, "data.js"), "utf8") +
-    fs.readFileSync(path.join(ui, "charts.js"), "utf8") +
-    fs.readFileSync(path.join(ui, "responses.js"), "utf8") +
-    fs.readFileSync(path.join(ui, "workspace.js"), "utf8") +
-    fs.readFileSync(path.join(ui, "bridge.js"), "utf8") +
-    fs.readFileSync(path.join(ui, "dashboard.js"), "utf8"),
-);
+new Function(['data.js','charts.js','responses.js','workspace.js','map.js','chat.js','bridge.js','dashboard.js'].map(name=>fs.readFileSync(path.join(ui,name),'utf8')).join('\n'));
+
 console.log(
   JSON.stringify({
     calculationChecks: checked,

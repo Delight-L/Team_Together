@@ -4,6 +4,7 @@ Python: CSV 읽기·검사 / HTML·CSS·JS: 화면과 사용자 동작.
 main.py에서 전달한 데이터만 사용하며 새로운 샘플 수치를 만들지 않습니다.
 """
 
+import base64
 import hashlib
 import json
 from pathlib import Path
@@ -38,7 +39,6 @@ export default function(component) {
 
 JAVASCRIPT_END = """
     const cleanup = () => {
-    return () => {
         listeners.forEach(([type, handler]) => root.removeEventListener(type, handler));
         clearTimeout(weightTimer);
         if (root.dataset.version === BOOT.version) delete root.dataset.version;
@@ -55,6 +55,8 @@ UI_SCRIPT_FILES = [
     "charts.js",
     "responses.js",
     "workspace.js",
+    "map.js",
+    "chat.js",
     "bridge.js",
     "dashboard.js",
 ]
@@ -67,7 +69,7 @@ JAVASCRIPT = "\n".join(script_parts)
 _DASHBOARD = st.components.v2.component(
     "isolation_dashboard",
     html=read_ui("layout.html"),
-    css=read_ui("style.css"),
+    css=read_ui("style.css") + "\n" + read_ui("brand.css"),
     js=JAVASCRIPT,
     isolate_styles=True,  # 대시보드 CSS를 Streamlit 본체의 스타일과 분리합니다.
 )
@@ -76,6 +78,11 @@ _DASHBOARD = st.components.v2.component(
 def render_dashboard(payload):
     """Python 데이터를 화면에 전달합니다. 원래 딕셔너리는 변경하지 않습니다."""
     payload = dict(payload)
+    assets = UI_DIR.parents[1] / "ci"
+    payload["brand"] = {
+        name: "data:image/png;base64," + base64.b64encode((assets / filename).read_bytes()).decode("ascii")
+        for name, filename in [("logo", "welfind_logo.png"), ("character", "welfind_character.png")]
+    }
     component_state = st.session_state.get("isolation_dashboard", {})
     payload["savedUI"] = component_state.get("ui_state")
     payload_json = json.dumps(payload, ensure_ascii=False, sort_keys=True)

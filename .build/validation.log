@@ -1,0 +1,101 @@
+CHECK: . utf8 -m unittest discover -s chatbot/tests -v
+test_default_and_false_never_create_client (test_token_gate.TokenGateTests.test_default_and_false_never_create_client) ... ok
+test_explicit_opt_in_calls_once (test_token_gate.TokenGateTests.test_explicit_opt_in_calls_once) ... ok
+test_no_evidence_never_calls (test_token_gate.TokenGateTests.test_no_evidence_never_calls) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.003s
+
+OK
+
+CHECK: . utf8 -m unittest discover -s chatbot/data_assistant/tests -v
+test_all_evidence_card_records_are_explained (test_analysis_interpreter.AnalysisInterpreterTests.test_all_evidence_card_records_are_explained) ... ok
+test_negative_robust_z_is_visible (test_analysis_interpreter.AnalysisInterpreterTests.test_negative_robust_z_is_visible) ... ok
+test_context_character_limit_is_respected (test_data_catalog.DataCatalogTests.test_context_character_limit_is_respected) ... ok
+test_discovers_only_allowlisted_outputs (test_data_catalog.DataCatalogTests.test_discovers_only_allowlisted_outputs) ... ok
+test_missing_files_are_reported_without_failure (test_data_catalog.DataCatalogTests.test_missing_files_are_reported_without_failure) ... ok
+test_retrieval_prefers_matching_rows_and_respects_limits (test_data_catalog.DataCatalogTests.test_retrieval_prefers_matching_rows_and_respects_limits) ... ok
+test_all_signal_request (test_question_router.QuestionRouterTests.test_all_signal_request) ... ok
+test_methodology_request (test_question_router.QuestionRouterTests.test_methodology_request) ... ok
+test_unrelated_question_is_rejected (test_question_router.QuestionRouterTests.test_unrelated_question_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.025s
+
+OK
+
+CHECK: . utf8 -m unittest discover -s dashboard/tests -p test_*.py -v
+test_invalid_order_and_stale_report (test_missions.WorkflowTests.test_invalid_order_and_stale_report) ... ok
+test_legacy_completion_is_not_new_completion (test_missions.WorkflowTests.test_legacy_completion_is_not_new_completion) ... ok
+test_matching_uses_signal_evidence (test_missions.WorkflowTests.test_matching_uses_signal_evidence) ... ok
+test_old_workflow_migrates_without_losing_review (test_missions.WorkflowTests.test_old_workflow_migrates_without_losing_review) ... ok
+test_review_then_report_completes (test_missions.WorkflowTests.test_review_then_report_completes) ... ok
+test_review_then_report_through_forms (test_workflow_dialogs.DialogTests.test_review_then_report_through_forms) ... 2026-10-06 12:47:45.365 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-06 12:47:46.410 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 1.854s
+
+OK
+
+CHECK: . node dashboard/tests/check_workflow.cjs
+PASS: 지역 클릭 → 저장된 분석, 질의 전달, 매칭/승인/보고 단계 및 미연결 표시
+
+CHECK: . utf8 dashboard/tests/check_dashboard.py
+{"calculationChecks":40420,"syntax":"PASS","missingData":"PASS"}
+PASS: group signals, missing/partial months, filters, service gating, city-scoped status
+PASS: Python entry, CSV calculations, JavaScript syntax
+2026-10-06 12:47:48.739 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-10-06 12:47:48.740 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-10-06 12:47:48.741 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+
+CHECK: preprocessing\regional_features utf8 -m unittest discover -s tests -p test_*.py -v
+test_explicit_symlink_checked_before_resolve (test_preprocessor.ArchiveTests.test_explicit_symlink_checked_before_resolve) ... ok
+test_month_aware_identity_and_loose_limits (test_preprocessor.ArchiveTests.test_month_aware_identity_and_loose_limits) ... ok
+test_nested_and_duplicate (test_preprocessor.ArchiveTests.test_nested_and_duplicate) ... ok
+test_symlink (test_preprocessor.ArchiveTests.test_symlink) ... ok
+test_unsafe_and_corrupt_and_limits (test_preprocessor.ArchiveTests.test_unsafe_and_corrupt_and_limits) ... ok
+test_reproducible_custom_weather_failure_and_malformed_config (test_preprocessor.CliTests.test_reproducible_custom_weather_failure_and_malformed_config) ... ok
+test_bad_numeric_and_negative_weight (test_preprocessor.FeatureTests.test_bad_numeric_and_negative_weight) ... ok
+test_calendar (test_preprocessor.FeatureTests.test_calendar) ... ok
+test_missing_column_and_normalized_content_identity (test_preprocessor.FeatureTests.test_missing_column_and_normalized_content_identity) ... ok
+test_weighted_aggregation_and_structural_flag (test_preprocessor.FeatureTests.test_weighted_aggregation_and_structural_flag) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.766s
+
+OK
+
+CHECK: agents\regional_analysis\Analysis2 utf8 -c import runpy; runpy.run_path("tests/test_analysis2.py")["test_analysis2_reproduction"](); print("PASS: Analysis2 matches reference outputs")
+PASS: Analysis2 matches reference outputs
+
+CHECK: . utf8 main.py --analysis --no-download
+[실행] C:\Users\user\Desktop\Team_Together\.venv\Scripts\python.exe C:\Users\user\.codex\worktrees\welfind-dashboard\Team_Together\preprocessing\regional_types\main.py
+[��ó�� �Ϸ�]
+- �м�1 �Է�: outputs/analysis1_preprocessed/analysis1_input.csv
+- ���� ������: outputs/analysis1_preprocessed/analysis1_profile.csv
+- ����: ������ 22�� ��, ���� ����
+[실행] C:\Users\user\Desktop\Team_Together\.venv\Scripts\python.exe C:\Users\user\.codex\worktrees\welfind-dashboard\Team_Together\preprocessing\regional_features\main.py --no-download
+{
+  "status": "NO_NEW_DATA",
+  "baseline_month": "2025-12",
+  "downloaded": [],
+  "analysis": "SKIPPED"
+}
+[실행] C:\Users\user\Desktop\Team_Together\.venv\Scripts\python.exe C:\Users\user\.codex\worktrees\welfind-dashboard\Team_Together\agents\regional_analysis\Analysis2\run_analysis2.py
+===== ANALYSIS 2 =====
+Input validation: PASS
+Feature Table: (1056, 23)
+Analysis Result: (1056, 64)
+Detection Table: (770, 55)
+Evidence Card: (35, 29)
+Signals: 35
+Detection saved: C:\Users\user\.codex\worktrees\welfind-dashboard\Team_Together\agents\regional_analysis\Analysis2\outputs\gangnam_analysis2_detection_2022_2025.csv
+Evidence saved: C:\Users\user\.codex\worktrees\welfind-dashboard\Team_Together\agents\regional_analysis\Analysis2\outputs\gangnam_analysis2_evidence_card_2022_2025.csv
+[검증] Analysis2: PASS
+[보고서] C:\Users\user\.codex\worktrees\welfind-dashboard\Team_Together\agents\regional_analysis\analysis2_execution_report.json
+
+CHECK: . utf8 -c from streamlit.testing.v1 import AppTest; a=AppTest.from_file("chatbot/app.py").run(); assert not a.exception; a.segmented_control[0].set_value("분석 기준").run(); assert not a.exception; print("PASS: standalone chatbot menu")
+PASS: standalone chatbot menu
+2026-10-06 12:48:03.625 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.

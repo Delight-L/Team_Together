@@ -22,7 +22,7 @@ CREATE TABLE facility_example (
 ```
 
 ```python
-from db_init import engine
+from db.connection import engine
 from api_pipeline import save_api_data, load_api_data
 
 try:
@@ -60,7 +60,7 @@ finally:
 
 ```python
 import os
-from db_init import engine  # .env 설정을 읽습니다.
+from db.connection import engine  # .env 설정을 읽습니다.
 from api_pipeline import save_api_data
 
 def validate_welfare_response(data):

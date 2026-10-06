@@ -8,3 +8,6 @@ streamlit==1.64.0
 numpy>=1.26,<3
 openpyxl>=3.1.5,<4
 python-docx>=1.2,<2
+
+# Optional AI mode; local guidance works without credentials.
+google-genai>=1.0,<2
