@@ -11,20 +11,19 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import inspect, text
 
-from agent.risk_analysis_version1.analyzer import run_risk_analysis
-from agent.risk_analysis_version1.data_provider import (
-    validate_preprocessed_data,
-    resolve_risk_metrics,
-)
-from agent.risk_analysis_version1.region_context import REGION_CODE_CLUSTER_K3
-from agent.risk_analysis_version1.preprocessing_agent.preprocessor import (
-    read_csv,
-    preprocess_raw_dir,
-)
+import sys
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
+ANALYSIS_DIR = ROOT_DIR / "risk_analysis_version11(gemini_chatbot error edit4 easy talking)"
+DETECTION_FILE = ANALYSIS_DIR / "Analysis2/outputs/gangnam_analysis2_detection_2022_2025.csv"
+
+# 폴더 이름에 괄호와 공백이 있어 내부 전처리 폴더를 직접 연결합니다.
+if str(ANALYSIS_DIR) not in sys.path:
+    sys.path.insert(0, str(ANALYSIS_DIR))
+from risk_analysis_version11.preprocessing_agent1.preprocessor import preprocess_raw_dir
+
 SCHEMA = "db1"  # PostgreSQL에서 확인한 실제 스키마 이름입니다.
-RULE_VERSION = "risk-analysis-v1"
+RULE_VERSION = "analysis2-v11"
 
 
 def get_engine():
@@ -38,7 +37,7 @@ def now_text():
 
 
 def monthly_upload(content, filename):
-    """월별 행동 CSV/XLSX를 검사합니다. 원본 5종 전처리와 다른 입력입니다."""
+    """Analysis2 탐지 결과 CSV/XLSX를 읽고 화면용 자료로 변환합니다."""
     if Path(filename).suffix.lower() == ".xlsx":
         data = pd.read_excel(BytesIO(content), dtype={"행정동코드": str})
     else:
@@ -53,43 +52,69 @@ def monthly_upload(content, filename):
                 continue
         if data is None:
             raise ValueError("CSV 한글 인코딩을 읽지 못했습니다.")
-    identifiers = ["행정동코드", "행정동명", "기준연월"]
-    if all(column in data for column in identifiers):
-        for column in identifiers:
-            if (
-                data[column].isna().any()
-                or data[column].astype(str).str.strip().eq("").any()
-            ):
-                raise ValueError(f"{column}: 빈 값은 사용할 수 없습니다.")
-    data = validate_preprocessed_data(data)
-    if data.empty or data[["행정동코드", "행정동명", "기준연월"]].isna().any().any():
-        raise ValueError("행정동·기준월 값이 비어 있거나 자료가 없습니다.")
-    if not data["행정동코드"].isin(REGION_CODE_CLUSTER_K3).all():
-        raise ValueError(
-            "현재 시연은 강남구 행정동 코드 자료만 지원합니다. 다른 지역 자료는 별도 연결이 필요합니다."
-        )
-    for _, group in data.groupby("행정동코드"):
-        periods = pd.PeriodIndex(sorted(group["기준연월"]), freq="M")
-        if len(periods) > 1 and not np.all(np.diff(periods.asi8) == 1):
-            raise ValueError("동별 월이 연속되지 않습니다. 빠진 월을 확인하세요.")
-    metrics = resolve_risk_metrics(data)
+    return prepare_analysis2(data, Path(filename).name)
+
+
+def prepare_analysis2(data, source):
+    """version11이 계산한 결과를 화면에서 사용하는 열 이름으로 바꿉니다."""
+    required = ["date", "행정동코드", "행정동", "communication_signal", "mobility_signal", "any_signal"]
+    metrics = {
+        "call_contacts": ("전화 연락", "communication_signal"),
+        "text_contacts": ("문자 연락", "communication_signal"),
+        "weekday_move_count": ("평일 이동", "mobility_signal"),
+        "weekend_move_count": ("휴일 이동", "mobility_signal"),
+    }
     for metric in metrics:
-        values = pd.to_numeric(data[metric.column], errors="raise")
-        if not np.isfinite(values).all():
-            raise ValueError(f"{metric.column}: 빈 값·무한대는 사용할 수 없습니다.")
-        data[metric.column] = values
-    data = data[
-        ["행정동코드", "행정동명", "기준연월"] + [metric.column for metric in metrics]
-    ].copy()
-    result = run_risk_analysis(data)
+        required.extend([metric + "_log_change", metric + "_residual_change", metric + "_residual_change_expanding_rz"])
+    missing = [column for column in required if column not in data.columns]
+    if missing or data.empty:
+        raise ValueError("version11의 Analysis2 탐지 결과 CSV를 사용하세요. 누락 열: " + ", ".join(missing))
+    # 문자열 'False'를 bool()로 바꾸면 True가 되므로 명시적으로 검사합니다.
+    for column in ["communication_signal", "mobility_signal", "any_signal"]:
+        values = data[column].astype(str).str.lower()
+        if not values.isin(["true", "false"]).all():
+            raise ValueError(column + ": True 또는 False가 필요합니다.")
+        data[column] = values.eq("true")
+    data["행정동코드"] = data["행정동코드"].astype(str)
+    months = pd.to_datetime(data["date"], errors="raise").dt.strftime("%Y-%m")
+    if months.isna().any() or data.duplicated(["date", "행정동코드"]).any():
+        raise ValueError("날짜가 비어 있거나 동·월 결과가 중복되었습니다.")
+    rows = []
+    for metric, (label, signal_column) in metrics.items():
+        frame = pd.DataFrame()
+        frame["행정동코드"] = data["행정동코드"]
+        frame["행정동명"] = data["행정동"]
+        frame["기준연월"] = months
+        frame["metric_label"] = label
+        frame["change_pct"] = np.expm1(pd.to_numeric(data[metric + "_log_change"])) * 100
+        frame["relative_change_pp"] = pd.to_numeric(data[metric + "_residual_change"]) * 100
+        frame["risk_robust_z"] = pd.to_numeric(data[metric + "_residual_change_expanding_rz"])
+        frame["has_enough_history"] = frame["risk_robust_z"].notna()
+        frame["is_risk_signal"] = data[signal_column]
+        frame["explanation"] = frame["행정동명"] + " " + label + " · Analysis2 탐지 결과"
+        frame["context_note"] = "지역 집계자료의 변화이며 개인의 고립 판정이 아닙니다."
+        rows.append(frame)
+    assessment = pd.concat(rows, ignore_index=True)
+    alerts = data.loc[data["any_signal"], ["date", "행정동코드", "행정동"]].copy()
     return {
-        "kind": "monthly",
-        "source": Path(filename).name,
-        "data": data,
-        "assessment": result.assessment,
-        "signals": result.signals,
-        "alerts": result.region_alerts,
-        "period": f"{data['기준연월'].min()} ~ {data['기준연월'].max()}",
+        "kind": "monthly", "source": source, "data": data,
+        "assessment": assessment,
+        "signals": assessment[assessment["is_risk_signal"]].copy(),
+        "alerts": alerts,
+        "period": months.min() + " ~ " + months.max(),
+    }
+
+
+def load_analysis2_data():
+    """DB 적재 없이 version11의 저장된 분석 결과를 읽습니다."""
+    prepared = monthly_upload(DETECTION_FILE.read_bytes(), DETECTION_FILE.name)
+    return {
+        "connected": True, "isDemo": False, "source": "Analysis2 CSV",
+        "runId": "analysis2-" + str(DETECTION_FILE.stat().st_mtime_ns),
+        "assessment": records(prepared["assessment"]),
+        "signals": records(prepared["signals"]), "alerts": records(prepared["alerts"]),
+        "activity": [], "runs": [{"kind": "monthly", "source_name": str(DETECTION_FILE),
+            "period": prepared["period"], "created_at": "CSV 결과", "rule_version": "analysis2-v11"}],
     }
 
 

@@ -112,3 +112,13 @@ DB1 미연결 시 저장소 예제 행동자료를 분석한 시연 모드를 �
 기록과 파일은 dashboard/data/mission_records.sqlite3에 저장됩니다. 실행은 프로젝트의 run_dashboard.cmd를 사용하세요.
 
 검증: `python -m unittest dashboard.tests.test_missions dashboard.tests.test_workflow_dialogs -q` 및 `node dashboard/tests/check_workflow.cjs`.
+
+
+## version11 연결 (2026-10-06)
+
+최상위 폴더에서 `.venv/Scripts/python.exe main.py`로 실행합니다.
+대시보드는 `risk_analysis_version11(gemini_chatbot error edit4 easy talking)/Analysis2/outputs/gangnam_analysis2_detection_2022_2025.csv`를 직접 읽습니다.
+DB 적재 없이 기존 탐지 결과를 지도·월별 분석에 표시합니다. 분석 규칙은 version11 결과를 그대로 사용합니다.
+결과를 갱신하려면 version11 폴더에서 `../.venv/Scripts/python.exe main.py --no-download`를 실행한 뒤 대시보드를 새로고침하세요.
+관리자 월별 업로드에는 원본 행동자료 대신 위 탐지 결과 CSV를 사용합니다.
+통계 기반 분석 연결까지 적용했으며 Gemini 챗봇 별도 연결은 포함하지 않습니다.

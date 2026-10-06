@@ -1,6 +1,5 @@
 // 버튼 요청만 Python으로 보냅니다. 무거운 계산과 DB 반영은 서버가 담당합니다.
 function requestOperation(action, extra = {}) {
-function requestOperation(action) {
   const snapshot = {
     state: { ...S, user: S.user ? { id: S.user.id } : null },
     responses: R,
@@ -111,7 +110,6 @@ function viewActualOverview() {
     .join("");
   const latest = (BOOT.db1?.runs || []).find((run) => run.kind === "monthly");
   return (BOOT.db1?.isDemo ? `<div class="note">시연 모드 · DB 미연결 상태에서 저장소 예제 분석과 가상 사업으로 전체 흐름을 테스트합니다. 승인·보고서는 실제 업무와 별도로 저장됩니다.</div>` : "") + `<div class="overview-intro"><h2>${esc(S.city)} 이번 달 한눈에 보기</h2><span class="hint">${esc(S.month)} · 최근 월별 자료 반영 ${esc(latest?.created_at?.slice(0, 10) || "없음")}</span></div>
-  return `<div class="overview-intro"><h2>${esc(S.city)} 이번 달 한눈에 보기</h2><span class="hint">${esc(S.month)} · 최근 월별 자료 반영 ${esc(latest?.created_at?.slice(0, 10) || "없음")}</span></div>
   <div class="overview-metrics">${[
     ["확인 후보 지역", `${candidates.length}곳`, `${names.length}개 동 분석`],
     [
@@ -129,7 +127,6 @@ function viewActualOverview() {
     .join("")}</div>
   <div class="overview-grid"><section class="card"><header><h2>전체 지역 현황</h2><span class="pill">DB1 분석</span></header><div class="cbody"><div class="actual-map overview-map"><svg viewBox="0 0 ${geometry.w} ${geometry.h}" aria-label="전체 지역 요약 지도">${map}</svg></div><p class="hint">연한 파랑: 후보 없음 · 주황: 1개 · 분홍: 2개 이상 · 회색: 자료 없음<br>지역을 누르면 상세 분석으로 이동합니다.</p></div></section>
   <section class="card"><header><h2>우선 확인할 지역 ${Math.min(3, ranking.length)}곳</h2></header><div class="cbody overview-priorities">${
-  <section class="card"><header><h2>먼저 확인할 지역</h2></header><div class="cbody overview-priorities">${
     ranking
       .map(
         (item, index) =>
@@ -142,7 +139,6 @@ function viewActualOverview() {
       )
       .join("") || "<p>현재 기준을 통과한 변화 후보가 없습니다.</p>"
   }<p class="hint">후보 지표 수를 기준으로 정렬했습니다. 개인의 위험도 순위와 구분합니다.</p><div class="overview-next"><b>다음 업무</b><button class="btn ghost" data-view="analysis">지역별 근거 확인</button><button class="btn ghost" data-view="actions">진행 중인 업무 보기</button></div></div></section></div>`;
-  }<p class="hint">후보 지표 수를 기준으로 정렬했습니다. 개인의 위험도 순위와 구분합니다.</p><div class="overview-next"><b>다음 업무</b><button class="btn ghost" data-view="analysis">지역별 근거 확인</button><button class="btn ghost" data-view="actions">후속 업무 보드 보기</button><button class="btn" data-operation="report">검토 보고서 작성</button><small class="hint">후속 업무 보드는 시연 자료입니다.</small></div></div></section></div>`;
 }
 
 listen("click", (event) => {
@@ -153,12 +149,6 @@ listen("click", (event) => {
 function viewActualAnalysis() {
   const frozen = currentMission().analysis_evidence;
   const all = frozen || (BOOT.db1?.assessment || []).filter(
-  S.sel = target.dataset.overviewDistrict;
-  S.view = "analysis";
-  render();
-});
-function viewActualAnalysis() {
-  const all = (BOOT.db1?.assessment || []).filter(
     (row) => row["기준연월"] === S.month,
   );
   const rows = S.city === "강남구" ? all : [];
@@ -192,13 +182,12 @@ function viewActualAnalysis() {
   const detail = selected
     .map(
       (row) =>
-        `<tr><td>${esc(row["행정동명"])}</td><td>${esc(row.metric_label)}</td><td>${row.change_pct === null ? "자료 없음" : row.change_pct.toFixed(1) + "%"}</td><td>${row.relative_change_pp === null ? "자료 없음" : row.relative_change_pp.toFixed(1) + "%p"}</td><td>${row.risk_robust_z === null ? "산출 불가" : row.risk_robust_z.toFixed(2)}</td><td>${!row.has_enough_history ? "판단 보류" : row.is_risk_signal ? "확인 후보" : "기준 미해당"}</td></tr>`,
+        `<tr><td>${esc(row["행정동명"])}</td><td>${esc(row.metric_label)}</td><td>${row.change_pct === null ? "자료 없음" : row.change_pct.toFixed(1) + "%"}</td><td>${row.relative_change_pp === null ? "자료 없음" : row.relative_change_pp.toFixed(1)}</td><td>${row.risk_robust_z === null ? "산출 불가" : row.risk_robust_z.toFixed(2)}</td><td>${!row.has_enough_history ? "판단 보류" : row.is_risk_signal ? "확인 후보" : "기준 미해당"}</td></tr>`,
     )
     .join("");
   const item=currentMission();
   const next = S.sel ? `<section class="card workflow-next"><header><h2>${esc(S.sel)} · 다음 업무</h2></header><div class="cbody">${workflowProgress(item)}${BOOT.notice?`<div class="note">${esc(BOOT.notice)}</div>`:""}<p class="hint">업무에 저장된 분석 버전: ${esc(item.analysis_run_id || BOOT.db1?.runId || "없음")}</p><p>추가 질문은 오른쪽 도우미에서 할 수 있습니다. 질문 없이도 근거를 확인한 뒤 사업 검토로 진행할 수 있습니다.</p>${item.done.includes(0) && !item.done.includes(1)?'<button class="btn" data-confirm-evidence>분석 근거 확인 완료</button>':""}${item.done.includes(1)?'<button class="btn" data-view="users">분석 결과에 맞는 사업 검토 →</button>':""}${!item.done.includes(0) && selected.length?'<button class="btn" data-start-current>이 분석 결과로 업무 시작</button>':""}</div></section>` : '<div class="note">우선 확인 지역 또는 지도에서 행정동을 선택하면 상세 근거와 다음 업무가 표시됩니다.</div>';
-  return next + `<section class="card"><header><h2>반영된 월별 변화 분석</h2><span class="pill">DB1 · ${esc(S.month)}</span></header><div class="cbody"><p>변화 후보 <b>${signals.length}건</b> · 후보 지역 <b>${[...counts.values()].filter((count) => count > 0).length}곳</b> · 과거 비교 가능한 지표 <b>${enough}/${rows.length}</b></p><p class="hint">0~100 시연 점수와 구분한 분석 결과입니다. 회색: 자료 없음 · 연한 파랑: 후보 없음 · 주황: 1개 지표 후보 · 분홍: 2개 이상. 이력 부족은 아래 표에서 판단 보류로 표시합니다.</p><div class="actual-map"><svg viewBox="0 0 ${geometry.w} ${geometry.h}" role="group" aria-label="DB1 변화 후보 지도">${map}</svg></div><label>상세 지역 <select data-actual-district><option value="">전체 지역</option>${names.map((name) => `<option ${name === S.sel ? "selected" : ""}>${esc(name)}</option>`).join("")}</select></label><div class="tblwrap"><table class="tbl"><thead><tr><th>동</th><th>지표</th><th>전월 변화</th><th>상대 변화</th><th>Robust Z</th><th>판정</th></tr></thead><tbody>${detail || '<tr><td colspan="6">선택 지역·월의 반영 자료가 없습니다.</td></tr>'}</tbody></table></div><details><summary>적용 분석 기준</summary><p>위험 방향 상대 변화 5%p 이상과 Robust Z-score 2.5 이상을 모두 통과해야 후보입니다. 과거 변화 3회가 필요하며 MAD가 0이면 판단을 보류합니다. 후보 없음은 개인의 고립 없음 판정이 아닙니다.</p></details></div></section>`;
-  return `<section class="card"><header><h2>반영된 월별 변화 분석</h2><span class="pill">DB1 · ${esc(S.month)}</span></header><div class="cbody"><p>변화 후보 <b>${signals.length}건</b> · 후보 지역 <b>${[...counts.values()].filter((count) => count > 0).length}곳</b> · 과거 비교 가능한 지표 <b>${enough}/${rows.length}</b></p><p class="hint">0~100 시연 점수와 구분한 분석 결과입니다. 회색: 자료 없음 · 연한 파랑: 후보 없음 · 주황: 1개 지표 후보 · 분홍: 2개 이상. 이력 부족은 아래 표에서 판단 보류로 표시합니다.</p><div class="actual-map"><svg viewBox="0 0 ${geometry.w} ${geometry.h}" role="group" aria-label="DB1 변화 후보 지도">${map}</svg></div><label>상세 지역 <select data-actual-district><option value="">전체 지역</option>${names.map((name) => `<option ${name === S.sel ? "selected" : ""}>${esc(name)}</option>`).join("")}</select></label><div class="tblwrap"><table class="tbl"><thead><tr><th>동</th><th>지표</th><th>전월 변화</th><th>상대 변화</th><th>Robust Z</th><th>판정</th></tr></thead><tbody>${detail || '<tr><td colspan="6">선택 지역·월의 반영 자료가 없습니다.</td></tr>'}</tbody></table></div><details><summary>적용 분석 기준</summary><p>위험 방향 상대 변화 5%p 이상과 Robust Z-score 2.5 이상을 모두 통과해야 후보입니다. 과거 변화 3회가 필요하며 MAD가 0이면 판단을 보류합니다. 후보 없음은 개인의 고립 없음 판정이 아닙니다.</p></details></div></section>`;
+  return next + `<section class="card"><header><h2>반영된 월별 변화 분석</h2><span class="pill">DB1 · ${esc(S.month)}</span></header><div class="cbody"><p>변화 후보 <b>${signals.length}건</b> · 후보 지역 <b>${[...counts.values()].filter((count) => count > 0).length}곳</b> · 과거 비교 가능한 지표 <b>${enough}/${rows.length}</b></p><p class="hint">0~100 시연 점수와 구분한 분석 결과입니다. 회색: 자료 없음 · 연한 파랑: 후보 없음 · 주황: 1개 지표 후보 · 분홍: 2개 이상. 이력 부족은 아래 표에서 판단 보류로 표시합니다.</p><div class="actual-map"><svg viewBox="0 0 ${geometry.w} ${geometry.h}" role="group" aria-label="DB1 변화 후보 지도">${map}</svg></div><label>상세 지역 <select data-actual-district><option value="">전체 지역</option>${names.map((name) => `<option ${name === S.sel ? "selected" : ""}>${esc(name)}</option>`).join("")}</select></label><div class="tblwrap"><table class="tbl"><thead><tr><th>동</th><th>지표</th><th>전월 변화</th><th>상대 로그 변화 × 100</th><th>Robust Z</th><th>판정</th></tr></thead><tbody>${detail || '<tr><td colspan="6">선택 지역·월의 반영 자료가 없습니다.</td></tr>'}</tbody></table></div><details><summary>적용 분석 기준</summary><p>version11 Analysis2 결과를 표시합니다. 전화·문자 또는 평일·휴일 이동 지표의 Robust Z가 모두 -2.0 이하이면 해당 묶음을 후보로 표시합니다. 과거 이력은 최소 12회이며, 상대 변화 열은 공통 변화를 뺀 로그 변화량 × 100입니다. 후보 없음은 개인의 고립 없음 판정이 아닙니다.</p></details></div></section>`;
 }
 
 listen("click", (event) => {
@@ -220,7 +209,3 @@ listen("change", (event) => {
 });
 
 listen("click", event=>{if(event.target.closest("[data-start-current]")) requestOperation("open_analysis");});
-    S.sel = event.target.value || null;
-    renderPage();
-  }
-});

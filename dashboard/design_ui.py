@@ -38,7 +38,6 @@ export default function(component) {
 
 JAVASCRIPT_END = """
     const cleanup = () => {
-    return () => {
         listeners.forEach(([type, handler]) => root.removeEventListener(type, handler));
         clearTimeout(weightTimer);
         if (root.dataset.version === BOOT.version) delete root.dataset.version;
