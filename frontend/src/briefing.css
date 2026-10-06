@@ -1189,3 +1189,221 @@
     margin: 3px 0 5px;
   }
 }
+
+
+/* 지도 높이와 후보 요약 높이를 맞추고, 신호등 세 칸은 같은 크기로 유지합니다. */
+.briefing-v2 {
+  grid-template-columns: minmax(0, 1fr) clamp(150px, 13vw, 200px);
+  grid-template-rows: minmax(320px, 1fr) 100px;
+  grid-template-areas: "map signals" "highlights highlights";
+  gap: 14px;
+  overflow: auto;
+}
+.briefing-v2 > .mission-map-card { grid-area: map; }
+.briefing-v2 > .mission-kpis {
+  grid-area: signals;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.briefing-v2 > .mission-highlights { grid-area: highlights; }
+.briefing-v2 .mission-kpi {
+  min-width: 0; min-height: 0;
+  flex-direction: column; justify-content: center; text-align: center;
+  gap: clamp(4px, 0.8vh, 10px); padding: 12px 10px;
+}
+.briefing-v2 .mission-kpi-icon { width: clamp(36px, 5vh, 54px); height: clamp(36px, 5vh, 54px); display: grid; }
+.briefing-v2 .mission-kpi > div > span { font-size: 12px; }
+.briefing-v2 .mission-kpi strong { font-size: clamp(28px, 3.8vh, 38px); line-height: 1.2; margin-top: 5px; }
+.briefing-v2 .mission-kpi p { display: block; font-size: 9px; line-height: 1.5; margin-top: 5px; }
+.briefing-v2 .mission-kpi-note { display: inline-block; position: static; font-size: 9px; padding: 4px 8px; }
+.briefing-v2 .mission-map-card > header { flex-wrap: wrap; gap: 6px; }
+.briefing-v2 .mission-map-card h2 { font-size: clamp(12px, 1.1vw, 17px); }
+.briefing-v2 .region-insight { width: min(290px, calc(100% - 24px)); box-shadow: 0 8px 30px #233c5626; z-index: 5; }
+.road-map { background: #f4f6f1; isolation: isolate; user-select: none; -webkit-user-select: none; }
+.road-map-canvas { position: absolute; inset: 0 0 34px; z-index: 0; font-family: inherit; }
+.directory-map .road-map-canvas { bottom: 0; }
+.road-map .leaflet-container { cursor: grab; }
+.road-map .leaflet-container.leaflet-drag-target { cursor: grabbing; }
+.road-map .leaflet-tile { -webkit-user-drag: none; }
+.road-map .leaflet-interactive { outline: none; }
+.road-map .leaflet-interactive:focus-visible { stroke: #215eb8; stroke-width: 4; }
+.road-map .leaflet-control-attribution { font-size: 8px; max-width: 100%; background: #ffffffed; line-height: 1.5; }
+.road-map .map-tools { z-index: 2; }
+.road-map .map-tools button { width: 34px; height: 34px; }
+.roadmap-district-label.leaflet-tooltip {
+  background: transparent; border: 0; box-shadow: none; color: #65778b;
+  font-size: 11px; font-weight: 600; text-shadow: 0 1px 2px white, 1px 0 2px white, -1px 0 2px white;
+}
+.roadmap-marker { background: none; border: 0; }
+.roadmap-pin { display: flex; align-items: flex-start; gap: 8px; padding: 0; text-align: left; border: 0; background: none; cursor: pointer; }
+.roadmap-pin-number { width: 38px; height: 45px; display: grid; place-items: center; flex-shrink: 0;
+  color: white; background: var(--pin-color); border: 3px solid white; border-radius: 50% 50% 50% 3px;
+  transform: rotate(-45deg); box-shadow: 0 3px 8px #21375825; font-size: 0;
+}
+.roadmap-pin-number::after { content: attr(data-number); transform: rotate(45deg); font-size: 18px; font-weight: 800; }
+.roadmap-pin-label { display: grid; gap: 4px; padding: 10px 12px; background: white; border: 1px solid #e5eaf0;
+  border-radius: 10px; box-shadow: 0 3px 12px #21375818; white-space: nowrap; }
+.roadmap-pin-label b { color: #213758; font-size: 13px; }
+.roadmap-pin-label small { color: var(--pin-color); font-size: 10px; }
+.roadmap-pin:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; border-radius: 8px; }
+.map-zoom-hint { position: absolute; z-index: 2; right: 12px; bottom: 64px; display: flex;
+  align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; background: #fffffff0;
+  color: #7486a1; font-size: 9px; pointer-events: none; }
+.map-zoom-hint output { border-left: 1px solid #dfe5ee; padding-left: 10px; min-width: 40px; }
+.directory-map .map-zoom-hint { bottom: 30px; }
+.map-tile-error { position: absolute; z-index: 3; top: 12px; left: 56px; right: 12px;
+  padding: 8px 10px; background: #fff7e6; border-radius: 8px; font-size: 10px; color: #805c19; }
+.map-tile-error button { margin-left: 8px; text-decoration: underline; }
+@media (max-height: 750px) and (min-width: 851px) {
+  .briefing-v2 { grid-template-rows: minmax(300px, 1fr) 88px; gap: 10px; }
+  .briefing-v2 .mission-kpi { gap: 5px; padding: 8px; }
+  .briefing-v2 .mission-kpi-icon { width: 34px; height: 34px; }
+  .briefing-v2 .mission-kpi strong { font-size: 28px; }
+  .briefing-v2 .mission-kpi p { display: none; }
+}
+@media (max-width: 1100px) and (min-width: 851px) {
+  .briefing-v2 { grid-template-columns: minmax(0, 1fr) 138px; gap: 10px; }
+  .briefing-v2 .mission-kpi > div > span { font-size: 11px; }
+  .briefing-v2 .mission-kpi p { font-size: 8px; }
+  .map-zoom-hint span { display: none; }
+}
+@media (max-width: 850px) {
+  .briefing-shell .main-content { overflow-y: auto; }
+  .briefing-v2 { flex: none; min-height: 660px; grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(360px, 1fr) auto; grid-template-areas: "signals" "map" "highlights"; }
+  .briefing-v2 > .mission-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto; gap: 6px; }
+  .briefing-v2 .mission-kpi { gap: 5px; padding: 10px 5px; }
+  .briefing-v2 .mission-kpi-icon { width: 32px; height: 32px; }
+  .briefing-v2 .mission-kpi > div > span { font-size: 9px; }
+  .briefing-v2 .mission-kpi strong { font-size: 27px; }
+  .briefing-v2 .mission-kpi p, .briefing-v2 .mission-kpi-note { display: none; }
+  .map-zoom-hint { right: 8px; font-size: 8px; }
+  .map-zoom-hint span { display: none; }
+  .briefing-v2 .mission-highlights { min-height: 96px; }
+}
+/* 카드 내부 요소 합계가 카드 높이를 넘지 않도록 명시적인 줄 높이를 사용합니다. */
+.briefing-v2 .mission-kpi { gap: 6px; padding: 10px 8px; }
+.briefing-v2 .mission-kpi-icon { width: 40px; height: 40px; }
+.briefing-v2 .mission-kpi > div:not(.mission-kpi-icon) { display: grid; gap: 4px; }
+.briefing-v2 .mission-kpi > div > span { display: block; line-height: 16px; }
+.briefing-v2 .mission-kpi strong { margin: 0; font-size: 32px; line-height: 36px; }
+.briefing-v2 .mission-kpi p { margin: 0; line-height: 12px; }
+.briefing-v2 .mission-kpi-note { line-height: 12px; padding: 3px 8px; flex-shrink: 0; }
+.road-map .leaflet-tile-pane { filter: saturate(0.55) brightness(1.05); }
+.map-jurisdiction {
+  position: absolute; z-index: 2; left: 12px; bottom: 64px;
+  display: grid; gap: 3px; padding: 8px 10px; border: 1px solid #e4eaf1;
+  border-radius: 8px; background: #ffffffed; color: #244361;
+  font-size: 11px; font-weight: 700; pointer-events: none;
+}
+.map-jurisdiction span { color: #8796a8; font-size: 9px; font-weight: 400; }
+.directory-map .map-jurisdiction { bottom: 30px; }
+@media (max-height: 800px) and (min-width: 851px) {
+  .briefing-v2 .mission-kpi-icon { width: 30px; height: 30px; }
+  .briefing-v2 .mission-kpi { gap: 4px; padding: 8px; }
+  .briefing-v2 .mission-kpi strong { font-size: 28px; line-height: 32px; }
+  .briefing-v2 .mission-kpi p { display: none; }
+}
+@media (max-height: 650px) and (min-width: 851px) {
+  .briefing-v2 .mission-kpi-note { display: none; }
+}
+@media (max-width: 850px) {
+  .briefing-v2 .mission-kpi-icon { width: 30px; height: 30px; }
+  .briefing-v2 .mission-kpi strong { font-size: 27px; line-height: 30px; }
+}
+/* 도로는 위치 파악을 돕는 배경으로, 행정동 경계와 후보 표시를 우선합니다. */
+.road-map .leaflet-tile-pane { opacity: 0.48; filter: saturate(0.3) brightness(1.08); }
+.roadmap-district-label.leaflet-tooltip { color: #344f66; font-weight: 700; }
+/* 행정동을 판 형태로 표현하는 입체 지도. 실제 도로 지도는 별도 모드로 유지합니다. */
+.mission-map-switchable { position: relative; height: 100%; min-height: 0; isolation: isolate; }
+.map-view-toggle { position: absolute; right: 12px; top: 12px; z-index: 4;
+  display: flex; gap: 3px; padding: 3px; border: 1px solid #e0e7ee; border-radius: 9px;
+  background: #ffffffef; box-shadow: 0 2px 8px #1c355412; }
+.map-view-toggle button { padding: 5px 10px; border-radius: 6px; color: #8491a3; font-size: 10px; }
+.map-view-toggle button[aria-pressed="true"] { background: #e8f0ff; color: #2563eb; font-weight: 700; }
+.relief-map { background: radial-gradient(ellipse at 40% 25%, #ffffff, #f2f4f7 85%);
+  user-select: none; -webkit-user-select: none; touch-action: none; }
+.relief-scene { position: absolute; width: 100%; height: calc(100% - 34px); display: block;
+  cursor: grab; touch-action: none; -webkit-user-drag: none; }
+.directory-map .relief-scene { height: 100%; }
+.relief-map.dragging .relief-scene, .relief-map.dragging .relief-district { cursor: grabbing; }
+.relief-district { cursor: pointer; outline: none; }
+.relief-district .relief-top { transition: filter .15s; }
+.relief-district:hover .relief-top { filter: brightness(1.06); stroke: #c0d3ef; stroke-width: 2.5; }
+.relief-district.selected .relief-top, .relief-district:focus-visible .relief-top { stroke: #2563eb; stroke-width: 3; }
+.relief-district text { fill: #36516f; font-size: 12px; font-weight: 600; pointer-events: none;
+  paint-order: stroke; stroke: #ffffff60; stroke-width: 2px; }
+.relief-district.candidate text { fill: #53263f; font-weight: 800; font-size: 14px; }
+.relief-priority { cursor: pointer; outline: none; }
+.relief-priority:focus-visible rect, .relief-priority:hover rect { stroke: #2563eb; stroke-width: 2; }
+.relief-map .map-zoom-hint, .relief-map .map-jurisdiction { bottom: 68px; }
+.relief-map-note { position: absolute; left: 12px; bottom: 42px; font-size: 8px; color: #8c9aac; pointer-events: none; }
+.directory-map .relief-map .map-zoom-hint, .directory-map .relief-map .map-jurisdiction { bottom: 36px; }
+.directory-map .relief-map-note { bottom: 10px; }
+@media (max-width: 600px) {
+  .map-view-toggle { top: 7px; right: 7px; }
+  .map-view-toggle button { padding: 4px 8px; font-size: 9px; }
+  .relief-map-note { font-size: 7px; }
+}
+@media (prefers-reduced-motion: reduce) { .relief-district .relief-top { transition: none; } }
+/* 넓어진 요약 카드는 아이콘을 왼쪽에 두어 낮은 화면에서도 잘리지 않습니다. */
+@media (min-width: 851px) {
+  .briefing-v2 { grid-template-columns: minmax(0, 1fr) clamp(210px, 16vw, 250px); }
+  .briefing-v2 .mission-kpi { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-content: center; justify-content: initial; text-align: left; gap: 8px 12px; padding: 14px; }
+  .briefing-v2 .mission-kpi-icon { width: 40px; height: 40px; grid-row: 1 / 3; align-self: center; }
+  .briefing-v2 .mission-kpi > div:not(.mission-kpi-icon) { gap: 3px; }
+  .briefing-v2 .mission-kpi p { display: block; font-size: 9px; line-height: 14px; }
+  .briefing-v2 .mission-kpi-note { display: inline-block; grid-column: 2; justify-self: start; }
+  .briefing-v2 > .mission-kpis { grid-template-rows: repeat(3, minmax(120px, 1fr)); }
+  .briefing-v2 { grid-template-rows: minmax(384px, 1fr) 100px; }
+}
+.road-map .leaflet-tile-pane { opacity: 0.72; filter: saturate(0.35) brightness(1.05); }
+.roadmap-district-label.leaflet-tooltip { font-size: 12px; background: #ffffffe0; padding: 2px 5px; border-radius: 4px; }
+/* E 시안: 관할 전체와 선택 동의 도로 확대창을 동시에 표시합니다. */
+.overview-lens { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(190px, 1fr); height: 100%; background: #f7f9fc; }
+.lens-overview { min-width: 0; min-height: 0; }
+.lens-overview .road-map, .lens-overview .leaflet-container { background: #f7f9fc; }
+.lens-overview .map-zoom-hint { bottom: 48px; left: 12px; right: auto; }
+.lens-overview .map-zoom-hint span { display: none; }
+.lens-overview .map-jurisdiction { bottom: 85px; }
+.lens-overview .roadmap-district-label { font-size: 10px; }
+.lens-detail { padding: 20px 10px 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-width: 0; }
+.lens-detail header { text-align: center; display: grid; gap: 5px; }
+.lens-detail header span { color: #7c8ca0; font-size: 10px; }
+.lens-detail header strong { color: #193553; font-size: 21px; }
+.lens-circle { width: 100%; aspect-ratio: 1; max-width: 300px; border: 3px solid #ff7394; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 6px white, 0 5px 22px #233c5612; isolation: isolate; flex-shrink: 0; }
+.lens-circle .road-map-canvas { bottom: 0; }
+.lens-circle .map-tools { top: 28px; left: 25px; }
+.lens-circle .map-tools button { width: 23px; height: 23px; font-size: 13px; }
+.lens-circle .leaflet-control-attribution { display: none; }
+.lens-circle .roadmap-district-label { color: #cf3b65; font-size: 13px; }
+.lens-caption { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; font-size: 10px; color: #7c8ca0; }
+.lens-caption b { color: #d74e74; }
+.lens-open { border: 1px solid #dfe5ee; border-radius: 8px; background: white; padding: 8px 14px; color: #244361; font-size: 11px; cursor: pointer; }
+.lens-detail p { margin: 0; text-align: center; font-size: 9px; line-height: 1.6; color: #8896a8; }
+@media (max-height: 800px) { .lens-detail { padding-top: 8px; gap: 7px; } .lens-circle { max-width: 185px; } .lens-detail p { display: none; } }
+@media (max-width: 850px) { .overview-lens { grid-template-columns: minmax(0, 1fr) minmax(150px, .85fr); } .lens-detail header strong { font-size: 16px; } }
+.overview-lens { position: relative; }
+.lens-connector { position: absolute; inset: 0; width: 100%; height: calc(100% - 34px); pointer-events: none; z-index: 1; overflow: hidden; }
+.lens-connector line { stroke: #ee7595; stroke-width: 1.5; stroke-dasharray: 5 5; opacity: .7; }
+.lens-detail { position: relative; z-index: 2; }
+/* 전체 지도와 선택 동을 하나의 지도 영역에서 전환합니다. */
+.single-overview { position: relative; height: 100%; min-height: 0; isolation: isolate; }
+.single-overview .road-map, .single-overview .leaflet-container { background: #f7f9fc; }
+.single-overview .map-view-toggle { z-index: 4; }
+.single-overview .roadmap-district-label { font-size: 10px; padding: 1px 3px; }
+.single-overview .map-jurisdiction { bottom: 72px; }
+.single-overview .map-zoom-hint { left: 12px; right: auto; bottom: 48px; }
+.single-overview .map-zoom-hint span { display: none; }
+.map-region-chip { position: absolute; z-index: 3; bottom: 52px; right: 12px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; padding: 9px 10px; border: 1px solid #e0e7ef; border-radius: 9px; background: #fffffff5; font-size: 10px; color: #738499; max-width: calc(100% - 125px); }
+.map-region-chip b { color: #263f60; }
+.map-region-chip button { border: 0; border-radius: 5px; padding: 4px 6px; background: #f1f6ff; color: #3168ae; cursor: pointer; font-size: 10px; }
+/* J 시안: 관할 전체를 유지하고 도로는 옅게, 후보 설명은 작게 표시합니다. */
+.quiet-road-overview .leaflet-tile-pane { opacity: .42; filter: saturate(.2) brightness(1.07); }
+.quiet-road-overview .roadmap-pin-label { padding: 7px 9px; border-color: #f4b7c7; border-left: 3px solid var(--pin-color); border-radius: 8px; gap: 3px; box-shadow: 0 3px 10px #233c5610; }
+.quiet-road-overview .roadmap-pin-label b { font-size: 11px; }
+.quiet-road-overview .roadmap-pin-label small { font-size: 9px; }
+.quiet-road-overview .roadmap-pin { gap: 0; }

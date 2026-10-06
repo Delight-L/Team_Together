@@ -215,19 +215,15 @@ export default function App() {
     setData(null);
     setView('dashboard');
   }
+  const regions = useMemo(() => summarizeRegions(
+    data?.assessment || [], data?.geometry[city], city, month, data?.months || [],
+  ), [data, city, month]);
   if (checking) return <div className="loading">복지탐정 업무 공간을 준비하고 있습니다…</div>;
   if (!user) return <Login onLogin={setUser} />;
   const select = (name) => setDistrict(name);
   const start = async () => {
     if (await mutate('/workflow/start')) setView('chart');
   };
-  const regions = summarizeRegions(
-    data?.assessment || [],
-    data?.geometry[city],
-    city,
-    month,
-    data?.months || [],
-  );
   const briefingProps = {
     regions,
     assessment: data?.assessment || [],
