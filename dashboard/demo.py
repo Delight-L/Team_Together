@@ -5,8 +5,8 @@ import streamlit as st
 
 @st.cache_data(show_spinner=False)
 def load_demo_analysis():
-    from dashboard.pipeline import monthly_upload, records
-    source = Path(__file__).resolve().parents[1] / "agent/risk_analysis_version1/data/gangnam_db1_dong_month_behavior_mart_2025_07_12(1).csv"
+    from dashboard.pipeline import monthly_upload, records, DETECTION_FILE
+    source = DETECTION_FILE
     content = source.read_bytes()
     prepared = monthly_upload(content, source.name)
     run = "demo-" + hashlib.sha256(content).hexdigest()[:12]

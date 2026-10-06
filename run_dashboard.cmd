@@ -1,3 +1,12 @@
 @echo off
+chcp 65001 >nul
 cd /d "%~dp0"
-"C:\Users\user\Documents\Codex\2026-10-02\https-github-com-delight-l-team\work\dashboard-venv\Scripts\python.exe" -m streamlit run main.py --server.address=127.0.0.1 --server.port=8501
+if exist ".venv\Scripts\python.exe" (
+  ".venv\Scripts\python.exe" -X utf8 main.py %*
+) else (
+  python -X utf8 main.py %*
+)
+if errorlevel 1 (
+  echo 실행 실패: 루트 requirements.txt의 패키지 설치와 README.md를 확인하세요.
+  pause
+)

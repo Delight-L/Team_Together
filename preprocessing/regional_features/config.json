@@ -1,0 +1,20 @@
+{
+  "input": "raw_data",
+  "output": "outputs",
+  "start_month": "2022-01",
+  "end_month": "2025-12",
+  "weather": "reference/weather_monthly.csv",
+  "analysis2_dir": "../../agents/regional_analysis/Analysis2",
+  "sources": {
+    "telecom": "https://data.seoul.go.kr/dataList/OA-22267/F/1/datasetView.do",
+    "interest": "https://data.seoul.go.kr/dataList/OA-22266/F/1/datasetView.do"
+  },
+  "comparison_absolute_tolerance": 1e-8,
+  "demographics": {"sex": [1, 2], "age": [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75]},
+  "archive_limits": {
+    "max_depth": 8,
+    "max_files": 10000,
+    "max_file_bytes": 2147483648,
+    "max_total_bytes": 12884901888
+  }
+}

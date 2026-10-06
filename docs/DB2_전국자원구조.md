@@ -68,7 +68,7 @@ python collect_db2.py collect --source local --region nationwide --all-pages --r
 ## 이용 범위 검토 입력
 
 ```python
-from db_init import engine
+from db.connection import engine
 from db2_storage import set_service_access
 
 # 실제로 확인한 원문과 서비스 ID를 넣습니다. 아래는 호출 형식입니다.

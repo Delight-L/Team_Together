@@ -1,16 +1,16 @@
 # Team Together 공통 Streamlit 테마 및 실행 설정
 [theme]
 base = "light"
-primaryColor = "#1F6F8B"
+primaryColor = "#2563EB"
 backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#EDF0F3"
-textColor = "#1B2733"
+secondaryBackgroundColor = "#F1F8FF"
+textColor = "#1E293B"
 
 [theme.sidebar]
-backgroundColor = "#132A3E"
-secondaryBackgroundColor = "#21455F"
+backgroundColor = "#1E293B"
+secondaryBackgroundColor = "#334155"
 textColor = "#EAF1F7"
-primaryColor = "#75C4DD"
+primaryColor = "#60A5FA"
 
 [browser]
 gatherUsageStats = false

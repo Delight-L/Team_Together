@@ -22,7 +22,7 @@ FACTORS = {
     "welfare": "복지 연계 공백",
 }
 DEFAULT_WEIGHTS = {"flow": 25, "card": 25, "single": 20, "elder": 15, "welfare": 15}
-FACTOR_COLORS = ["#2F7FA3", "#7060A8", "#C68B2C", "#4E9A76", "#B5527A"]
+FACTOR_COLORS = ["#2563EB", "#60A5FA", "#10B981", "#F59E0B", "#1E293B"]
 
 # 위험도 42 미만: 양호 / 42 이상: 주의 / 52 이상: 위험 / 60 이상: 심각
 THRESHOLDS = [42, 52, 60]

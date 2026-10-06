@@ -17,3 +17,53 @@ dashboard/**/*.log
 
 # 담당자 업무 기록은 저장소에 포함하지 않습니다.
 dashboard/data/mission_records.sqlite3*
+
+# Runtime state and developer scratch files
+db/runtime/*.sqlite3*
+.build/
+*.log
+**/api_key.txt
+**/.env.txt
+!agents/risk_analysis/data/gangnam_analysis1_cluster_profile_2025H2(1).csv
+!agents/risk_analysis/data/gangnam_db1_dong_month_behavior_mart_2025_07_12(1).csv
+!agents/risk_analysis/data/gangnam_db1_final_k2_cluster_result_2025(1).csv
+!agents/regional_analysis/Analysis2/gangnam_analysis2_feature_table_2022_2025.csv
+!agents/regional_analysis/Analysis2/outputs/gangnam_analysis2_detection_2022_2025.csv
+!agents/regional_analysis/Analysis2/outputs/gangnam_analysis2_evidence_card_2022_2025.csv
+!agents/regional_analysis/Analysis2/reference/gangnam_analysis1_final_region_typology_2025H2.csv
+!agents/regional_analysis/Analysis2/reference/gangnam_analysis2_detection_2022_2025.csv
+!agents/regional_analysis/Analysis2/reference/gangnam_analysis2_evidence_card_2022_2025.csv
+!preprocessing/regional_types/Analysis1_source/1인가구(거처종류별)_20260922163814.csv
+!preprocessing/regional_types/Analysis1_source/1인가구(연령별)_20260923095001.csv
+!preprocessing/regional_types/Analysis1_source/gangnam_db1_features_202507.csv
+!preprocessing/regional_types/Analysis1_source/고령자현황(강남구 동별).csv
+!preprocessing/regional_types/Analysis1_source/국민기초생활 수급자 동별 현황(202405).xlsx
+!preprocessing/regional_types/Analysis1_source/국민기초생활보장+수급자(2020+이후)_20260922173232.csv
+!preprocessing/regional_types/Analysis1_source/국민기초생활보장+연령별+일반수급자(구별)_20260922173516.csv
+!preprocessing/regional_types/Analysis1_source/등록인구(연령별_동별)_20260922163622.csv
+!preprocessing/regional_types/Analysis1_source/세대원수별+세대수_2025Q3_Q4.csv
+!preprocessing/regional_types/Analysis1_source/장애인 현황(장애유형별, 동별).csv
+!preprocessing/regional_types/Analysis1_source/장애인+현황(등급별_연령별)_20260923095357.csv
+!preprocessing/regional_types/outputs/analysis1_preprocessed/analysis1_input.csv
+!preprocessing/regional_types/outputs/analysis1_preprocessed/analysis1_profile.csv
+!preprocessing/regional_types/raw_data/1인가구(거처종류별)_20260922163814.csv
+!preprocessing/regional_types/raw_data/1인가구(연령별)_20260923095001.csv
+!preprocessing/regional_types/raw_data/gangnam_db1_features_202507.csv
+!preprocessing/regional_types/raw_data/고령자현황(강남구 동별).csv
+!preprocessing/regional_types/raw_data/국민기초생활 수급자 동별 현황(202405).xlsx
+!preprocessing/regional_types/raw_data/국민기초생활보장+수급자(2020+이후)_20260922173232.csv
+!preprocessing/regional_types/raw_data/국민기초생활보장+연령별+일반수급자(구별)_20260922173516.csv
+!preprocessing/regional_types/raw_data/등록인구(연령별_동별)_20260922163622.csv
+!preprocessing/regional_types/raw_data/세대원수별+세대수_2025Q3_Q4.csv
+!preprocessing/regional_types/raw_data/장애인 현황(장애유형별, 동별).csv
+!preprocessing/regional_types/raw_data/장애인+현황(등급별_연령별)_20260923095357.csv
+!preprocessing/regional_features/outputs/gangnam_analysis2_detection_2022_2025.csv
+!preprocessing/regional_features/outputs/gangnam_analysis2_evidence_card_2022_2025.csv
+!preprocessing/regional_features/outputs/gangnam_analysis2_feature_table_2022_2025.csv
+!preprocessing/regional_features/reference/weather_monthly.csv
+
+# Regenerable execution reports; CSV/reference baselines remain versioned.
+agents/regional_analysis/analysis2_execution_report.json
+preprocessing/**/outputs/*manifest.json
+preprocessing/**/outputs/**/preprocessing_manifest.json
+preprocessing/**/outputs/validation_report.json

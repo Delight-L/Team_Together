@@ -37,7 +37,7 @@ def render_app():
     # ============================================================
     st.set_page_config(
         page_title="복지탐정 AI · 분석·사업 검토·보고",
-        page_title="복지탐정 AI · 지역 복지 미션",
+        #page_title="복지탐정 AI · 지역 복지 미션",
         layout="wide",
         initial_sidebar_state="collapsed",
     )
@@ -147,23 +147,15 @@ def render_app():
     # layout.html: 로그인·메뉴·챗봇 뼈대 / style.css: 색·간격·카드 배치
     # dashboard.js: 화면 생성·지도 클릭 / charts.js: 추이 그래프
     # data.js: 날짜 조회·월평균·위험 점수 계산
-    from dashboard.pipeline import load_dashboard_data
+    from dashboard.pipeline import load_analysis2_data
     from dashboard.operations import handle_request
 
     try:
-        db_data = load_dashboard_data()
-    except Exception:
-        db_data = {
-            "connected": False,
-            "runs": [],
-            "assessment": [],
-            "signals": [],
-            "alerts": [],
-            "activity": [],
-        }
-    if not db_data.get("connected"):
-        from dashboard.demo import load_demo_analysis
-        db_data = load_demo_analysis()
+        db_data = load_analysis2_data()
+    except (OSError, ValueError) as error:
+        st.error(f"version11 분석 결과를 읽지 못했습니다: {error}")
+        st.info("version11 폴더에서 python main.py --no-download를 실행해 결과 CSV를 생성하세요.")
+        st.stop()
     from dashboard.missions import load_all
     payload["missions"] = load_all()
     payload["db1"] = db_data
@@ -171,7 +163,3 @@ def render_app():
     result = render_dashboard(payload)
     next_report = st.session_state.pop("next_workflow_report", None)
     handle_request(next_report | {"action": "report"} if next_report else result.get("request"), db_data)
-    payload["db1"] = db_data
-    payload["notice"] = st.session_state.get("operation_notice", "")
-    result = render_dashboard(payload)
-    handle_request(result.get("request"), db_data)
