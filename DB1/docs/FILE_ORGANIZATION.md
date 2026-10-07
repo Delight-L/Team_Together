@@ -33,3 +33,15 @@
 - `docs/ISOLATION_EXPLANATION_USAGE.md`: 실행·갱신 방법과 상태 정의.
 
 자체 과거 기준·지역 비교·지속성·보조 근거는 독립 항목이며 군집이나 탐지 기준을 변경하지 않는다. DB 업데이트 완료 뒤 설명 생성기를 실행해 최신 파일을 생성한다. 이 정리의 변경 전 파일은 DB1 바깥 `DB1_backups/explanation_publish_<시각>/`에 보관한다. 기존 GitHub 과거 자료는 archive에 유지한다.
+
+
+## 기상 추적 최종 파일 구성
+
+- `Context/weather_tracking.py`: 고정 기준의 월별·3개월 계절 비교.
+- `Context/tests/test_weather_tracking.py`: 신규 기간·기준 유지·결측·0 분모 검증.
+- `Context/outputs/evidence/ctx_weather_*_tracking.csv`: 기간별 원본 JSON 근거·비교 품질·기준 목록을 보존하는 상세 내보내기.
+- `Context/outputs/evidence/weather_*_tracking.csv`: 지표별 숫자를 표로 조회할 수 있는 평탄 CSV. 상세 내보내기와 역할이 달라 둘 다 보존한다.
+- `docs/WEATHER_TRACKING_RESULT_20261007.md`: 실제 기상 월 6개·행동 관측 창 6개의 결과와 갱신 안내.
+- `outputs/handoff/agent_signal_evidence.json`, `isolation_signal_explanations.json`: 기상 비교가 포함된 최신 10건 근거·설명.
+
+현재 코드·운영 DB는 기상 추적을 포함한다. 기상 값이 누락되었을 때 분석을 허용하는 별도의 미반영 코드와는 구분한다. 기존 예시·검증 기록은 참고·이력으로 보존하며 최신 설명은 ISOLATION_SIGNAL_EXPLANATIONS.md를 사용한다. DB 변경 전 백업은 DB1_backups/weather_tracking_<시각>/에, 이번 문서 정리 전 백업은 DB1_backups/weather_publish_<시각>/에 있다.

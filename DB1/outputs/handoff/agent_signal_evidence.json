@@ -1225,6 +1225,133 @@
           "snow_days": 0.0
         }
       },
+      "weather_tracking": {
+        "baseline_candidates": [
+          {
+            "months": [
+              "2022-08",
+              "2022-09",
+              "2022-10"
+            ],
+            "period": "2022-11-01",
+            "values": {
+              "rain_days": 32.0,
+              "rainfall_mm": 890.4,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2023-08",
+              "2023-09",
+              "2023-10"
+            ],
+            "period": "2023-11-01",
+            "values": {
+              "rain_days": 29.0,
+              "rainfall_mm": 463.6,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2024-08",
+              "2024-09",
+              "2024-10"
+            ],
+            "period": "2024-11-01",
+            "values": {
+              "rain_days": 28.0,
+              "rainfall_mm": 290.7,
+              "snow_days": 0.0
+            }
+          }
+        ],
+        "baseline_end": "2025-06",
+        "baseline_method": "fixed_prior_same_three_calendar_months",
+        "baseline_start": "2022-01",
+        "causal_adjustment_applied": false,
+        "geography": "same_source_weather_common_context_not_dong_specific",
+        "method_version": "weather_season_tracking_v1",
+        "metrics": {
+          "rain_days": {
+            "baseline_max": 32.0,
+            "baseline_mean": 29.666666666666668,
+            "baseline_median": 29.0,
+            "baseline_min": 28.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-11-01",
+              "2023-11-01",
+              "2024-11-01"
+            ],
+            "change_pct": 34.8314606741573,
+            "current": 40.0,
+            "difference": 10.333333333333332,
+            "historical_range_position": "above_historical_max",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "days"
+          },
+          "rainfall_mm": {
+            "baseline_max": 890.4,
+            "baseline_mean": 548.2333333333333,
+            "baseline_median": 463.6,
+            "baseline_min": 290.7,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-11-01",
+              "2023-11-01",
+              "2024-11-01"
+            ],
+            "change_pct": 54.55098194199548,
+            "current": 847.3,
+            "difference": 299.0666666666666,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "mm"
+          },
+          "snow_days": {
+            "baseline_max": 0.0,
+            "baseline_mean": 0.0,
+            "baseline_median": 0.0,
+            "baseline_min": 0.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-11-01",
+              "2023-11-01",
+              "2024-11-01"
+            ],
+            "change_pct": null,
+            "current": 0.0,
+            "difference": 0.0,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "zero_baseline_mean",
+            "quality_status": "available",
+            "unit": "days"
+          }
+        },
+        "minimum_reference_windows": 3,
+        "not_detection_input": true,
+        "note": "Historical-range position is descriptive, not an anomaly threshold. Compare overlapping windows as context, not independent repeated events.",
+        "observation_end": "2025-10-31",
+        "observation_months": [
+          "2025-08",
+          "2025-09",
+          "2025-10"
+        ],
+        "observation_start": "2025-08-01",
+        "period": "2025-11-01",
+        "quality_status": "available",
+        "retrospective_only": true,
+        "scope": "behavior_observation_three_month_window",
+        "station_scope_verified": false,
+        "tracking_start": "2025-07"
+      },
       "youth_reference": {
         "applicability": "applicable_static_reference",
         "metrics": [
@@ -2851,6 +2978,12 @@
           "reason": "available",
           "not_detection_input": true
         },
+        "weather_tracking": {
+          "status": "available",
+          "reason": "available",
+          "not_detection_input": true,
+          "causal_adjustment_applied": false
+        },
         "youth": {
           "status": "available",
           "reason": "static_age_reference_only",
@@ -4441,6 +4574,133 @@
           "rainfall_mm": 954.9,
           "snow_days": 0.0
         }
+      },
+      "weather_tracking": {
+        "baseline_candidates": [
+          {
+            "months": [
+              "2022-07",
+              "2022-08",
+              "2022-09"
+            ],
+            "period": "2022-10-01",
+            "values": {
+              "rain_days": 41.0,
+              "rainfall_mm": 1018.5999999999999,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2023-07",
+              "2023-08",
+              "2023-09"
+            ],
+            "period": "2023-10-01",
+            "values": {
+              "rain_days": 43.0,
+              "rainfall_mm": 892.5,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2024-07",
+              "2024-08",
+              "2024-09"
+            ],
+            "period": "2024-10-01",
+            "values": {
+              "rain_days": 44.0,
+              "rainfall_mm": 774.0,
+              "snow_days": 0.0
+            }
+          }
+        ],
+        "baseline_end": "2025-06",
+        "baseline_method": "fixed_prior_same_three_calendar_months",
+        "baseline_start": "2022-01",
+        "causal_adjustment_applied": false,
+        "geography": "same_source_weather_common_context_not_dong_specific",
+        "method_version": "weather_season_tracking_v1",
+        "metrics": {
+          "rain_days": {
+            "baseline_max": 44.0,
+            "baseline_mean": 42.666666666666664,
+            "baseline_median": 43.0,
+            "baseline_min": 41.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": -17.96875,
+            "current": 35.0,
+            "difference": -7.666666666666664,
+            "historical_range_position": "below_historical_min",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "days"
+          },
+          "rainfall_mm": {
+            "baseline_max": 1018.5999999999999,
+            "baseline_mean": 895.0333333333333,
+            "baseline_median": 892.5,
+            "baseline_min": 774.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": 6.6887639194070925,
+            "current": 954.9,
+            "difference": 59.866666666666674,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "mm"
+          },
+          "snow_days": {
+            "baseline_max": 0.0,
+            "baseline_mean": 0.0,
+            "baseline_median": 0.0,
+            "baseline_min": 0.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": null,
+            "current": 0.0,
+            "difference": 0.0,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "zero_baseline_mean",
+            "quality_status": "available",
+            "unit": "days"
+          }
+        },
+        "minimum_reference_windows": 3,
+        "not_detection_input": true,
+        "note": "Historical-range position is descriptive, not an anomaly threshold. Compare overlapping windows as context, not independent repeated events.",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "period": "2025-10-01",
+        "quality_status": "available",
+        "retrospective_only": true,
+        "scope": "behavior_observation_three_month_window",
+        "station_scope_verified": false,
+        "tracking_start": "2025-07"
       },
       "youth_reference": {
         "applicability": "applicable_static_reference",
@@ -6068,6 +6328,12 @@
           "reason": "available",
           "not_detection_input": true
         },
+        "weather_tracking": {
+          "status": "available",
+          "reason": "available",
+          "not_detection_input": true,
+          "causal_adjustment_applied": false
+        },
         "youth": {
           "status": "available",
           "reason": "static_age_reference_only",
@@ -7656,6 +7922,133 @@
           "rainfall_mm": 954.9,
           "snow_days": 0.0
         }
+      },
+      "weather_tracking": {
+        "baseline_candidates": [
+          {
+            "months": [
+              "2022-07",
+              "2022-08",
+              "2022-09"
+            ],
+            "period": "2022-10-01",
+            "values": {
+              "rain_days": 41.0,
+              "rainfall_mm": 1018.5999999999999,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2023-07",
+              "2023-08",
+              "2023-09"
+            ],
+            "period": "2023-10-01",
+            "values": {
+              "rain_days": 43.0,
+              "rainfall_mm": 892.5,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2024-07",
+              "2024-08",
+              "2024-09"
+            ],
+            "period": "2024-10-01",
+            "values": {
+              "rain_days": 44.0,
+              "rainfall_mm": 774.0,
+              "snow_days": 0.0
+            }
+          }
+        ],
+        "baseline_end": "2025-06",
+        "baseline_method": "fixed_prior_same_three_calendar_months",
+        "baseline_start": "2022-01",
+        "causal_adjustment_applied": false,
+        "geography": "same_source_weather_common_context_not_dong_specific",
+        "method_version": "weather_season_tracking_v1",
+        "metrics": {
+          "rain_days": {
+            "baseline_max": 44.0,
+            "baseline_mean": 42.666666666666664,
+            "baseline_median": 43.0,
+            "baseline_min": 41.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": -17.96875,
+            "current": 35.0,
+            "difference": -7.666666666666664,
+            "historical_range_position": "below_historical_min",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "days"
+          },
+          "rainfall_mm": {
+            "baseline_max": 1018.5999999999999,
+            "baseline_mean": 895.0333333333333,
+            "baseline_median": 892.5,
+            "baseline_min": 774.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": 6.6887639194070925,
+            "current": 954.9,
+            "difference": 59.866666666666674,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "mm"
+          },
+          "snow_days": {
+            "baseline_max": 0.0,
+            "baseline_mean": 0.0,
+            "baseline_median": 0.0,
+            "baseline_min": 0.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": null,
+            "current": 0.0,
+            "difference": 0.0,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "zero_baseline_mean",
+            "quality_status": "available",
+            "unit": "days"
+          }
+        },
+        "minimum_reference_windows": 3,
+        "not_detection_input": true,
+        "note": "Historical-range position is descriptive, not an anomaly threshold. Compare overlapping windows as context, not independent repeated events.",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "period": "2025-10-01",
+        "quality_status": "available",
+        "retrospective_only": true,
+        "scope": "behavior_observation_three_month_window",
+        "station_scope_verified": false,
+        "tracking_start": "2025-07"
       },
       "youth_reference": {
         "applicability": "applicable_static_reference",
@@ -9283,6 +9676,12 @@
           "reason": "available",
           "not_detection_input": true
         },
+        "weather_tracking": {
+          "status": "available",
+          "reason": "available",
+          "not_detection_input": true,
+          "causal_adjustment_applied": false
+        },
         "youth": {
           "status": "available",
           "reason": "static_age_reference_only",
@@ -10870,6 +11269,133 @@
           "snow_days": 0.0
         }
       },
+      "weather_tracking": {
+        "baseline_candidates": [
+          {
+            "months": [
+              "2022-07",
+              "2022-08",
+              "2022-09"
+            ],
+            "period": "2022-10-01",
+            "values": {
+              "rain_days": 41.0,
+              "rainfall_mm": 1018.5999999999999,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2023-07",
+              "2023-08",
+              "2023-09"
+            ],
+            "period": "2023-10-01",
+            "values": {
+              "rain_days": 43.0,
+              "rainfall_mm": 892.5,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2024-07",
+              "2024-08",
+              "2024-09"
+            ],
+            "period": "2024-10-01",
+            "values": {
+              "rain_days": 44.0,
+              "rainfall_mm": 774.0,
+              "snow_days": 0.0
+            }
+          }
+        ],
+        "baseline_end": "2025-06",
+        "baseline_method": "fixed_prior_same_three_calendar_months",
+        "baseline_start": "2022-01",
+        "causal_adjustment_applied": false,
+        "geography": "same_source_weather_common_context_not_dong_specific",
+        "method_version": "weather_season_tracking_v1",
+        "metrics": {
+          "rain_days": {
+            "baseline_max": 44.0,
+            "baseline_mean": 42.666666666666664,
+            "baseline_median": 43.0,
+            "baseline_min": 41.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": -17.96875,
+            "current": 35.0,
+            "difference": -7.666666666666664,
+            "historical_range_position": "below_historical_min",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "days"
+          },
+          "rainfall_mm": {
+            "baseline_max": 1018.5999999999999,
+            "baseline_mean": 895.0333333333333,
+            "baseline_median": 892.5,
+            "baseline_min": 774.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": 6.6887639194070925,
+            "current": 954.9,
+            "difference": 59.866666666666674,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "mm"
+          },
+          "snow_days": {
+            "baseline_max": 0.0,
+            "baseline_mean": 0.0,
+            "baseline_median": 0.0,
+            "baseline_min": 0.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": null,
+            "current": 0.0,
+            "difference": 0.0,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "zero_baseline_mean",
+            "quality_status": "available",
+            "unit": "days"
+          }
+        },
+        "minimum_reference_windows": 3,
+        "not_detection_input": true,
+        "note": "Historical-range position is descriptive, not an anomaly threshold. Compare overlapping windows as context, not independent repeated events.",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "period": "2025-10-01",
+        "quality_status": "available",
+        "retrospective_only": true,
+        "scope": "behavior_observation_three_month_window",
+        "station_scope_verified": false,
+        "tracking_start": "2025-07"
+      },
       "youth_reference": {
         "applicability": "not_applicable",
         "metrics": [],
@@ -10922,6 +11448,12 @@
           "status": "available",
           "reason": "available",
           "not_detection_input": true
+        },
+        "weather_tracking": {
+          "status": "available",
+          "reason": "available",
+          "not_detection_input": true,
+          "causal_adjustment_applied": false
         },
         "youth": {
           "status": "not_applicable",
@@ -12512,6 +13044,133 @@
           "snow_days": 0.0
         }
       },
+      "weather_tracking": {
+        "baseline_candidates": [
+          {
+            "months": [
+              "2022-07",
+              "2022-08",
+              "2022-09"
+            ],
+            "period": "2022-10-01",
+            "values": {
+              "rain_days": 41.0,
+              "rainfall_mm": 1018.5999999999999,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2023-07",
+              "2023-08",
+              "2023-09"
+            ],
+            "period": "2023-10-01",
+            "values": {
+              "rain_days": 43.0,
+              "rainfall_mm": 892.5,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2024-07",
+              "2024-08",
+              "2024-09"
+            ],
+            "period": "2024-10-01",
+            "values": {
+              "rain_days": 44.0,
+              "rainfall_mm": 774.0,
+              "snow_days": 0.0
+            }
+          }
+        ],
+        "baseline_end": "2025-06",
+        "baseline_method": "fixed_prior_same_three_calendar_months",
+        "baseline_start": "2022-01",
+        "causal_adjustment_applied": false,
+        "geography": "same_source_weather_common_context_not_dong_specific",
+        "method_version": "weather_season_tracking_v1",
+        "metrics": {
+          "rain_days": {
+            "baseline_max": 44.0,
+            "baseline_mean": 42.666666666666664,
+            "baseline_median": 43.0,
+            "baseline_min": 41.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": -17.96875,
+            "current": 35.0,
+            "difference": -7.666666666666664,
+            "historical_range_position": "below_historical_min",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "days"
+          },
+          "rainfall_mm": {
+            "baseline_max": 1018.5999999999999,
+            "baseline_mean": 895.0333333333333,
+            "baseline_median": 892.5,
+            "baseline_min": 774.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": 6.6887639194070925,
+            "current": 954.9,
+            "difference": 59.866666666666674,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "mm"
+          },
+          "snow_days": {
+            "baseline_max": 0.0,
+            "baseline_mean": 0.0,
+            "baseline_median": 0.0,
+            "baseline_min": 0.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": null,
+            "current": 0.0,
+            "difference": 0.0,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "zero_baseline_mean",
+            "quality_status": "available",
+            "unit": "days"
+          }
+        },
+        "minimum_reference_windows": 3,
+        "not_detection_input": true,
+        "note": "Historical-range position is descriptive, not an anomaly threshold. Compare overlapping windows as context, not independent repeated events.",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "period": "2025-10-01",
+        "quality_status": "available",
+        "retrospective_only": true,
+        "scope": "behavior_observation_three_month_window",
+        "station_scope_verified": false,
+        "tracking_start": "2025-07"
+      },
       "youth_reference": {
         "applicability": "not_applicable",
         "metrics": [],
@@ -12564,6 +13223,12 @@
           "status": "available",
           "reason": "available",
           "not_detection_input": true
+        },
+        "weather_tracking": {
+          "status": "available",
+          "reason": "available",
+          "not_detection_input": true,
+          "causal_adjustment_applied": false
         },
         "youth": {
           "status": "not_applicable",
@@ -14156,6 +14821,133 @@
           "snow_days": 0.0
         }
       },
+      "weather_tracking": {
+        "baseline_candidates": [
+          {
+            "months": [
+              "2022-07",
+              "2022-08",
+              "2022-09"
+            ],
+            "period": "2022-10-01",
+            "values": {
+              "rain_days": 41.0,
+              "rainfall_mm": 1018.5999999999999,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2023-07",
+              "2023-08",
+              "2023-09"
+            ],
+            "period": "2023-10-01",
+            "values": {
+              "rain_days": 43.0,
+              "rainfall_mm": 892.5,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2024-07",
+              "2024-08",
+              "2024-09"
+            ],
+            "period": "2024-10-01",
+            "values": {
+              "rain_days": 44.0,
+              "rainfall_mm": 774.0,
+              "snow_days": 0.0
+            }
+          }
+        ],
+        "baseline_end": "2025-06",
+        "baseline_method": "fixed_prior_same_three_calendar_months",
+        "baseline_start": "2022-01",
+        "causal_adjustment_applied": false,
+        "geography": "same_source_weather_common_context_not_dong_specific",
+        "method_version": "weather_season_tracking_v1",
+        "metrics": {
+          "rain_days": {
+            "baseline_max": 44.0,
+            "baseline_mean": 42.666666666666664,
+            "baseline_median": 43.0,
+            "baseline_min": 41.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": -17.96875,
+            "current": 35.0,
+            "difference": -7.666666666666664,
+            "historical_range_position": "below_historical_min",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "days"
+          },
+          "rainfall_mm": {
+            "baseline_max": 1018.5999999999999,
+            "baseline_mean": 895.0333333333333,
+            "baseline_median": 892.5,
+            "baseline_min": 774.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": 6.6887639194070925,
+            "current": 954.9,
+            "difference": 59.866666666666674,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "mm"
+          },
+          "snow_days": {
+            "baseline_max": 0.0,
+            "baseline_mean": 0.0,
+            "baseline_median": 0.0,
+            "baseline_min": 0.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": null,
+            "current": 0.0,
+            "difference": 0.0,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "zero_baseline_mean",
+            "quality_status": "available",
+            "unit": "days"
+          }
+        },
+        "minimum_reference_windows": 3,
+        "not_detection_input": true,
+        "note": "Historical-range position is descriptive, not an anomaly threshold. Compare overlapping windows as context, not independent repeated events.",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "period": "2025-10-01",
+        "quality_status": "available",
+        "retrospective_only": true,
+        "scope": "behavior_observation_three_month_window",
+        "station_scope_verified": false,
+        "tracking_start": "2025-07"
+      },
       "youth_reference": {
         "applicability": "not_applicable",
         "metrics": [],
@@ -14208,6 +15000,12 @@
           "status": "available",
           "reason": "available",
           "not_detection_input": true
+        },
+        "weather_tracking": {
+          "status": "available",
+          "reason": "available",
+          "not_detection_input": true,
+          "causal_adjustment_applied": false
         },
         "youth": {
           "status": "not_applicable",
@@ -15796,6 +16594,133 @@
           "snow_days": 0.0
         }
       },
+      "weather_tracking": {
+        "baseline_candidates": [
+          {
+            "months": [
+              "2022-07",
+              "2022-08",
+              "2022-09"
+            ],
+            "period": "2022-10-01",
+            "values": {
+              "rain_days": 41.0,
+              "rainfall_mm": 1018.5999999999999,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2023-07",
+              "2023-08",
+              "2023-09"
+            ],
+            "period": "2023-10-01",
+            "values": {
+              "rain_days": 43.0,
+              "rainfall_mm": 892.5,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2024-07",
+              "2024-08",
+              "2024-09"
+            ],
+            "period": "2024-10-01",
+            "values": {
+              "rain_days": 44.0,
+              "rainfall_mm": 774.0,
+              "snow_days": 0.0
+            }
+          }
+        ],
+        "baseline_end": "2025-06",
+        "baseline_method": "fixed_prior_same_three_calendar_months",
+        "baseline_start": "2022-01",
+        "causal_adjustment_applied": false,
+        "geography": "same_source_weather_common_context_not_dong_specific",
+        "method_version": "weather_season_tracking_v1",
+        "metrics": {
+          "rain_days": {
+            "baseline_max": 44.0,
+            "baseline_mean": 42.666666666666664,
+            "baseline_median": 43.0,
+            "baseline_min": 41.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": -17.96875,
+            "current": 35.0,
+            "difference": -7.666666666666664,
+            "historical_range_position": "below_historical_min",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "days"
+          },
+          "rainfall_mm": {
+            "baseline_max": 1018.5999999999999,
+            "baseline_mean": 895.0333333333333,
+            "baseline_median": 892.5,
+            "baseline_min": 774.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": 6.6887639194070925,
+            "current": 954.9,
+            "difference": 59.866666666666674,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "mm"
+          },
+          "snow_days": {
+            "baseline_max": 0.0,
+            "baseline_mean": 0.0,
+            "baseline_median": 0.0,
+            "baseline_min": 0.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": null,
+            "current": 0.0,
+            "difference": 0.0,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "zero_baseline_mean",
+            "quality_status": "available",
+            "unit": "days"
+          }
+        },
+        "minimum_reference_windows": 3,
+        "not_detection_input": true,
+        "note": "Historical-range position is descriptive, not an anomaly threshold. Compare overlapping windows as context, not independent repeated events.",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "period": "2025-10-01",
+        "quality_status": "available",
+        "retrospective_only": true,
+        "scope": "behavior_observation_three_month_window",
+        "station_scope_verified": false,
+        "tracking_start": "2025-07"
+      },
       "youth_reference": {
         "applicability": "not_applicable",
         "metrics": [],
@@ -15848,6 +16773,12 @@
           "status": "available",
           "reason": "available",
           "not_detection_input": true
+        },
+        "weather_tracking": {
+          "status": "available",
+          "reason": "available",
+          "not_detection_input": true,
+          "causal_adjustment_applied": false
         },
         "youth": {
           "status": "not_applicable",
@@ -17421,6 +18352,133 @@
           "snow_days": 0.0
         }
       },
+      "weather_tracking": {
+        "baseline_candidates": [
+          {
+            "months": [
+              "2022-07",
+              "2022-08",
+              "2022-09"
+            ],
+            "period": "2022-10-01",
+            "values": {
+              "rain_days": 41.0,
+              "rainfall_mm": 1018.5999999999999,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2023-07",
+              "2023-08",
+              "2023-09"
+            ],
+            "period": "2023-10-01",
+            "values": {
+              "rain_days": 43.0,
+              "rainfall_mm": 892.5,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2024-07",
+              "2024-08",
+              "2024-09"
+            ],
+            "period": "2024-10-01",
+            "values": {
+              "rain_days": 44.0,
+              "rainfall_mm": 774.0,
+              "snow_days": 0.0
+            }
+          }
+        ],
+        "baseline_end": "2025-06",
+        "baseline_method": "fixed_prior_same_three_calendar_months",
+        "baseline_start": "2022-01",
+        "causal_adjustment_applied": false,
+        "geography": "same_source_weather_common_context_not_dong_specific",
+        "method_version": "weather_season_tracking_v1",
+        "metrics": {
+          "rain_days": {
+            "baseline_max": 44.0,
+            "baseline_mean": 42.666666666666664,
+            "baseline_median": 43.0,
+            "baseline_min": 41.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": -17.96875,
+            "current": 35.0,
+            "difference": -7.666666666666664,
+            "historical_range_position": "below_historical_min",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "days"
+          },
+          "rainfall_mm": {
+            "baseline_max": 1018.5999999999999,
+            "baseline_mean": 895.0333333333333,
+            "baseline_median": 892.5,
+            "baseline_min": 774.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": 6.6887639194070925,
+            "current": 954.9,
+            "difference": 59.866666666666674,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "mm"
+          },
+          "snow_days": {
+            "baseline_max": 0.0,
+            "baseline_mean": 0.0,
+            "baseline_median": 0.0,
+            "baseline_min": 0.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": null,
+            "current": 0.0,
+            "difference": 0.0,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "zero_baseline_mean",
+            "quality_status": "available",
+            "unit": "days"
+          }
+        },
+        "minimum_reference_windows": 3,
+        "not_detection_input": true,
+        "note": "Historical-range position is descriptive, not an anomaly threshold. Compare overlapping windows as context, not independent repeated events.",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "period": "2025-10-01",
+        "quality_status": "available",
+        "retrospective_only": true,
+        "scope": "behavior_observation_three_month_window",
+        "station_scope_verified": false,
+        "tracking_start": "2025-07"
+      },
       "youth_reference": {
         "applicability": "not_applicable",
         "metrics": [],
@@ -17473,6 +18531,12 @@
           "status": "available",
           "reason": "available",
           "not_detection_input": true
+        },
+        "weather_tracking": {
+          "status": "available",
+          "reason": "available",
+          "not_detection_input": true,
+          "causal_adjustment_applied": false
         },
         "youth": {
           "status": "not_applicable",
@@ -19048,6 +20112,133 @@
           "snow_days": 0.0
         }
       },
+      "weather_tracking": {
+        "baseline_candidates": [
+          {
+            "months": [
+              "2022-07",
+              "2022-08",
+              "2022-09"
+            ],
+            "period": "2022-10-01",
+            "values": {
+              "rain_days": 41.0,
+              "rainfall_mm": 1018.5999999999999,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2023-07",
+              "2023-08",
+              "2023-09"
+            ],
+            "period": "2023-10-01",
+            "values": {
+              "rain_days": 43.0,
+              "rainfall_mm": 892.5,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2024-07",
+              "2024-08",
+              "2024-09"
+            ],
+            "period": "2024-10-01",
+            "values": {
+              "rain_days": 44.0,
+              "rainfall_mm": 774.0,
+              "snow_days": 0.0
+            }
+          }
+        ],
+        "baseline_end": "2025-06",
+        "baseline_method": "fixed_prior_same_three_calendar_months",
+        "baseline_start": "2022-01",
+        "causal_adjustment_applied": false,
+        "geography": "same_source_weather_common_context_not_dong_specific",
+        "method_version": "weather_season_tracking_v1",
+        "metrics": {
+          "rain_days": {
+            "baseline_max": 44.0,
+            "baseline_mean": 42.666666666666664,
+            "baseline_median": 43.0,
+            "baseline_min": 41.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": -17.96875,
+            "current": 35.0,
+            "difference": -7.666666666666664,
+            "historical_range_position": "below_historical_min",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "days"
+          },
+          "rainfall_mm": {
+            "baseline_max": 1018.5999999999999,
+            "baseline_mean": 895.0333333333333,
+            "baseline_median": 892.5,
+            "baseline_min": 774.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": 6.6887639194070925,
+            "current": 954.9,
+            "difference": 59.866666666666674,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "mm"
+          },
+          "snow_days": {
+            "baseline_max": 0.0,
+            "baseline_mean": 0.0,
+            "baseline_median": 0.0,
+            "baseline_min": 0.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": null,
+            "current": 0.0,
+            "difference": 0.0,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "zero_baseline_mean",
+            "quality_status": "available",
+            "unit": "days"
+          }
+        },
+        "minimum_reference_windows": 3,
+        "not_detection_input": true,
+        "note": "Historical-range position is descriptive, not an anomaly threshold. Compare overlapping windows as context, not independent repeated events.",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "period": "2025-10-01",
+        "quality_status": "available",
+        "retrospective_only": true,
+        "scope": "behavior_observation_three_month_window",
+        "station_scope_verified": false,
+        "tracking_start": "2025-07"
+      },
       "youth_reference": {
         "applicability": "not_applicable",
         "metrics": [],
@@ -19100,6 +20291,12 @@
           "status": "available",
           "reason": "available",
           "not_detection_input": true
+        },
+        "weather_tracking": {
+          "status": "available",
+          "reason": "available",
+          "not_detection_input": true,
+          "causal_adjustment_applied": false
         },
         "youth": {
           "status": "not_applicable",
@@ -20692,6 +21889,133 @@
           "snow_days": 0.0
         }
       },
+      "weather_tracking": {
+        "baseline_candidates": [
+          {
+            "months": [
+              "2022-07",
+              "2022-08",
+              "2022-09"
+            ],
+            "period": "2022-10-01",
+            "values": {
+              "rain_days": 41.0,
+              "rainfall_mm": 1018.5999999999999,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2023-07",
+              "2023-08",
+              "2023-09"
+            ],
+            "period": "2023-10-01",
+            "values": {
+              "rain_days": 43.0,
+              "rainfall_mm": 892.5,
+              "snow_days": 0.0
+            }
+          },
+          {
+            "months": [
+              "2024-07",
+              "2024-08",
+              "2024-09"
+            ],
+            "period": "2024-10-01",
+            "values": {
+              "rain_days": 44.0,
+              "rainfall_mm": 774.0,
+              "snow_days": 0.0
+            }
+          }
+        ],
+        "baseline_end": "2025-06",
+        "baseline_method": "fixed_prior_same_three_calendar_months",
+        "baseline_start": "2022-01",
+        "causal_adjustment_applied": false,
+        "geography": "same_source_weather_common_context_not_dong_specific",
+        "method_version": "weather_season_tracking_v1",
+        "metrics": {
+          "rain_days": {
+            "baseline_max": 44.0,
+            "baseline_mean": 42.666666666666664,
+            "baseline_median": 43.0,
+            "baseline_min": 41.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": -17.96875,
+            "current": 35.0,
+            "difference": -7.666666666666664,
+            "historical_range_position": "below_historical_min",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "days"
+          },
+          "rainfall_mm": {
+            "baseline_max": 1018.5999999999999,
+            "baseline_mean": 895.0333333333333,
+            "baseline_median": 892.5,
+            "baseline_min": 774.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": 6.6887639194070925,
+            "current": 954.9,
+            "difference": 59.866666666666674,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "available",
+            "quality_status": "available",
+            "unit": "mm"
+          },
+          "snow_days": {
+            "baseline_max": 0.0,
+            "baseline_mean": 0.0,
+            "baseline_median": 0.0,
+            "baseline_min": 0.0,
+            "baseline_n": 3,
+            "baseline_periods": [
+              "2022-10-01",
+              "2023-10-01",
+              "2024-10-01"
+            ],
+            "change_pct": null,
+            "current": 0.0,
+            "difference": 0.0,
+            "historical_range_position": "within_historical_range",
+            "not_statistical_significance_or_weather_alert": true,
+            "percent_status": "zero_baseline_mean",
+            "quality_status": "available",
+            "unit": "days"
+          }
+        },
+        "minimum_reference_windows": 3,
+        "not_detection_input": true,
+        "note": "Historical-range position is descriptive, not an anomaly threshold. Compare overlapping windows as context, not independent repeated events.",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "period": "2025-10-01",
+        "quality_status": "available",
+        "retrospective_only": true,
+        "scope": "behavior_observation_three_month_window",
+        "station_scope_verified": false,
+        "tracking_start": "2025-07"
+      },
       "youth_reference": {
         "applicability": "not_applicable",
         "metrics": [],
@@ -20744,6 +22068,12 @@
           "status": "available",
           "reason": "available",
           "not_detection_input": true
+        },
+        "weather_tracking": {
+          "status": "available",
+          "reason": "available",
+          "not_detection_input": true,
+          "causal_adjustment_applied": false
         },
         "youth": {
           "status": "not_applicable",

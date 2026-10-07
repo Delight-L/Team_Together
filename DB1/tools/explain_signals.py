@@ -104,6 +104,9 @@ def explain(row):
             suffix=f" 동일 연령의 지역 공통 변화는 {common:+.2f}%입니다." if common is not None else ''
             lines.append(f"{label}는 저장된 탐지 기준에서 신호로 판정되지 않았습니다.{suffix} 단순 감소율만으로 이동 이상 신호를 추가하지 않습니다.")
     checks=evidence_checks(row,metrics)
+    checks['auxiliary']['weather_tracking']={
+        'status':(row.get('weather_tracking') or {}).get('quality_status','unavailable'),
+        'not_detection_input':True,'causal_adjustment_applied':False}
     # Display these checks independently; auxiliary context never promotes a signal.
     self_label,regional_label=check_labels(checks)
     market=checks['auxiliary']['consumption']
@@ -149,6 +152,16 @@ def explain(row):
     lines.append(f"SNS 자료의 품질은 {sns.get('quality_status','자료 없음')}이며 동일 라벨의 동·연령 비교에만 사용합니다. SNS 감소율을 계산하지 않습니다.")
     weather=row.get('observation_weather') or {}
     lines.append(f"실제 관측 창 기상자료 품질은 {weather.get('quality_status','자료 없음')}입니다. 기상은 이동 해석의 참고자료이며 현재 탐지 모델의 보정 입력은 아닙니다.")
+    tracking=row.get('weather_tracking') or {}
+    weather_labels={'rainfall_mm':'강수량','rain_days':'강수일수','snow_days':'눈일수'}
+    for metric,comparison in tracking.get('metrics',{}).items():
+        if comparison.get('quality_status')!='available':
+            lines.append(f"{weather_labels[metric]} 계절 비교는 자료 부족으로 판단을 유보합니다.")
+            continue
+        unit='mm' if metric=='rainfall_mm' else '일'
+        lines.append(f"관측 기간 {weather_labels[metric]}은 {comparison['current']:.2f}{unit}이며, 2022년 1월~2025년 6월 기준 자료의 같은 3개월 계절 창 {comparison['baseline_n']}개 평균 {comparison['baseline_mean']:.2f}{unit} 대비 {comparison['difference']:+.2f}{unit}입니다.")
+    if tracking.get('metrics'):
+        lines.append('기상 비교는 계절별 환경 변화의 기술통계입니다. 기상이 행동 변화의 원인이라고 확정하거나 기상만으로 기존 신호를 취소·승격하지 않습니다.')
     lines.append('현재 결과는 사후 관측자료에 근거한 지역·연령 집단 신호입니다. 개인별 고립 확률이나 미래 발생 확률을 산출하지 않습니다.')
     return {'signal_id':f"{row.get('adm_cd')}_{row.get('age_band')}_{row.get('source_label_date')}",'dong_name':name,'age':age,'category':category,'title':titles[category],'isolation_related_candidate':candidate,'assessment_status':row.get('assessment_status'),'probability':None,'observation_start':row.get('observation_start'),'observation_end':row.get('observation_end'),'source_label_date':row.get('source_label_date'),'metrics':metrics,'evidence_checks':checks,'explanation':lines,'source_view':'v_a123_age_source_context','evidence':row}
 

@@ -31,4 +31,30 @@ class ReaderChecks(unittest.TestCase):
     def test_noncanonical_cutoff_rejected(self):
         with fixture() as c:
             with self.assertRaises(ValueError):r.enrich(c,{},'20251231')
+    def tracking_fixture(self,c):
+        c.execute('CREATE TABLE ctx_weather_window_tracking(date TEXT,payload_json TEXT)')
+        p={'quality_status':'available','observation_months':['2025-07','2025-08','2025-09'],
+           'baseline_candidates':[{'months':['2022-07','2022-08','2022-09']}],
+           'metrics':{'rainfall_mm':{'current':100,'baseline_mean':50}},'not_detection_input':True}
+        c.execute('INSERT INTO ctx_weather_window_tracking VALUES(?,?)',('2025-10-01',json.dumps(p)))
+        for kind in ['telecom','interest']:
+            for period in ['2025-09','2025-10']:pub(c,kind,period,'2025-11-01')
+        return {'adm_cd':'x','age_band':'40s','source_label_date':'2025-10-01','model_version':'m','assessment_status':'assessed','communication_signal':1,'mobility_signal':0,'same_period_sns_json':None,'observation_consumption_json':None}
+    def test_weather_comparison_baseline_publications_required(self):
+        with fixture() as c:
+            item=self.tracking_fixture(c)
+            for period in ['2025-07','2025-08','2025-09']:pub(c,'weather',period,'2025-11-01')
+            result=r.enrich(c,item,'2025-12-31')
+            self.assertEqual(result['weather_tracking']['metrics'],{})
+            self.assertEqual(result['evidence_status']['weather_tracking']['status'],'unavailable')
+    def test_weather_comparison_visible_when_all_releases_known(self):
+        with fixture() as c:
+            item=self.tracking_fixture(c)
+            for period in ['2025-07','2025-08','2025-09','2022-07','2022-08','2022-09']:pub(c,'weather',period,'2025-11-01')
+            result=r.enrich(c,item,'2025-12-31')
+            self.assertEqual(result['weather_tracking']['metrics']['rainfall_mm']['current'],100)
+    def test_retrospective_weather_comparison_visible(self):
+        with fixture() as c:
+            item=self.tracking_fixture(c)
+            self.assertEqual(r.enrich(c,item)['weather_tracking']['quality_status'],'available')
 if __name__=='__main__':unittest.main()

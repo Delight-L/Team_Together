@@ -20,10 +20,19 @@ def enrich(c,item,as_of=None):
     if as_of and not core_available(c,label,as_of):return None
     p=c.execute('SELECT observation_weather_json,youth_detail_json FROM v_a123_age_evidence_context WHERE adm_cd=? AND age_band=? AND source_label_date=? AND model_version=?',(item['adm_cd'],age,label,item['model_version'])).fetchone()
     weather=json.loads(p[0]) if p and p[0] else None;youth=json.loads(p[1]) if p and p[1] else []
+    tracking=None
+    if c.execute("SELECT 1 FROM sqlite_master WHERE name='ctx_weather_window_tracking'").fetchone():
+        t=c.execute('SELECT payload_json FROM ctx_weather_window_tracking WHERE date=?',(label,)).fetchone()
+        tracking=json.loads(t[0]) if t else None
     guides=[dict(r) for r in c.execute('SELECT source_id,age_scope,topic,payload_json FROM ctx_evidence_guide')] if age in ['20s','30s'] else []
     for g in guides:g['payload_json']=json.loads(g['payload_json'])
     availability={'telecom':lookup(c,'telecom',label[:7]),'interest':lookup(c,'interest',label[:7])}
     if as_of:
+        if tracking:
+            required=set(tracking['observation_months'])
+            for candidate in tracking['baseline_candidates']:required.update(candidate['months'])
+            if not all(known(c,'weather',m,as_of) for m in required):
+                tracking={'quality_status':'publication_unverified_or_after_cutoff','metrics':{},'baseline_candidates':[],'not_detection_input':True,'causal_adjustment_applied':False}
         if weather and not all(known(c,'weather',m,as_of) for m in weather['observation_months']):
             weather={**weather,'totals':{k:None for k in weather['totals']},'monthly_values':[],'quality_status':'publication_unverified_or_after_cutoff'}
         if cons:
@@ -45,13 +54,14 @@ def enrich(c,item,as_of=None):
             if not known(c,'survey',sid,as_of):bg['survey_context_json']=None;bg['survey_publication_status']='unverified_or_after_cutoff'
             # Annual elderly releases have not been registered by this adapter.
             bg['elder_context_json']=None;bg['elder_publication_status']='unverified'
-    item.update(observation_weather=weather,youth_reference={'applicability':'applicable_static_reference' if age in ['20s','30s'] else 'not_applicable','metrics':youth,'guides':guides,'geography':'gangnam_not_dong','risk_score_modified':False},source_availability=availability,auxiliary_as_of=as_of)
+    item.update(observation_weather=weather,weather_tracking=tracking,youth_reference={'applicability':'applicable_static_reference' if age in ['20s','30s'] else 'not_applicable','metrics':youth,'guides':guides,'geography':'gangnam_not_dong','risk_score_modified':False},source_availability=availability,auxiliary_as_of=as_of)
     item['feature_period_annotation']={'legacy_weather_and_calendar_fields_period':label[:7],'legacy_weather_matches_behavior_window':False,'aligned_weather_field':'observation_weather','legacy_fields':['rainfall_mm','rain_days','snow_days','days_in_month','weekday_days','weekend_days'],'note':'Do not use label-month legacy weather as simultaneous three-month behavior evidence.'}
     quality={
         'communication':status(item['communication_signal'] is not None,item['assessment_status']),
         'mobility':status(item['mobility_signal'] is not None,item['assessment_status']),
         'sns':status(item['same_period_sns_json'] is not None and item['same_period_sns_json'].get('sns_index_mean') is not None,item['same_period_sns_json'].get('quality_status') if item['same_period_sns_json'] else 'missing',time_comparison_allowed=False),
         'weather':status(weather is not None and weather['quality_status']=='available',weather['quality_status'] if weather else 'missing',not_detection_input=True),
+        'weather_tracking':status(tracking is not None and tracking['quality_status']=='available',tracking['quality_status'] if tracking else 'not_installed_or_baseline_period',not_detection_input=True,causal_adjustment_applied=False),
         'youth':{'status':'not_applicable' if age not in ['20s','30s'] else 'available' if youth else 'unavailable','reason':'static_age_reference_only','age_alignment_review':age=='20s'},
         'consumption':[]}
     if cons:

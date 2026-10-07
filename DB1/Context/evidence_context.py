@@ -4,6 +4,7 @@ from contextlib import closing
 from datetime import date
 import argparse,sqlite3,json,csv,hashlib,math,re,calendar
 import youth_detail
+import weather_tracking
 from source_semantics import window,canonical
 SCHEMA='''
 CREATE TABLE IF NOT EXISTS ctx_weather_month(period TEXT PRIMARY KEY,payload_json TEXT);
@@ -102,16 +103,17 @@ def publications(c,config):
 def run(db,config,output=None):
     if not isinstance(config,dict):config=json.loads(Path(config).read_text(encoding='utf-8'))
     with closing(sqlite3.connect(db)) as c:
-        c.execute('PRAGMA foreign_keys=ON');c.executescript(youth_detail.SCHEMA+SCHEMA)
+        c.execute('PRAGMA foreign_keys=ON');c.executescript(youth_detail.SCHEMA+SCHEMA+weather_tracking.SCHEMA)
         with c:
-            y=youth_detail.run(c,config);w=weather(c,config['analysis2']);p=publications(c,config)
-        summary={'new_youth_metric_rows':y,'new_or_enriched_weather_windows':w,'new_publication_records':p,'existing_detection_modified':False}
+            y=youth_detail.run(c,config);w=weather(c,config['analysis2']);tracking=weather_tracking.run(c);p=publications(c,config)
+        summary={'new_youth_metric_rows':y,'new_or_enriched_weather_windows':w,'weather_tracking':tracking,'new_publication_records':p,'existing_detection_modified':False}
     if output:export(db,output)
     return summary
 def export(db,output):
     path=Path(output);path.mkdir(parents=True,exist_ok=True)
     with closing(sqlite3.connect(db)) as c:
-        for table in ['v_youth_detail','ctx_weather_window','ctx_publication_registry','a23_context_revision','ctx_weather_revision']:
+        weather_tracking.export(c,path)
+        for table in ['v_youth_detail','ctx_weather_window','ctx_weather_month_tracking','ctx_weather_window_tracking','ctx_publication_registry','a23_context_revision','ctx_weather_revision']:
             cur=c.execute('SELECT * FROM '+table)
             with (path/(table+'.csv')).open('w',encoding='utf-8-sig',newline='') as f:
                 w=csv.writer(f);w.writerow([r[0] for r in cur.description]);w.writerows(cur)

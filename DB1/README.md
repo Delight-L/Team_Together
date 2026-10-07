@@ -72,3 +72,8 @@ python tools/explain_signals.py --output outputs/handoff/isolation_signal_explan
 ```
 
 현재 자체 과거 기준 10건·지역 비교 2건이며 지속성은 모두 추가 추적입니다. 설명 테스트는 `tests/test_explain_signals.py`에 있어 기본 검증에 포함됩니다.
+
+
+## 기상 변화 추적
+
+2022-01~2025-06 기상을 고정 기준으로 2025-07부터 실제 월별·행동 관측 3개월별 계절 비교를 저장합니다. 기존 `evidence-context` 및 scan/export 갱신 경로에 포함되며 행동 탐지는 유지합니다. [실제 결과와 사용 방법](docs/WEATHER_TRACKING_RESULT_20261007.md)을 확인하세요.

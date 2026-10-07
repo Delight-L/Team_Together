@@ -1,5 +1,10 @@
 # AI agent 담당자 인수 안내
 
+## 최신 근거와 설명 조회
+
+아래 SQL은 핵심 저장 결과 조회 예시입니다. 기상 계절 비교·조사·추적을 모두 포함하려면 `python tools/read_agent_context.py --signals-only --limit 1000`을 우선 사용하세요. `weather_tracking`은 실제 관측 창의 비교이고 `observation_weather`는 그 창의 원값입니다. 읽을 결과는 [현재 10건 설명](ISOLATION_SIGNAL_EXPLANATIONS.md), 구조화 결과는 `outputs/handoff/isolation_signal_explanations.json`입니다. DB 업데이트 후 `tools/explain_signals.py`로 설명을 갱신합니다. [기상 결과와 갱신 방법](WEATHER_TRACKING_RESULT_20261007.md)을 함께 확인하세요.
+
+
 ## 우선 조회
 
 `outputs/db1.sqlite`를 읽기 전용으로 열고 `v_a123_age_source_context`를 조회한다. 원천 기준월과 실제 관측 창을 함께 표시한다. 기존 공식 결과는 그대로 보존돼 있다.

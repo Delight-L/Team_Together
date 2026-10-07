@@ -1,0 +1,10 @@
+{
+  "method_version": "weather_season_tracking_v1",
+  "weather_month_count": 6,
+  "behavior_window_count": 6,
+  "signal_count": 10,
+  "existing_analytical_tables_unchanged": true,
+  "idempotent": true,
+  "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1_backups\\weather_tracking_20261007_163548",
+  "tests": "Context 41 + explanation 13 passed"
+}

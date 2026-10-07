@@ -26,3 +26,8 @@ python tools/explain_signals.py --output outputs/handoff/isolation_signal_explan
 매번 DB1 업데이트 파이프라인이 완료된 뒤 위 명령을 실행해야 최신 설명 파일을 생성합니다. 결과 JSON의 category는 탐지 유형이고 isolation_related_candidate는 기존 DB1 판정을 그대로 유지합니다. probability는 null입니다. evidence에는 기간, 품질, 표본·분모, 보조자료 적용 여부와 실제 근거를 보존합니다. AI agent는 explanation을 사용자 설명 초안으로, metrics와 evidence를 검증 가능한 근거로 사용합니다.
 
 직전 라벨과 비교한 통신 변화율은 exp(log_change)-1로 계산합니다. 실제 관측 창은 3개월이며 직전 창과 2개월 겹칩니다. rZ 경계는 각 지표·기준에 저장된 실제 값을 사용합니다. 소비 비교기간이 맞지 않거나 이전 자료가 없으면 판단을 유보합니다. SNS는 동일 라벨의 상대 비교만 허용합니다. 구 단위 연간 조사와 독거노인·청년 조사에는 공간·연령 적용 범위가 유지됩니다.
+
+
+## 기상 비교 근거
+
+각 사례의 `evidence.weather_tracking`에 실제 관측 창과 같은 계절의 고정 기준 비교를 제공합니다. `evidence_checks.auxiliary.weather_tracking`은 자료 상태와 인과 보정 미적용 여부를 표시합니다. 기존 JSON 형식 v2의 선택적 보조 필드이며 기존 신호 판정을 변경하지 않습니다. 기상 갱신은 evidence-context로 수행하고 이후 설명 생성기를 다시 실행합니다.

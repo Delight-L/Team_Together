@@ -298,3 +298,8 @@ SNS 음수 제외 및 증감률 계산에 따른 기존 8건 보류 해석은 �
 `tools/explain_signals.py`는 기존 모델과 군집을 유지하면서 실제 탐지를 설명합니다. 실행 방법은 `docs/ISOLATION_EXPLANATION_USAGE.md`, 현재 전체 사례는 `docs/ISOLATION_SIGNAL_EXPLANATIONS.md`, 구조화 결과는 `outputs/handoff/isolation_signal_explanations.json`에 있습니다. DB 업데이트 완료 뒤 생성기를 다시 실행해 최신 설명을 만듭니다.
 
 JSON `isolation_explanation_v2`의 `evidence_checks`는 자체 과거 기준·지역 비교·지속성·보조 근거를 독립 항목으로 제공합니다. 순차 통과 조건이나 위험 등급이 아닙니다. 현재 자체 기준 10건, 지역 비교 2건, 지속성은 10건 모두 추가 추적입니다. 소비는 기간 정렬·비교 가능 여부 및 공간 적용 범위를 함께 전달하며 기존 신호를 승격하지 않습니다. 평가 자료 부족과 추가 탐지 없음을 구분합니다. 각 사례의 `evidence`는 원본 근거를 보존하며 `isolation_related_candidate`는 기존 판정입니다. 확률은 산출하지 않습니다.
+
+
+## 2026-10-07 기상 변화 추적
+
+기상은 2022년 1월~2025년 6월을 고정 기준으로 2025년 7월부터 같은 달·같은 3개월 계절 창을 비교합니다. 실제 기상 월별 결과는 `ctx_weather_month_tracking`, 행동 라벨의 실제 관측 창 비교는 `ctx_weather_window_tracking`입니다. AI 조회의 `weather_tracking`과 설명의 `evidence_checks.auxiliary.weather_tracking`을 사용합니다. 기존 군집·행동 탐지·점수는 유지합니다. [실제 결과와 갱신 안내](WEATHER_TRACKING_RESULT_20261007.md)를 확인하세요.
