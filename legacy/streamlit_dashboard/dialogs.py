@@ -5,7 +5,7 @@ import tempfile
 import streamlit as st
 
 from db.analysis_repository import ROOT_DIR, DETECTION_FILE, monthly_upload, structure_upload, publish
-from dashboard.report import build_report
+from shared.report import build_report
 
 
 @st.dialog("데이터 업로드와 분석", width="large")
@@ -142,7 +142,7 @@ def handle_request(request, db_data):
         return
     request = dict(request, workflow_mode="demo" if db_data.get("isDemo") else "live")
     from db.mission_store import load_all, identity, save_event
-    from dashboard.common import selected_evidence, explain_question
+    from legacy.streamlit_dashboard.common import selected_evidence, explain_question
     if request.get("action") == "candidates":
         candidates_dialog(request)
     elif request.get("action") == "open_analysis":
@@ -179,7 +179,7 @@ def handle_request(request, db_data):
 
 """지역 분석 → 사업 매칭 검토 → 보고서 작성."""
 from db.mission_store import service_key, load_all, identity, save_event
-from dashboard.common import match_services
+from legacy.streamlit_dashboard.common import match_services
 
 @st.dialog("분석 결과와 복지사업 매칭 검토", width="large")
 def candidates_dialog(request):

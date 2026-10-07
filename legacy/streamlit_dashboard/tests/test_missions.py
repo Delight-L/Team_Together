@@ -4,8 +4,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 from db import mission_store as missions
-from dashboard.common import match_services, explain_question
-from dashboard.report import build_report
+from legacy.streamlit_dashboard.common import match_services, explain_question
+from shared.report import build_report
 from io import BytesIO
 from docx import Document
 

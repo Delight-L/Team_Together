@@ -15,7 +15,7 @@ r"""사회적 고립 위험도를 살펴보는 Streamlit 대시보드.
 # 1. 라이브러리와 설정 가져오기
 # ============================================================
 import streamlit as st
-from dashboard.common import (
+from legacy.streamlit_dashboard.common import (
     APP_TITLE,
     RISK_FILE,
     MAP_FILE,
@@ -26,8 +26,8 @@ from dashboard.common import (
     THRESHOLDS,
     DEMO_ACCOUNTS,
 )
-from dashboard.common import load_risk_data, load_boundaries
-from dashboard.design_ui import render_dashboard
+from legacy.streamlit_dashboard.common import load_risk_data, load_boundaries
+from legacy.streamlit_dashboard.design_ui import render_dashboard
 
 
 def render_app():
@@ -127,7 +127,7 @@ def render_app():
     # dashboard.js: 화면 생성·지도 클릭 / charts.js: 추이 그래프
     # data.js: 날짜 조회·월평균·위험 점수 계산
     from db.analysis_repository import load_analysis2_data
-    from dashboard.dialogs import handle_request
+    from legacy.streamlit_dashboard.dialogs import handle_request
 
     try:
         db_data = load_analysis2_data()

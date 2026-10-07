@@ -323,7 +323,7 @@ AI Agent의 결과가 단순한 LLM 생성 문장이 아니라 **DB1의 분석 �
 
 카드 소비의 가맹점 지역은 시군구이므로 유동인구와의 결합 분석은 우선 시군구·월·호환 인구집단 단위로 설계합니다. 카드 주제1의 시간대와 주제2의 고객 거주 시도는 서로 다른 레이아웃이며 실제 제공 파일을 확인하여 선택합니다. 원천 테이블명은 추적을 위해 보존하되 정제·분석·운영 테이블은 별도로 구성합니다.
 
-- [대시보드 실행 및 구성 안내](dashboard/README.md): 지역·집단별 변화 확인과 서비스 연계 흐름 시연
+- [대시보드 실행 및 구성 안내](legacy/streamlit_dashboard/README.md): 지역·집단별 변화 확인과 서비스 연계 흐름 시연
 
 현재는 Streamlit Custom Component v2 화면입니다. DB1 결과 검사·반영과 DB2 사업 후보 조회, 업무 기록과 Word 보고서 저장을 지원합니다. 실제 기관 연락 및 자동 지원 승인은 구현하지 않았습니다. 시연 점수와 Analysis2 결과를 데이터 모드로 구분합니다.
 
@@ -447,12 +447,14 @@ DB1 / DB2 업데이트
 
 ```text
 main.py                       실행 명령 라우팅
-dashboard/
+frontend/                     현재 React 화면·Vite 개발 서버
+webapp/                       React용 Python HTTP API
+shared/                       공용 시연 계정·보고서·지도 데이터
+legacy/streamlit_dashboard/
   main.py                     화면 데이터 조립
   common.py                   설정·자료 검사·분석 근거 선택 공통 함수
   design_ui.py                Custom Component 등록
   dialogs.py                  업로드·사업 검토·보고 대화상자
-  report.py                   Word 문서 생성
   ui/                         HTML·CSS·JS 화면과 지도
   tools/                      오프라인 검증·이전 시연 계산
   tests/                      계산·업무 흐름 검증
@@ -464,7 +466,7 @@ ci/                           브랜드 원본과 보미 이미지
 docs/                         설계·운영 문서
 ```
 
-공유 설정과 자료 검사 함수는 `dashboard.common`에서 가져옵니다. DB 조회·저장은 `db`, AI 설명은 `chatbot.service`, 사업 매칭은 `agents.service_matching`이 담당합니다.
+React와 기존 화면의 공용 계정·보고서·지도는 `shared`에서 가져옵니다. 기존 Streamlit 전용 설정과 자료 검사는 `legacy.streamlit_dashboard.common`에 있습니다. DB 조회·저장은 `db`, AI 설명은 `chatbot.service`, 사업 매칭은 `agents.service_matching`이 담당합니다.
 
 ## 14. 구현 현황과 현재 업무 흐름
 
@@ -555,7 +557,10 @@ python main.py --risk --input "월별행동.csv"
 
 | 폴더 | 역할 |
 | --- | --- |
-| `dashboard/` | 화면, 컴포넌트, 업무 대화상자, 보고서 |
+| `frontend/` | 현재 React 화면, Vite 개발 서버 |
+| `webapp/` | React용 Python HTTP API |
+| `shared/` | 공용 시연 계정, 보고서 생성, 지도 데이터 |
+| `legacy/streamlit_dashboard/` | 기존 Streamlit 화면, 컴포넌트, 업무 대화상자 |
 | `chatbot/` | 시작 메뉴, 근거 설명, 데이터 질의, 독립 실행 화면 |
 | `agents/` | Analysis2, v1 분석 도구, 복지사업 매칭 |
 | `preprocessing/` | 지역 유형·월별 행동 자료 전처리 |
@@ -570,6 +575,6 @@ python main.py --risk --input "월별행동.csv"
 
 챗봇 메뉴 선택, 저장된 결과 확인, 기본 근거 안내는 AI를 호출하지 않습니다. ‘AI 에이전트 사용’을 켠 뒤 질문을 보낼 때만 호출을 허용합니다. 서버도 명시적인 호출 조건을 확인하며, Gemini 설정이 없으면 규칙 기반 안내를 제공합니다. `.env`의 `GEMINI_API_KEY`, `GEMINI_MODEL`로 연결합니다.
 
-이전 `dashboard/data/mission_records.sqlite3`가 있으면 최초 실행 시 `db/runtime/`로 복사 이관하며 원본을 보존합니다.
+이전 `legacy/streamlit_dashboard/data/mission_records.sqlite3`가 있으면 최초 실행 시 `db/runtime/`로 복사 이관하며 원본을 보존합니다.
 
-[화면 수정 안내](dashboard/README.md) · [정리 및 검증 기록](docs/2026-10-06_대시보드_정리.md)
+[화면 수정 안내](legacy/streamlit_dashboard/README.md) · [정리 및 검증 기록](docs/2026-10-06_대시보드_정리.md)

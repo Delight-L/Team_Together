@@ -8,7 +8,7 @@ from db import mission_store as missions
 class DialogTests(unittest.TestCase):
     def test_csv_analysis_open_saves_real_evidence_and_source(self):
         from db.analysis_repository import load_analysis2_data
-        from dashboard.dialogs import handle_request
+        from legacy.streamlit_dashboard.dialogs import handle_request
         data = load_analysis2_data()
         self.assertEqual(data["runId"], data["runs"][0]["run_id"])
         row = data["assessment"][-1]
@@ -23,7 +23,7 @@ class DialogTests(unittest.TestCase):
             self.assertEqual(item["done"], [0])
 
     def test_legacy_run_without_id_does_not_crash(self):
-        from dashboard.dialogs import handle_request
+        from legacy.streamlit_dashboard.dialogs import handle_request
         request = {"action":"open_analysis", "user":{"id":"gangnam01"}, "city":"강남구",
                    "district":"삼성1동", "month":"2025-12"}
         data = {"runId":"legacy-run", "runs":[{"kind":"monthly"}],
@@ -40,7 +40,7 @@ class DialogTests(unittest.TestCase):
             missions.save_event(request,1,{"confirmed":True})
             source = """
 import streamlit as st
-import dashboard.dialogs as dialog
+import legacy.streamlit_dashboard.dialogs as dialog
 request={"user":{"id":"gangnam01"},"city":"강남구","district":"역삼1동","month":"2025-12"}
 service={"source_id":"test","region_id":"gangnam","external_id":"test-1","name":"테스트 전용 교류사업","target_text":"주민","source_url":"https://example.org/test"}
 dialog.match_services=lambda *args: [{"service":service,"key":"test-service","reasons":[{"category":"교류","metrics":["유동인구 감소"],"service_terms":["교류"]}],"score":1}]
@@ -57,7 +57,7 @@ dialog.candidates_dialog(request)
             self.assertIn(2,item["done"])
             self.assertFalse(item["workflow_complete"])
             report_source = """
-from dashboard.dialogs import report_dialog
+from legacy.streamlit_dashboard.dialogs import report_dialog
 request={"user":{"id":"gangnam01"},"city":"강남구","district":"역삼1동","month":"2025-12"}
 report_dialog(request,{})
 """

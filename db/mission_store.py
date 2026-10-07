@@ -5,7 +5,7 @@ import sqlite3
 from pathlib import Path
 from datetime import datetime
 
-LEGACY_STORE = Path(__file__).resolve().parents[1] / "dashboard" / "data" / "mission_records.sqlite3"
+LEGACY_STORE = Path(__file__).resolve().parents[1] / "legacy" / "streamlit_dashboard" / "data" / "mission_records.sqlite3"
 STORE = Path(__file__).resolve().parents[1] / "db" / "runtime" / "mission_records.sqlite3"
 STEPS = ["분석 확인", "근거 검토·질의", "사업 매칭 검토", "보고서 완료"]
 WORKFLOW_VERSION = 3

@@ -2,6 +2,16 @@
 
 이 브랜치는 React + Vite 화면과 Python HTTP API를 사용합니다. Python 전처리·Analysis2·챗봇·사업 매칭·SQLite 업무 기록은 기존 모듈을 재사용합니다. 서버는 로컬 시연용이며 `127.0.0.1`에만 바인딩합니다.
 
+## 폴더 구분
+
+- `frontend/`: 현재 React 화면과 Vite 개발 서버
+- `webapp/`: React용 Python HTTP API
+- `shared/`: React와 기존 화면이 함께 사용하는 시연 계정, 보고서 생성, 지도 경계 데이터. Streamlit을 가져오지 않습니다.
+- `legacy/streamlit_dashboard/`: 기존 Streamlit 화면, 전용 데이터, 컴포넌트, 검증 도구
+- `db/`, `agents/`, `chatbot/`, `preprocessing/`: 기존 업무 저장·분석·AI·전처리 기능
+
+현재 화면을 수정할 때는 `frontend/`와 `webapp/`를 확인하세요. 기존 Streamlit 비교 실행은 루트에서 `python main.py --streamlit`입니다. 공용 지도 파일은 `shared/data/map_boundaries.json`, 보고서 생성은 `shared/report.py`, 시연 계정은 `shared/accounts.py`입니다.
+
 ## 최초 설치
 
 프로젝트 루트에서 Python 가상환경을 준비한 후:
@@ -9,13 +19,13 @@
 ```powershell
 .venv/Scripts/python.exe -m pip install -r requirements.txt
 cd frontend
-npm install
-npm run build
+pnpm install --frozen-lockfile
+pnpm run build
 cd ..
 .venv/Scripts/python.exe main.py
 ```
 
-Node.js 22.12 이상을 권장합니다. pnpm 사용 시 `pnpm install`, `pnpm run build`를 사용합니다. pnpm lockfile을 포함하며 esbuild의 설치 스크립트만 허용합니다.
+Node.js 22.12 이상을 권장합니다. 의존성 설치는 pnpm으로 통일합니다. pnpm으로 설치된 `node_modules`에서 `npm install`을 실행하면 `workspace:*` 오류가 발생할 수 있습니다. pnpm lockfile을 포함하며 esbuild의 설치 스크립트만 허용합니다. pnpm이 없다면 `npm install -g pnpm`으로 먼저 설치하세요.
 
 브라우저에서 http://127.0.0.1:8503 을 엽니다. 강남구 시연 계정은 `gangnam01 / demo1234`, 관리자는 `admin / admin1234`입니다. 춘천시는 실제 Analysis2 자료 미연결 상태를 표시합니다. 시연 계정은 실제 서비스 인증이 아닙니다.
 
@@ -34,7 +44,7 @@ CSV는 Git에서 제외됩니다. 새 PC에는 아래 데이터를 같은 경로
 
 터미널 1: 프로젝트 루트에서 `.venv/Scripts/python.exe main.py`
 
-터미널 2: `frontend`에서 `npm run dev`
+터미널 2: `frontend`에서 `pnpm run dev`
 
 http://127.0.0.1:5173 에서 화면을 개발합니다. Vite가 API와 브랜드 이미지를 Python 서버(8503)로 전달합니다. 빌드 후에는 Python 서버 하나가 화면과 API를 함께 제공합니다. 프런트엔드 변경 후 빌드를 다시 실행하세요.
 
@@ -64,7 +74,7 @@ http://127.0.0.1:5173 에서 화면을 개발합니다. Vite가 API와 브랜드
 
 ```powershell
 cd frontend
-npm run build
+pnpm run build
 cd ..
 .venv/Scripts/python.exe -m unittest discover -s webapp/tests -v
 ```

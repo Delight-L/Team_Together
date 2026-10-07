@@ -8,10 +8,10 @@ import sys
 from pathlib import Path
 
 DASHBOARD_DIR = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(DASHBOARD_DIR.parent))
+sys.path.insert(0, str(DASHBOARD_DIR.parents[1]))
 
 from streamlit.testing.v1 import AppTest
-from dashboard.common import (
+from legacy.streamlit_dashboard.common import (
     BASE_DIR,
     RISK_FILE,
     MAP_FILE,
@@ -20,10 +20,10 @@ from dashboard.common import (
     FACTOR_COLORS,
     THRESHOLDS,
 )
-from dashboard.common import load_risk_data, load_boundaries
+from legacy.streamlit_dashboard.common import load_risk_data, load_boundaries
 
 # 브라우저를 열지 않고 Python 코드와 컴포넌트 등록에 오류가 없는지 확인합니다.
-app = AppTest.from_file(str(DASHBOARD_DIR.parent / "streamlit_app.py"), default_timeout=30).run()
+app = AppTest.from_file(str(DASHBOARD_DIR.parents[1] / "streamlit_app.py"), default_timeout=30).run()
 assert not app.exception, [item.message for item in app.exception]
 assert not app.error, [item.value for item in app.error]
 

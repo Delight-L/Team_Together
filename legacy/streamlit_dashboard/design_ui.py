@@ -78,7 +78,7 @@ _DASHBOARD = st.components.v2.component(
 def render_dashboard(payload):
     """Python 데이터를 화면에 전달합니다. 원래 딕셔너리는 변경하지 않습니다."""
     payload = dict(payload)
-    assets = UI_DIR.parents[1] / "ci"
+    assets = UI_DIR.parents[2] / "ci"
     payload["brand"] = {
         name: "data:image/png;base64," + base64.b64encode((assets / filename).read_bytes()).decode("ascii")
         for name, filename in [("logo", "welfind_logo.png"), ("character", "welfind_character.png")]

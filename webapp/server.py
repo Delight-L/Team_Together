@@ -47,7 +47,7 @@ def get_preview(token, user, kind):
 def dashboard_data():
     from db.analysis_repository import load_analysis2_data
     data = load_analysis2_data()
-    data['geometry'] = json.loads((ROOT / 'dashboard/data/map_boundaries.json').read_text(encoding='utf-8'))
+    data['geometry'] = json.loads((ROOT / 'shared/data/map_boundaries.json').read_text(encoding='utf-8'))
     data['months'] = sorted({r['기준연월'] for r in data['assessment']})
     return data
 
@@ -192,7 +192,7 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(body, dict): raise ValueError('JSON 객체가 필요합니다.')
             route = urlsplit(self.path).path
             if route == '/api/login':
-                from dashboard.common import DEMO_ACCOUNTS
+                from shared.accounts import DEMO_ACCOUNTS
                 account = DEMO_ACCOUNTS.get(body.get('id',''))
                 if not account or not secrets.compare_digest(str(body.get('password','')), account['password']):
                     raise PermissionError('아이디 또는 비밀번호가 올바르지 않습니다.')
@@ -263,7 +263,7 @@ class Handler(BaseHTTPRequestHandler):
             if not evidence: raise ValueError('선택 지역·월의 실제 분석 결과가 없습니다.')
             from db.mission_store import save_event, load_all, identity, review_revision
             if route == '/api/report/preview':
-                from dashboard.report import build_report
+                from shared.report import build_report
                 item = load_all().get(identity(context), {})
                 if 2 not in item.get('done',[]) or item.get('workflow_complete'):
                     raise ValueError('사업 검토 기록을 먼저 저장하세요. 완료 업무는 수정할 수 없습니다.')
