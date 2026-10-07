@@ -50,7 +50,7 @@ Analysis2의 동·연령대별 전처리 이력과 업데이트 경로를 추가
 
 ## AI agent 담당자 인수
 
-먼저 [조회 실행 안내](docs/AI_AGENT_QUICKSTART.md), [실제 3건 설명 예시](docs/AI_AGENT_EXPLANATION_EXAMPLES.md), [인수 검증 결과](docs/DB1_HANDOFF_ACCEPTANCE_20261007.md)를 읽으세요. `tools/read_agent_context.py --signals-only`로 읽기 전용 통합 근거를 조회합니다. 집계 기준월과 실제 직전 3개월 관측을 구분하고 SNS 시계열 증감률을 계산하지 않습니다. 검증용 모의 DB와 원본 파일은 운영 DB1에 포함하지 않습니다.
+먼저 [조회 실행 안내](docs/AI_AGENT_QUICKSTART.md), [현재 10건의 근거별 설명](docs/ISOLATION_SIGNAL_EXPLANATIONS.md), [인수 검증 결과](docs/DB1_HANDOFF_ACCEPTANCE_20261007.md)를 읽으세요. `tools/read_agent_context.py --signals-only`로 읽기 전용 통합 근거를 조회합니다. 집계 기준월과 실제 직전 3개월 관측을 구분하고 SNS 시계열 증감률을 계산하지 않습니다. 검증용 모의 DB와 원본 파일은 운영 DB1에 포함하지 않습니다.
 
 
 ## 2026-10-07 근거 보완 반영
@@ -61,3 +61,14 @@ Analysis2의 동·연령대별 전처리 이력과 업데이트 경로를 추가
 ## GitHub 전달 전 정리
 
 [폴더 구성과 전달 안내](docs/FILE_ORGANIZATION.md)를 참조하세요. 최신 인수인계 본문은 docs/AI_AGENT_HANDOFF.md입니다. 과거 변경 백업은 DB1_backups로 이동했으며 운영 DB·모델·기준 입력은 유지했습니다. 근거별 상태와 청년 세부 근거를 포함한 통합 조회는 tools/read_agent_context.py를 사용하세요.
+
+
+## 기존 탐지의 근거별 설명
+
+[설명 생성기 사용 방법](docs/ISOLATION_EXPLANATION_USAGE.md)에 따라 DB 업데이트 완료 후 실행합니다. 기존 군집·탐지를 유지하고 자체 과거 기준, 지역 비교, 지속성, 보조 근거를 독립 항목으로 표시합니다.
+
+```powershell
+python tools/explain_signals.py --output outputs/handoff/isolation_signal_explanations.json --markdown docs/ISOLATION_SIGNAL_EXPLANATIONS.md
+```
+
+현재 자체 과거 기준 10건·지역 비교 2건이며 지속성은 모두 추가 추적입니다. 설명 테스트는 `tests/test_explain_signals.py`에 있어 기본 검증에 포함됩니다.
