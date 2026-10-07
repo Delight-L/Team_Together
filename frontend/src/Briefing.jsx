@@ -240,7 +240,7 @@ export function Briefing({
                 <div className="change-symbol">
                   <Icon name={i === 2 ? 'services' : 'chart'} size={22} />
                 </div>
-                <div>
+                <div className="highlight-copy">
                   <span>
                     {r.name} · {r.metric_label}
                   </span>

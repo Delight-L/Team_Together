@@ -4,7 +4,7 @@ API 키나 자동 다운로드는 사용하지 않습니다. 사진처럼 `raw_d
 
 ## 1. 원본 파일 넣기
 
-`preprocessing_agent/raw_data` 폴더에 아래 **필수 5개**를 넣습니다. 파일명 뒤의 날짜·괄호는 달라도 됩니다.
+`preprocessing/regional_types/raw_data` 폴더에 아래 **필수 5개**를 넣습니다. 파일명 뒤의 날짜·괄호는 달라도 됩니다.
 
 |필수 파일|파일명에서 포함돼야 하는 글자|
 |---|---|
@@ -18,16 +18,16 @@ API 키나 자동 다운로드는 사용하지 않습니다. 사진처럼 `raw_d
 
 ## 2. 실행
 
-터미널을 `preprocessing_agent` 폴더에서 연 뒤 실행합니다.
+프로젝트 루트에서 실행합니다.
 
 ```powershell
-python main.py
+python main.py --preprocess-analysis1
 ```
 
 원본 또는 결과 폴더가 다른 곳에 있다면:
 
 ```powershell
-python main.py --raw-dir "raw_data" --output-dir "outputs\analysis1_preprocessed"
+python main.py --preprocess-analysis1 --raw-dir "raw_data" --output-dir "outputs\analysis1_preprocessed"
 ```
 
 ## 3. 결과
@@ -40,3 +40,5 @@ python main.py --raw-dir "raw_data" --output-dir "outputs\analysis1_preprocessed
 - `preprocessing_manifest.json`: 22개 동·결측 검증 결과
 
 이 결과는 동별 **지역 유형·맥락** 자료이며, 개인 또는 동의 고립 위험 점수는 아닙니다. `일원2동` 표기는 행정동 코드 기준으로 `개포3동`으로 통일합니다.
+
+이전 중복 전처리 폴더에 있던 JSON 산출물은 `outputs/previous_preprocessing_agent`에 보존했습니다.

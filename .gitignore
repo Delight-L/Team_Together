@@ -18,14 +18,8 @@ node_modules/
 frontend/dist/
 db/runtime/*.sqlite3*
 !ci/bomi-face.png
-legacy/streamlit_dashboard/.streamlit/secrets.toml
-.streamlit/secrets.toml
-legacy/streamlit_dashboard/**/*.log
 
 # 담당자 업무 기록은 저장소에 포함하지 않습니다.
-legacy/streamlit_dashboard/data/mission_records.sqlite3*
-!legacy/streamlit_dashboard/data/people.csv
-!legacy/streamlit_dashboard/data/risk_factors.csv
 
 # Runtime state and developer scratch files
 db/runtime/*.sqlite3*
@@ -76,3 +70,4 @@ agents/regional_analysis/analysis2_execution_report.json
 preprocessing/**/outputs/*manifest.json
 preprocessing/**/outputs/**/preprocessing_manifest.json
 preprocessing/**/outputs/validation_report.json
+!preprocessing/regional_types/outputs/previous_preprocessing_agent/analysis1_preprocessed/preprocessing_manifest.json

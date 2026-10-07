@@ -21,9 +21,7 @@ class ApiTest(unittest.TestCase):
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory()
         cls.store_patch = patch.object(mission_store, 'STORE', Path(cls.temp.name)/'test.sqlite3')
-        cls.legacy_patch = patch.object(mission_store, 'LEGACY_STORE', Path(cls.temp.name)/'missing.sqlite3')
         cls.store_patch.start()
-        cls.legacy_patch.start()
         cls.httpd = ThreadingHTTPServer(('127.0.0.1',0),server.Handler)
         cls.thread = threading.Thread(target=cls.httpd.serve_forever,daemon=True)
         cls.thread.start()
@@ -36,7 +34,6 @@ class ApiTest(unittest.TestCase):
         cls.httpd.server_close()
         cls.thread.join()
         cls.store_patch.stop()
-        cls.legacy_patch.stop()
         cls.temp.cleanup()
 
     def setUp(self):

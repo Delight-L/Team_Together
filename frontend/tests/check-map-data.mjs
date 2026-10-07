@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const source = JSON.parse(readFileSync(new URL('../src/data/administrative-regions.json', import.meta.url), 'utf8').replace(/^\uFEFF/, ''));
-const existing = JSON.parse(readFileSync(new URL('../../dashboard/data/map_boundaries.json', import.meta.url), 'utf8'));
+const existing = JSON.parse(readFileSync(new URL('../../shared/data/map_boundaries.json', import.meta.url), 'utf8'));
 const identities = new Set();
 assert.equal(source.type, 'FeatureCollection');
 

@@ -14,15 +14,14 @@ const tileAttribution = import.meta.env.VITE_MAP_ATTRIBUTION ||
 // WGS84 경계를 Leaflet이 도로 타일과 같은 좌표계로 투영합니다.
 // 분석값과 선택 콜백은 기존 화면과 동일하며 드래그/휠 처리는 Leaflet에 맡깁니다.
 export function MissionMap(props) {
-  const [mode, setMode] = useState('road');
-  if (!props.flat) return <OverviewMap {...props} />;
+  const [mode, setMode] = useState(props.flat ? 'road' : 'relief');
   return (
     <div className="mission-map-switchable">
       <div className="map-view-toggle" role="group" aria-label="지도 표현 방식">
+        <button aria-pressed={mode === 'road'} onClick={() => setMode('road')}>기본</button>
         <button aria-pressed={mode === 'relief'} onClick={() => setMode('relief')}>입체</button>
-        <button aria-pressed={mode === 'road'} onClick={() => setMode('road')}>도로</button>
       </div>
-      {mode === 'relief' ? <ReliefMap {...props} /> : <RoadMap {...props} />}
+      {mode === 'relief' ? <ReliefMap {...props} /> : props.flat ? <RoadMap {...props} /> : <OverviewMap {...props} />}
     </div>
   );
 }

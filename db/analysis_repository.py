@@ -1,6 +1,8 @@
 """업로드 검사·분석·DB1 저장. 원본과 분석 결과는 실행 버전별로 보관합니다."""
 
 import json
+from copy import deepcopy
+from functools import lru_cache
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
@@ -9,7 +11,6 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
-import streamlit as st
 from sqlalchemy import inspect, text
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -102,19 +103,21 @@ def prepare_analysis2(data, source):
 
 
 def load_analysis2_data():
-    return _load_analysis2_data(DETECTION_FILE.stat().st_mtime_ns)
+    # 캐시 원본은 요청별 수정(지도 추가 등)으로부터 보호합니다.
+    return deepcopy(_load_analysis2_data(str(DETECTION_FILE.resolve()), DETECTION_FILE.stat().st_mtime_ns))
 
-@st.cache_data(show_spinner=False, max_entries=4)
-def _load_analysis2_data(modified_ns):
+@lru_cache(maxsize=4)
+def _load_analysis2_data(source_path, modified_ns):
     """DB 적재 없이 version11의 저장된 분석 결과를 읽습니다."""
-    prepared = monthly_upload(DETECTION_FILE.read_bytes(), DETECTION_FILE.name)
+    source = Path(source_path)
+    prepared = monthly_upload(source.read_bytes(), source.name)
     run_id = "analysis2-" + str(modified_ns)
     return {
         "connected": True, "isDemo": False, "source": "Analysis2 CSV",
         "runId": run_id,
         "assessment": records(prepared["assessment"]),
         "signals": records(prepared["signals"]), "alerts": records(prepared["alerts"]),
-        "activity": [], "runs": [{"run_id": run_id, "kind": "monthly", "source_name": str(DETECTION_FILE),
+        "activity": [], "runs": [{"run_id": run_id, "kind": "monthly", "source_name": str(source),
             "period": prepared["period"], "created_at": "CSV 결과", "rule_version": "analysis2-v11"}],
     }
 

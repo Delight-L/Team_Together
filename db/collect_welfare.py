@@ -16,7 +16,7 @@ from sqlalchemy import text
 
 from db.db2_welfare import LOCK_ID, WelfareStore
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 ENDPOINT = "https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations"
 LOG = logging.getLogger("db2.collect")
 

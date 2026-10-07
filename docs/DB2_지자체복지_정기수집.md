@@ -44,14 +44,14 @@ DB 세션 잠금으로 동일 DB에 대한 중복 수집을 막습니다.
 기존 시설 API의 `DATA_API_ENDPOINT` 설정과 독립적으로 동작합니다.
 
 ```powershell
-.\.venv\Scripts\python.exe collect_db2.py init
-.\.venv\Scripts\python.exe collect_db2.py collect
+.\.venv\Scripts\python.exe -m db.collect_welfare init
+.\.venv\Scripts\python.exe -m db.collect_welfare collect
 
 # 소량 검증: 목록 한 페이지, 상세 최대 2건
-.\.venv\Scripts\python.exe collect_db2.py collect --max-pages 1 --rows 2 --max-details 2
+.\.venv\Scripts\python.exe -m db.collect_welfare collect --max-pages 1 --rows 2 --max-details 2
 
 # 특정 지역
-.\.venv\Scripts\python.exe collect_db2.py collect --province 서울특별시 --district 강남구
+.\.venv\Scripts\python.exe -m db.collect_welfare collect --province 서울특별시 --district 강남구
 ```
 
 예약 수집에도 지역을 적용하려면 `.env`의 `DB2_WELFARE_PROVINCE`, `DB2_WELFARE_DISTRICT`를 설정합니다.
@@ -69,7 +69,7 @@ PC가 켜져 있고 PostgreSQL/API에 연결할 수 있어야 합니다.
 
 ```powershell
 # 새 환경에 등록 (이미 같은 이름의 작업이 있으면 덮어쓰지 않고 중단)
-.\ci\install_db2_welfare_task.ps1
+.\scripts\install_db2_welfare_task.ps1
 
 Get-ScheduledTask -TaskName TeamTogether-DB2-Welfare
 Get-ScheduledTaskInfo -TaskName TeamTogether-DB2-Welfare

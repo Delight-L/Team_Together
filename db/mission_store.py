@@ -5,7 +5,6 @@ import sqlite3
 from pathlib import Path
 from datetime import datetime
 
-LEGACY_STORE = Path(__file__).resolve().parents[1] / "legacy" / "streamlit_dashboard" / "data" / "mission_records.sqlite3"
 STORE = Path(__file__).resolve().parents[1] / "db" / "runtime" / "mission_records.sqlite3"
 STEPS = ["분석 확인", "근거 검토·질의", "사업 매칭 검토", "보고서 완료"]
 WORKFLOW_VERSION = 3
@@ -30,9 +29,6 @@ def review_revision(item):
 @contextmanager
 def connection():
     STORE.parent.mkdir(parents=True, exist_ok=True)
-    if not STORE.exists() and LEGACY_STORE.is_file():
-        with sqlite3.connect(LEGACY_STORE) as legacy, sqlite3.connect(STORE) as target:
-            legacy.backup(target)
     db = sqlite3.connect(STORE)
     db.execute("CREATE TABLE IF NOT EXISTS missions (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
     try:

@@ -17,20 +17,13 @@ def main():
     }
     if arguments and arguments[0] in jobs:
         script = jobs[arguments[0]]
-        path_flags = {"--input", "--context", "--output-dir", "--raw-dir", "--config", "--output", "--weather"}
+        path_flags = {"--input", "--context", "--output-dir", "--raw-dir", "--config", "--output", "--weather", "--compare"}
         for index in range(1, len(arguments)-1):
             if arguments[index] in path_flags:
                 arguments[index+1] = str(Path(arguments[index+1]).resolve())
         raise SystemExit(subprocess.call([sys.executable, "-X", "utf8", str(script), *arguments[1:]], cwd=script.parent))
-    if arguments[:1] == ["--chatbot"]:
-        script = ROOT_DIR / "chatbot" / "app.py"
-        raise SystemExit(subprocess.call([sys.executable, "-m", "streamlit", "run", str(script), *arguments[1:]], cwd=ROOT_DIR))
-    if arguments[:1] != ["--streamlit"]:
-        from webapp.server import main as serve_react
-        serve_react(arguments)
-        return
-    # React가 기본 실행입니다. 비교용 Streamlit은 별도 시작 파일로 실행합니다.
-    raise SystemExit(subprocess.call([sys.executable, "-m", "streamlit", "run", str(ROOT_DIR / "streamlit_app.py"), *arguments[1:]], cwd=ROOT_DIR))
+    from webapp.server import main as serve_react
+    serve_react(arguments)
 
 if __name__ == "__main__":
     main()

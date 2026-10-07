@@ -3,8 +3,8 @@ import boundaries from './data/administrative-regions.json';
 import { Icon } from './components';
 
 const palette = {
-  quiet: ['#e5eaf1', '#c8d2df', '#a2afbf'],
-  rose: ['#ffb5c6', '#f47798', '#b94d70'],
+  quiet: ['#e8eef9', '#bdcde3', '#93aecb'],
+  rose: ['#ff97b6', '#ff527f', '#ce3565'],
   orange: ['#ffe3a6', '#f4ba62', '#bd873a'],
   sky: ['#c2ddff', '#91baf0', '#6289bb'],
 };
@@ -127,11 +127,13 @@ export function ReliefMap({ geometry, regions, selected, onSelect }) {
           {Object.entries(palette).map(([color, values]) => <linearGradient id={`${id}-${color}`} key={color} x1="0" y1="0" x2="1" y2="1">
             <stop stopColor={values[0]} /><stop offset="1" stopColor={values[1]} />
           </linearGradient>)}
-          <filter id={`${id}-shadow`} x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="2" dy="10" stdDeviation="5" floodColor="#26374c" floodOpacity=".19" /></filter>
+          <filter id={`${id}-shadow`} x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="2" dy="15" stdDeviation="9" floodColor="#3c527b" floodOpacity=".24" /></filter>
+          <filter id={`${id}-glow`} x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#70dcff" floodOpacity=".65" /></filter>
+          <filter id={`${id}-rose-glow`} x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="3" stdDeviation="6" floodColor="#ff527f" floodOpacity=".55" /></filter>
         </defs>
         <g transform={`translate(${450 + view.x} ${300 + view.y}) scale(${view.zoom}) translate(-450 -300)`}>
           <g aria-hidden="true" filter={`url(#${id}-shadow)`}>
-            {scene.units.map((unit) => <path key={unit.name} d={unit.path} transform="translate(0 12)" fill="#a1afbd" stroke="#a1afbd" strokeWidth="1" />)}
+            {scene.units.map((unit) => <path key={unit.name} d={unit.path} transform="translate(0 20)" fill="#a4bad3" stroke="#a4bad3" strokeWidth="1" />)}
           </g>
           {scene.units.map((unit) => {
             const region = rows.get(unit.name);
@@ -144,9 +146,10 @@ export function ReliefMap({ geometry, regions, selected, onSelect }) {
               }}>
               <title>{unit.name} · {region.status}</title>
               {/* 같은 경계를 층으로 쌓아 판의 측면을 표현합니다. 높이는 분석 수치가 아닙니다. */}
-              {[12, 8, 4, 0, -4, -8, -12].filter((level) => level >= -lift).map((level) =>
+              {[20, 16, 12, 8, 4, 0, -4, -8, -12].filter((level) => level >= -lift).map((level) =>
                 <path key={level} d={unit.path} transform={`translate(0 ${level})`} fill={palette[color][2]} stroke={palette[color][2]} strokeWidth="1" fillRule="evenodd" aria-hidden="true" />)}
-              <path className="relief-top" d={unit.path} transform={`translate(0 ${-lift})`} fill={`url(#${id}-${color})`} stroke="#f9fbff" strokeWidth="1.8" strokeLinejoin="round" fillRule="evenodd" />
+              <path d={unit.path} transform="translate(0 17)" fill="none" stroke="#b0edff" strokeWidth="2" filter={`url(#${id}-glow)`} aria-hidden="true" />
+              <path className="relief-top" d={unit.path} transform={`translate(0 ${-lift})`} fill={`url(#${id}-${color})`} stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" fillRule="evenodd" filter={region.count ? `url(#${id}-rose-glow)` : undefined} />
               <text x={unit.x} y={unit.y - lift} textAnchor="middle" dominantBaseline="middle">{unit.name}</text>
             </g>;
           })}
@@ -157,9 +160,11 @@ export function ReliefMap({ geometry, regions, selected, onSelect }) {
             return <g key={unit.name} className="relief-priority" transform={`translate(${x} ${y})`} role="button" tabIndex="0" aria-label={`${unit.name} ${region.status} 상세`}
               onClick={(event) => choose(event, unit.name)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(event, unit.name); } }}>
               <circle r="16" fill={color} stroke="white" strokeWidth="3" /><text textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="16" fontWeight="800">{priorities.indexOf(region) + 1}</text>
-              <rect x={labelX} y="-24" width="150" height="49" rx="10" fill="white" stroke="#e1e7ee" />
+              <rect x={labelX} y="-24" width="150" height="76" rx="12" fill="white" stroke="#dce4f3" />
               <text x={labelX + 12} y="-5" fill="#18334f" fontSize="13" fontWeight="700">{unit.name}</text>
               <text x={labelX + 12} y="13" fill={color} fontSize="10">{region.status} · {region.count}개 지표</text>
+              <rect x={labelX + 10} y="25" width="130" height="20" rx="7" fill="#edf3ff" />
+              <text x={labelX + 75} y="39" textAnchor="middle" fill="#3168da" fontSize="10">상세 보기 →</text>
             </g>;
           })}
         </g>

@@ -1324,7 +1324,7 @@
   background: #ffffffef; box-shadow: 0 2px 8px #1c355412; }
 .map-view-toggle button { padding: 5px 10px; border-radius: 6px; color: #8491a3; font-size: 10px; }
 .map-view-toggle button[aria-pressed="true"] { background: #e8f0ff; color: #2563eb; font-weight: 700; }
-.relief-map { background: radial-gradient(ellipse at 40% 25%, #ffffff, #f2f4f7 85%);
+.relief-map { background: radial-gradient(ellipse at 48% 44%, #e3eaff 0%, #f0f2ff 48%, #f8faff 90%);
   user-select: none; -webkit-user-select: none; touch-action: none; }
 .relief-scene { position: absolute; width: 100%; height: calc(100% - 34px); display: block;
   cursor: grab; touch-action: none; -webkit-user-drag: none; }
@@ -1332,8 +1332,9 @@
 .relief-map.dragging .relief-scene, .relief-map.dragging .relief-district { cursor: grabbing; }
 .relief-district { cursor: pointer; outline: none; }
 .relief-district .relief-top { transition: filter .15s; }
-.relief-district:hover .relief-top { filter: brightness(1.06); stroke: #c0d3ef; stroke-width: 2.5; }
-.relief-district.selected .relief-top, .relief-district:focus-visible .relief-top { stroke: #2563eb; stroke-width: 3; }
+.relief-district:hover .relief-top { stroke: #ffffff; stroke-width: 3.5; }
+.relief-district.selected .relief-top { stroke: #ffffff; stroke-width: 4; }
+.relief-district:focus-visible .relief-top { stroke: #2563eb; stroke-width: 4; }
 .relief-district text { fill: #36516f; font-size: 12px; font-weight: 600; pointer-events: none;
   paint-order: stroke; stroke: #ffffff60; stroke-width: 2px; }
 .relief-district.candidate text { fill: #53263f; font-weight: 800; font-size: 14px; }
@@ -1407,3 +1408,20 @@
 .quiet-road-overview .roadmap-pin-label b { font-size: 11px; }
 .quiet-road-overview .roadmap-pin-label small { font-size: 9px; }
 .quiet-road-overview .roadmap-pin { gap: 0; }
+
+/* 주요 변화는 제목과 지표가 고정 높이 안에서 눌리지 않도록 합니다. */
+.briefing-v2 { grid-template-rows: minmax(320px, 1fr) minmax(132px, auto); }
+.briefing-v2 .mission-highlights { min-height: 132px; overflow: visible; }
+.briefing-v2 .mission-highlights > header { padding: 13px 16px 9px; gap: 12px; flex-wrap: wrap; }
+.briefing-v2 .mission-highlights h2 { font-size: 15px; line-height: 22px; margin: 0; }
+.briefing-v2 .mission-highlights > header > span { font-size: 11px; line-height: 18px; color: #748399; }
+.briefing-v2 .highlight-grid { padding: 0 12px 12px; gap: 10px; }
+.briefing-v2 .highlight-grid > button { min-height: 72px; padding: 10px 14px; gap: 12px; }
+.briefing-v2 .highlight-copy { min-width: 0; display: grid; gap: 3px; }
+.briefing-v2 .highlight-copy span { font-size: 12px; line-height: 18px; white-space: normal; overflow-wrap: anywhere; color: #63758c; }
+.briefing-v2 .highlight-copy strong { font-size: 24px; line-height: 28px; margin: 0; font-variant-numeric: tabular-nums; }
+.briefing-v2 .highlight-grid > button > svg { flex-shrink: 0; }
+@media (max-width: 600px) {
+  .briefing-v2 .highlight-grid { flex-direction: column; }
+  .briefing-v2 .mission-highlights h2 { font-size: 14px; }
+}

@@ -56,9 +56,9 @@ const [district, setDistrict] = useState('');
 ## 수정하고 확인하는 순서
 
 1. Python 서버를 실행합니다: 프로젝트 루트에서 `.venv/Scripts/python.exe main.py`.
-2. 다른 터미널에서 `cd frontend`, `npm run dev`를 실행합니다.
+2. 다른 터미널에서 `cd frontend`, `pnpm run dev`를 실행합니다.
 3. http://127.0.0.1:5173 을 열어 수정합니다. 개발 서버는 저장한 변경을 자동 반영합니다.
-4. 수정 후 `frontend`에서 `npm run build`로 문법/번들 오류를 확인합니다.
+4. 수정 후 `frontend`에서 `pnpm run build`로 문법/번들 오류를 확인합니다.
 5. 시연용 http://127.0.0.1:8503 에서 새로고침합니다. 이 주소는 마지막 빌드 결과를 사용하므로 빌드를 생략하면 수정 전 화면이 나옵니다.
 
 ## 오류가 났을 때
@@ -67,8 +67,8 @@ const [district, setDistrict] = useState('');
 
 | 증상 | 먼저 볼 곳 | 확인할 사항 |
 |---|---|---|
-| `frontend ... npm run build` 안내 | frontend 폴더 | 의존성 설치와 빌드가 완료됐는지 |
-| 화면이 하얗게 나오거나 JSX 오류 | Console, `npm run build` | 오류 파일/줄의 닫는 태그, 괄호, import 이름 |
+| `frontend ... pnpm run build` 안내 | frontend 폴더 | 의존성 설치와 빌드가 완료됐는지 |
+| 화면이 하얗게 나오거나 JSX 오류 | Console, `pnpm run build` | 오류 파일/줄의 닫는 태그, 괄호, import 이름 |
 | 수정한 내용이 안 보임 | 접속 URL | 8503에서는 다시 빌드해야 함. 개발은 5173 사용 |
 | 질문/조회에 `Failed to fetch`, `ECONNREFUSED` | Network, Python 터미널 | Python 서버가 8503에서 실행 중인지 |
 | 401 | 로그인 | 서버 재시작 시 메모리 세션이 초기화되므로 다시 로그인 |
@@ -110,6 +110,6 @@ ChatPanel.send(question, topic)에서 버튼은 고정 topic ID를, 직접 입�
 
 자유 대화는 총괄 라우팅 1회와 전문 답변 1회, 총 2회 모델 요청을 사용합니다. 총괄의 agent 출력은 고정 허용 목록으로 검사하며 임의 코드/파일 실행을 허용하지 않습니다. 지역 에이전트는 현재 CSV, 사업 에이전트는 기존 DB2 매칭 조회를 사용합니다. 보고서 에이전트는 작성 절차를 안내하며 문서를 자동 저장하지 않습니다. 구체적인 사업 조회에 필요한 동이 없으면 선택을 요청합니다.
 
-동을 선택하지 않은 대화는 소속 도시의 현재 월 자료만 사용합니다. 다른 도시 접근 검증과 업무 저장의 동 선택 검증은 유지합니다. AI 키·모델 설정이 없거나 연결 실패하면 명시적인 안내를 반환합니다. 이전 Streamlit의 opt-in API는 별도로 유지합니다.
+동을 선택하지 않은 대화는 소속 도시의 현재 월 자료만 사용합니다. 다른 도시 접근 검증과 업무 저장의 동 선택 검증은 유지합니다. AI 키·모델 설정이 없거나 연결 실패하면 명시적인 안내를 반환합니다.
 
 검사: .venv/Scripts/python.exe -m unittest discover -s chatbot/tests -v 및 API 검사. 외부 AI는 mock으로 대체하므로 테스트에서 토큰을 사용하지 않습니다.
