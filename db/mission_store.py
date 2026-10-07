@@ -62,7 +62,7 @@ def save_event(request, step, record=None):
         record = dict(record or {})
         if step > 0 and not set(range(step)).issubset(done):
             raise ValueError("분석 확인 → 근거 검토 → 사업 매칭 검토 → 보고서 저장 순서로 진행하세요.")
-        if item.get("workflow_complete") and step >= 1:
+        if item.get("workflow_complete") and step in (1, 2):
             raise ValueError("보고서 완료된 업무는 수정할 수 없습니다. 새 업무로 진행하세요.")
         record["created_at"] = timestamp()
         record["actor"] = request["user"]["id"]
@@ -97,6 +97,19 @@ def save_event(request, step, record=None):
             if not document or hashlib.sha256(document).hexdigest() != record["sha256"]:
                 raise ValueError("실제 보고서 파일을 생성한 후 저장하세요.")
             db.execute("CREATE TABLE IF NOT EXISTS report_files (key TEXT PRIMARY KEY, document BLOB NOT NULL)")
+            db.execute("""CREATE TABLE IF NOT EXISTS report_versions (
+                key TEXT NOT NULL, revision INTEGER NOT NULL, document BLOB NOT NULL,
+                record TEXT NOT NULL, PRIMARY KEY (key, revision))""")
+            revision = db.execute("SELECT COALESCE(MAX(revision),0) FROM report_versions WHERE key=?", (key,)).fetchone()[0]
+            previous = db.execute("SELECT document FROM report_files WHERE key=?", (key,)).fetchone()
+            # 이 기능 도입 전에 저장된 보고서도 첫 재작성 시 이력에 남깁니다.
+            if previous and revision == 0:
+                revision = 1
+                db.execute("INSERT INTO report_versions VALUES (?,?,?,?)",
+                           (key, revision, previous[0], json.dumps(item.get('report', {}), ensure_ascii=False)))
+            record['revision'] = revision + 1
+            db.execute("INSERT INTO report_versions VALUES (?,?,?,?)",
+                       (key, record['revision'], document, json.dumps(record, ensure_ascii=False)))
             db.execute("INSERT OR REPLACE INTO report_files VALUES (?,?)", (key, document))
             item["report"] = record
         done.add(step)
@@ -108,22 +121,37 @@ def save_event(request, step, record=None):
 
 
 def service_candidates(city):
-    """DB2의 검토된 이용 범위로 조회. 게시 지역을 이용 자격으로 간주하지 않습니다."""
+    """주기 수집된 지자체 사업을 검토 후보로 조회합니다. 게시 지역은 자격이 아닙니다."""
     from sqlalchemy import text
     from db.analysis_repository import get_engine
-    region = {"강남구": "gangnam", "춘천시": "chuncheon"}.get(city)
-    if not region:
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    provinces = {"강남구": ("서울특별시", "서울특별시"),
+                 "춘천시": ("강원특별자치도", "강원도")}.get(city)
+    if not provinces:
         return []
-    query = text("""SELECT s.* FROM db2.reviewed_service_candidates s
-        WHERE s.coverage_scope = 'national' OR EXISTS (
-        SELECT 1 FROM db2.service_coverage c
-        WHERE (c.source_id,c.provider_region_id,c.service_id) = (s.source_id,s.region_id,s.external_id)
-        AND c.eligible_region_id = :region)
-        ORDER BY s.name""")
+    query = text("""SELECT s.*,
+            'local_welfare_api' AS source_id,
+            s.province || ':' || COALESCE(s.district, '') AS region_id,
+            s.service_id AS external_id,
+            s.benefit_text AS support_text,
+            'unknown' AS coverage_scope,
+            '지원 대상·거주 조건은 원문 및 운영기관 확인 필요' AS residency_text
+        FROM db2.local_welfare_services s
+        WHERE s.province IN (:province, :province_alias)
+          AND (s.district = :city OR COALESCE(TRIM(s.district), '') IN ('', '-'))
+          AND (s.effective_start IS NULL OR s.effective_start <= :today)
+          AND (s.effective_end IS NULL OR s.effective_end >= :today)
+        ORDER BY s.name, s.service_id""")
     with get_engine().connect() as db:
-        return [dict(row) for row in db.execute(query, {"region": region}).mappings()]
+        return [dict(row) for row in db.execute(query, {
+            "province": provinces[0], "province_alias": provinces[1], "city": city,
+            "today": datetime.now(ZoneInfo('Asia/Seoul')).date()}).mappings()]
 
 def service_key(service):
+    if service.get('source_id') == 'local_welfare_api':
+        # 명칭·지역 표기가 갱신되어도 API 서비스 ID로 같은 사업을 식별합니다.
+        return json.dumps(['local_welfare_api', service['service_id']], ensure_ascii=False)
     return json.dumps([service["source_id"], service["region_id"], service["external_id"]], ensure_ascii=False)
 
 

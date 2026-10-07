@@ -73,7 +73,7 @@ const [district, setDistrict] = useState('');
 | 질문/조회에 `Failed to fetch`, `ECONNREFUSED` | Network, Python 터미널 | Python 서버가 8503에서 실행 중인지 |
 | 401 | 로그인 | 서버 재시작 시 메모리 세션이 초기화되므로 다시 로그인 |
 | 분석 CSV 누락 | Python 터미널 | `agents/regional_analysis/Analysis2/outputs`에 detection CSV가 있는지 |
-| 사업 조회 실패 | Python 터미널, `.env` | DB 주소·계정·권한과 `db2.reviewed_service_candidates` 조회 가능 여부 |
+| 사업 조회 실패 | Python 터미널, `.env` | DB 주소·계정·권한과 `db2.local_welfare_services` 조회 가능 여부 |
 | AI 모드가 규칙 설명으로 돌아옴 | `.env`, 답변의 모드 표시 | `GEMINI_API_KEY`와 `GEMINI_MODEL`, 외부 연결 확인 |
 | 저장 버튼이 비활성화됨 | 지역 분석 화면 | 지역 선택 → 분석 확인 → 근거 검토 → 사업 검토 순서 |
 | `EADDRINUSE` 또는 Windows 10048 | 실행 터미널 | 같은 포트 서버가 이미 실행 중. 기존 터미널 Ctrl+C 또는 `python main.py --port 8504` |

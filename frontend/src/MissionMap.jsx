@@ -5,7 +5,7 @@ import boundaries from './data/administrative-regions.json';
 import { Icon } from './components';
 import { ReliefMap } from './ReliefMap';
 
-const statusColor = (region) => region.status === '연속 후보' ? '#f4922d'
+const statusColor = (region) => region.status === '자료 없음' ? '#dce3ec' : region.status === '연속 후보' ? '#f4922d'
   : region.count > 0 ? '#ff527b' : region.pending ? '#448bef' : '#8b9c91';
 const tileUrl = import.meta.env.VITE_MAP_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const tileAttribution = import.meta.env.VITE_MAP_ATTRIBUTION ||
@@ -55,7 +55,7 @@ function RoadMap({ regions, selected, onSelect, geometry, flat = false, overview
   const style = (region, isSelected) => ({
     color: detail ? (region.count || region.pending ? statusColor(region) : '#344f69') : isSelected ? '#215eb8' : region.count || region.pending ? statusColor(region) : '#71869b',
     weight: isSelected ? 3 : region.count ? 2.5 : 1.3,
-    dashArray: null,
+    dashArray: region.status === '자료 없음' ? '4 4' : null,
     fillColor: overview && !region.count && !region.pending ? '#dce3ec' : statusColor(region),
     fillOpacity: overview ? 0.85 : region.count ? 0.22 : region.pending ? 0.1 : 0.025,
   });

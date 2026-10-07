@@ -82,6 +82,7 @@ export function RegionInsight({ region, city, month, onClose, onStart, onChat, b
       ) : (
         <p className="empty">이 동의 실제 분석 자료가 없습니다.</p>
       )}
+      <p className="hint">{region.count > 0 ? `과거 흐름과 비교하여 ${region.count}개 지표가 후보 기준에 해당합니다. 아래 지표를 함께 검토하세요.` : region.status === '자료 없음' ? '분석 자료가 없어 판단할 수 없습니다.' : region.pending ? '과거 이력이 부족한 지표가 있어 추가 자료 확인이 필요합니다.' : '현재 후보 기준에 해당하는 지표가 없습니다.'}</p>
       <p className="hint">
         개인의 고립 판정이 아닙니다.
         <br />
@@ -214,6 +215,8 @@ export function Briefing({
               <i className="sky" />
               판단 보류
             </span>
+            <span><i className="rose" />변화 후보</span>
+            <span><i className="missing" />자료 없음</span>
             <span>
               <i className="quiet" />
               기준 미해당
@@ -246,18 +249,7 @@ export function Briefing({
                   </span>
                   <strong>{number(r.change_pct)}%</strong>
                 </div>
-                <svg viewBox="0 0 52 30" aria-hidden="true">
-                  <path
-                    d={
-                      r.change_pct < 0
-                        ? 'M2 5 12 10 21 7 31 18 40 15 50 26'
-                        : 'M2 25 12 20 21 23 31 12 40 15 50 4'
-                    }
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                  />
-                </svg>
+                <span className="change-direction" aria-label={r.change_pct < 0 ? '전월 대비 감소' : '전월 대비 증가'}>{r.change_pct < 0 ? '↓' : '↑'}</span>
               </button>
             ))
           ) : (
@@ -329,6 +321,7 @@ export function RegionalOverview({
               '확인 후보',
               '신규 후보',
               '연속 후보',
+              '변화 후보',
               '판단 보류',
               '자료 없음',
               '기준 미해당',
@@ -348,7 +341,7 @@ export function RegionalOverview({
                 <th>행정동</th>
                 <th>분석 상태</th>
                 <th>후보 지표</th>
-                <th>최저 Robust Z</th>
+                <th>변화 참고값</th>
                 <th>근거</th>
               </tr>
             </thead>

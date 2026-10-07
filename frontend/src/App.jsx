@@ -3,17 +3,22 @@ import { api, query, number } from './api';
 import { Icon, Bomi, RegionMap, EvidenceTable, Trend, ChatPanel } from './components';
 import { Missions, Activity, Upload } from './Workspace';
 import { Briefing, RegionalOverview, summarizeRegions } from './Briefing';
+import { SupportDialog, ReviewWorkspace, Comparison, ReportQuality } from './Experience';
 
 const menus = [
   ['dashboard', '종합 현황'],
   ['map', '지역 현황'],
   ['chart', '지역 분석'],
+  ['compare', '지역·기간 비교'],
+  ['followup', '검토·후속 조치'],
   ['missions', '업무 현황'],
   ['services', '사업 매칭 검토'],
   ['report', '보고서 작성'],
   ['data', '데이터 안내'],
 ];
 const titles = {
+  compare: '여러 지역과 월별 변화를 비교하세요',
+  followup: '검토 의견과 실제 조치를 이어서 기록하세요',
   dashboard: '우리 지역의 작은 변화를 발견하세요',
   map: '지역별 변화 한눈에 살펴보기',
   chart: '변화의 근거를 자세히 살펴봐요',
@@ -133,16 +138,23 @@ export default function App() {
     [checking, setChecking] = useState(true),
     [data, setData] = useState(null),
     [error, setError] = useState('');
-  const [view, setView] = useState('dashboard'),
+  const [supportOpen, setSupportOpen] = useState(false),
+    [view, setView] = useState('dashboard'),
     [city, setCity] = useState('강남구'),
     [month, setMonth] = useState(''),
     [district, setDistrict] = useState('');
   // 메뉴 접힘 상태도 React가 관리합니다. 화면 내용/선택 지역은 그대로 유지됩니다.
   const [navCollapsed, setNavCollapsed] = useState(() => window.innerWidth <= 1100);
+  const previousChatView = useRef('dashboard');
+  const originalWorkspace = useRef(null);
+  const pendingWorkspace = useRef(null);
   const [workflow, setWorkflow] = useState({}),
+    [reportSeed, setReportSeed] = useState(null),
+    [reviewSeed, setReviewSeed] = useState(null),
     [notice, setNotice] = useState(''),
-    [chatOpen, setChatOpen] = useState(true),
-    [busy, setBusy] = useState(false);
+    [chatOpen, setChatOpen] = useState(() => window.innerWidth >= 1500),
+    [busy, setBusy] = useState(false),
+    [trialError, setTrialError] = useState('');
   useEffect(() => {
     api('/session')
       .then((d) => setUser(d.user))
@@ -151,16 +163,27 @@ export default function App() {
   }, []);
   useEffect(() => {
     if (!user) return;
+    setReportSeed(null);
+    setReviewSeed(null);
     let active = true;
     setData(null);
     setError('');
     api('/dashboard')
       .then((d) => {
         if (active) {
+          const target = pendingWorkspace.current;
+          pendingWorkspace.current = null;
+          const nextCity = target?.city && d.geometry[target.city] ? target.city : user.admin ? '강남구' : user.org;
+          const nextMonth = d.months.includes(target?.month) ? target.month : d.months.at(-1) || '';
+          const nextDistrict = d.geometry[nextCity]?.units.some(u => u.n === target?.district) ? target.district : '';
           setData(d);
-          setCity(user.admin ? '강남구' : user.org);
-          setMonth(d.months.at(-1) || '');
-          setDistrict('');
+          setCity(nextCity);
+          setMonth(nextMonth);
+          setDistrict(nextDistrict);
+          if (target) {
+            setView(target.view || 'dashboard');
+            setChatOpen(!!target.chatOpen);
+          }
         }
       })
       .catch((e) => active && setError(e.message));
@@ -188,7 +211,7 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, [context]);
+  }, [context, user?.id]);
   // 저장 공통 처리: 중복 클릭 방지 → 서버 저장 → 최신 업무 상태 반영.
   // 실제 저장 성공 여부와 단계 검증은 Python API 결과로 판단합니다.
   async function mutate(path, extra = {}) {
@@ -209,11 +232,49 @@ export default function App() {
       setBusy(false);
     }
   }
+  async function switchTrial(mode) {
+    if (busy) return false;
+    setBusy(true); setTrialError('');
+    try {
+      const result = await api('/trial/' + mode, {});
+      if (mode === 'start') {
+        if (!user.trial) originalWorkspace.current = { ...context, view, chatOpen };
+        const trialCity = result.user.org;
+        const candidates = summarizeRegions(data.assessment, data.geometry[trialCity], trialCity, month, data.months);
+        const first = candidates.find(r => r.count > 0) || candidates.find(r => r.rows.length);
+        pendingWorkspace.current = { city: trialCity, month, district: first?.name || '', view: first ? 'chart' : 'dashboard', chatOpen: false };
+      } else {
+        pendingWorkspace.current = originalWorkspace.current || { city: result.user.org, month, view: 'dashboard' };
+        originalWorkspace.current = null;
+      }
+      setWorkflow({}); setNotice(''); setUser(result.user);
+      return true;
+    } catch (e) {
+      setTrialError(e.message);
+      return false;
+    } finally { setBusy(false); }
+  }
+  function expandChat() {
+    if (view !== 'chat') previousChatView.current = view;
+    setChatOpen(true);
+    setView('chat');
+  }
+  function collapseChat() {
+    setChatOpen(true);
+    setView(previousChatView.current);
+  }
+  function closeChat() {
+    setChatOpen(false);
+    if (view === 'chat') setView(previousChatView.current);
+  }
   async function logout() {
     await api('/logout', {});
     setUser(null);
     setData(null);
     setView('dashboard');
+    setSupportOpen(false);
+    originalWorkspace.current = null;
+    pendingWorkspace.current = null;
   }
   const regions = useMemo(() => summarizeRegions(
     data?.assessment || [], data?.geometry[city], city, month, data?.months || [],
@@ -269,7 +330,7 @@ export default function App() {
             aria-label={label}
             aria-current={view === key ? 'page' : undefined}
           >
-            <Icon name={key} />
+            <Icon name={key === 'compare' ? 'chart' : key === 'followup' ? 'missions' : key} />
             <span>{label}</span>
           </button>
         ))}
@@ -287,10 +348,7 @@ export default function App() {
         <button
           className={view === 'chat' ? 'active' : ''}
           aria-label="보미 챗봇"
-          onClick={() => {
-            setView('chat');
-            setChatOpen(true);
-          }}
+          onClick={expandChat}
         >
           <Icon name="chat" />
           <span>보미 챗봇</span>
@@ -300,9 +358,9 @@ export default function App() {
           <div className="user-avatar">{user.admin ? 'A' : user.org.slice(0, 1)}</div>
           <div>
             <b>{user.admin ? '전체 관리자' : user.org + ' 담당자'}</b>
-            <small>{user.id}</small>
+            <small>{user.account_id || user.id}</small>
           </div>
-          <button onClick={logout} aria-label="로그아웃">
+          <button disabled={busy} onClick={logout} aria-label="로그아웃">
             <Icon name="logout" size={18} />
           </button>
         </div>
@@ -314,13 +372,15 @@ export default function App() {
             {menus.find((m) => m[0] === view)?.[1] || '보미 챗봇'}
           </span>
           <div>
+            <button className="text-button support-trigger" disabled={!data} onClick={() => setSupportOpen(true)}>이용 안내{user.trial ? ' · 체험 중' : ''}</button>
+            {user.trial && <button className="text-button" disabled={busy || !data} onClick={async () => { if (!await switchTrial('end')) setSupportOpen(true); }}>체험 종료</button>}
             <span className="connected">
               <span className="online-dot" />
               {data ? '분석 결과 연결' : '분석 결과 확인 중'}
             </span>
             <button
               className="icon-button"
-              onClick={() => setChatOpen((v) => !v)}
+              onClick={() => view === 'chat' ? closeChat() : setChatOpen(v => !v)}
               aria-label="챗봇 표시 전환"
             >
               <Icon name="chat" />
@@ -375,7 +435,8 @@ export default function App() {
           {error ? (
             <div className="error" role="alert">
               {error}
-              <p>분석 결과 CSV를 전달하거나 전처리·분석을 먼저 실행하세요.</p>
+              <p>분석 자료를 연결하지 못했습니다. 다시 연결한 뒤에도 문제가 계속되면 관리자에게 문의하세요.</p>
+              {user.admin && <p>관리자 확인: 분석 결과 파일과 서버 로그를 확인하세요.</p>}
               <button onClick={() => setUser({ ...user })}>다시 연결</button>
             </div>
           ) : !data ? (
@@ -394,6 +455,9 @@ export default function App() {
                   </button>
                 </div>
               )}
+              {!rows.length && <div className="notice" role="status">{city} · {month}의 분석 자료가 없습니다. 지역 또는 기준월을 확인해 주세요.</div>}
+              {view === 'compare' && <Comparison key={city} data={data} context={context} />}
+              {view === 'followup' && (district ? <ReviewWorkspace key={JSON.stringify(context) + (reviewSeed?.id || "")} context={context} onView={setView} seed={reviewSeed} /> : <div className="empty">지도나 지역 분석에서 동을 먼저 선택하세요.<button className="text-button" onClick={() => setView('map')}>지역 선택하기 →</button></div>)}
               {view === 'dashboard' && <Briefing {...briefingProps} />}
               {view === 'map' && <RegionalOverview {...briefingProps} />}
               {view === 'chart' && (
@@ -416,11 +480,12 @@ export default function App() {
                       <>
                         <div className="analysis-title">
                           <h2>{district}</h2>
-                          <span className="pill">{month} · Analysis2</span>
+                          <span className="pill">{month} · 분석 결과</span>
                         </div>
                         <EvidenceTable rows={selectedRows} />
+                        <p className="hint">{selectedRows.filter(r => r.is_risk_signal).length}개 지표가 후보 기준에 해당합니다. 전월 증가한 지표도 지역 전체의 공통 흐름과 과거 이력을 반영하면 후보가 될 수 있습니다. 후보는 지표 묶음을 함께 확인한 결과입니다.</p>
                         <p className="hint">
-                          상대 로그 변화 ×100:{' '}
+                          지역 전체의 공통 흐름을 제외한 변화 참고값:{' '}
                           {selectedRows
                             .map((r) => `${r.metric_label} ${number(r.relative_change_pp)}`)
                             .join(' · ')}
@@ -453,7 +518,7 @@ export default function App() {
                         </div>
                         <p className="hint">
                           {workflow.done?.includes(1)
-                            ? '근거 검토 완료'
+                            ? '근거 검토 완료 · 사업 매칭 검토로 이동하세요'
                             : workflow.done?.includes(0)
                               ? '분석 확인 완료 · 근거 검토를 진행하세요'
                               : '분석 확인을 저장하면 업무 기록이 시작됩니다.'}
@@ -473,7 +538,7 @@ export default function App() {
                           <span>전월 변화율 (%)</span>
                         </header>
                         <Trend
-                          assessment={data.assessment}
+                          assessment={data.assessment.filter(r => r['기준연월'] <= month)}
                           district={district}
                           metric={r.metric_label}
                         />
@@ -487,7 +552,7 @@ export default function App() {
               )}
               {view === 'services' && (
                 <Services
-                  key={JSON.stringify(context) + JSON.stringify(workflow.done)}
+                  key={JSON.stringify(context)}
                   context={context}
                   workflow={workflow}
                   mutate={mutate}
@@ -496,11 +561,14 @@ export default function App() {
               )}
               {view === 'report' && (
                 <Report
+                  key={JSON.stringify(context)}
                   context={context}
                   workflow={workflow}
                   user={user}
                   mutate={mutate}
                   busy={busy}
+                  seed={reportSeed}
+                  onSaved={() => { if (latestContext.current === context) setReportSeed(null); }}
                 />
               )}
               {view === 'data' && (
@@ -594,19 +662,20 @@ export default function App() {
           <span>지역의 변화를 발견하고, 필요한 지원으로 연결합니다.</span>
         </footer>
       </div>
+      {data && supportOpen && <SupportDialog onClose={() => setSupportOpen(false)} data={data} context={context} rows={selectedRows} workflow={workflow} onView={setView} onSelect={select} regions={regions} user={user} onTrial={switchTrial} busy={busy} trialError={trialError} page={view} />}
       {data && (
         <ChatPanel
+          key={user.id}
           visible={chatOpen || view === 'chat'}
           context={context}
           hasEvidence={selectedRows.length > 0}
           expanded={view === 'chat'}
-          onClose={() => {
-            setChatOpen(false);
-            if (view === 'chat') setView('dashboard');
-          }}
-          onExpand={() => setView(view === 'chat' ? 'dashboard' : 'chat')}
+          onClose={closeChat}
+          onExpand={view === 'chat' ? collapseChat : expandChat}
           onAction={(a) => {
             if (a.district) select(a.district);
+            if (a.reportDraft) setReportSeed(a.reportDraft);
+            if (a.reviewNote) setReviewSeed({ id: Date.now(), context: { ...context }, text: a.reviewNote });
             setView(a.view === 'analysis' ? 'chart' : a.view);
           }}
         />
@@ -621,14 +690,39 @@ function Services({ context, workflow, mutate, busy }) {
   const [matches, setMatches] = useState([]),
     [error, setError] = useState(''),
     [loading, setLoading] = useState(false),
+    [loaded, setLoaded] = useState(false),
+    [pageSize, setPageSize] = useState(5),
+    [page, setPage] = useState(1),
     [selected, setSelected] = useState(''),
-    [decision, setDecision] = useState('보류'),
-    [note, setNote] = useState('');
+    [reviewDrafts, setReviewDrafts] = useState({});
+  const pageCount = Math.max(1, Math.ceil(matches.length / pageSize));
+  const pageStart = (page - 1) * pageSize;
+  const visibleMatches = matches.slice(pageStart, pageStart + pageSize);
+  function changePage(nextPage) {
+    setPage(nextPage);
+    setSelected('');
+  }
+  function updateReview(key, field, value) {
+    setReviewDrafts((previous) => ({
+      ...previous,
+      [key]: { decision: '보류', note: '', ...previous[key], [field]: value },
+    }));
+  }
+  const pagination = (
+    <div className="service-pagination" aria-label="사업 목록 페이지">
+      <button className="secondary" disabled={busy || loading || page === 1} onClick={() => changePage(page - 1)}>이전</button>
+      <span aria-live="polite">{page} / {pageCount} 페이지</span>
+      <button className="secondary" disabled={busy || loading || page === pageCount} onClick={() => changePage(page + 1)}>다음</button>
+    </div>
+  );
   async function load() {
     setLoading(true);
     setError('');
+    setSelected('');
     try {
       setMatches((await api('/services?' + query(context))).matches);
+      setLoaded(true);
+      setPage(1);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -641,13 +735,13 @@ function Services({ context, workflow, mutate, busy }) {
         <span className="eyebrow">SERVICE REVIEW</span>
         <h2>{context.district || '지역 선택 필요'} · 사업 매칭 검토</h2>
         <p>
-          실제 DB2 사업의 이용 조건과 지표 연관성을 확인하세요. 사업 자격과 접수 가능 여부는 담당
-          기관에 확인해야 합니다.
+          정기 수집된 지자체 복지사업에서 선택 지역과 같은 시·도의 지역 미지정 자료를 검토 후보로 조회합니다.
+          게시 지역이 이용 자격을 뜻하지는 않습니다. 지원 대상과 접수 가능 여부는 운영기관에 확인하세요.
         </p>
         <button
           className="primary"
           onClick={load}
-          disabled={loading || !workflow.done?.includes(1)}
+          disabled={busy || loading || !workflow.done?.includes(1)}
         >
           {loading ? 'DB2 조회 중…' : '관련 사업 조회'}
         </button>
@@ -659,14 +753,40 @@ function Services({ context, workflow, mutate, busy }) {
             {error}
           </p>
         )}
-        {matches.map((m) => (
+        {matches.length > 0 && (
+          <div className="service-list-toolbar">
+            <label className="service-page-size">
+              표시 개수
+              <select aria-label="페이지당 사업 개수" value={pageSize} disabled={busy || loading}
+                onChange={(e) => { setPageSize(Number(e.target.value)); changePage(1); }}>
+                {[5, 10, 15].map((size) => <option key={size} value={size}>{size}개씩</option>)}
+              </select>
+            </label>
+            <span className="service-result-count">총 {matches.length}개 · {pageStart + 1}–{Math.min(pageStart + pageSize, matches.length)}개 표시</span>
+            {pagination}
+          </div>
+        )}
+        {visibleMatches.map((m) => {
+          const review = reviewDrafts[m.key] || { decision: '보류', note: '' };
+          return (
           <article className={`service-card ${selected === m.key ? 'chosen' : ''}`} key={m.key}>
             <h3>{m.service.name}</h3>
+            {m.service.source_id === 'local_welfare_api' && (
+              <>
+                <small>게시 지역: {m.service.province} · {m.service.district && m.service.district !== '-' ? m.service.district : '시·군·구 미지정'} / 이용 가능 지역은 별도 확인</small>
+                {m.service.detail_pending && <p className="hint">{m.service.detail_checked_at ? '상세 재확인 대기 · 이전에 수집한 상세정보입니다.' : '상세 수집 대기 · 현재 목록 정보만 제공됩니다.'}</p>}
+                <p>시행기간: {m.service.effective_start || '시작일 미확인'} ~ {m.service.effective_end || '종료일 미확인'}</p>
+              </>
+            )}
             <p>{m.service.target_text || m.service.description || '사업 대상 정보 확인 필요'}</p>
             <p>{m.service.eligibility_text || '이용 조건 확인 필요'}</p>
             <p>{m.service.support_text || m.service.summary}</p>
+            {m.service.application_text && <p>신청 방법: {m.service.application_text}</p>}
+            {/^https?:\/\//i.test(m.service.source_url || '') && (
+              <a className="text-button" href={m.service.source_url} target="_blank" rel="noopener noreferrer">사업 안내 원문 확인 →</a>
+            )}
             <small>
-              {m.reasons.length
+              매칭 근거: {m.reasons.length
                 ? m.reasons
                     .map(
                       (r) =>
@@ -675,44 +795,45 @@ function Services({ context, workflow, mutate, busy }) {
                     .join(' / ')
                 : '지표와 직접 연결되는 키워드 근거 없음'}
             </small>
+            <details><summary>적합성·추가 확인 조건</summary><p>게시 지역은 이용 자격을 의미하지 않습니다. 선택 지역 {context.city} {context.district}의 주민이 이용 가능한지 확인하세요.</p><ul><li>지원 대상: {m.service.target_text || '운영기관 확인 필요'}</li><li>이용 조건: {m.service.eligibility_text || '운영기관 확인 필요'}</li><li>신청 방법: {m.service.application_text || '운영기관 확인 필요'}</li><li>현재 접수 여부·정원·거주 요건을 운영기관에 확인하세요.</li></ul></details>
             <button
               className="secondary"
-              disabled={workflow.workflow_complete}
-              onClick={() => setSelected(m.key)}
+              disabled={busy || loading || workflow.workflow_complete}
+              aria-expanded={selected === m.key}
+              aria-controls={selected === m.key ? 'service-review-form' : undefined}
+              onClick={() => setSelected(selected === m.key ? '' : m.key)}
             >
-              이 사업 검토
+              {selected === m.key ? '검토 입력 닫기' : '이 사업 검토'}
             </button>
+            {selected === m.key && (
+              <div className="review-form service-inline-review" id="service-review-form" role="group" aria-label={`${m.service.name} 검토 입력`}>
+                <b>{m.service.name} · 검토 기록</b>
+                <label>
+                  검토 결과
+                  <select value={review.decision} disabled={busy} onChange={(e) => updateReview(m.key, 'decision', e.target.value)}>
+                    {['적합', '보류', '부적합'].map((decision) => <option key={decision}>{decision}</option>)}
+                  </select>
+                </label>
+                <label>
+                  검토 근거
+                  <textarea value={review.note} disabled={busy} onChange={(e) => updateReview(m.key, 'note', e.target.value)}
+                    placeholder="사업 조건과 지역 근거를 함께 기록하세요." />
+                </label>
+                <button className="primary" disabled={busy || !review.note.trim() || workflow.workflow_complete}
+                  onClick={async () => {
+                    const result = await mutate('/workflow/review', { serviceKey: m.key, ...review });
+                    if (result) setSelected('');
+                  }}>
+                  {busy ? '저장 중…' : '사업 검토 기록 저장'}
+                </button>
+              </div>
+            )}
           </article>
-        ))}
+          );
+        })}
+        {matches.length > 0 && <div className="service-list-footer">{pagination}</div>}
         {!loading && !error && !matches.length && (
-          <p className="hint">관련 사업 조회를 눌러 DB2의 실제 사업을 확인하세요.</p>
-        )}
-        {selected && (
-          <div className="review-form">
-            <label>
-              검토 결과
-              <select value={decision} onChange={(e) => setDecision(e.target.value)}>
-                {['적합', '보류', '부적합'].map((d) => (
-                  <option key={d}>{d}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              검토 근거
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="사업 조건과 지역 근거를 함께 기록하세요."
-              />
-            </label>
-            <button
-              className="primary"
-              disabled={busy || !note.trim() || workflow.workflow_complete}
-              onClick={() => mutate('/workflow/review', { serviceKey: selected, decision, note })}
-            >
-              사업 검토 기록 저장
-            </button>
-          </div>
+          <p className="hint">{loaded ? '선택 지역의 검토 후보가 없습니다. 수집 범위와 시행기간을 확인하세요.' : '관련 사업 조회를 눌러 수집된 사업을 확인하세요.'}</p>
         )}
       </section>
       <section className="card info-card">
@@ -735,10 +856,11 @@ function Services({ context, workflow, mutate, busy }) {
 }
 
 // Word 문서 생성은 Python build_report(), 단계/해시 검증은 mission_store.py가 처리합니다.
-function Report({ context, workflow, user, mutate, busy }) {
-  const [author, setAuthor] = useState(user.id),
+function Report({ context, workflow, user, mutate, busy, seed, onSaved }) {
+  const [author, setAuthor] = useState(user.account_id || user.id),
     [department, setDepartment] = useState(context.city + ' 복지정책과'),
-    [opinion, setOpinion] = useState(''),
+    [contact, setContact] = useState(''),
+    [content, setContent] = useState(null),
     [confirmed, setConfirmed] = useState(false),
     [draft, setDraft] = useState(null),
     [draftBusy, setDraftBusy] = useState(false),
@@ -746,64 +868,111 @@ function Report({ context, workflow, user, mutate, busy }) {
   useEffect(() => {
     setDraft(null);
     setConfirmed(false);
-  }, [author, department, opinion]);
+  }, [author, department, contact, content]);
+  const reviewKey = JSON.stringify(workflow.reviews || []);
   useEffect(() => {
-    setDepartment(context.city + ' 복지정책과');
-    setOpinion('');
+    setContent(null);
     setConfirmed(false);
     setDraft(null);
-  }, [context]);
-  async function preview() {
+  }, [reviewKey]);
+  useEffect(() => {
+    if (seed && JSON.stringify(seed.review_snapshot || []) === reviewKey &&
+      ['city', 'district', 'month'].every((k) => seed.context?.[k] === context[k])) {
+      setContent(seed);
+      setDraft(null);
+      setConfirmed(false);
+    }
+  }, [seed, reviewKey]);
+  async function generate() {
     setDraftBusy(true);
     setError('');
     try {
-      setDraft(await api('/report/preview', { ...context, author, department, opinion }));
+      setContent(await api('/report/content', context));
     } catch (e) {
       setError(e.message);
     } finally {
       setDraftBusy(false);
     }
   }
+  async function preview() {
+    setDraftBusy(true);
+    setConfirmed(false);
+    setDraft(null);
+    setError('');
+    try {
+      setDraft(await api('/report/preview', { ...context, author, department, contact,
+        content, review_id: content.review_id }));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setDraftBusy(false);
+    }
+  }
+  async function save() {
+    const result = await mutate('/report', { token: draft.token, confirmed });
+    if (result) {
+      setContent(null);
+      setDraft(null);
+      setConfirmed(false);
+      setError('');
+      onSaved();
+    }
+  }
   return (
     <div className="scroll-view">
       <section className="card info-card">
         <span className="eyebrow">REVIEW REPORT</span>
-        <h2>{context.district || '지역 선택 필요'} · 사업 검토 결과 보고서</h2>
-        {workflow.workflow_complete ? (
+        <h2>{context.district || '지역 선택 필요'} · 복지서비스 연계 검토보고</h2>
+        {workflow.workflow_complete && (
           <>
-            <p>최종 보고서가 저장되었습니다.</p>
+            <p>최종 보고서가 저장되었습니다. 같은 지역의 보고서를 다시 작성할 수 있습니다. 이전 저장본은 이력으로 보관됩니다.</p>
             <a className="primary download" href={'/api/report?' + query(context)}>
               저장된 Word 보고서 내려받기
               <Icon name="arrow" />
             </a>
           </>
-        ) : (
-          <>
-            <p>분석 근거와 저장된 사업 검토 내역을 Word 보고서로 생성합니다.</p>
+        )}
+        <>
+            <p>지역 분석과 사업 검토를 바탕으로 복지서비스 연계·추진을 제안하는 약식보고서를 작성합니다. 기본 분량은 1~2쪽을 목표로 하며, 입력 내용에 따라 늘어날 수 있습니다.</p>
+            <p className="hint">약식보고서 표준서식 · 검토 요지 → 지역 현황 → 서비스 제안 → 향후 조치</p>
             {!workflow.done?.includes(2) && (
               <p className="hint">사업 매칭 검토 기록을 먼저 저장하세요.</p>
             )}
             <div className="report-form">
               <label>
                 작성 부서
-                <input value={department} onChange={(e) => setDepartment(e.target.value)} />
+                <input value={department} maxLength={100} disabled={draftBusy || busy} onChange={(e) => setDepartment(e.target.value)} />
               </label>
               <label>
                 작성자
-                <input value={author} onChange={(e) => setAuthor(e.target.value)} />
+                <input value={author} maxLength={60} disabled={draftBusy || busy} onChange={(e) => setAuthor(e.target.value)} />
               </label>
               <label className="full">
-                최종 의견
-                <textarea
-                  value={opinion}
-                  onChange={(e) => {
-                    setOpinion(e.target.value);
-                    setConfirmed(false);
-                  }}
-                  placeholder="현장 확인과 후속 검토 계획을 작성하세요."
-                />
+                연락처 (선택)
+                <input value={contact} maxLength={80} disabled={draftBusy || busy} onChange={(e) => setContact(e.target.value)} />
               </label>
             </div>
+            <button className="secondary" disabled={busy || draftBusy || !workflow.done?.includes(2)} onClick={generate}>
+              {draftBusy ? '생성 중…' : content ? '저장된 근거로 초안 다시 만들기' : '보고서 에이전트로 초안 만들기'}
+            </button>
+            {content && (
+              <div className="report-form report-editor">
+                <p className="hint full">{content.mode} · 제안 내용과 확인할 조건을 검토해 수정하세요. 초안 재생성 시 편집 내용이 바뀝니다.</p>
+                {[
+                  ['title', '보고서 제목', 80], ['summary', '검토 요지', 350],
+                  ['situation', '지역 현황', 900], ['proposal', '복지서비스 연계·추진 제안', 1200],
+                  ['next_steps', '향후 조치 및 담당자 의견', 600],
+                ].map(([key, label, limit]) => (
+                  <label className="full" key={key}>
+                    {label}
+                    <textarea rows={key === 'title' ? 2 : 4} maxLength={limit} disabled={draftBusy || busy} value={content[key]}
+                      onChange={(e) => setContent((prev) => ({ ...prev, [key]: e.target.value }))} />
+                    <small>{content[key].length} / {limit}자</small>
+                  </label>
+                ))}
+              </div>
+            )}
+            <ReportQuality content={content} workflow={workflow} />
             {error && <p className="error">{error}</p>}
             <button
               className="secondary"
@@ -811,11 +980,11 @@ function Report({ context, workflow, user, mutate, busy }) {
                 busy ||
                 draftBusy ||
                 !workflow.done?.includes(2) ||
-                ![author, department, opinion].every((s) => s.trim())
+                !content || ![author, department, ...['title', 'summary', 'situation', 'proposal', 'next_steps'].map((k) => content?.[k] || '')].every((s) => s.trim())
               }
               onClick={preview}
             >
-              {draftBusy ? '생성 중…' : 'Word 보고서 초안 생성'}
+              {draftBusy ? '생성 중…' : '편집한 내용으로 Word 파일 생성'}
             </button>
             {draft && (
               <a
@@ -841,14 +1010,13 @@ function Report({ context, workflow, user, mutate, busy }) {
                 !workflow.done?.includes(2) ||
                 !confirmed ||
                 !draft ||
-                ![author, department, opinion].every((s) => s.trim())
+                draftBusy || !content || ![author, department].every((s) => s.trim())
               }
-              onClick={() => mutate('/report', { token: draft.token, confirmed })}
+              onClick={save}
             >
               확인한 최종 보고서 저장
             </button>
-          </>
-        )}
+        </>
       </section>
     </div>
   );

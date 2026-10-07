@@ -43,6 +43,8 @@ export function Icon({ name, size = 20 }) {
     send: <path d="m3 11 18-8-7 18-3-7-8-3Zm8 3 10-11" />,
     arrow: <path d="M5 12h14m-5-5 5 5-5 5" />,
     close: <path d="m6 6 12 12M18 6 6 18" />,
+    expand: <path d="M9 3H3v6M15 21h6v-6M3 3l7 7M21 21l-7-7" />,
+    minimize: <path d="M4 14h6v6M20 10h-6V4M10 14l-6 6M14 10l6-6" />,
     logout: <path d="M9 4H4v16h5M10 12h11m-4-4 4 4-4 4" />,
   };
   return (
@@ -143,7 +145,7 @@ export function EvidenceTable({ rows }) {
           <tr>
             <th>지표</th>
             <th>전월 변화</th>
-            <th>Robust Z</th>
+            <th><abbr title="과거 변화 흐름에서 얼마나 벗어났는지 나타내는 값입니다. 판정은 여러 지표를 묶어 수행합니다.">변화 참고값(Z)</abbr></th>
             <th>판단</th>
           </tr>
         </thead>
@@ -176,15 +178,15 @@ export function EvidenceTable({ rows }) {
 }
 
 // 실제 분석값만 그립니다. null은 0으로 바꾸지 않고 선을 끊어 누락을 표시합니다.
-export function Trend({ assessment, district, metric = '전화 연락' }) {
-  const rows = assessment
+export function Trend({ assessment, district, metric = '전화 연락', maxRows = 12, extent }) {
+  const allRows = assessment
     .filter((r) => r['행정동명'] === district && r.metric_label === metric)
-    .sort((a, b) => a['기준연월'].localeCompare(b['기준연월']))
-    .slice(-12);
+    .sort((a, b) => a['기준연월'].localeCompare(b['기준연월']));
+  const rows = maxRows ? allRows.slice(-maxRows) : allRows;
   const values = rows.map((r) => r.change_pct).filter(Number.isFinite);
   if (!values.length) return <div className="empty">변화 추이를 계산할 자료가 없습니다.</div>;
-  const low = Math.min(0, ...values),
-    high = Math.max(0, ...values),
+  const low = extent?.[0] ?? Math.min(0, ...values),
+    high = extent?.[1] ?? Math.max(0, ...values),
     range = high - low || 1;
   const x = (i) => 40 + (i * 660) / Math.max(1, rows.length - 1),
     y = (v) => 150 - ((v - low) * 120) / range;
@@ -203,7 +205,7 @@ export function Trend({ assessment, district, metric = '전화 연락' }) {
       className="trend"
       viewBox="0 0 740 195"
       role="img"
-      aria-label={`${district} ${metric} 최근 12개월 전월 변화율`}
+      aria-label={`${district} ${metric} ${maxRows ? '최근 분석월' : '선택 기간'} 전월 변화율`}
     >
       {[low, (low + high) / 2, high].map((v, i) => (
         <g key={i}>
@@ -224,7 +226,7 @@ export function Trend({ assessment, district, metric = '전화 연락' }) {
                 {r['기준연월']} · {number(r.change_pct)}%
               </title>
             </circle>
-            {i % 3 === 0 && (
+            {(i % Math.max(1, Math.ceil(rows.length / 6)) === 0 || i === rows.length - 1) && (
               <text x={x(i)} y="181" textAnchor="middle">
                 {r['기준연월']}
               </text>
@@ -304,19 +306,22 @@ export function ChatPanel({
         <div>
           <span className="eyebrow">YOUR WELFARE PARTNER</span>
           <h2>
-            보미와 함께 살펴봐요 <span className="online-dot" />
+            보미와 함께 살펴봐요
           </h2>
         </div>
+        <div className="chat-heading-actions">
         <button
           className="icon-button"
           onClick={onExpand}
-          aria-label={expanded ? '챗봇 패널로 돌아가기' : '챗봇 크게 보기'}
+          aria-label={expanded ? '챗봇 작게 보기' : '챗봇 크게 보기'}
+          title={expanded ? '챗봇 작게 보기' : '챗봇 크게 보기'}
         >
-          <Icon name={expanded ? 'close' : 'chat'} />
+          <Icon name={expanded ? 'minimize' : 'expand'} />
         </button>
         <button className="icon-button" onClick={onClose} aria-label="챗봇 닫기">
           <Icon name="close" size={17} />
         </button>
+        </div>
       </header>
       <div className="chat-intro">
         <Bomi busy={busy} />
@@ -330,86 +335,26 @@ export function ChatPanel({
         </div>
       </div>
       <div className="context-chip">
-        <span className="online-dot" />
-        {context.district || `${context.city} 전체 · 자유 대화 가능`}
-        <span>{context.month}</span>
+        <span className="context-region">분석 지역: {context.district || `${context.city} 전체`}</span>
+        <span>기준월: {context.month}</span>
       </div>
-      {/* 고정 주제 버튼은 topic ID를 보내며 서버에서 AI를 호출하지 않습니다. */}
-      <div className="chat-topics">
-        <div className="topic-tabs">
-          {[
-            ['regional', '지역 분석'],
-            ['matching', '사업 매칭 검토'],
-            ['report', '보고서 작성'],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              className={topicTab === id ? 'active' : ''}
-              onClick={() => setTopicTab(id)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <b>무엇을 도와드릴까요?</b>
-        <small>기본 주제 안내 · AI 호출 없음</small>
-        <div className="topic-buttons">
-          {(topicTab === 'regional'
-            ? [
-                ['changes', '지역 변화 살펴보기'],
-                ['method', '분석 기준 이해하기'],
-                ['priority', '우선 확인 지역'],
-              ]
-            : topicTab === 'matching'
-              ? [
-                  ['matching', '복지사업 연결하기'],
-                  ['eligibility', '사업 조건 확인하기'],
-                ]
-              : [['report', '검토 보고서 작성하기']]
-          ).map(([id, label]) => (
-            <button key={id} disabled={busy} onClick={() => send(label, id)}>
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="chat-messages" aria-live="polite">
-        {!messages.length && (
-          <div className="welcome">
-            <span className="assistant-label">보미 · 분석 도우미</span>
-            <p>
-              {hasEvidence
-                ? `${context.district}의 분석 결과가 연결되었어요. 어떤 변화가 나타났는지 함께 확인해 볼까요?`
-                : '안녕하세요! 지역을 선택하지 않아도 대화할 수 있어요. 기본 주제 버튼으로 시작하거나 자유롭게 질문해 주세요.'}
-            </p>
-            <div className="suggestions">
-              {[
-                '어떤 변화 후보가 있나요?',
-                '탐지 기준을 설명해 주세요',
-                '연결할 복지사업은 어떻게 검토하나요?',
-              ].map((q) => (
-                <button
-                  key={q}
-                  disabled={busy}
-                  onClick={() =>
-                    send(
-                      q,
-                      q.includes('기준') ? 'method' : q.includes('사업') ? 'matching' : 'changes',
-                    )
-                  }
-                >
-                  {q}
-                  <Icon name="arrow" size={15} />
-                </button>
-              ))}
+      <div className={`chat-messages ${!messages.length ? 'is-empty' : ''}`} aria-live="polite">
+        <div className="chat-start">
+          {!messages.length && (
+            <div className="chat-welcome">
+              <h3>무엇을 도와드릴까요?</h3>
+              <p>{hasEvidence
+                ? `${context.district}의 지역 변화부터 함께 살펴볼까요?`
+                : '궁금한 주제를 선택하거나 자유롭게 질문해 주세요.'}</p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
         {messages.map((m, i) => (
           <article className={`message ${m.role}`} key={i}>
             {m.role === 'assistant' && <span className="assistant-label">보미</span>}
             <div>{m.text}</div>
             {m.mode && <small>{m.mode}</small>}
+            {m.role === 'assistant' && hasEvidence && <div className="experience-toolbar"><button className="text-button" onClick={() => onAction({ view: 'chart' })}>분석 근거 확인 →</button><button className="text-button" onClick={() => onAction({ view: 'followup', reviewNote: m.text })}>검토 의견으로 가져오기 →</button></div>}
             {m.actions?.map((a) => (
               <button className="text-button" key={a.label} onClick={() => onAction(a)}>
                 {a.label}
@@ -435,6 +380,43 @@ export function ChatPanel({
       </div>
       <div className="chat-footer">
         <p className="free-chat-note">자유 질문은 총괄 AI가 담당 에이전트에 연결합니다.</p>
+      {/* 고정 주제 버튼은 topic ID를 보내며 서버에서 AI를 호출하지 않습니다. */}
+      <div className="chat-topics" key={visible ? 'topics-visible' : 'topics-hidden'}>
+        <div className="topic-tabs">
+          {[
+            ['regional', '지역 분석'],
+            ['matching', '사업 매칭 검토'],
+            ['report', '보고서 작성'],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              className={topicTab === id ? 'active' : ''}
+              onClick={() => setTopicTab(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="topic-buttons" key={topicTab}>
+          {(topicTab === 'regional'
+            ? [
+                ['changes', '지역 변화 살펴보기'],
+                ['method', '분석 기준 이해하기'],
+                ['priority', '우선 확인 지역'],
+              ]
+            : topicTab === 'matching'
+              ? [
+                  ['matching', '복지사업 연결하기'],
+                  ['eligibility', '사업 조건 확인하기'],
+                ]
+              : [['report', '보고서 작성 방법'], ['report_draft', '약식보고서 초안 만들기']]
+          ).map(([id, label]) => (
+            <button key={id} disabled={busy} onClick={() => send(label, id)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
         <form
           className="chat-input"
           onSubmit={(e) => {

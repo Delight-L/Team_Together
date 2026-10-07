@@ -3,12 +3,13 @@ import boundaries from './data/administrative-regions.json';
 import { Icon } from './components';
 
 const palette = {
+  missing: ['#f1f5f9', '#dce3ec', '#94a3b8'],
   quiet: ['#e8eef9', '#bdcde3', '#93aecb'],
   rose: ['#ff97b6', '#ff527f', '#ce3565'],
   orange: ['#ffe3a6', '#f4ba62', '#bd873a'],
   sky: ['#c2ddff', '#91baf0', '#6289bb'],
 };
-const tone = (region) => region.count ? region.status === '연속 후보' ? 'orange' : 'rose' : region.pending ? 'sky' : 'quiet';
+const tone = (region) => region.status === '자료 없음' ? 'missing' : region.count ? region.status === '연속 후보' ? 'orange' : 'rose' : region.pending ? 'sky' : 'quiet';
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const constrain = (view) => {
   const horizontal = (view.zoom - 1) * 450 + 30;
