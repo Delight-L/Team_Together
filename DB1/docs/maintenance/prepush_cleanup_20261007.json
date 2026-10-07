@@ -1,0 +1,556 @@
+{
+  "archived_backup_location": "C:\\Users\\user\\Desktop\\Team_Together\\DB1_backups\\prepush_cleanup_20261007_151801\\operational_backups",
+  "archived_files": 95,
+  "archived_bytes": 2966005410,
+  "cache_removed": [
+    {
+      "path": ".pytest_cache",
+      "files": 4
+    },
+    {
+      "path": "__pycache__",
+      "files": 1
+    },
+    {
+      "path": "Analysis3\\__pycache__",
+      "files": 2
+    },
+    {
+      "path": "Analysis3\\tests\\__pycache__",
+      "files": 1
+    },
+    {
+      "path": "Context\\__pycache__",
+      "files": 4
+    },
+    {
+      "path": "Context\\tests\\__pycache__",
+      "files": 1
+    }
+  ],
+  "db_sha256_unchanged": "87fbedfee62a5f8765842b4ad42843aeb72f014c4df04746944a23b8c8739f04",
+  "model_sha256_unchanged": "ff84337f6df3a34bbe19dc33eb4e016560481f324e55097f9e87e8f01ae405e2",
+  "signals": [
+    660,
+    10,
+    0,
+    0
+  ],
+  "checks": [
+    {
+      "args": [
+        "-m",
+        "pytest",
+        "tests",
+        "-q"
+      ],
+      "returncode": 0,
+      "stdout": "........                                                                 [100%]\n8 passed in 24.00s\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "Context/tests",
+        "-p",
+        "test_*.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "............................\n----------------------------------------------------------------------\nRan 28 tests in 0.053s\n\nOK\n"
+    },
+    {
+      "args": [
+        "tools/read_agent_context.py",
+        "--signals-only",
+        "--limit",
+        "10"
+      ],
+      "returncode": 0,
+      "stdout": "read_only_signal_rows=10",
+      "stderr": ""
+    }
+  ],
+  "archived_file_hashes": [
+    {
+      "path": "before_activity_level_20261007_113713\\db1.sqlite",
+      "sha256": "94728a4d4be72b3e8e12c450d66f3069af8c12cac2885827138b537c17ef9272",
+      "size": 362098688
+    },
+    {
+      "path": "before_age_consumption_20261007_095907\\db1.sqlite",
+      "sha256": "c734aef3150402efb759a9b9176e0dbdade27e7ad0389b49fe5d810b55a45bcd",
+      "size": 346992640
+    },
+    {
+      "path": "before_age_detection_20261007_094343\\db1.sqlite",
+      "sha256": "434dcb1987ba8f2e73a201268b4b9a2c69b898ac748ffd31efd4c9baf6646f92",
+      "size": 341360640
+    },
+    {
+      "path": "before_age_rebuild_20261007_091924\\db1.sqlite",
+      "sha256": "bb3e1ed4176ff4125a743e4b82bce248794816ec7c3573d3b2a18d15a9b2841e",
+      "size": 72765440
+    },
+    {
+      "path": "before_elder_context_20261007_101257\\db1.sqlite",
+      "sha256": "c4e174c464c2901621d3f78c9262cfbd8d34b950a519a632d40159214fa77b28",
+      "size": 361459712
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\db1.sqlite",
+      "sha256": "b6035e35d0f8db1c27f6662d5b1974597a62aed03fd64d57f966961cdcbedb6c",
+      "size": 377516032
+    },
+    {
+      "path": "before_handoff_acceptance_20261007_141231\\AI_AGENT_HANDOFF.md",
+      "sha256": "9b31926dcce5d28a76158ee34187976e515887907a8fa169276e0d82a8b84c50",
+      "size": 28059
+    },
+    {
+      "path": "before_handoff_acceptance_20261007_141231\\README.md",
+      "sha256": "bba4dee0b376385cfa03ede60c9dbad552f323de1c8bd9bc3aae83540a823e3d",
+      "size": 5095
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\AI_AGENT_HANDOFF.md",
+      "sha256": "4c73eb2b89436c5793c11dcb2e9cb7de6f9e27e5238b6ac34f7aff69fe5410d0",
+      "size": 27333
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\db1.sqlite",
+      "sha256": "ea904cb78251e70716e517e97c91bc3680314db8acd21155c173d6b02fca5272",
+      "size": 362758144
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\run_db1.ps1",
+      "sha256": "5abc0aa9c15053d624d57831584cd4586221da9e9cb1e47cedf15442eaa0d930",
+      "size": 982
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\run_db1.py",
+      "sha256": "4b503b166e090fb61895a151c453a061dacfb1c8cbb014c036fb5041d4016706",
+      "size": 7947
+    },
+    {
+      "path": "before_survey_context_20261007_110527\\db1.sqlite",
+      "sha256": "2447f410d963eaeb4b228c68d9fa75aee9f85a60d8035086abaa20887e54d23f",
+      "size": 361725952
+    },
+    {
+      "path": "publication_audit_20261007_145314\\AI_AGENT_HANDOFF.md",
+      "sha256": "1bf7505e09388cabe8ce9a0fce3976e563794735a2ce569eb905236f21ac30bb",
+      "size": 29148
+    },
+    {
+      "path": "publication_audit_20261007_145314\\db1.sqlite",
+      "sha256": "377c4f9f10e534532c0db47cbb381b77e510284115bd057a97e62f80ae163637",
+      "size": 378392576
+    },
+    {
+      "path": "before_activity_level_20261007_113713\\files\\AI_AGENT_HANDOFF.md",
+      "sha256": "b8070563de136d4e813ada7285f2784001aae399a5733591e8cbc6312575d774",
+      "size": 23960
+    },
+    {
+      "path": "before_activity_level_20261007_113713\\files\\README.md",
+      "sha256": "e422ac901f8847ec3e1ce47264c06415968668f2225ebd6d19ecd7fb2694775b",
+      "size": 4816
+    },
+    {
+      "path": "before_activity_level_20261007_113713\\files\\run_db1.ps1",
+      "sha256": "8bfa0d28a88d145dbc648b7ad23720278f4de549ce2444a51d95df705fdbd183",
+      "size": 961
+    },
+    {
+      "path": "before_activity_level_20261007_113713\\files\\run_db1.py",
+      "sha256": "9038d993dc0006ba8fc541abd7ec2134b689514faef718065bddf697c5c0f4ec",
+      "size": 6979
+    },
+    {
+      "path": "before_activity_level_20261007_113713\\files\\docs\\AI_AGENT_HANDOFF.md",
+      "sha256": "b8070563de136d4e813ada7285f2784001aae399a5733591e8cbc6312575d774",
+      "size": 23960
+    },
+    {
+      "path": "before_activity_level_20261007_113713\\files\\Analysis3\\tests\\test_pipeline.py",
+      "sha256": "88777420309d8b319e7419922c864e61068e57143506316da330278b06863fd9",
+      "size": 12302
+    },
+    {
+      "path": "before_age_consumption_20261007_095907\\files\\AI_AGENT_HANDOFF.md",
+      "sha256": "c23d7c8ea9e2cdc3d8ec9cb4575aa861c106f616407eb6201e61d3081e3f9693",
+      "size": 20497
+    },
+    {
+      "path": "before_age_consumption_20261007_095907\\files\\README.md",
+      "sha256": "21d6931ba789342cddbb1e964e6ea6d66253f0e60b128002274a681d4c3184b9",
+      "size": 2991
+    },
+    {
+      "path": "before_age_consumption_20261007_095907\\files\\run_db1.py",
+      "sha256": "498c4c689b7b249b7327287f615f15d0e1f25d4f07a902d6df86ab3bf89a08b0",
+      "size": 5667
+    },
+    {
+      "path": "before_age_consumption_20261007_095907\\files\\Analysis2\\AGE_DETECTION.md",
+      "sha256": "158e1386499c8c395c3680260e5e7971432d3d819ca8c017247e99a3c830fedc",
+      "size": 7400
+    },
+    {
+      "path": "before_age_consumption_20261007_095907\\files\\Analysis3\\pipeline.py",
+      "sha256": "251436d175bd614822ded4fa7c7095258e6162b8610cf713a758e00c027e7597",
+      "size": 24194
+    },
+    {
+      "path": "before_age_consumption_20261007_095907\\files\\Analysis3\\README.md",
+      "sha256": "8b24651e2fc2b284ba108cbcffeb65b0f24a89e94d7b044d398178db3766c31f",
+      "size": 10818
+    },
+    {
+      "path": "before_age_detection_20261007_094343\\files\\AI_AGENT_HANDOFF.md",
+      "sha256": "4d651815b3ec8f724ecb69285a70784a00714eacc554dee5763a2d656a2a2186",
+      "size": 18927
+    },
+    {
+      "path": "before_age_detection_20261007_094343\\files\\README.md",
+      "sha256": "d7fccc14290a2544c5eddb588755dc419a5b74f122a9126369bb3d0ecae661c5",
+      "size": 2826
+    },
+    {
+      "path": "before_age_detection_20261007_094343\\files\\run_db1.ps1",
+      "sha256": "8df16cdf6aeaab7987137c0955dde552bf75d34a3beac69957a2c6a382ce4438",
+      "size": 903
+    },
+    {
+      "path": "before_age_detection_20261007_094343\\files\\run_db1.py",
+      "sha256": "585b10299a7c92b70be0bf9c47c3fce218cb79389729fcbe2fbafa9042d2cddc",
+      "size": 4715
+    },
+    {
+      "path": "before_age_detection_20261007_094343\\files\\Analysis2\\AGE_PREPROCESSING.md",
+      "sha256": "75b1150ee3a1d619eea44cc092436ff716aef4e2b4cf71f3bfdbdbbd6083c2ce",
+      "size": 5031
+    },
+    {
+      "path": "before_age_detection_20261007_094343\\files\\Analysis2\\README.md",
+      "sha256": "c79ee1fccf78092ef26cf3275ac77f1b399ccc605c8f46482462083c2bead11f",
+      "size": 706
+    },
+    {
+      "path": "before_age_detection_20261007_094343\\files\\Analysis2\\update_worker.py",
+      "sha256": "71d7d9c881697b8f536d26449b407649ee4a49fab419fab0fad0d23b454cdc72",
+      "size": 4141
+    },
+    {
+      "path": "before_age_rebuild_20261007_091924\\files\\AI_AGENT_HANDOFF.md",
+      "sha256": "8ee062ea977f2aad2c2cc5004bf05716e89e96e3611ac416402966e07d5ad828",
+      "size": 18099
+    },
+    {
+      "path": "before_age_rebuild_20261007_091924\\files\\README.md",
+      "sha256": "2ffd07c063d5022958d0c5d5600e8cf8359c2775681b1968291d9bfb09f9b873",
+      "size": 2504
+    },
+    {
+      "path": "before_age_rebuild_20261007_091924\\files\\run_db1.ps1",
+      "sha256": "578fbf22fb71cb77b61381cece0e83d93809e613a2387bb3165b7c8016a2519f",
+      "size": 867
+    },
+    {
+      "path": "before_age_rebuild_20261007_091924\\files\\run_db1.py",
+      "sha256": "c7bb29b2df64250a274be1660112e1c09669d9bfa7bb421aa553d0093446ecfa",
+      "size": 3901
+    },
+    {
+      "path": "before_age_rebuild_20261007_091924\\files\\Analysis2\\README.md",
+      "sha256": "5207f26d7a30ab5e91332ae9ad6583d6530f8495c33f639f8b8cfd8d161a393e",
+      "size": 401
+    },
+    {
+      "path": "before_age_rebuild_20261007_091924\\files\\Analysis2\\update_worker.py",
+      "sha256": "f2f42be4be63cd35f593eb0c910cd109ccbefc14cccdd1fe655f01b5ac40146e",
+      "size": 3714
+    },
+    {
+      "path": "before_age_rebuild_20261007_091924\\files\\Analysis2\\preprocessing\\monthly_features.py",
+      "sha256": "d02f43c505a4c144b7f70472072ae8fb656b57678d6a09e4aa4a0af817656e4c",
+      "size": 5580
+    },
+    {
+      "path": "before_elder_context_20261007_101257\\files\\AI_AGENT_HANDOFF.md",
+      "sha256": "f093522921d82595c4a28aabf5152b5dc9592864b4631417f523a4cc09007209",
+      "size": 21050
+    },
+    {
+      "path": "before_elder_context_20261007_101257\\files\\README.md",
+      "sha256": "d4f21a2c1563ecb186db39aeeae23fb9a7f1d42f97b4b8dc5d31f549ad193496",
+      "size": 3483
+    },
+    {
+      "path": "before_elder_context_20261007_101257\\files\\run_db1.ps1",
+      "sha256": "35c2286bdea23db1045e4095cbda3d47a5b63ecadbe45cf46b927e6cc375c5d2",
+      "size": 925
+    },
+    {
+      "path": "before_elder_context_20261007_101257\\files\\run_db1.py",
+      "sha256": "03a4ba6cc4f37a25bdd472a452beb6a42b3518a85b6af250ee20ddb359e3a34d",
+      "size": 5724
+    },
+    {
+      "path": "before_elder_context_20261007_101257\\files\\Analysis1\\README.md",
+      "sha256": "c4eb077fc8099f12c98e366e1ed11437afaaa4138b78c78f006bb0a1b1df4597",
+      "size": 333
+    },
+    {
+      "path": "before_elder_context_20261007_101257\\files\\Analysis3\\pipeline.py",
+      "sha256": "eb61ba51e4fcf85d5b5a6b67d49bff49fdd336d72a980a5eebc6c7c06f90405f",
+      "size": 24561
+    },
+    {
+      "path": "before_elder_context_20261007_101257\\files\\Analysis3\\run_analysis3.py",
+      "sha256": "215f6780f43340469f00ea818ccbf4ff51018c9de34aa606137903a74ca35c1b",
+      "size": 1862
+    },
+    {
+      "path": "before_elder_context_20261007_101257\\files\\config\\db1_config.json",
+      "sha256": "465fd3011f2dadff3d317118b69e42c2e7a2b9e1d50c3dabc158697a82228783",
+      "size": 1966
+    },
+    {
+      "path": "before_elder_context_20261007_101257\\files\\Analysis3\\docs\\AGE_BEHAVIOR_CONSUMPTION.md",
+      "sha256": "00dc850d8ccb06d3eb7789784b6002a48e4daec1e01f4b136f971cf9ab077405",
+      "size": 5537
+    },
+    {
+      "path": "before_elder_context_20261007_101257\\files\\Analysis3\\tests\\test_pipeline.py",
+      "sha256": "338396a72d210f84174e0f0e9a3b51a754076ee5944acdfafd4337638d509c71",
+      "size": 11652
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\AI_AGENT_HANDOFF.md",
+      "sha256": "28d737af78ec4bcf88400756a0bd54c06f30206498202d581d00ec309f00439c",
+      "size": 28761
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\README.md",
+      "sha256": "f628bb0dabc06fccde2b062427058e8ea46934b0b5e1f7d68ecfdcdbaa248ea4",
+      "size": 5763
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\run_db1.ps1",
+      "sha256": "734374d9e770b3132898662a175321456d1edbaa881ece5c5d6443b4c4a17af6",
+      "size": 1001
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\run_db1.py",
+      "sha256": "b067ec13fa43deab0bb8a5b19182b574dda3abb0205645c630369c0c40f60826",
+      "size": 8668
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\run_tests.ps1",
+      "sha256": "e5c368b2c8e3dab66575d81ace788dd3d302b12f4ade71685216f5a29931ff14",
+      "size": 626
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\config\\db1_config.json",
+      "sha256": "a24660be6c387764b053e358a2f968c74cf37e1b16803d0b1ef1fe16aa57aa4c",
+      "size": 5571
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\Context\\README.md",
+      "sha256": "53257a3a089b576e1dd09d51b30da1b801a0a35e6b0045424c13215d6fbdfe20",
+      "size": 8559
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\Context\\SOURCE_SEMANTICS.md",
+      "sha256": "f83aa6eafde33cea4c2fd15c5e475b92c3e9102e68e19bf76456c65291538336",
+      "size": 1567
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\Context\\source_semantics.py",
+      "sha256": "6ad94aaf8b912a16891ea57c541e225e322788ef7a6dd33ddf3b93db26c4c343",
+      "size": 12427
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\docs\\AI_AGENT_EXPLANATION_RULES.md",
+      "sha256": "3fda29f478f46193f71ff0ef3994ceabaa5bb2fb57ca416822b3d235c419e45a",
+      "size": 2707
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\docs\\AI_AGENT_HANDOFF.md",
+      "sha256": "28d737af78ec4bcf88400756a0bd54c06f30206498202d581d00ec309f00439c",
+      "size": 28761
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\docs\\AI_AGENT_QUICKSTART.md",
+      "sha256": "e63c634b99aad30a3407e3d5f2ab8089fefefe2e4975fb433d1322d8d803b13a",
+      "size": 4450
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\tools\\read_agent_context.py",
+      "sha256": "fe7d12cc6681703997369c07a2217e6e2076c7fa5c6b2098a3b77c03e2a70f92",
+      "size": 2957
+    },
+    {
+      "path": "before_evidence_improvements_20261007_144319\\files\\Analysis3\\tests\\test_pipeline.py",
+      "sha256": "26508579c046c7c8db8d6ddd129ae54cd76f7a59cc3c8031ba159a7926429437",
+      "size": 12553
+    },
+    {
+      "path": "before_handoff_acceptance_20261007_141231\\docs\\AI_AGENT_HANDOFF.md",
+      "sha256": "9b31926dcce5d28a76158ee34187976e515887907a8fa169276e0d82a8b84c50",
+      "size": 28059
+    },
+    {
+      "path": "before_handoff_acceptance_20261007_141231\\docs\\AI_AGENT_QUICKSTART.md",
+      "sha256": "a659dd1ed5ed9c6270f6cfa4c248d45022021f34116242877065f4914590ebf9",
+      "size": 2569
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\Analysis2\\ACTIVITY_LEVEL.md",
+      "sha256": "183706eb08abd98454b6c575b299d1d944e9c3f3c6757fc9249d3d1ee6d3c0fd",
+      "size": 5546
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\Analysis2\\AGE_DETECTION.md",
+      "sha256": "750bf542d18d74aa206e99e505a20701c711813624b6d1163d9015ca137ee583",
+      "size": 7978
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\Analysis2\\AGE_PREPROCESSING.md",
+      "sha256": "62c078d0f22cad9915afede49da92911f949748209ac76265fc974d499a6ffc4",
+      "size": 5061
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\docs\\ACTIVITY_LEVEL_RESULT_20261007.md",
+      "sha256": "9106d70a035d126020565dd0553b058465bebac8aebaeaf5857daf2a4f1d3d7a",
+      "size": 3122
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\docs\\AI_AGENT_EXPLANATION_RULES.md",
+      "sha256": "f85889b9d3b45dcdd5ad1f451860666ab7fa9543475276ef9fbb137c8c26722b",
+      "size": 3397
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\docs\\AI_AGENT_HANDOFF.md",
+      "sha256": "4c73eb2b89436c5793c11dcb2e9cb7de6f9e27e5238b6ac34f7aff69fe5410d0",
+      "size": 27333
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\docs\\RETROSPECTIVE_VALIDATION_20261007.md",
+      "sha256": "408a8e11946895bf8a78f2513869653eaf45e961fffd78e4d7d9282ee8182877",
+      "size": 8018
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\docs\\SIGNAL_FOLLOWUP_20261007.md",
+      "sha256": "36dad28f7c2bf0c66d57d9281f0de96d7a3d919420de1686eba1e9ef0d502e9c",
+      "size": 8796
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\Analysis2\\validation\\build_report.py",
+      "sha256": "bae131bb804c2657adc315c2a5d12ab664b211e90383302e5917063af74ae522",
+      "size": 13840
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\Analysis2\\validation\\DEPLOYED.txt",
+      "sha256": "eeca0d000f0b8359dcfea7b974240d217f7e65e1c4696183087c01f1c3549ed9",
+      "size": 81
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\Analysis2\\validation\\sns_review.py",
+      "sha256": "a80cf7bbf6bea7daacf93e1245c1c474da850f156182eb82a7476c3070f04f80",
+      "size": 3803
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\Analysis3\\docs\\AGE_BEHAVIOR_CONSUMPTION.md",
+      "sha256": "da0c52ae797b87f78c2d1bd5731821fa29e8f91f633eff0f3df7afa4e62f440a",
+      "size": 6292
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\Analysis3\\tests\\test_pipeline.py",
+      "sha256": "1b1a6b41d8bd5a520f23812800829839d3f3fa9269a74b6cd8b1909a9f0d409b",
+      "size": 12420
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\outputs\\validation\\retrospective_20261007\\agent_case_review.json",
+      "sha256": "75f8320bf0308acf88acf857bc716b8fee034369ea59cf1c064c09badd2c9988",
+      "size": 15912
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\outputs\\validation\\retrospective_20261007\\AI_AGENT_EXPLANATION_RULES.md",
+      "sha256": "f85889b9d3b45dcdd5ad1f451860666ab7fa9543475276ef9fbb137c8c26722b",
+      "size": 3397
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\outputs\\validation\\retrospective_20261007\\RETROSPECTIVE_VALIDATION_20261007.md",
+      "sha256": "408a8e11946895bf8a78f2513869653eaf45e961fffd78e4d7d9282ee8182877",
+      "size": 8018
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\outputs\\validation\\retrospective_20261007\\sns_review.json",
+      "sha256": "0457218e06cbad36361284d8173bab8685d1265b6a1d3881a4747b20faab8ed7",
+      "size": 19476
+    },
+    {
+      "path": "before_source_semantics_20261007_124833\\outputs\\validation\\retrospective_20261007\\validation_results.json",
+      "sha256": "7a3d298d05a2fded063d08f8761d8ebc694d4b774b7acbfd770efab1f4782818",
+      "size": 100979
+    },
+    {
+      "path": "before_survey_context_20261007_110527\\files\\AI_AGENT_HANDOFF.md",
+      "sha256": "579293e59e1dbc8d9c8dd5d2c101c16f4379a429fd9486de946e0573db48e8ee",
+      "size": 21805
+    },
+    {
+      "path": "before_survey_context_20261007_110527\\files\\README.md",
+      "sha256": "73de1c25e0bf29f9c867669d650c148435c8760d26914600a2ebe20c2279fd87",
+      "size": 4238
+    },
+    {
+      "path": "before_survey_context_20261007_110527\\files\\run_db1.ps1",
+      "sha256": "41a62dd4e087742ff3f72d99e3ff7df0514f26be47d833f567bbe89f0faed79e",
+      "size": 944
+    },
+    {
+      "path": "before_survey_context_20261007_110527\\files\\run_db1.py",
+      "sha256": "f9bbc4a2b661e80ef99d6c1aea2140728144a7bb220bb9f008eb15dc36c89ac0",
+      "size": 6193
+    },
+    {
+      "path": "before_survey_context_20261007_110527\\files\\run_tests.ps1",
+      "sha256": "0cdb4021d219218a6e9f6cd5c519277595b7c1eb0f9fc2468f5c8204384b53b8",
+      "size": 467
+    },
+    {
+      "path": "before_survey_context_20261007_110527\\files\\config\\db1_config.json",
+      "sha256": "fd23acc1a6a6d2da2a1e23097209fe4c3361b2b06dbc33f786730eb28e007c81",
+      "size": 2284
+    },
+    {
+      "path": "before_survey_context_20261007_110527\\files\\docs\\AI_AGENT_HANDOFF.md",
+      "sha256": "8ee062ea977f2aad2c2cc5004bf05716e89e96e3611ac416402966e07d5ad828",
+      "size": 18099
+    },
+    {
+      "path": "before_validation_handoff_20261007_115122\\files\\AI_AGENT_HANDOFF.md",
+      "sha256": "b6ba3f8e364bc49b2195d8a6a4f0251c754cceb688b6ae163d750076defdfc1e",
+      "size": 25731
+    },
+    {
+      "path": "before_validation_handoff_20261007_115122\\files\\docs\\AI_AGENT_HANDOFF.md",
+      "sha256": "b6ba3f8e364bc49b2195d8a6a4f0251c754cceb688b6ae163d750076defdfc1e",
+      "size": 25731
+    },
+    {
+      "path": "publication_audit_20261007_145314\\docs\\AI_AGENT_HANDOFF.md",
+      "sha256": "e6cf53080b105f50d72bae35c1ae60b3756521eaa4cbfc9e1030056ea7c095c0",
+      "size": 29109
+    }
+  ],
+  "push_performed": false,
+  "lfs_initialized": false
+}

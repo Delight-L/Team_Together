@@ -1,0 +1,14 @@
+{
+  "months": 48,
+  "service_rows": 5280,
+  "five_year_rows": 12672,
+  "raw_rows": 50688,
+  "baseline_service_rows": 4620,
+  "update_service_rows": 660,
+  "weighted_reconciliation_checks": 9504,
+  "max_reconciliation_error": 4.547473508864641e-13,
+  "stored_history_checks": 9504,
+  "stored_history_mismatches": 0,
+  "max_stored_history_error": 6.821210263296962e-13,
+  "review_required_rows_both_schemes": 408
+}

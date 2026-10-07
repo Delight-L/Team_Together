@@ -27,7 +27,7 @@ DB1은 지역별 관측·분석 근거를 제공하는 저장소다. 최종 종�
 | 분석 | 무엇을 제공하는가 | 시간·공간 단위 |
 |---|---|---|
 | Analysis1 | 활동·인구·가구·복지 구조를 반영한 지역유형과 기준 대비 변화 | 강남구 22개 동·반기. 기준 2025H2 |
-| Analysis2 | 통신·이동 활동의 과거 이력 대비 변화신호와 근거 | 동·월. 초기 이력 2022-01~2025-06, 이후 월별 탐지 |
+| Analysis2 | 통신·이동 활동의 과거 이력 대비 변화신호와 근거 | 기존 동·월 및 추가 동·연령·월. 초기 이력 2022-01~2025-06, 이후 월별 탐지 |
 | Analysis3A | 상권 소비의 연령·영역별 구성 및 과거 동일 분기 비교 | 동별 가맹점·분기 |
 | Analysis3B | 신한카드 소비의 연령·영역별 전월 변화 | 강남구 가맹점 전체·월 |
 
@@ -39,6 +39,7 @@ SQLite의 view는 기존 테이블을 연결한 조회용 구조다. agent는 �
 
 | 조회 대상 | 행 단위 / 키 | 용도 |
 |---|---|---|
+| `v_a2_age_detection` | 동·월·연령·모델 버전 / `adm_cd`, `date`, `age_band`, `model_version` | 새 연령별 행동 변화 판정. 소비 연결은 다음 단계 |
 | `v_a123_monthly` | 동·월 / `adm_cd`, `date` | 지역유형·행동신호·소비 요약 |
 | `v_a123_detail` | 동·월·고객 연령·소비영역 / 위 키 + `age`, `domain` | 세부 근거 확인 |
 | `v_db1_integrated` | 동·월 | Analysis1·2와 탐지 근거 연결 |
@@ -48,7 +49,7 @@ SQLite의 view는 기존 테이블을 연결한 조회용 구조다. agent는 �
 
 SQL view의 `a1_features`, `a2_result`, `a2_evidence`, `a3a_summary`, `a3b_summary`, `a3a_feature`, `a3a_comparison`, `a3b_month_context` 등은 JSON 문자열이다. Python에서는 NULL 여부를 확인한 후 `json.loads`로 읽는다. CSV 내보내기는 일부 JSON을 여러 열로 펼치므로 SQL view와 CSV의 열 구성이 완전히 같지 않다.
 
-`any_signal`, `communication_signal`, `mobility_signal`, `combined_signal`은 0/1이다. `signal_status`는 New/Continuing 등의 탐지 상태이며 무신호일 때 NULL일 수 있다. `context_period`는 해당 Analysis2 결과에 실제 적용된 Analysis1 반기다. agent가 이를 임의로 최신 반기로 바꿔 연결하면 과거 결과의 의미가 달라진다.
+기존 동별 view의 `any_signal`, `communication_signal`, `mobility_signal`, `combined_signal`은 0/1이다. 새 `v_a2_age_detection`에서는 도메인 신호가 NULL이면 판정 불가능이며 0으로 바꾸지 않는다. 기존 `signal_status`는 New/Continuing 등의 탐지 상태이며 무신호일 때 NULL일 수 있다. 연령별 상태는 New/Continuing/New_after_gap/No_signal/Deferred를 구분한다. `context_period`는 해당 Analysis2 결과에 실제 적용된 Analysis1 반기다. agent가 이를 임의로 최신 반기로 바꿔 연결하면 과거 결과의 의미가 달라진다.
 
 ## 5. 읽기 전용 조회 예시
 
@@ -219,3 +220,74 @@ Analysis2는 중간 월을 건너뛰지 않고 순서대로 처리한다. 예를
 현재 로컬 자료와 업데이트 처리 로직에 대한 58개 테스트는 통과했다. **실제 2026년 원본으로 전체 업데이트를 끝까지 수행한 검증은 아직 하지 않았다.** 최초 신규 자료가 확보되면 처리 월/반기/분기, 입력 행 수와 중복 여부, DB 저장, 통합 view, 결측 처리와 CSV 갱신을 확인해야 한다.
 
 “DB1의 신규 자료 전처리·분석·DB 통합 기능은 구현돼 있습니다. AI agent 담당자는 원본 수집, 업데이트 명령 호출, 실행 스케줄, 오류 감지·재시도를 연결해 주세요. 2026년 1월부터 Analysis2와 카드 자료는 월별로, Analysis1은 반기별로, 상권 자료는 분기별로 갱신됩니다. 첫 실제 신규 자료로 실행 결과를 함께 확인하면 됩니다.”
+
+
+## Analysis2 연령별 전처리 이력 (2026-10-07)
+
+`a2_age_feature`는 동·연령·월별 전처리 지표이며 탐지 결과가 아닙니다. `service`는 20s·30s·40s·50s·60plus, `five_year`는 원본 연령 코드를 보존합니다. 2022-01~2025-06은 기준선, 이후는 업데이트 구간입니다. `a2_age_raw`는 성별·5세 단위 원본 셀을 보존합니다. `quality_status=available`은 전처리 값의 기본 완전성만 뜻합니다. 기존 통합 뷰의 동별 탐지 신호를 이 연령대에 복사하거나 연령별 고립 신호로 설명하지 마세요. `scan`은 새로운 동별 이력에 맞춰 연령별 이력도 추가합니다. 상세한 분모·품질·업데이트 규칙과 결과 위치는 [Analysis2/AGE_PREPROCESSING.md](Analysis2/AGE_PREPROCESSING.md)에 있습니다.
+
+
+## Analysis2 동·연령별 변화 탐지 (2026-10-07)
+
+`v_a2_age_detection`에서 동·연령·월별 결과를 조회하세요. `a2_age_model`에 고정 기준·보정 임계값·버전, `a2_age_common_change`에 강남구 연령별 공통 변화를 저장합니다. `communication_signal`/`mobility_signal`은 해당 도메인의 감소 신호, `combined_signal`/`isolation_related_candidate`는 두 도메인이 겹친 집단 수준 후보입니다. NULL은 판정 불가능이며 0으로 바꾸지 마세요. `assessment_status`, `review_reasons`, 보조 근거 가용성을 함께 읽으세요. 2025-07~12 결과는 소통 신호 10건, 이동 신호 0건, 동시 후보 0건, 부분 판정 4건입니다. 이는 고립이 없다는 뜻이 아닙니다. 보정 임계값은 탐색용으로 고립 정답 자료를 통한 정확도 검증은 아직 없습니다. 기존 통합 뷰의 동별 탐지와 연령별 탐지를 구분하며, Analysis3 소비의 교차 확인 근거는 새 `v_a23_age_*` 조회에 있으며 고립 확정 근거로 설명하지 마세요. 상세 규칙과 결과 위치는 [Analysis2/AGE_DETECTION.md](Analysis2/AGE_DETECTION.md)를 참조하세요.
+
+
+## 동·연령별 행동과 소비 연결 (2026-10-07)
+
+연결 구현과 실행을 완료했다. 동·연령·월별 행동 근거에는 `v_a23_age_monthly`와 `v_a23_age_detail`을 사용한다. 분기 집계는 `v_a23_age_quarter`, 공표일 기준 조회는 `v_a23_age_available_context`다. 상세 해석과 업데이트 규칙은 `Analysis3/docs/AGE_BEHAVIOR_CONSUMPTION.md`를 참조한다. 소비는 보조 근거이며 탐지 신호나 고립 점수에 합산하지 않는다.
+
+
+## 동별 독거노인 통계 연결 (2026-10-07)
+
+동별 독거노인 관측 통계 연결을 완료했다. `v_a1_elder_annual`은 연간 지표, `v_a1_elder_context`는 반기 지역 유형 연결, `v_a123_age_elder_context`는 동·연령별 행동·소비와의 사후 연결이다. 독거노인은 65세 이상이므로 60plus에만 부분 연령 일치로 연결한다. 다른 연령대에는 직접 적용하지 않는다. 공표일 기준 조회는 `v_a123_age_elder_available_context`다. 독거 여부는 고립 판정이 아니며 기존 모형과 점수는 유지한다. 갱신 명령은 `run_db1.ps1 -Command analysis1-elder`와 일반 `scan`이고, 해석·DB 질의·정정 처리 규칙은 `Analysis1/ELDERLY_CONTEXT.md`에 있다.
+
+
+## 관계망·외로움 및 청년 고립 조사 연결 (2026-10-07)
+
+서울서베이 2022~2025년 가구원 원자료로 강남구와 서울 전체의 연령별 지원망·외로움 통계를 구축했다. `v_survey_annual`과 `v_survey_age_trend`에서 조사연도별 통계와 직전 연도의 기술적 차이를 조회한다. 2025년의 새 외로움 문항은 과거 문항과 별도로 보존한다.
+
+`v_a123_age_survey_context`는 기존 동·연령·월별 행동·소비·독거노인 결과에 **강남구 연령별** 조사 맥락을 추가한다. `survey_geography_alignment=district_not_dong`를 반드시 읽고, 같은 값이 22개 동에 연결돼도 동별 관측값으로 설명하거나 합산하지 않는다. `survey_context_json`의 표본 수·유효 표본·품질과 NULL을 유지한다. 조사 통계는 탐지 임계값이나 위험점수를 올리는 입력이 아니다.
+
+`v_a123_age_survey_available_context`는 확인된 공개일이 행동 월말 이전인 조사만 연결한다. 현재 서울서베이 공개일은 NULL이므로 이 뷰의 조사값도 NULL이다. 회고 뷰의 2025년 조사 연결을 당시 실시간 정보로 설명하지 않는다. 공개일 확인 후 설정을 채우면 갱신 가능하다.
+
+2022년 서울 청년 가구조사·청년조사는 `v_survey_annual`의 별도 survey로 저장한다. 가구조사는 가중 통계, 청년조사는 비가중 응답자 구성비다. 19~39세 및 5년 구간을 보존하며 19세 포함 구간을 DB1 20s로 복사하지 않는다. `ctx_evidence_guide`는 외출·대면교류·온라인 소통·소비 해석과 지원 필요의 참고 문항을 제공한다. 2025년 행동 탐지의 정답 또는 강남구 동별 고립률이 아니다.
+
+새 조사 원본은 연도별 문항·가중치를 확인하고 `config/db1_config.json`의 `survey_context`에 등록한다. 갱신은 `run_db1.ps1 -Command survey-context`이며 일반 `scan`/`watch`에 연결했다. 상세 정의·질의·정정 절차는 [Context/README.md](../Context/README.md), 실행 결과는 [docs/SURVEY_CONTEXT_RESULT.md](SURVEY_CONTEXT_RESULT.md)에 있다.
+
+
+## 신호 이후 소통 활동 수준·회복 추적 (2026-10-07)
+
+`v_a2_activity_followup_latest`에서 각 동·연령의 최초 신호 이후 최신 소통 수준을 조회합니다. `raw_state`(원자료), `seasonal_state`(고정 과거 같은 달 정규화), `local_state`(구 같은 연령 공통 변화 분리)를 함께 설명하세요. `both_below_reference`, `recovered_to_reference`, `mixed_recovery`, `unavailable`은 신호 발생 직전 비교 수준과의 관계이며 위험 등급·유의성·고립 확정이 아닙니다. NULL을 0으로 바꾸지 마세요. 작은 부호 차이만으로 악화나 회복을 단정하지 마세요.
+
+추가 변화 신호가 없더라도 활동 수준이 발생 전보다 낮을 수 있습니다. 상대 상태가 회복됐다고 원자료 수준이 회복된 것으로 설명하지 마세요. 동일 개인의 지속 고립을 확인한 결과도 아닙니다. `consecutive_both_below_months`는 중첩 집계 창이 있을 수 있는 인접 집계월 수입니다. 소통/이동 변화 신호 및 결합 고립 후보는 기존 `v_a2_age_detection`에서 별도로 읽습니다.
+
+`analysis2-activity`로 직접 계산할 수 있고 `scan`/`watch`의 분석 연결 및 `analysis2-age-detect`, 일반 월 처리·내보내기에도 연결돼 있습니다. 신규 월의 기존 전처리·DB 적재가 선행돼야 합니다. 자세한 기준·업데이트·해석 제한은 [Analysis2/ACTIVITY_LEVEL.md](Analysis2/ACTIVITY_LEVEL.md), 현재 결과는 [docs/ACTIVITY_LEVEL_RESULT_20261007.md](ACTIVITY_LEVEL_RESULT_20261007.md)를 참조하세요. 현재 기준은 사후 해석용이며 공휴일·장기 추세를 완전히 보정한 시계열 모형이나 고립 성능 검증 결과가 아닙니다.
+
+
+## 과거 재현·설정 민감도와 설명 보류 기준 (2026-10-07)
+
+현재 10건의 탐지는 저장 결과와 동일하게 재현됐고 과거 점수에 미래 월이 영향을 주지 않는지 확인했습니다. 다만 임계값·기준 기간에 따라 신호 수가 달라졌고, 같은 달 수준 비교 방식을 바꾸면 상대 회복 상태도 달라졌습니다. 유지된 설정 수를 신뢰도·발생 확률·정확도로 설명하지 마세요. 운영 탐지 및 수준 추적 기준은 이번 검증으로 바꾸지 않았습니다.
+
+SNS 음수 제외 및 증감률 계산에 따른 기존 8건 보류 해석은 철회했습니다. SNS는 시점별 표준화 상대 지수여서 시간 비교에 사용할 수 없습니다. 같은 기준월·연령 내 지역 비교만 제공하고, 0값은 비사용으로 단정하지 않습니다.
+
+필수 설명·보류 기준은 [docs/AI_AGENT_EXPLANATION_RULES.md](AI_AGENT_EXPLANATION_RULES.md), 시나리오별 결과는 [docs/RETROSPECTIVE_VALIDATION_20261007.md](RETROSPECTIVE_VALIDATION_20261007.md)를 참조하세요. `outputs/validation/retrospective_20261007/agent_case_review.json`은 2025년까지 10건의 검증 스냅샷입니다. 새 월에 자동 적용되는 위험 결과나 정답 자료가 아닙니다. 재실행 방법은 `Analysis2/validation/README.md`에 있습니다. 원천 공개일·휴일 정의·SNS 품질 및 분모는 추가 확인이 필요합니다.
+
+
+## 원천 정의 정정 및 AI agent 인수 안내
+
+`v_a123_age_source_context`를 우선 조회하세요. 집계 기준월과 실제 관측 기간을 구분합니다. 2025-10 기준은 7~9월이므로 2025Q3 소비와 연결합니다. 2025-11 기준은 8~10월이어서 분기 상권 비교는 NULL입니다. 기존 같은 라벨월 소비 연결은 후속 기간 맥락입니다. SNS 음수는 유효하며 시계열 증감률은 계산하지 않습니다. 공휴일 포함 정의·실제 공개일은 미확인입니다.
+
+담당자 실행 안내: [docs/AI_AGENT_QUICKSTART.md](AI_AGENT_QUICKSTART.md). 정정된 10건: [docs/SOURCE_DEFINITIONS_RESULT_20261007.md](SOURCE_DEFINITIONS_RESULT_20261007.md). 자동 갱신 명령 `source-semantics`는 기존 분석 연결 뒤 실행되며 파일 확보·공개일 확인은 별도입니다.
+
+
+## 최종 인수 검증 및 실제 설명 예시
+
+[실제 3건 설명 예시](AI_AGENT_EXPLANATION_EXAMPLES.md), [검증 범위와 전달 구성](DB1_HANDOFF_ACCEPTANCE_20261007.md)를 추가했습니다. `tools/read_agent_context.py`는 읽기 전용이며 같은 기준월의 활동 추적·조사 배경을 함께 반환합니다. 신규 2026-01·02 기준 자료와 카드 업데이트는 운영 DB와 분리한 모의 검증에서 통과했습니다. 운영 자료는 2025-12 기준까지 유지했습니다. Analysis1 신규 반기와 새 연도 조사는 이번 모의 검증 범위에 포함되지 않습니다. 모의 결합 신호를 실제 사례로 발표하지 마세요.
+
+
+## 2026-10-07 근거 보완 반영
+
+청년 조사 세부 통계, 관측 기간 기상, 지연 소비 근거 보충, 공개일 기준 조회를 추가했습니다. [근거 사용 설명](../Context/EVIDENCE_CONTEXT.md)과 [검증 결과](DB1_IMPROVEMENTS_RESULT_20261007.md)를 함께 전달하세요. 기존 탐지 건수는 소통 10·이동 0·복합 0으로 유지됩니다.
+
+
+공식 홈페이지·공모전 정의서의 공개일 조사 결과는 [공개일 증빙 조사](DATA_PUBLICATION_AUDIT_20261007.md)를 참조하세요. 파일 수정일과 최초 공개일을 구분하며 미확인 날짜는 기준일 조회에 사용하지 않습니다. 청년 조사 2024-05-22는 공식 페이지로 재확인했습니다.

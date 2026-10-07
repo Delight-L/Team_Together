@@ -1,0 +1,28 @@
+{
+  "database": "outputs/db1.sqlite",
+  "exports": "outputs/integrated",
+  "analysis1": {
+    "skt_source": "C:\\Users\\user\\Desktop\\Team_Together\\공모전 원본 데이터\\2026빅콘테스트_sk통신인구_데이터_레이아웃",
+    "public_root": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터",
+    "boundary": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 행정동 경계\\평면좌표계 변환\\서울_행정동_경계_2017_EPSG5179.geojson",
+    "public": {
+      "resident": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\원본\\등록인구(연령별_동별)_20260922163622.csv",
+      "household": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\원본\\세대원수별+세대수_2025Q3_Q4.csv",
+      "disability": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\원본\\장애인 현황(장애유형별, 동별).csv",
+      "welfare": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\원본\\국민기초생활 수급자 동별 현황(202405).xlsx"
+    },
+    "periods": {
+      "2025H2": {
+        "disability_year": 2025,
+        "welfare_observation": "2024-05"
+      }
+    },
+    "baseline_model": "Analysis1/models/2025H2/analysis1_baseline_2025H2.joblib"
+  },
+  "analysis2": {
+    "telecom_dir": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 시민생활 데이터\\29개 통신정보 7~12월",
+    "interest_dir": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 시민생활 데이터\\10개 관심집단수 7~12월",
+    "rain": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 기상 데이터\\강수량+및+강수일수_20260929171721.csv",
+    "diary": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 기상 데이터\\일기일수_20260929171813.csv"
+  }
+}

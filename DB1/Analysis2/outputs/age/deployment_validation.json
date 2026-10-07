@@ -1,0 +1,7 @@
+{
+  "target": "C:\\Users\\user\\Desktop\\Team_Together\\DB1",
+  "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\outputs\\backups\\before_age_rebuild_20261007_091924",
+  "existing_tables_preserved": true,
+  "age_feature_rows": 17952,
+  "age_raw_rows": 50688
+}

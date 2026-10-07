@@ -1,0 +1,8 @@
+{
+  "target": "C:\\Users\\user\\Desktop\\Team_Together\\DB1",
+  "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\outputs\\backups\\before_age_detection_20261007_094343",
+  "existing_tables_preserved": true,
+  "detection_rows": 660,
+  "common_change_rows": 30,
+  "new_population_files_used": false
+}

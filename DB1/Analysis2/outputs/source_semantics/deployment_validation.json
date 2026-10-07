@@ -1,0 +1,26 @@
+{
+  "inserted": {
+    "a2_observation_window": 48,
+    "ctx_sns_index": 5280,
+    "a23_observation_context": 660
+  },
+  "source_label_months": 48,
+  "sns_cells": 5280,
+  "aligned_context_rows": 660,
+  "existing_signal_rules_modified": false,
+  "holiday_definition_confirmed": false,
+  "sns_time_comparison_allowed": false,
+  "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\outputs\\backups\\before_source_semantics_20261007_124833",
+  "existing_tables_preserved": true,
+  "idempotent": true,
+  "new_unit_tests": 9,
+  "runner_integration_tests": 1,
+  "official_signals": {
+    "communication": 10,
+    "mobility": 0,
+    "combined": 0
+  },
+  "sns_finite_cases": 10,
+  "sns_zero_review_cases": 3,
+  "exact_quarter_cases": 9
+}

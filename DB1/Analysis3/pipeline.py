@@ -266,7 +266,7 @@ def apply_packets(db,packets,config):
   if con.execute('PRAGMA foreign_key_check').fetchall():raise ValueError('Foreign key validation failed')
  return {'stored_periods':changed,'unchanged_periods':skipped}
 
-def export(db,directory,integrated_directory=None):
+def export(db,directory,integrated_directory=None,context_config=None,context_ingest=False):
  directory=Path(directory);directory.mkdir(parents=True,exist_ok=True)
  integrated_directory=Path(integrated_directory) if integrated_directory else ROOT.parent/'outputs/integrated'
  integrated_directory.mkdir(parents=True,exist_ok=True)
@@ -310,9 +310,26 @@ def export(db,directory,integrated_directory=None):
   pd.DataFrame(mapping).to_csv(directory/'mappings/industry_mapping.csv',index=False,encoding='utf-8-sig')
   pd.DataFrame([{'public_adm_cd':c,'adm_cd':v[0],'adm_nm':v[1],'legacy_alias':'일원2동' if c=='11680740' else ''} for c,v in CROSSWALK.items()]).to_csv(directory/'mappings/region_crosswalk.csv',index=False,encoding='utf-8-sig')
 
+ from age_link import run as link_age_consumption
+ link_age_consumption(db,integrated_directory)
+ import sys
+ sys.path.insert(0,str(ROOT.parent/'Analysis1'))
+ from elder_context import run as run_elder_context, export as export_elder_context
+ if context_config and context_ingest:
+  run_elder_context(db,json.loads(Path(context_config).read_text(encoding='utf-8')),integrated_directory)
+ else:
+  export_elder_context(db,integrated_directory)
+
 def status(db):
  with sqlite3.connect(db) as con:
   counts={t:con.execute(f'SELECT COUNT(*) FROM {t}').fetchone()[0] for t in ['a3_run','a3a_industry','a3b_industry',*DERIVED,'v_a123_monthly','v_a123_detail']}
+  for table in ('a23_age_monthly','a23_age_detail','a23_age_quarter','a23_age_available_context'):
+   if con.execute("SELECT 1 FROM sqlite_master WHERE name=?",(table,)).fetchone():counts[table]=con.execute('SELECT COUNT(*) FROM '+table).fetchone()[0]
+  for table in ('a1_elder_annual','a1_elder_observation'):
+   if con.execute('SELECT 1 FROM sqlite_master WHERE name=?',(table,)).fetchone():counts[table]=con.execute('SELECT COUNT(*) FROM '+table).fetchone()[0]
+  if con.execute("SELECT 1 FROM sqlite_master WHERE name='a1_elder_year'").fetchone():
+   counts['last_elder_reference_year']=con.execute('SELECT MAX(year) FROM a1_elder_year').fetchone()[0]
+   counts['next_expected_elder_reference_year']=None if counts['last_elder_reference_year'] is None else counts['last_elder_reference_year']+1
   counts['behavior_signal_months']=con.execute('SELECT COUNT(*) FROM v_a123_monthly WHERE any_signal=1').fetchone()[0]
   counts['integrity']=con.execute('PRAGMA integrity_check').fetchone()[0]
   last=dict(con.execute('SELECT source,MAX(period) FROM a3_run GROUP BY source').fetchall())

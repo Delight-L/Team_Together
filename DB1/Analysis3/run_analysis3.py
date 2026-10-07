@@ -7,6 +7,7 @@ def main():
  parser=argparse.ArgumentParser(description='Analysis3 preprocessing and DB1 consumption context')
  parser.add_argument('command',choices=['scan','status','export','watch'],nargs='?',default='scan')
  parser.add_argument('--config',default=str(ROOT/'config/analysis3_config.json'))
+ parser.add_argument('--db1-config',default=str(ROOT.parent/'config/db1_config.json'))
  parser.add_argument('--db');parser.add_argument('--exports');parser.add_argument('--integrated-exports');parser.add_argument('--interval',type=int,default=60)
  args=parser.parse_args();config_path=Path(args.config).resolve()
  config=json.loads(config_path.read_text(encoding='utf-8'))
@@ -14,10 +15,10 @@ def main():
  outputs=Path(args.exports).resolve() if args.exports else (ROOT/config['exports']).resolve()
  integrated=Path(args.integrated_exports).resolve() if args.integrated_exports else (ROOT/config.get('integrated_exports','../outputs/integrated')).resolve()
  if args.command=='status':print(json.dumps(status(db),ensure_ascii=False,indent=2));return
- if args.command=='export':export(db,outputs,integrated);return
+ if args.command=='export':export(db,outputs,integrated,context_config=args.db1_config);return
  def scan():
   packets,waiting=prepare(config)
-  result=apply_packets(db,packets,config);export(db,outputs,integrated)
+  result=apply_packets(db,packets,config);export(db,outputs,integrated,context_config=args.db1_config,context_ingest=True)
   result['waiting']=waiting
   logs=ROOT/'logs';logs.mkdir(exist_ok=True)
   (logs/'last_scan.json').write_text(json.dumps({**result,'status':status(db)},ensure_ascii=False,indent=2),encoding='utf-8')

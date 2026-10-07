@@ -38,6 +38,11 @@ def build_month_feature_table(
     rain = pd.read_csv(rain_path, encoding="utf-8-sig")
     diary = pd.read_csv(diary_path, encoding="utf-8-sig")
 
+    return build_month_feature_frames(telecom, interest, rain, diary, year, month, district)
+
+
+def build_month_feature_frames(telecom, interest, rain, diary, year, month, district="강남구"):
+
     telecom = telecom.loc[telecom["자치구"].eq(district)].copy()
     interest = interest.loc[interest["자치구"].eq(district)].copy()
 

@@ -1,0 +1,422 @@
+[
+  {
+    "adm_cd": "1123051",
+    "adm_nm": "신사동",
+    "age_band": "30s",
+    "common_change_pct": {
+      "call_contacts": -0.5886892650431741,
+      "text_contacts": -12.013764591602726
+    },
+    "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_both_below_months": 0,
+    "date": "2025-12-01",
+    "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "local_change_pct": {
+      "call_contacts": 2.3836971378027094,
+      "text_contacts": -0.5882598159946295
+    },
+    "local_state": "mixed_recovery",
+    "months_since_signal": 2,
+    "peer_n": {
+      "call_contacts": 22,
+      "text_contacts": 22
+    },
+    "quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready"
+    },
+    "raw_change_pct": {
+      "call_contacts": -2.448958890951569,
+      "text_contacts": -11.051921240906559
+    },
+    "raw_state": "both_below_reference",
+    "reference_date": "2025-09-01",
+    "seasonal_change_pct": {
+      "call_contacts": 1.7809753035981535,
+      "text_contacts": -12.531352258116769
+    },
+    "seasonal_state": "mixed_recovery",
+    "signal_date": "2025-10-01",
+    "trigger_domains": [
+      "communication"
+    ]
+  },
+  {
+    "adm_cd": "1123059",
+    "adm_nm": "삼성2동",
+    "age_band": "30s",
+    "common_change_pct": {
+      "call_contacts": -0.5886892650431741,
+      "text_contacts": -12.013764591602726
+    },
+    "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_both_below_months": 3,
+    "date": "2025-12-01",
+    "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "local_change_pct": {
+      "call_contacts": -2.7766379188958634,
+      "text_contacts": -2.5121401750186623
+    },
+    "local_state": "both_below_reference",
+    "months_since_signal": 2,
+    "peer_n": {
+      "call_contacts": 22,
+      "text_contacts": 22
+    },
+    "quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready"
+    },
+    "raw_change_pct": {
+      "call_contacts": -3.690765893944481,
+      "text_contacts": -13.566932872952165
+    },
+    "raw_state": "both_below_reference",
+    "reference_date": "2025-09-01",
+    "seasonal_change_pct": {
+      "call_contacts": -3.3489814145813757,
+      "text_contacts": -14.22410215978357
+    },
+    "seasonal_state": "both_below_reference",
+    "signal_date": "2025-10-01",
+    "trigger_domains": [
+      "communication"
+    ]
+  },
+  {
+    "adm_cd": "1123059",
+    "adm_nm": "삼성2동",
+    "age_band": "50s",
+    "common_change_pct": {
+      "call_contacts": -2.4448970326407915,
+      "text_contacts": -9.809814918584259
+    },
+    "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_both_below_months": 3,
+    "date": "2025-12-01",
+    "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "local_change_pct": {
+      "call_contacts": 0.2563660583775329,
+      "text_contacts": -2.625331667604136
+    },
+    "local_state": "mixed_recovery",
+    "months_since_signal": 2,
+    "peer_n": {
+      "call_contacts": 22,
+      "text_contacts": 22
+    },
+    "quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready"
+    },
+    "raw_change_pct": {
+      "call_contacts": -4.152184879682508,
+      "text_contacts": -11.61235384298508
+    },
+    "raw_state": "both_below_reference",
+    "reference_date": "2025-09-01",
+    "seasonal_change_pct": {
+      "call_contacts": -2.1947988604172353,
+      "text_contacts": -12.177606408597452
+    },
+    "seasonal_state": "both_below_reference",
+    "signal_date": "2025-10-01",
+    "trigger_domains": [
+      "communication"
+    ]
+  },
+  {
+    "adm_cd": "1123064",
+    "adm_nm": "역삼1동",
+    "age_band": "40s",
+    "common_change_pct": {
+      "call_contacts": -2.5233367999339062,
+      "text_contacts": -11.274770775892073
+    },
+    "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_both_below_months": 3,
+    "date": "2025-12-01",
+    "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "local_change_pct": {
+      "call_contacts": -0.7998140893608174,
+      "text_contacts": 0.6704659166554494
+    },
+    "local_state": "mixed_recovery",
+    "months_since_signal": 2,
+    "peer_n": {
+      "call_contacts": 22,
+      "text_contacts": 22
+    },
+    "quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready"
+    },
+    "raw_change_pct": {
+      "call_contacts": -2.5555991311882353,
+      "text_contacts": -8.749491972430611
+    },
+    "raw_state": "both_below_reference",
+    "reference_date": "2025-09-01",
+    "seasonal_change_pct": {
+      "call_contacts": -3.302968886046831,
+      "text_contacts": -10.67989835447002
+    },
+    "seasonal_state": "both_below_reference",
+    "signal_date": "2025-10-01",
+    "trigger_domains": [
+      "communication"
+    ]
+  },
+  {
+    "adm_cd": "1123065",
+    "adm_nm": "역삼2동",
+    "age_band": "40s",
+    "common_change_pct": {
+      "call_contacts": -2.5233367999339062,
+      "text_contacts": -11.274770775892073
+    },
+    "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_both_below_months": 3,
+    "date": "2025-12-01",
+    "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "local_change_pct": {
+      "call_contacts": -0.8088420002690166,
+      "text_contacts": 0.8728418974477403
+    },
+    "local_state": "mixed_recovery",
+    "months_since_signal": 2,
+    "peer_n": {
+      "call_contacts": 22,
+      "text_contacts": 22
+    },
+    "quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready"
+    },
+    "raw_change_pct": {
+      "call_contacts": -2.9860631193195375,
+      "text_contacts": -8.982488803590394
+    },
+    "raw_state": "both_below_reference",
+    "reference_date": "2025-09-01",
+    "seasonal_change_pct": {
+      "call_contacts": -3.3117689923568117,
+      "text_contacts": -10.50033980161752
+    },
+    "seasonal_state": "both_below_reference",
+    "signal_date": "2025-10-01",
+    "trigger_domains": [
+      "communication"
+    ]
+  },
+  {
+    "adm_cd": "1123067",
+    "adm_nm": "도곡2동",
+    "age_band": "40s",
+    "common_change_pct": {
+      "call_contacts": -2.5233367999339062,
+      "text_contacts": -11.274770775892073
+    },
+    "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_both_below_months": 3,
+    "date": "2025-12-01",
+    "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "local_change_pct": {
+      "call_contacts": -0.5103440449639396,
+      "text_contacts": -2.0697396006117974
+    },
+    "local_state": "both_below_reference",
+    "months_since_signal": 2,
+    "peer_n": {
+      "call_contacts": 22,
+      "text_contacts": 22
+    },
+    "quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready"
+    },
+    "raw_change_pct": {
+      "call_contacts": -2.4967397773335454,
+      "text_contacts": -9.913463460424444
+    },
+    "raw_state": "both_below_reference",
+    "reference_date": "2025-09-01",
+    "seasonal_change_pct": {
+      "call_contacts": -3.0208031458049955,
+      "text_contacts": -13.111151980877022
+    },
+    "seasonal_state": "both_below_reference",
+    "signal_date": "2025-10-01",
+    "trigger_domains": [
+      "communication"
+    ]
+  },
+  {
+    "adm_cd": "1123072",
+    "adm_nm": "일원본동",
+    "age_band": "40s",
+    "common_change_pct": {
+      "call_contacts": -2.5233367999339062,
+      "text_contacts": -11.274770775892073
+    },
+    "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_both_below_months": 3,
+    "date": "2025-12-01",
+    "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "local_change_pct": {
+      "call_contacts": 0.37413990520520635,
+      "text_contacts": -0.5185610869665735
+    },
+    "local_state": "mixed_recovery",
+    "months_since_signal": 2,
+    "peer_n": {
+      "call_contacts": 22,
+      "text_contacts": 22
+    },
+    "quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready"
+    },
+    "raw_change_pct": {
+      "call_contacts": -2.264810374195736,
+      "text_contacts": -8.40352901141289
+    },
+    "raw_state": "both_below_reference",
+    "reference_date": "2025-09-01",
+    "seasonal_change_pct": {
+      "call_contacts": -2.1586377046399874,
+      "text_contacts": -11.734865288970187
+    },
+    "seasonal_state": "both_below_reference",
+    "signal_date": "2025-10-01",
+    "trigger_domains": [
+      "communication"
+    ]
+  },
+  {
+    "adm_cd": "1123074",
+    "adm_nm": "일원2동",
+    "age_band": "40s",
+    "common_change_pct": {
+      "call_contacts": -2.5233367999339062,
+      "text_contacts": -11.274770775892073
+    },
+    "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_both_below_months": 3,
+    "date": "2025-12-01",
+    "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "local_change_pct": {
+      "call_contacts": -3.1922288655438447,
+      "text_contacts": -0.8136462100485908
+    },
+    "local_state": "both_below_reference",
+    "months_since_signal": 2,
+    "peer_n": {
+      "call_contacts": 22,
+      "text_contacts": 22
+    },
+    "quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready"
+    },
+    "raw_change_pct": {
+      "call_contacts": -5.175943429105145,
+      "text_contacts": -9.532065711897019
+    },
+    "raw_state": "both_below_reference",
+    "reference_date": "2025-09-01",
+    "seasonal_change_pct": {
+      "call_contacts": -5.635014979775366,
+      "text_contacts": -11.996680240830948
+    },
+    "seasonal_state": "both_below_reference",
+    "signal_date": "2025-10-01",
+    "trigger_domains": [
+      "communication"
+    ]
+  },
+  {
+    "adm_cd": "1123077",
+    "adm_nm": "압구정동",
+    "age_band": "40s",
+    "common_change_pct": {
+      "call_contacts": -2.5233367999339062,
+      "text_contacts": -11.274770775892073
+    },
+    "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_both_below_months": 3,
+    "date": "2025-12-01",
+    "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "local_change_pct": {
+      "call_contacts": -0.9983284944119375,
+      "text_contacts": -1.7756411356802726
+    },
+    "local_state": "both_below_reference",
+    "months_since_signal": 2,
+    "peer_n": {
+      "call_contacts": 22,
+      "text_contacts": 22
+    },
+    "quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready"
+    },
+    "raw_change_pct": {
+      "call_contacts": -3.432971778917304,
+      "text_contacts": -10.367483673121258
+    },
+    "raw_state": "both_below_reference",
+    "reference_date": "2025-09-01",
+    "seasonal_change_pct": {
+      "call_contacts": -3.4964741040621194,
+      "text_contacts": -12.850212443721954
+    },
+    "seasonal_state": "both_below_reference",
+    "signal_date": "2025-10-01",
+    "trigger_domains": [
+      "communication"
+    ]
+  },
+  {
+    "adm_cd": "1123065",
+    "adm_nm": "역삼2동",
+    "age_band": "30s",
+    "common_change_pct": {
+      "call_contacts": 0.36326699247624106,
+      "text_contacts": -7.7898378282478475
+    },
+    "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_both_below_months": 2,
+    "date": "2025-12-01",
+    "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "local_change_pct": {
+      "call_contacts": -1.0979351360916767,
+      "text_contacts": 1.7124314258484485
+    },
+    "local_state": "mixed_recovery",
+    "months_since_signal": 1,
+    "peer_n": {
+      "call_contacts": 22,
+      "text_contacts": 22
+    },
+    "quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready"
+    },
+    "raw_change_pct": {
+      "call_contacts": -0.3462160172747364,
+      "text_contacts": -6.943410237387204
+    },
+    "raw_state": "both_below_reference",
+    "reference_date": "2025-10-01",
+    "seasonal_change_pct": {
+      "call_contacts": -0.7386565795636568,
+      "text_contacts": -6.210802033392948
+    },
+    "seasonal_state": "both_below_reference",
+    "signal_date": "2025-11-01",
+    "trigger_domains": [
+      "communication"
+    ]
+  }
+]

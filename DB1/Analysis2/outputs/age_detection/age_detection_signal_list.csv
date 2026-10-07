@@ -1,0 +1,11 @@
+﻿date,행정동코드,행정동,age_band,assessment_status,communication_signal,mobility_signal,combined_signal,isolation_related_candidate,signal_status,evidence_level,interest_support,distance_support,review_reasons,context_period,a1_cluster_type
+2025-10-01,1123051,신사동,30s,assessed,True,False,False,False,New,no_detected_joint_behavior_change,True,True,,2025H2,중간활동·다인가구 중심형
+2025-10-01,1123059,삼성2동,30s,assessed,True,False,False,False,New,no_detected_joint_behavior_change,True,True,,2025H2,고활동·청년유동·1인가구 중심형
+2025-10-01,1123059,삼성2동,50s,assessed,True,False,False,False,New,no_detected_joint_behavior_change,False,True,,2025H2,고활동·청년유동·1인가구 중심형
+2025-10-01,1123064,역삼1동,40s,assessed,True,False,False,False,New_after_gap,no_detected_joint_behavior_change,False,True,,2025H2,고활동·청년유동·1인가구 중심형
+2025-10-01,1123065,역삼2동,40s,assessed,True,False,False,False,New,no_detected_joint_behavior_change,False,True,,2025H2,고활동·청년유동·1인가구 중심형
+2025-10-01,1123067,도곡2동,40s,assessed,True,False,False,False,New,no_detected_joint_behavior_change,True,True,,2025H2,중간활동·다인가구 중심형
+2025-10-01,1123072,일원본동,40s,assessed,True,False,False,False,New,no_detected_joint_behavior_change,True,True,,2025H2,중간활동·다인가구 중심형
+2025-10-01,1123074,일원2동,40s,assessed,True,False,False,False,New,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-10-01,1123077,압구정동,40s,assessed,True,False,False,False,New,no_detected_joint_behavior_change,True,True,,2025H2,중간활동·다인가구 중심형
+2025-11-01,1123065,역삼2동,30s,assessed,True,False,False,False,New,no_detected_joint_behavior_change,True,True,,2025H2,고활동·청년유동·1인가구 중심형

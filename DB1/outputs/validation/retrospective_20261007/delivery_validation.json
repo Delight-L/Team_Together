@@ -1,0 +1,18 @@
+{
+  "operational_db_unchanged": true,
+  "db_sha256": "e96cbbe3c584c49b6374492e7aa35172e9fd3ef9f6b52dd2a55b26a3d735dfc1",
+  "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\outputs\\backups\\before_validation_handoff_20261007_115122",
+  "published_files": 33,
+  "checks": [
+    {
+      "script": "sns_review.py",
+      "exit_code": 0
+    },
+    {
+      "script": "build_report.py",
+      "exit_code": 0
+    }
+  ],
+  "report": "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\docs\\RETROSPECTIVE_VALIDATION_20261007.md",
+  "policy": "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\docs\\AI_AGENT_EXPLANATION_RULES.md"
+}

@@ -27,3 +27,7 @@ DB1/**/*.tmp
 DB1/outputs/db1.sqlite-wal
 DB1/outputs/db1.sqlite-shm
 DB1/outputs/db1.sqlite-journal
+
+# Preserve previous published DB1 as a historical snapshot
+!archive/DB1_before_20261007/**
+DB1/outputs/backups/

@@ -1,0 +1,828 @@
+{
+  "as_of": "2026-10-07",
+  "observations_through": "2025-12",
+  "purpose": "validation_snapshot_not_operational_risk",
+  "cases": [
+    {
+      "adm_cd": "1123051",
+      "date": "2025-10-01",
+      "age_band": "30s",
+      "dong": "신사동",
+      "retained_in_threshold_variants": 2,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 1,
+      "window_variants": 2,
+      "sensitivity_is_not_probability": true,
+      "level_method_states": {
+        "median_all_baseline": {
+          "seasonal_state": "mixed_recovery",
+          "local_state": "mixed_recovery"
+        },
+        "mean_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        },
+        "median_recent_two_years": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        }
+      },
+      "sns_same_period": {
+        "adm_cd": "1123051",
+        "adm_nm": "신사동",
+        "age_band": "30s",
+        "aggregation": "estimated_population_weighted_mean_of_published_sex_age_group_scores",
+        "date": "2025-10-01",
+        "finite_population_coverage": 1.0,
+        "individual_contacts_measured": false,
+        "negative_cells": 0,
+        "negative_values_valid": true,
+        "percent_change_allowed": false,
+        "quality_status": "zero_semantics_review",
+        "same_period_gangnam_age_median": 0.10632661582529715,
+        "same_period_gangnam_age_percentile": 0.11363636363636363,
+        "same_period_peer_n": 22,
+        "sns_index_mean": 0.07444444444444445,
+        "sns_index_without_zero_sensitivity": null,
+        "source_cells": 4,
+        "time_series_comparable": false,
+        "unit": "provider_standardized_z_index",
+        "valid_estimated_population": 2340.0,
+        "zero_cells": 1,
+        "zero_note": "standardized zero can represent reference mean; legacy column guide also notes raw reaggregation; do not infer no use",
+        "zero_population_share": 0.2594017094017094
+      },
+      "observation_window": {
+        "available_from": null,
+        "calendar_days": 92,
+        "calendar_definition": "literal_Mon_Fri_and_Sat_Sun_not_provider_weekday_holiday_definition",
+        "calendar_mon_fri_days": 66,
+        "calendar_sat_sun_days": 26,
+        "definition_source": "https://data.seoul.go.kr/dataVisual/seoul/seoulLiving.do",
+        "exact_quarter": "2025Q3",
+        "label_month": "2025-10",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "overlap_quarters": [
+          "2025Q3"
+        ],
+        "provider_holiday_includes_public_holidays": null,
+        "publication_note": "manual indicates publication next month; actual file-specific release date not verified; do not infer availability",
+        "semantics_version": "source_semantics_v1",
+        "window_basis": "provider_manual_previous_three_months; source-file date treated as aggregation label"
+      },
+      "review_required": [
+        "threshold_and_window_sensitivity",
+        "same_person_linkage_unavailable",
+        "survey_not_dong_specific",
+        "publication_dates_unverified",
+        "sns_time_comparison_prohibited"
+      ],
+      "confirmed_social_isolation": null
+    },
+    {
+      "adm_cd": "1123059",
+      "date": "2025-10-01",
+      "age_band": "30s",
+      "dong": "삼성2동",
+      "retained_in_threshold_variants": 2,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 1,
+      "window_variants": 2,
+      "sensitivity_is_not_probability": true,
+      "level_method_states": {
+        "median_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        },
+        "mean_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        },
+        "median_recent_two_years": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        }
+      },
+      "sns_same_period": {
+        "adm_cd": "1123059",
+        "adm_nm": "삼성2동",
+        "age_band": "30s",
+        "aggregation": "estimated_population_weighted_mean_of_published_sex_age_group_scores",
+        "date": "2025-10-01",
+        "finite_population_coverage": 1.0,
+        "individual_contacts_measured": false,
+        "negative_cells": 0,
+        "negative_values_valid": true,
+        "percent_change_allowed": false,
+        "quality_status": "same_period_relative_only",
+        "same_period_gangnam_age_median": 0.10632661582529715,
+        "same_period_gangnam_age_percentile": 0.38636363636363635,
+        "same_period_peer_n": 22,
+        "sns_index_mean": 0.09941529835802963,
+        "sns_index_without_zero_sensitivity": 0.09941529835802963,
+        "source_cells": 4,
+        "time_series_comparable": false,
+        "unit": "provider_standardized_z_index",
+        "valid_estimated_population": 4994.0,
+        "zero_cells": 0,
+        "zero_note": "standardized zero can represent reference mean; legacy column guide also notes raw reaggregation; do not infer no use",
+        "zero_population_share": 0.0
+      },
+      "observation_window": {
+        "available_from": null,
+        "calendar_days": 92,
+        "calendar_definition": "literal_Mon_Fri_and_Sat_Sun_not_provider_weekday_holiday_definition",
+        "calendar_mon_fri_days": 66,
+        "calendar_sat_sun_days": 26,
+        "definition_source": "https://data.seoul.go.kr/dataVisual/seoul/seoulLiving.do",
+        "exact_quarter": "2025Q3",
+        "label_month": "2025-10",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "overlap_quarters": [
+          "2025Q3"
+        ],
+        "provider_holiday_includes_public_holidays": null,
+        "publication_note": "manual indicates publication next month; actual file-specific release date not verified; do not infer availability",
+        "semantics_version": "source_semantics_v1",
+        "window_basis": "provider_manual_previous_three_months; source-file date treated as aggregation label"
+      },
+      "review_required": [
+        "threshold_and_window_sensitivity",
+        "same_person_linkage_unavailable",
+        "survey_not_dong_specific",
+        "publication_dates_unverified",
+        "sns_time_comparison_prohibited"
+      ],
+      "confirmed_social_isolation": null
+    },
+    {
+      "adm_cd": "1123059",
+      "date": "2025-10-01",
+      "age_band": "50s",
+      "dong": "삼성2동",
+      "retained_in_threshold_variants": 2,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2,
+      "sensitivity_is_not_probability": true,
+      "level_method_states": {
+        "median_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        },
+        "mean_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        },
+        "median_recent_two_years": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        }
+      },
+      "sns_same_period": {
+        "adm_cd": "1123059",
+        "adm_nm": "삼성2동",
+        "age_band": "50s",
+        "aggregation": "estimated_population_weighted_mean_of_published_sex_age_group_scores",
+        "date": "2025-10-01",
+        "finite_population_coverage": 1.0,
+        "individual_contacts_measured": false,
+        "negative_cells": 2,
+        "negative_values_valid": true,
+        "percent_change_allowed": false,
+        "quality_status": "same_period_relative_only",
+        "same_period_gangnam_age_median": -0.0173819649431042,
+        "same_period_gangnam_age_percentile": 0.5681818181818182,
+        "same_period_peer_n": 22,
+        "sns_index_mean": -0.01607576314821626,
+        "sns_index_without_zero_sensitivity": -0.01607576314821626,
+        "source_cells": 4,
+        "time_series_comparable": false,
+        "unit": "provider_standardized_z_index",
+        "valid_estimated_population": 5438.0,
+        "zero_cells": 0,
+        "zero_note": "standardized zero can represent reference mean; legacy column guide also notes raw reaggregation; do not infer no use",
+        "zero_population_share": 0.0
+      },
+      "observation_window": {
+        "available_from": null,
+        "calendar_days": 92,
+        "calendar_definition": "literal_Mon_Fri_and_Sat_Sun_not_provider_weekday_holiday_definition",
+        "calendar_mon_fri_days": 66,
+        "calendar_sat_sun_days": 26,
+        "definition_source": "https://data.seoul.go.kr/dataVisual/seoul/seoulLiving.do",
+        "exact_quarter": "2025Q3",
+        "label_month": "2025-10",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "overlap_quarters": [
+          "2025Q3"
+        ],
+        "provider_holiday_includes_public_holidays": null,
+        "publication_note": "manual indicates publication next month; actual file-specific release date not verified; do not infer availability",
+        "semantics_version": "source_semantics_v1",
+        "window_basis": "provider_manual_previous_three_months; source-file date treated as aggregation label"
+      },
+      "review_required": [
+        "threshold_and_window_sensitivity",
+        "same_person_linkage_unavailable",
+        "survey_not_dong_specific",
+        "publication_dates_unverified",
+        "sns_time_comparison_prohibited"
+      ],
+      "confirmed_social_isolation": null
+    },
+    {
+      "adm_cd": "1123064",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "역삼1동",
+      "retained_in_threshold_variants": 6,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 1,
+      "window_variants": 2,
+      "sensitivity_is_not_probability": true,
+      "level_method_states": {
+        "median_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        },
+        "mean_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        },
+        "median_recent_two_years": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        }
+      },
+      "sns_same_period": {
+        "adm_cd": "1123064",
+        "adm_nm": "역삼1동",
+        "age_band": "40s",
+        "aggregation": "estimated_population_weighted_mean_of_published_sex_age_group_scores",
+        "date": "2025-10-01",
+        "finite_population_coverage": 1.0,
+        "individual_contacts_measured": false,
+        "negative_cells": 2,
+        "negative_values_valid": true,
+        "percent_change_allowed": false,
+        "quality_status": "same_period_relative_only",
+        "same_period_gangnam_age_median": 0.026596989189525598,
+        "same_period_gangnam_age_percentile": 0.3409090909090909,
+        "same_period_peer_n": 22,
+        "sns_index_mean": 0.022864695986541696,
+        "sns_index_without_zero_sensitivity": 0.022864695986541696,
+        "source_cells": 4,
+        "time_series_comparable": false,
+        "unit": "provider_standardized_z_index",
+        "valid_estimated_population": 8322.0,
+        "zero_cells": 0,
+        "zero_note": "standardized zero can represent reference mean; legacy column guide also notes raw reaggregation; do not infer no use",
+        "zero_population_share": 0.0
+      },
+      "observation_window": {
+        "available_from": null,
+        "calendar_days": 92,
+        "calendar_definition": "literal_Mon_Fri_and_Sat_Sun_not_provider_weekday_holiday_definition",
+        "calendar_mon_fri_days": 66,
+        "calendar_sat_sun_days": 26,
+        "definition_source": "https://data.seoul.go.kr/dataVisual/seoul/seoulLiving.do",
+        "exact_quarter": "2025Q3",
+        "label_month": "2025-10",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "overlap_quarters": [
+          "2025Q3"
+        ],
+        "provider_holiday_includes_public_holidays": null,
+        "publication_note": "manual indicates publication next month; actual file-specific release date not verified; do not infer availability",
+        "semantics_version": "source_semantics_v1",
+        "window_basis": "provider_manual_previous_three_months; source-file date treated as aggregation label"
+      },
+      "review_required": [
+        "threshold_and_window_sensitivity",
+        "same_person_linkage_unavailable",
+        "survey_not_dong_specific",
+        "publication_dates_unverified",
+        "sns_time_comparison_prohibited"
+      ],
+      "confirmed_social_isolation": null
+    },
+    {
+      "adm_cd": "1123065",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "역삼2동",
+      "retained_in_threshold_variants": 6,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2,
+      "sensitivity_is_not_probability": true,
+      "level_method_states": {
+        "median_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        },
+        "mean_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        },
+        "median_recent_two_years": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        }
+      },
+      "sns_same_period": {
+        "adm_cd": "1123065",
+        "adm_nm": "역삼2동",
+        "age_band": "40s",
+        "aggregation": "estimated_population_weighted_mean_of_published_sex_age_group_scores",
+        "date": "2025-10-01",
+        "finite_population_coverage": 1.0,
+        "individual_contacts_measured": false,
+        "negative_cells": 0,
+        "negative_values_valid": true,
+        "percent_change_allowed": false,
+        "quality_status": "zero_semantics_review",
+        "same_period_gangnam_age_median": 0.026596989189525598,
+        "same_period_gangnam_age_percentile": 0.8409090909090909,
+        "same_period_peer_n": 22,
+        "sns_index_mean": 0.042683997689197,
+        "sns_index_without_zero_sensitivity": null,
+        "source_cells": 4,
+        "time_series_comparable": false,
+        "unit": "provider_standardized_z_index",
+        "valid_estimated_population": 8655.0,
+        "zero_cells": 1,
+        "zero_note": "standardized zero can represent reference mean; legacy column guide also notes raw reaggregation; do not infer no use",
+        "zero_population_share": 0.29393414211438473
+      },
+      "observation_window": {
+        "available_from": null,
+        "calendar_days": 92,
+        "calendar_definition": "literal_Mon_Fri_and_Sat_Sun_not_provider_weekday_holiday_definition",
+        "calendar_mon_fri_days": 66,
+        "calendar_sat_sun_days": 26,
+        "definition_source": "https://data.seoul.go.kr/dataVisual/seoul/seoulLiving.do",
+        "exact_quarter": "2025Q3",
+        "label_month": "2025-10",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "overlap_quarters": [
+          "2025Q3"
+        ],
+        "provider_holiday_includes_public_holidays": null,
+        "publication_note": "manual indicates publication next month; actual file-specific release date not verified; do not infer availability",
+        "semantics_version": "source_semantics_v1",
+        "window_basis": "provider_manual_previous_three_months; source-file date treated as aggregation label"
+      },
+      "review_required": [
+        "threshold_and_window_sensitivity",
+        "same_person_linkage_unavailable",
+        "survey_not_dong_specific",
+        "publication_dates_unverified",
+        "sns_time_comparison_prohibited"
+      ],
+      "confirmed_social_isolation": null
+    },
+    {
+      "adm_cd": "1123067",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "도곡2동",
+      "retained_in_threshold_variants": 3,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2,
+      "sensitivity_is_not_probability": true,
+      "level_method_states": {
+        "median_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        },
+        "mean_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        },
+        "median_recent_two_years": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        }
+      },
+      "sns_same_period": {
+        "adm_cd": "1123067",
+        "adm_nm": "도곡2동",
+        "age_band": "40s",
+        "aggregation": "estimated_population_weighted_mean_of_published_sex_age_group_scores",
+        "date": "2025-10-01",
+        "finite_population_coverage": 1.0,
+        "individual_contacts_measured": false,
+        "negative_cells": 1,
+        "negative_values_valid": true,
+        "percent_change_allowed": false,
+        "quality_status": "same_period_relative_only",
+        "same_period_gangnam_age_median": 0.026596989189525598,
+        "same_period_gangnam_age_percentile": 0.5681818181818182,
+        "same_period_peer_n": 22,
+        "sns_index_mean": 0.029392436453812777,
+        "sns_index_without_zero_sensitivity": 0.029392436453812777,
+        "source_cells": 4,
+        "time_series_comparable": false,
+        "unit": "provider_standardized_z_index",
+        "valid_estimated_population": 6452.0,
+        "zero_cells": 0,
+        "zero_note": "standardized zero can represent reference mean; legacy column guide also notes raw reaggregation; do not infer no use",
+        "zero_population_share": 0.0
+      },
+      "observation_window": {
+        "available_from": null,
+        "calendar_days": 92,
+        "calendar_definition": "literal_Mon_Fri_and_Sat_Sun_not_provider_weekday_holiday_definition",
+        "calendar_mon_fri_days": 66,
+        "calendar_sat_sun_days": 26,
+        "definition_source": "https://data.seoul.go.kr/dataVisual/seoul/seoulLiving.do",
+        "exact_quarter": "2025Q3",
+        "label_month": "2025-10",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "overlap_quarters": [
+          "2025Q3"
+        ],
+        "provider_holiday_includes_public_holidays": null,
+        "publication_note": "manual indicates publication next month; actual file-specific release date not verified; do not infer availability",
+        "semantics_version": "source_semantics_v1",
+        "window_basis": "provider_manual_previous_three_months; source-file date treated as aggregation label"
+      },
+      "review_required": [
+        "threshold_and_window_sensitivity",
+        "same_person_linkage_unavailable",
+        "survey_not_dong_specific",
+        "publication_dates_unverified",
+        "sns_time_comparison_prohibited"
+      ],
+      "confirmed_social_isolation": null
+    },
+    {
+      "adm_cd": "1123072",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "일원본동",
+      "retained_in_threshold_variants": 3,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2,
+      "sensitivity_is_not_probability": true,
+      "level_method_states": {
+        "median_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        },
+        "mean_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        },
+        "median_recent_two_years": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "recovered_to_reference"
+        }
+      },
+      "sns_same_period": {
+        "adm_cd": "1123072",
+        "adm_nm": "일원본동",
+        "age_band": "40s",
+        "aggregation": "estimated_population_weighted_mean_of_published_sex_age_group_scores",
+        "date": "2025-10-01",
+        "finite_population_coverage": 1.0,
+        "individual_contacts_measured": false,
+        "negative_cells": 0,
+        "negative_values_valid": true,
+        "percent_change_allowed": false,
+        "quality_status": "zero_semantics_review",
+        "same_period_gangnam_age_median": 0.026596989189525598,
+        "same_period_gangnam_age_percentile": 0.9772727272727273,
+        "same_period_peer_n": 22,
+        "sns_index_mean": 0.06106661045531197,
+        "sns_index_without_zero_sensitivity": null,
+        "source_cells": 4,
+        "time_series_comparable": false,
+        "unit": "provider_standardized_z_index",
+        "valid_estimated_population": 4744.0,
+        "zero_cells": 1,
+        "zero_note": "standardized zero can represent reference mean; legacy column guide also notes raw reaggregation; do not infer no use",
+        "zero_population_share": 0.2693929173693086
+      },
+      "observation_window": {
+        "available_from": null,
+        "calendar_days": 92,
+        "calendar_definition": "literal_Mon_Fri_and_Sat_Sun_not_provider_weekday_holiday_definition",
+        "calendar_mon_fri_days": 66,
+        "calendar_sat_sun_days": 26,
+        "definition_source": "https://data.seoul.go.kr/dataVisual/seoul/seoulLiving.do",
+        "exact_quarter": "2025Q3",
+        "label_month": "2025-10",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "overlap_quarters": [
+          "2025Q3"
+        ],
+        "provider_holiday_includes_public_holidays": null,
+        "publication_note": "manual indicates publication next month; actual file-specific release date not verified; do not infer availability",
+        "semantics_version": "source_semantics_v1",
+        "window_basis": "provider_manual_previous_three_months; source-file date treated as aggregation label"
+      },
+      "review_required": [
+        "threshold_and_window_sensitivity",
+        "same_person_linkage_unavailable",
+        "survey_not_dong_specific",
+        "publication_dates_unverified",
+        "sns_time_comparison_prohibited"
+      ],
+      "confirmed_social_isolation": null
+    },
+    {
+      "adm_cd": "1123074",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "일원2동",
+      "retained_in_threshold_variants": 2,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2,
+      "sensitivity_is_not_probability": true,
+      "level_method_states": {
+        "median_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        },
+        "mean_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        },
+        "median_recent_two_years": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        }
+      },
+      "sns_same_period": {
+        "adm_cd": "1123074",
+        "adm_nm": "일원2동",
+        "age_band": "40s",
+        "aggregation": "estimated_population_weighted_mean_of_published_sex_age_group_scores",
+        "date": "2025-10-01",
+        "finite_population_coverage": 1.0,
+        "individual_contacts_measured": false,
+        "negative_cells": 1,
+        "negative_values_valid": true,
+        "percent_change_allowed": false,
+        "quality_status": "same_period_relative_only",
+        "same_period_gangnam_age_median": 0.026596989189525598,
+        "same_period_gangnam_age_percentile": 0.7045454545454546,
+        "same_period_peer_n": 22,
+        "sns_index_mean": 0.0385524775653531,
+        "sns_index_without_zero_sensitivity": 0.0385524775653531,
+        "source_cells": 4,
+        "time_series_comparable": false,
+        "unit": "provider_standardized_z_index",
+        "valid_estimated_population": 2563.0,
+        "zero_cells": 0,
+        "zero_note": "standardized zero can represent reference mean; legacy column guide also notes raw reaggregation; do not infer no use",
+        "zero_population_share": 0.0
+      },
+      "observation_window": {
+        "available_from": null,
+        "calendar_days": 92,
+        "calendar_definition": "literal_Mon_Fri_and_Sat_Sun_not_provider_weekday_holiday_definition",
+        "calendar_mon_fri_days": 66,
+        "calendar_sat_sun_days": 26,
+        "definition_source": "https://data.seoul.go.kr/dataVisual/seoul/seoulLiving.do",
+        "exact_quarter": "2025Q3",
+        "label_month": "2025-10",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "overlap_quarters": [
+          "2025Q3"
+        ],
+        "provider_holiday_includes_public_holidays": null,
+        "publication_note": "manual indicates publication next month; actual file-specific release date not verified; do not infer availability",
+        "semantics_version": "source_semantics_v1",
+        "window_basis": "provider_manual_previous_three_months; source-file date treated as aggregation label"
+      },
+      "review_required": [
+        "threshold_and_window_sensitivity",
+        "same_person_linkage_unavailable",
+        "survey_not_dong_specific",
+        "publication_dates_unverified",
+        "sns_time_comparison_prohibited"
+      ],
+      "confirmed_social_isolation": null
+    },
+    {
+      "adm_cd": "1123077",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "압구정동",
+      "retained_in_threshold_variants": 3,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2,
+      "sensitivity_is_not_probability": true,
+      "level_method_states": {
+        "median_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        },
+        "mean_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        },
+        "median_recent_two_years": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        }
+      },
+      "sns_same_period": {
+        "adm_cd": "1123077",
+        "adm_nm": "압구정동",
+        "age_band": "40s",
+        "aggregation": "estimated_population_weighted_mean_of_published_sex_age_group_scores",
+        "date": "2025-10-01",
+        "finite_population_coverage": 1.0,
+        "individual_contacts_measured": false,
+        "negative_cells": 2,
+        "negative_values_valid": true,
+        "percent_change_allowed": false,
+        "quality_status": "same_period_relative_only",
+        "same_period_gangnam_age_median": 0.026596989189525598,
+        "same_period_gangnam_age_percentile": 0.1590909090909091,
+        "same_period_peer_n": 22,
+        "sns_index_mean": 0.003414319501182541,
+        "sns_index_without_zero_sensitivity": 0.003414319501182541,
+        "source_cells": 4,
+        "time_series_comparable": false,
+        "unit": "provider_standardized_z_index",
+        "valid_estimated_population": 4651.0,
+        "zero_cells": 0,
+        "zero_note": "standardized zero can represent reference mean; legacy column guide also notes raw reaggregation; do not infer no use",
+        "zero_population_share": 0.0
+      },
+      "observation_window": {
+        "available_from": null,
+        "calendar_days": 92,
+        "calendar_definition": "literal_Mon_Fri_and_Sat_Sun_not_provider_weekday_holiday_definition",
+        "calendar_mon_fri_days": 66,
+        "calendar_sat_sun_days": 26,
+        "definition_source": "https://data.seoul.go.kr/dataVisual/seoul/seoulLiving.do",
+        "exact_quarter": "2025Q3",
+        "label_month": "2025-10",
+        "observation_end": "2025-09-30",
+        "observation_months": [
+          "2025-07",
+          "2025-08",
+          "2025-09"
+        ],
+        "observation_start": "2025-07-01",
+        "overlap_quarters": [
+          "2025Q3"
+        ],
+        "provider_holiday_includes_public_holidays": null,
+        "publication_note": "manual indicates publication next month; actual file-specific release date not verified; do not infer availability",
+        "semantics_version": "source_semantics_v1",
+        "window_basis": "provider_manual_previous_three_months; source-file date treated as aggregation label"
+      },
+      "review_required": [
+        "threshold_and_window_sensitivity",
+        "same_person_linkage_unavailable",
+        "survey_not_dong_specific",
+        "publication_dates_unverified",
+        "sns_time_comparison_prohibited"
+      ],
+      "confirmed_social_isolation": null
+    },
+    {
+      "adm_cd": "1123065",
+      "date": "2025-11-01",
+      "age_band": "30s",
+      "dong": "역삼2동",
+      "retained_in_threshold_variants": 6,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 1,
+      "window_variants": 2,
+      "sensitivity_is_not_probability": true,
+      "level_method_states": {
+        "median_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        },
+        "mean_all_baseline": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference"
+        },
+        "median_recent_two_years": {
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery"
+        }
+      },
+      "sns_same_period": {
+        "adm_cd": "1123065",
+        "adm_nm": "역삼2동",
+        "age_band": "30s",
+        "aggregation": "estimated_population_weighted_mean_of_published_sex_age_group_scores",
+        "date": "2025-11-01",
+        "finite_population_coverage": 1.0,
+        "individual_contacts_measured": false,
+        "negative_cells": 0,
+        "negative_values_valid": true,
+        "percent_change_allowed": false,
+        "quality_status": "same_period_relative_only",
+        "same_period_gangnam_age_median": 0.10028509780306707,
+        "same_period_gangnam_age_percentile": 0.4772727272727273,
+        "same_period_peer_n": 22,
+        "sns_index_mean": 0.0972408293460925,
+        "sns_index_without_zero_sensitivity": 0.0972408293460925,
+        "source_cells": 4,
+        "time_series_comparable": false,
+        "unit": "provider_standardized_z_index",
+        "valid_estimated_population": 5016.0,
+        "zero_cells": 0,
+        "zero_note": "standardized zero can represent reference mean; legacy column guide also notes raw reaggregation; do not infer no use",
+        "zero_population_share": 0.0
+      },
+      "observation_window": {
+        "available_from": null,
+        "calendar_days": 92,
+        "calendar_definition": "literal_Mon_Fri_and_Sat_Sun_not_provider_weekday_holiday_definition",
+        "calendar_mon_fri_days": 66,
+        "calendar_sat_sun_days": 26,
+        "definition_source": "https://data.seoul.go.kr/dataVisual/seoul/seoulLiving.do",
+        "exact_quarter": null,
+        "label_month": "2025-11",
+        "observation_end": "2025-10-31",
+        "observation_months": [
+          "2025-08",
+          "2025-09",
+          "2025-10"
+        ],
+        "observation_start": "2025-08-01",
+        "overlap_quarters": [
+          "2025Q3",
+          "2025Q4"
+        ],
+        "provider_holiday_includes_public_holidays": null,
+        "publication_note": "manual indicates publication next month; actual file-specific release date not verified; do not infer availability",
+        "semantics_version": "source_semantics_v1",
+        "window_basis": "provider_manual_previous_three_months; source-file date treated as aggregation label"
+      },
+      "review_required": [
+        "threshold_and_window_sensitivity",
+        "same_person_linkage_unavailable",
+        "survey_not_dong_specific",
+        "publication_dates_unverified",
+        "sns_time_comparison_prohibited"
+      ],
+      "confirmed_social_isolation": null
+    }
+  ]
+}

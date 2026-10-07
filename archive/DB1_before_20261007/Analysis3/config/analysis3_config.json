@@ -1,0 +1,12 @@
+{
+  "card_root": "C:/Users/user/Desktop/Team_Together/공모전 원본 데이터/2026빅콘테스트_신한카드_데이터_레이아웃",
+  "market_root": "C:/Users/user/Desktop/Team_Together/서울시 공공데이터/서울 상권분석 데이터",
+  "database": "../../outputs/db1.sqlite",
+  "exports": "outputs",
+  "first_detection_quarter": "2025Q3",
+  "minimum_same_quarter_history": 3,
+  "available_from": {},
+  "card_scope": "강남구 가맹점의 오프라인 결제, 고객 거주지와 다름",
+  "snapshot_policy": "월/분기 완전 스냅샷; 동일 기간 수정 원본 자동 덮어쓰기 차단",
+  "integrated_exports": "../outputs/integrated"
+}

@@ -109,3 +109,8 @@ DB 원본 집계는 `a3a_industry`, `a3b_industry`, 파생 결과는 위 파일�
 
 ## 정리 후 경로
 소비 분석 CSV는 outputs, 동·업종 연결표는 outputs/mappings, 통합 CSV와 신호 연결 CSV는 상위 outputs/integrated에 저장합니다. 마지막 scan 기록은 logs/last_scan.json, 검증 기록은 docs에 있습니다. 공통 실행·설정은 상위 README.md를 참조하세요.
+
+
+## 동·연령별 행동과 소비 연결 (2026-10-07)
+
+연결 구현과 실행을 완료했다. 동·연령·월별 행동 근거에는 `v_a23_age_monthly`와 `v_a23_age_detail`을 사용한다. 분기 집계는 `v_a23_age_quarter`, 공표일 기준 조회는 `v_a23_age_available_context`다. 상세 해석과 업데이트 규칙은 `Analysis3/docs/AGE_BEHAVIOR_CONSUMPTION.md`를 참조한다. 소비는 보조 근거이며 탐지 신호나 고립 점수에 합산하지 않는다.

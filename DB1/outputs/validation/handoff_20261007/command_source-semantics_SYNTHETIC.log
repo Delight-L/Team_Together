@@ -1,0 +1,13 @@
+{
+  "inserted": {
+    "a2_observation_window": 0,
+    "ctx_sns_index": 0,
+    "a23_observation_context": 0
+  },
+  "source_label_months": 50,
+  "sns_cells": 5500,
+  "aligned_context_rows": 880,
+  "existing_signal_rules_modified": false,
+  "holiday_definition_confirmed": false,
+  "sns_time_comparison_allowed": false
+}

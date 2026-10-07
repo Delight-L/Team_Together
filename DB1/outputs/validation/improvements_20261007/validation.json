@@ -1,0 +1,26 @@
+{
+  "existing_tables_preserved": 44,
+  "new_youth_metric_rows": 476,
+  "weather_windows": 48,
+  "existing_signals": {
+    "communication": 10,
+    "mobility": 0,
+    "combined": 0
+  },
+  "youth_enriched_actual_cases": 3,
+  "late_market_context_rows_filled": 110,
+  "late_market_detection_and_source_preserved": true,
+  "idempotent": true,
+  "as_of_unknown_core_withheld": true,
+  "twenties_household_age_mismatch_preserved": true,
+  "weather_example_202510": {
+    "rain_days": 35.0,
+    "rainfall_mm": 954.9,
+    "snow_days": 0.0
+  },
+  "simulated_late_arrival_not_project_findings": true,
+  "operational_deployed": true,
+  "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\outputs\\backups\\before_evidence_improvements_20261007_144319",
+  "original_tables_preserved_on_deployment": 44,
+  "actual_rows_exported": 10
+}

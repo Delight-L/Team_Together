@@ -8,6 +8,15 @@ BASE=Path(__file__).resolve().parents[2]/'test_db1.sqlite'
 if not BASE.exists():BASE=Path(__file__).resolve().parents[2]/'outputs/db1.sqlite'
 CONFIG=json.loads((Path(__file__).resolve().parents[1]/'config/analysis3_config.json').read_text(encoding='utf-8'))
 
+def test_elder_export_does_not_require_source_download(database,tmp_path):
+ from pipeline import export
+ configuration=tmp_path/'db1_config.json'
+ configuration.write_text(json.dumps({'analysis1':{'elderly_living_alone':{'sources':[str(tmp_path/'not_downloaded.csv')]}}}),encoding='utf-8')
+ export(database,tmp_path/'consumer',tmp_path/'integrated',context_config=configuration)
+ assert (tmp_path/'integrated/analysis123_age_elder_context.csv').exists()
+ with pytest.raises(FileNotFoundError,match='elderly living-alone source not found'):
+  export(database,tmp_path/'consumer',tmp_path/'integrated',context_config=configuration,context_ingest=True)
+
 @pytest.fixture
 def database(tmp_path):
  p=tmp_path/'db.sqlite'
@@ -171,8 +180,14 @@ def test_shared_runner_scan_order(tmp_path,monkeypatch):
  monkeypatch.setattr(runner.subprocess,'run',lambda cmd,**kw:calls.append(cmd))
  monkeypatch.setattr(sys,'argv',['run_db1.py','scan','--config',str(config),'--db',str(BASE)])
  runner.main()
- assert len(calls)==3
+ assert len(calls)==6
  assert 'Analysis1' in calls[0][1] and 'Analysis2' in calls[1][1] and 'Analysis3' in calls[2][1]
+ assert Path(calls[3][1]).name=='activity_level.py'
+ assert calls[3][calls[3].index('--db')+1]==str(BASE.resolve())
+ assert Path(calls[4][1]).name=='source_semantics.py'
+ assert calls[4][calls[4].index('--db')+1]==str(BASE.resolve())
+ assert Path(calls[5][1]).name=='evidence_context.py'
+ assert calls[5][calls[5].index('--db')+1]==str(BASE.resolve())
  assert calls[2][2]=='scan' and calls[2][calls[2].index('--db')+1]==str(BASE.resolve())
 
 def test_new_behavior_month_without_consumption_is_retained(database):
@@ -190,3 +205,4 @@ def test_historical_backfill_requires_explicit_migration(database):
   packet=source_packet(c,'market','2023Q3','2023Q3')
   c.execute("DELETE FROM a3_run WHERE source='market' AND period='2023Q3'")
  with pytest.raises(ValueError,match='historical backfill'):apply_packets(database,{('market','2023Q3'):packet},CONFIG)
+

@@ -17,12 +17,104 @@
         "welfare_observation": "2024-05"
       }
     },
-    "baseline_model": "Analysis1/models/2025H2/analysis1_baseline_2025H2.joblib"
+    "baseline_model": "Analysis1/models/2025H2/analysis1_baseline_2025H2.joblib",
+    "elderly_living_alone": {
+      "sources": [
+        "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\원본\\201_DT_201004_F030011_*.csv"
+      ],
+      "available_from": {},
+      "allow_non_gangnam_terminal_error": true,
+      "source_archive": "Analysis1/data/raw/elderly"
+    }
   },
   "analysis2": {
     "telecom_dir": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 시민생활 데이터\\29개 통신정보 7~12월",
     "interest_dir": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 시민생활 데이터\\10개 관심집단수 7~12월",
     "rain": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 기상 데이터\\강수량+및+강수일수_20260929171721.csv",
     "diary": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 기상 데이터\\일기일수_20260929171813.csv"
+  },
+  "survey_context": {
+    "seoul_years": {
+      "2022": {
+        "path": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 도시정책지표조사\\서울서베이 도시정책지표조사 정보(2022년)\\data\\2022 서울서베이_가구원조사.xlsx",
+        "mapping": {
+          "district": "gu",
+          "parent": "AQ26",
+          "sick": "AQ26A_1",
+          "money": "AQ26A_2",
+          "emotion": "AQ26A_3",
+          "family": "AQ39_1",
+          "outside": "AQ39_2",
+          "household": "ID",
+          "age": "DEW2",
+          "weight": "wtb1"
+        },
+        "available_from": null
+      },
+      "2023": {
+        "path": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 도시정책지표조사\\서울서베이 도시정책지표조사 정보(2023년)\\1. DATA\\2023 서울서베이 가구원 data(240826)_코드북.xlsx",
+        "mapping": {
+          "district": "GU",
+          "parent": "Q42",
+          "sick": "Q42B1",
+          "money": "Q42B2",
+          "emotion": "Q42B3",
+          "family": "Q56A1",
+          "outside": "Q56A2",
+          "household": "일련번호",
+          "age": "DEW2",
+          "weight": "wtb1"
+        },
+        "available_from": null
+      },
+      "2024": {
+        "path": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 도시정책지표조사\\서울서베이 도시정책지표조사 정보(2024년)\\1. DATA\\2024 서울서베이 가구원_data_코드북.xlsx",
+        "mapping": {
+          "district": "GU",
+          "parent": "Q47",
+          "sick": "Q47B1",
+          "money": "Q47B2",
+          "emotion": "Q47B3",
+          "family": "Q62A1",
+          "outside": "Q62A2",
+          "household": "일련번호",
+          "age": "DEW2",
+          "weight": "wtb1"
+        },
+        "available_from": null
+      },
+      "2025": {
+        "path": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 도시정책지표조사\\서울서베이 도시정책지표조사 정보(2025년)\\1. DATA\\2025년 서울서베이_가구원_data_codebook.xlsx",
+        "mapping": {
+          "district": "자치구",
+          "parent": "Q47",
+          "sick": "Q47AA1",
+          "money": "Q47AA2",
+          "emotion": "Q47AA3",
+          "family": "Q62A1",
+          "outside": "Q62A2",
+          "household": "일련번호",
+          "extra_loneliness": {
+            "loneliness_companionship": "Q62A3",
+            "loneliness_left_alone": "Q62A4",
+            "loneliness_among_people": "Q62A5"
+          },
+          "age": "DEW2",
+          "weight": "wtb1"
+        },
+        "available_from": null
+      }
+    },
+    "youth_reference": {
+      "household": {
+        "path": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 고립은둔청년 실태조사\\★DATA_서울시 고립은둔청년 실태조사(가구조사)_v1_230127.xlsx"
+      },
+      "youth": {
+        "path": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 고립은둔청년 실태조사\\★DATA_서울시 고립은둔청년 실태조사(청년조사)_v1_230127.xlsx"
+      }
+    }
+  },
+  "evidence_publication": {
+    "records": []
   }
 }

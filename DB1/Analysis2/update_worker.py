@@ -9,6 +9,13 @@ from run_analysis2_sequential import find_month_file,validate_current_month
 from analysis.sequential import run_month
 from analysis.outputs import build_evidence_card
 import db1_store as store
+from age_features import sync_age_history
+from age_detection import run as detect_age
+
+
+def sync_age(settings, db, through):
+    sync_age_history(settings, db, through, ROOT/'Analysis2/outputs/age')
+    detect_age(db,ROOT/'Analysis2/outputs/age_detection')
 
 
 def initialize(settings,db):
@@ -16,6 +23,7 @@ def initialize(settings,db):
     initial['date']=pd.to_datetime(initial.date)
     validate_history(initial)
     store.seed_history(db,initial)
+    sync_age(settings,db,initial.date.max())
 
 
 def process(settings,db,month):
@@ -28,6 +36,7 @@ def process(settings,db,month):
     digest=store.fingerprint(current,['date','행정동코드'])
     with store.connect(db) as con:
         if store.already_processed(con,'analysis2',str(period.date()),digest):
+            sync_age(settings,db,period)
             store.export_csv(db,ROOT/settings['exports'])
             print(f'{month}: already processed, no duplicate insert',flush=True)
             return
@@ -40,6 +49,7 @@ def process(settings,db,month):
     evidence=build_evidence_card(full_result)
     evidence=evidence.loc[pd.to_datetime(evidence.date)==period].copy()
     saved=store.commit_a2(db,current,result,evidence,context_period,{'telecom':str(telecom),'interest':str(interest),'rain':a2['rain'],'diary':a2['diary']})
+    sync_age(settings,db,period)
     store.export_csv(db,ROOT/settings['exports'])
     with store.connect(db) as con: updated=store.history(con)
     print(json.dumps({'analysis':'analysis2','month':month,'saved':saved,'history_rows':len(updated),'signals':int(result.any_signal.sum()),'context_period':context_period}),flush=True)
@@ -51,6 +61,8 @@ def main():
     if a.initialize:
         initialize(settings,db);store.export_csv(db,ROOT/settings['exports']);return
     if a.scan:
+        with store.connect(db) as con: latest_history=store.history(con)
+        if not latest_history.empty: sync_age(settings,db,latest_history.date.max())
         while True:
             with store.connect(db) as con: history=store.history(con)
             if history.empty: raise ValueError('Run initialize first')

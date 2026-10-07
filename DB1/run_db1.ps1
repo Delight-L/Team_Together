@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('initialize','analysis1','analysis2','analysis3','scan','watch','export','status')]
+    [ValidateSet('initialize','analysis1','analysis1-elder','survey-context','analysis2','analysis2-age','analysis2-age-detect','analysis2-activity','source-semantics','evidence-context','analysis3','scan','watch','export','status')]
     [string]$Command = 'scan',
     [string]$Period,
     [string]$Month,

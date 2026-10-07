@@ -1,0 +1,39 @@
+{
+  "sources": [
+    [
+      "seoul_survey",
+      2022
+    ],
+    [
+      "seoul_survey",
+      2023
+    ],
+    [
+      "seoul_survey",
+      2024
+    ],
+    [
+      "seoul_survey",
+      2025
+    ],
+    [
+      "seoul_youth_household",
+      2022
+    ],
+    [
+      "seoul_youth_youth",
+      2022
+    ]
+  ],
+  "metric_rows": 572,
+  "guide_rows": 6,
+  "detection_scores_modified": false,
+  "v_a123_age_survey_context": {
+    "rows": 660,
+    "linked": 660
+  },
+  "v_a123_age_survey_available_context": {
+    "rows": 660,
+    "linked": 0
+  }
+}

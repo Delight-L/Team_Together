@@ -1,0 +1,9 @@
+{
+  "analysis2_tests_passed": 33,
+  "db1_tests_passed": 8,
+  "rerun_saved_rows": 0,
+  "scan_waiting_month": "2026-01",
+  "synthetic_future_month_verified": true,
+  "past_context_snapshot_test_passed": true,
+  "new_population_files_used": false
+}

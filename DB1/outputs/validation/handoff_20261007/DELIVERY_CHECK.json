@@ -1,0 +1,42 @@
+{
+  "operational_database_unchanged": true,
+  "operational_db_sha256": "e53a96706cef1a9e43338330b0ed6fc98e6802089377f343d039eed21fe442d6",
+  "operational_source_labels_through": "2025-12",
+  "actual_signal_cases": 10,
+  "actual_joint_signals": 0,
+  "read_only_enforced": true,
+  "reader_examples_passed": 2,
+  "powershell_status_passed": true,
+  "synthetic_files_deployed_to_inputs": false,
+  "test_database_deployed": false,
+  "runtime": {
+    "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:37:13) [MSC v.1942 64 bit (AMD64)]",
+    "packages": {
+      "pandas": "2.3.3",
+      "numpy": "2.5.3",
+      "scikit-learn": "1.9.1",
+      "joblib": "1.6.0",
+      "openpyxl": "3.1.5",
+      "geopandas": "1.2.0",
+      "shapely": "2.1.2",
+      "pyogrio": "0.13.0",
+      "pyproj": "3.8.0",
+      "pytest": "9.1.1"
+    }
+  },
+  "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\outputs\\backups\\before_handoff_acceptance_20261007_141231",
+  "delivered_files": [
+    "AI_AGENT_HANDOFF.md",
+    "README.md",
+    "docs\\AI_AGENT_EXPLANATION_EXAMPLES.md",
+    "docs\\AI_AGENT_HANDOFF.md",
+    "docs\\AI_AGENT_QUICKSTART.md",
+    "docs\\DB1_HANDOFF_ACCEPTANCE_20261007.md",
+    "tools\\read_agent_context.py",
+    "outputs\\handoff\\agent_explanation_examples.json",
+    "outputs\\validation\\handoff_20261007\\command_scan_SYNTHETIC.log",
+    "outputs\\validation\\handoff_20261007\\command_source-semantics_SYNTHETIC.log",
+    "outputs\\validation\\handoff_20261007\\command_status_SYNTHETIC.log",
+    "outputs\\validation\\handoff_20261007\\UPDATE_ACCEPTANCE_SYNTHETIC.json"
+  ]
+}

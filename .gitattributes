@@ -1,3 +1,7 @@
 # Preserve delivered database, fixtures, exports and historical snapshots exactly.
 DB1/** -text
 archive/DB1_before_20261006/** -text
+
+# Current operational DB stored through Git LFS
+DB1/outputs/db1.sqlite filter=lfs diff=lfs merge=lfs -text
+archive/DB1_before_20261007/** -text

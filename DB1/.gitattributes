@@ -1,0 +1,2 @@
+# The operational database exceeds GitHub's regular file size limit.
+outputs/db1.sqlite filter=lfs diff=lfs merge=lfs -text

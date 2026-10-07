@@ -1,0 +1,70 @@
+{
+  "version": "a2_activity_level_v1_22b454887888",
+  "baseline_fingerprint": "22b45488788878c927b65c09bca2450f89ca92421c73eca0190eaa743bb7ae1e",
+  "level_rows": 660,
+  "followup_rows": 29,
+  "events": 10,
+  "inserted": {
+    "a2_activity_level": 0,
+    "a2_activity_followup": 0
+  },
+  "existing_detection_untouched": true,
+  "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\outputs\\backups\\before_activity_level_20261007_113713",
+  "existing_tables_preserved": true,
+  "idempotent": true,
+  "checks": [
+    {
+      "command": [
+        "C:\\ProgramData\\anaconda3\\envs\\analysis1\\python.exe",
+        "-m",
+        "pytest",
+        "tests/test_pipeline.py::test_shared_runner_scan_order",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "exit_code": 0,
+      "output": ".                                                                        [100%]\n1 passed in 0.87s\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\ProgramData\\anaconda3\\envs\\analysis1\\python.exe",
+        "-m",
+        "pytest",
+        "tests",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "exit_code": 0,
+      "output": "........                                                                 [100%]\n8 passed in 19.60s\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\ProgramData\\anaconda3\\envs\\analysis1\\python.exe",
+        "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\Context\\tests\\check_survey.py"
+      ],
+      "exit_code": 0,
+      "output": "",
+      "stderr": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.580s\n\nOK\n"
+    },
+    {
+      "command": [
+        "C:\\ProgramData\\anaconda3\\envs\\analysis1\\python.exe",
+        "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\run_db1.py",
+        "export"
+      ],
+      "exit_code": 0,
+      "output": "{\n  \"version\": \"a2_activity_level_v1_22b454887888\",\n  \"baseline_fingerprint\": \"22b45488788878c927b65c09bca2450f89ca92421c73eca0190eaa743bb7ae1e\",\n  \"level_rows\": 660,\n  \"followup_rows\": 29,\n  \"events\": 10,\n  \"inserted\": {\n    \"a2_activity_level\": 0,\n    \"a2_activity_followup\": 0\n  },\n  \"existing_detection_untouched\": true\n}\n{\"sources\": [[\"seoul_survey\", 2022], [\"seoul_survey\", 2023], [\"seoul_survey\", 2024], [\"seoul_survey\", 2025], [\"seoul_youth_household\", 2022], [\"seoul_youth_youth\", 2022]], \"metric_rows\": 572, \"guide_rows\": 6, \"detection_scores_modified\": false, \"v_a123_age_survey_context\": {\"rows\": 660, \"linked\": 660}, \"v_a123_age_survey_available_context\": {\"rows\": 660, \"linked\": 0}}\n{\"sources\": [[\"seoul_survey\", 2022], [\"seoul_survey\", 2023], [\"seoul_survey\", 2024], [\"seoul_survey\", 2025], [\"seoul_youth_household\", 2022], [\"seoul_youth_youth\", 2022]], \"metric_rows\": 572, \"guide_rows\": 6, \"detection_scores_modified\": false, \"v_a123_age_survey_context\": {\"rows\": 660, \"linked\": 660}, \"v_a123_age_survey_available_context\": {\"rows\": 660, \"linked\": 0}}\n",
+      "stderr": ""
+    }
+  ],
+  "regression_summary": {
+    "Analysis1": 22,
+    "Analysis2_including_new_tests": 42,
+    "Analysis3": 33,
+    "note": "Analysis3 original full run passed 32; updated runner order test passed on targeted rerun"
+  }
+}
