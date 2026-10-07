@@ -18,18 +18,24 @@ React는 화면을 담당합니다. 전처리와 분석은 계속 Python에서 �
 |---|---|---|
 | 메뉴 이름, 화면 제목 | `frontend/src/App.jsx` | `menus`, `titles` |
 | 선택 지역·월, 메뉴 접기 | `frontend/src/App.jsx` | `context`, `navCollapsed` |
-| 종합 현황·지역 비교·후보 집계 | `frontend/src/Briefing.jsx` | `Briefing`, `RegionalOverview`, `summarizeRegions` |
+| 종합 현황 조사 파일·요약 카드·질문 버튼 | `frontend/src/CaseBriefing.jsx` | `CaseBriefing`, `BriefingStats`, `MetricCard` |
+| 조사 파일 순서·6개월 그래프 자료·설명 | `frontend/src/briefingData.js` | `rankedCases`, `metricSeries`, `caseNarrative` |
+| 지역 현황·후보 판정 | `frontend/src/Briefing.jsx` | `RegionalOverview`, `summarizeRegions` |
 | 로그인 화면 | `frontend/src/App.jsx` | `Login` |
 | 사업 검토 입력 | `frontend/src/App.jsx` | `Services` |
 | 보고서 입력 | `frontend/src/App.jsx` | `Report` |
 | 업무 현황·자료 업로드·활동 이력 | `frontend/src/Workspace.jsx` | `Missions`, `Upload`, `Activity` |
-| 지도 클릭·색·라벨·팝업 | `frontend/src/Briefing.jsx` | `MissionMap`, `RegionInsight` |
+| 지도 클릭·확대·라벨 | `frontend/src/VectorMap.jsx` | MapLibre 지도, 지역 선택 콜백 |
+| 지도 배경·상태 색상 | `frontend/src/missionMapStyle.js` | 벡터 지도 스타일, 로컬 행정동 소스 |
+| 지도 표현 전환·상세 카드 | `frontend/src/MissionMap.jsx`, `frontend/src/Briefing.jsx` | 지도 지연 로딩, 입체/도로 전환, `RegionInsight` |
 | 챗봇 디자인·추천 질문·메시지 | `frontend/src/components.jsx` | `ChatPanel` |
-| 추이 그래프 | `frontend/src/components.jsx` | `Trend` |
-| 색·크기·간격·화면 높이 | `frontend/src/style.css`, `frontend/src/briefing.css` | 해당 클래스 이름 |
+| 브리핑 그래프 / 지역 분석 추이 | `frontend/src/CaseBriefing.jsx` / `frontend/src/components.jsx` | `ValueChart` / `Trend` |
+| 조사 파일 디자인·반응형 배치 | `frontend/src/case-briefing.css` | `case-board`, `case-paper`, `case-metrics` |
+| 공통 색·크기·간격·지도 화면 | `frontend/src/style.css`, `frontend/src/briefing.css` | 해당 클래스 이름 |
 | 프런트엔드 서버 통신 | `frontend/src/api.js` | `api` |
 | 분석 데이터 조회·API 오류 | `webapp/server.py` | `dashboard_data`, `do_GET`, `do_POST` |
-| 챗봇 답변 내용과 AI 호출 | `chatbot/service.py` | `explain_question` |
+| 그래프 원자료·단위 전달 | `db/analysis_repository.py` | `prepare_analysis2`, `metric_value`, `metric_unit` |
+| 복지이음 답변 내용과 AI 호출 | `chatbot/welfare/app/agent/orchestrator.py`, `chatbot/welfare/app/agent/resources.py`, `chatbot/welfare/app/llm/openai_client.py` | `handle_chat`, `search`, `stream` |
 | 업무 저장·단계 검증 | `db/mission_store.py` | `save_event` |
 
 ## React 문법 최소 설명
@@ -56,9 +62,9 @@ const [district, setDistrict] = useState('');
 ## 수정하고 확인하는 순서
 
 1. Python 서버를 실행합니다: 프로젝트 루트에서 `.venv/Scripts/python.exe main.py`.
-2. 다른 터미널에서 `cd frontend`, `npm run dev`를 실행합니다.
+2. 다른 터미널에서 `cd frontend`, `pnpm run dev`를 실행합니다.
 3. http://127.0.0.1:5173 을 열어 수정합니다. 개발 서버는 저장한 변경을 자동 반영합니다.
-4. 수정 후 `frontend`에서 `npm run build`로 문법/번들 오류를 확인합니다.
+4. 수정 후 `frontend`에서 `pnpm run build`로 문법/번들 오류를 확인합니다.
 5. 시연용 http://127.0.0.1:8503 에서 새로고침합니다. 이 주소는 마지막 빌드 결과를 사용하므로 빌드를 생략하면 수정 전 화면이 나옵니다.
 
 ## 오류가 났을 때
@@ -74,7 +80,7 @@ const [district, setDistrict] = useState('');
 | 401 | 로그인 | 서버 재시작 시 메모리 세션이 초기화되므로 다시 로그인 |
 | 분석 CSV 누락 | Python 터미널 | `agents/regional_analysis/Analysis2/outputs`에 detection CSV가 있는지 |
 | 사업 조회 실패 | Python 터미널, `.env` | DB 주소·계정·권한과 `db2.reviewed_service_candidates` 조회 가능 여부 |
-| AI 모드가 규칙 설명으로 돌아옴 | `.env`, 답변의 모드 표시 | `GEMINI_API_KEY`와 `GEMINI_MODEL`, 외부 연결 확인 |
+| 복지이음이 자료 검색 안내로 돌아옴 | `.env`, 답변의 모드 표시 | `OPENAI_API_KEY`와 `OPENAI_MODEL`, 외부 연결 확인 |
 | 저장 버튼이 비활성화됨 | 지역 분석 화면 | 지역 선택 → 분석 확인 → 근거 검토 → 사업 검토 순서 |
 | `EADDRINUSE` 또는 Windows 10048 | 실행 터미널 | 같은 포트 서버가 이미 실행 중. 기존 터미널 Ctrl+C 또는 `python main.py --port 8504` |
 
@@ -82,7 +88,11 @@ const [district, setDistrict] = useState('');
 
 `style.css`의 `.app-shell`은 `height: 100dvh`, `overflow: hidden`을 사용합니다. `.main-content`, `.overview`, `.distribution-grid`의 `min-height: 0`은 패널이 부모 높이보다 커지지 않도록 합니다. 이 값을 없애거나 카드 높이를 과하게 늘리면 하단이 잘릴 수 있습니다. 긴 목록과 대화는 `.table-scroll`, `.chat-messages`, `.scroll-view` 안에서만 스크롤합니다.
 
-메인 카드 추가 시 1366×768 및 1920×1080에서 지도·상세·입력창이 모두 보이는지 확인하세요. 모바일에서는 상세 패널이 지도 아래로 배치됩니다.
+종합 현황은 `case-briefing.css`에서 PC 화면(1201px 이상)의 문서·그래프 높이를 남는 공간에 맞춰 중앙 스크롤 없이 표시합니다. `min-height: 0`과 그래프의 유연한 높이를 유지하세요. 좁은 화면에서는 접근성을 위해 본문 스크롤을 허용하며 문서 위에 가로 목록과 전체 지역 선택을 표시합니다. 지도는 지역 현황 메뉴에 남아 있습니다.
+
+조사 파일은 `briefingData.js`의 `casePage`로 7곳씩 나누며, 선택 지역으로 마지막 항목을 덮어쓰지 않습니다. 후보가 많은 달에도 모든 지역을 페이지 버튼으로 볼 수 있어야 합니다. 기준월 변경 시 첫 페이지, 지역 선택 상자 변경 시 선택한 지역의 페이지로 이동합니다.
+
+메인 카드 추가 시 1366×768 및 1920×1080에서 카드·목록·입력창이 접근 가능한지 확인하세요.
 
 ## 지켜야 할 연결 규칙
 
@@ -90,6 +100,8 @@ const [district, setDistrict] = useState('');
 - `null` 분석값을 0으로 바꾸면 이력 부족이 정상 수치처럼 보입니다. 화면에서는 `—`로 표시합니다.
 - 전월 변화율과 Robust Z는 다릅니다. 전월 증가여도 공통 변화 제거 후 상대적으로 낮아 후보가 될 수 있습니다.
 - 후보 개수는 지표 개수, 후보 지역은 동 개수입니다. 4개 지표를 4개 동으로 세지 마세요.
+- 브리핑 그래프는 `metric_value`의 실제 지표값을 사용합니다. 원자료가 없을 때만 `change_pct`로 전환하고 단위를 %로 바꿉니다. 누락값을 만들거나 미래 월을 포함하지 마세요.
+- `AI에게 질문하기`는 실제 근거를 담은 입력 초안만 준비합니다. 클릭 직후 자동으로 외부 AI를 호출하지 않습니다.
 - 사용자 질문과 사업 설명은 React 텍스트로 표시합니다. 외부 문자열을 `dangerouslySetInnerHTML`로 넣지 마세요.
 - 보고서/업무 저장은 서버의 단계 검증을 거칩니다. 프런트에서 `done` 숫자만 추가하는 방식으로 저장을 대신하지 마세요.
 
@@ -104,12 +116,10 @@ const [district, setDistrict] = useState('');
 - 신규/연속 후보는 이전 분석월과 현재 분석월의 실제 후보를 비교합니다. 건물 배경은 일러스트이며 실제 건물 위치가 아닙니다.
 - 종합 현황은 우선 확인 후보 중심, 지역 현황은 전체 동 검색·필터·정렬 중심입니다.
 
-## 기본 주제와 자유 대화의 AI 비용 경계
+## 브리핑 질문과 복지이음 연결
 
-ChatPanel.send(question, topic)에서 버튼은 고정 topic ID를, 직접 입력은 null을 보냅니다. 서버는 chatbot/orchestrator.py의 topic_reply와 free_reply로 분리합니다. 기본 버튼은 API 키가 있어도 AI를 호출하지 않습니다.
+`CaseBriefing`의 질문 버튼은 `caseQuestionDraft`로 실제 지역·월·변화율·Robust Z를 담은 초안을 만듭니다. `App`이 공통 지역과 `chatDraft`를 갱신하고 `ChatPanel`이 같은 지역·월인지 확인한 뒤 입력창에 한 번 적용합니다. 사용자가 전송하기 전에는 AI 요청이 없습니다.
 
-자유 대화는 총괄 라우팅 1회와 전문 답변 1회, 총 2회 모델 요청을 사용합니다. 총괄의 agent 출력은 고정 허용 목록으로 검사하며 임의 코드/파일 실행을 허용하지 않습니다. 지역 에이전트는 현재 CSV, 사업 에이전트는 기존 DB2 매칭 조회를 사용합니다. 보고서 에이전트는 작성 절차를 안내하며 문서를 자동 저장하지 않습니다. 구체적인 사업 조회에 필요한 동이 없으면 선택을 요청합니다.
+질문을 전송하면 `ChatPanel.send` → `/api/chat` → `chatbot/welfare/service.py` → 가져온 `chatbot/welfare/app/agent/orchestrator.py`의 `handle_chat`으로 이어집니다. 추천 질문과 자유 질문 모두 같은 복지 자료 검색과 답변 흐름을 사용합니다. OpenAI 키가 있으면 AI 답변, 키가 없거나 AI 연결이 실패하면 자료 검색 안내를 제공합니다. DB2 사업 검토와 업무 저장은 별도 메뉴에서 기존 검증 순서를 따릅니다.
 
-동을 선택하지 않은 대화는 소속 도시의 현재 월 자료만 사용합니다. 다른 도시 접근 검증과 업무 저장의 동 선택 검증은 유지합니다. AI 키·모델 설정이 없거나 연결 실패하면 명시적인 안내를 반환합니다. 이전 Streamlit의 opt-in API는 별도로 유지합니다.
-
-검사: .venv/Scripts/python.exe -m unittest discover -s chatbot/tests -v 및 API 검사. 외부 AI는 mock으로 대체하므로 테스트에서 토큰을 사용하지 않습니다.
+검사: `frontend`에서 `node --test tests/briefing.test.mjs`, 프로젝트 루트에서 `.venv/Scripts/python.exe -m unittest discover -s webapp/tests -v`. API 검사는 외부 AI 호출과 실제 업무 DB 쓰기를 대체합니다.

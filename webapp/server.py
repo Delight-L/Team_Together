@@ -58,6 +58,26 @@ def evidence_for(data, context):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def chat_stream(self, messages, context):
+        from chatbot.welfare.service import stream_reply
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/event-stream; charset=utf-8')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('X-Accel-Buffering', 'no')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('Connection', 'close')
+        self.end_headers()
+        self.close_connection = True
+        events = stream_reply(messages, context)
+        try:
+            for event, payload in events:
+                self.wfile.write(f'event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n'.encode('utf-8'))
+                self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            pass  # 중지·지역 변경·탭 닫기로 브라우저가 요청을 취소했습니다.
+        finally:
+            events.close()
+
     def reply(self, status, payload, *, cookie=None, filename=None):
         binary = isinstance(payload, bytes)
         content = payload if binary else json.dumps(payload, ensure_ascii=False, allow_nan=False, default=str).encode('utf-8')
@@ -101,6 +121,11 @@ class Handler(BaseHTTPRequestHandler):
             if route.path.startswith('/api/'):
                 user = self.user()
                 if route.path == '/api/session': return self.reply(200, {'user':user})
+                if route.path == '/api/chat/config':
+                    from chatbot.welfare.app.agent.resources import RESOURCES
+                    from chatbot.welfare.app.config import settings
+                    return self.reply(200, {'mode': 'AI 대화' if settings.openai_api_key else '자료 검색',
+                                            'resourceCount': len(RESOURCES)})
                 if route.path == '/api/missions':
                     from db.mission_store import load_all
                     items = []
@@ -249,13 +274,17 @@ class Handler(BaseHTTPRequestHandler):
                 from chatbot.orchestrator import topic_reply, free_reply
                 context = self.context(body, user, data, optional_district=True)
                 public_context = {k:context[k] for k in ['city','district','month']}
+                if body.get('stream') is True:
+                    from chatbot.welfare.service import validate_messages
+                    messages = validate_messages(body.get('messages'))
+                    return self.chat_stream(messages, public_context)
                 evidence = evidence_for(data, context) if context['district'] else [
                     r for r in data['assessment'] if context['city']=='강남구' and r['기준연월']==context['month']]
                 question = str(body.get('question','')).strip()
                 if not question or len(question)>2000: raise ValueError('질문은 1~2,000자로 입력하세요.')
                 history = body.get('history', [])
                 if not isinstance(history, list): raise ValueError('대화 이력이 유효하지 않습니다.')
-                # topic ID는 고정 안내 경로입니다. 자유 입력은 항상 총괄 에이전트 경로입니다.
+                # 예시 주제와 자유 입력 모두 복지이음의 자료 검색·답변 경로를 사용합니다.
                 result = topic_reply(body['topic'], evidence, public_context) if body.get('topic') else free_reply(question,evidence,public_context,history[-4:])
                 return self.reply(200, dict(result, context=public_context))
             context = self.context(body, user, data)

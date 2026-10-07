@@ -1927,3 +1927,16 @@ tr:last-child td {
     scroll-behavior: auto !important;
   }
 }
+
+/* 복지이음: 기존 패널 크기와 지도 공유 상태를 유지합니다. */
+.welfare-status { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; color:#64748b; font-size:10px; }
+.welfare-status small { font-size:10px; }
+.welfare-chat .chat-messages { padding-top:12px; }
+.welfare-chat .welcome h3 { font-size:20px; color:#1e293b; }
+.welfare-chat .welfare-notice { border-left:3px solid #f59e0b; padding-left:10px; margin-top:18px; }
+.welfare-sources { margin-top:12px; padding:10px; border:1px solid #dbe5f2; border-radius:8px; overflow-wrap:anywhere; }
+.welfare-sources summary { cursor:pointer; color:#2563eb; }
+.welfare-sources > div { border-top:1px solid #dbe5f2; padding-top:10px; margin-top:10px; }
+.welfare-sources p { margin:5px 0; color:#64748b; }
+.welfare-sources small { color:#956100; }
+.welfare-chat .chat-input button { white-space:nowrap; min-width:38px; }

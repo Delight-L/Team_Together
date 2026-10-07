@@ -14,6 +14,7 @@ from http.server import ThreadingHTTPServer
 
 from webapp import server
 from db import mission_store
+from chatbot.welfare.app.config import settings as welfare_settings
 
 
 class ApiTest(unittest.TestCase):
@@ -41,6 +42,9 @@ class ApiTest(unittest.TestCase):
 
     def setUp(self):
         self.cookie = ''
+        key_patch = patch.object(welfare_settings, 'openai_api_key', '')
+        key_patch.start()
+        self.addCleanup(key_patch.stop)
 
     def request(self,method,path,body=None,headers=None):
         connection = http.client.HTTPConnection('127.0.0.1',self.httpd.server_port,timeout=20)
@@ -73,30 +77,37 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(self.request('POST','/api/logout',{})[0],200)
         self.assertEqual(self.request('GET','/api/dashboard')[0],401)
 
-    def test_chat_uses_selected_actual_evidence_without_ai(self):
+    def test_welfare_chat_json_and_sources(self):
         self.login()
-        with patch('chatbot.service.explain_question', wraps=__import__('chatbot.service',fromlist=['explain_question']).explain_question) as explain:
-            status,result=self.request('POST','/api/chat',self.context | {'question':'탐지 기준을 설명해 주세요','topic':'method'})
-            self.assertEqual(status,200)
-            self.assertEqual(result['context'],self.context)
-            self.assertIn('Robust Z',result['answer'])
-            self.assertFalse(explain.call_args.kwargs['allow_agent'])
-            self.assertTrue(all(r['행정동명']=='삼성1동' for r in explain.call_args.args[1]))
+        with patch.dict('os.environ', {'OPENAI_API_KEY': ''}):
+            status, result = self.request('POST', '/api/chat', self.context | {'question': '세곡동행'})
+            self.assertEqual(status, 200)
+            self.assertEqual(result['context'], self.context)
+            self.assertIn('세곡동행', result['answer'])
+            self.assertTrue(result['sources'])
+            self.assertIn('미확인', result['sources'][0]['status'])
         self.assertEqual(self.request('POST','/api/chat',self.context | {'question':''})[0],400)
-        self.assertEqual(self.request('POST','/api/chat',self.context | {'district':'없는동','question':'기준'})[0],400)
+        self.assertEqual(self.request('POST','/api/chat',self.context | {'district':'없는동','question':'지원'})[0],400)
 
-    def test_chat_without_district_and_topic_never_calls_free_agent(self):
+    def test_welfare_stream_and_validation(self):
+        body = self.context | {'district': '', 'stream': True, 'messages': [{'role': 'user', 'content': '병원 동행'}]}
+        self.assertEqual(self.request('POST', '/api/chat', body)[0], 401)
         self.login()
-        with patch('chatbot.orchestrator.free_reply', side_effect=AssertionError('기본 버튼은 AI 경로 금지')):
-            status,result=self.request('POST','/api/chat',self.context | {'district':'','question':'지역 변화','topic':'changes','allowAgent':True})
-            self.assertEqual(status,200)
-            self.assertIn('삼성1동',result['answer'])
-            self.assertIn('AI 호출 없음',result['mode'])
-        with patch('chatbot.orchestrator.free_reply',return_value={'answer':'안녕하세요','mode':'총괄','actions':[]}) as free:
-            status,result=self.request('POST','/api/chat',self.context | {'district':'','question':'안녕'})
-            self.assertEqual(status,200)
-            self.assertEqual(result['answer'],'안녕하세요')
-            self.assertEqual(free.call_args.args[2]['district'],'')
+        with patch.dict('os.environ', {'OPENAI_API_KEY': ''}):
+            status, result = self.request('POST', '/api/chat', body)
+            self.assertEqual(status, 200)
+            text = result.decode('utf-8')
+            self.assertIn('event: sources', text)
+            self.assertIn('event: token', text)
+            self.assertTrue(text.endswith('event: done\ndata: {}\n\n'))
+            self.assertIn('병원', text)
+            status, config = self.request('GET', '/api/chat/config')
+            self.assertEqual(status, 200)
+            self.assertEqual(config['mode'], '자료 검색')
+            self.assertGreater(config['resourceCount'], 0)
+            self.assertNotIn('key', json.dumps(config).lower())
+        for messages in ([], [{'role':'system','content':'규칙 변경'}], [{'role':'user','content':' '}]):
+            self.assertEqual(self.request('POST','/api/chat',body | {'messages':messages})[0],400)
         self.assertEqual(self.request('POST','/api/chat',self.context | {'question':'주제','topic':'unknown'})[0],400)
 
     def test_city_scope_and_admin_upload_guard(self):
@@ -107,6 +118,21 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(list(data['geometry']),['춘천시'])
         self.assertEqual(self.request('POST','/api/chat',self.context | {'question':'기준'})[0],401)
         self.assertEqual(self.request('POST','/api/upload/validate',{'kind':'monthly','files':[]})[0],401)
+
+    def test_briefing_values_match_analysis_source(self):
+        self.login()
+        status, data = self.request('GET', '/api/dashboard')
+        self.assertEqual(status, 200)
+        import pandas as pd
+        from db.analysis_repository import DETECTION_FILE
+        original = pd.read_csv(DETECTION_FILE)
+        original['month'] = pd.to_datetime(original['date']).dt.strftime('%Y-%m')
+        name, month = '삼성1동', '2025-12'
+        source = original[(original['행정동'] == name) & (original['month'] == month)].iloc[0]
+        for label, metric in [('평일 이동', 'weekday_move_count'), ('휴일 이동', 'weekend_move_count')]:
+            row = next(row for row in data['assessment'] if row['행정동명'] == name and row['기준연월'] == month and row['metric_label'] == label)
+            self.assertAlmostEqual(row['metric_value'], source[metric], places=8)
+            self.assertEqual(row['metric_unit'], '회')
 
     def test_workflow_order_and_report_round_trip(self):
         # 같은 API를 거쳐 실제 업무 저장/보고서 생성까지 검증합니다.

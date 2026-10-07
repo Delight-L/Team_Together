@@ -11,3 +11,6 @@ python-docx>=1.2,<2
 
 # Optional AI mode; local guidance works without credentials.
 google-genai>=1.0,<2
+
+# 복지이음: API 키 없이 자료 검색, 키 설정 시 OpenAI 스트리밍 대화
+-r chatbot/welfare/requirements.txt
