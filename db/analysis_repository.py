@@ -83,6 +83,10 @@ def prepare_analysis2(data, source):
         frame["행정동명"] = data["행정동"]
         frame["기준연월"] = months
         frame["metric_label"] = label
+        # 브리핑 그래프는 변화율과 같은 CSV의 실제 입력값을 표시합니다.
+        # 구버전 업로드에 원자료 열이 없으면 null로 전달하여 값을 만들어내지 않습니다.
+        frame["metric_value"] = pd.to_numeric(data[metric], errors="coerce") if metric in data.columns else np.nan
+        frame["metric_unit"] = "명" if metric in ("call_contacts", "text_contacts") else "회"
         frame["change_pct"] = np.expm1(pd.to_numeric(data[metric + "_log_change"])) * 100
         frame["relative_change_pp"] = pd.to_numeric(data[metric + "_residual_change"]) * 100
         frame["risk_robust_z"] = pd.to_numeric(data[metric + "_residual_change_expanding_rz"])

@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "test:map": "node tests/check-map-data.mjs",
+    "test:map": "node --test tests/check-map-data.mjs tests/mission-map.test.mjs",
+    "test:briefing": "node --test tests/briefing.test.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
-    "leaflet": "1.9.4",
+    "maplibre-gl": "^6.12.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

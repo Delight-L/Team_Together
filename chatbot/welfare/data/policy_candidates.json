@@ -1,0 +1,2079 @@
+{
+  "review_date": "2026-10-06",
+  "purpose": "웹페이지 연결 전 자료 검토용 후보 및 추출항목",
+  "status": "검토용; 현재 이용자격·운영 미확인; DB2 자동 등록용 아님",
+  "count": 68,
+  "counts_by_group": {
+    "seoul": 34,
+    "gangnam": 21,
+    "independent_youth": 13
+  },
+  "deduplication_required": true,
+  "records": [
+    {
+      "id": "seoul-001",
+      "name": "병원 안심동행서비스",
+      "description": "출발·귀가 동행, 접수·수납 지원",
+      "category": "건강",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-002",
+      "name": "1인가구 요리교실 및 소셜다이닝",
+      "description": "요리와 소통 프로그램",
+      "category": "건강",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-003",
+      "name": "방문건강관리",
+      "description": "동주민센터 방문간호사의 정기 건강관리",
+      "category": "건강",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-004",
+      "name": "1인가구 손목닥터 9988",
+      "description": "스마트 건강관리",
+      "category": "건강",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-005",
+      "name": "1인가구 안심장비 지원",
+      "description": "1인가구·1인점포 등의 안전장비",
+      "category": "안전",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-006",
+      "name": "AI 기반 지능형 CCTV 확대",
+      "description": "치안사각지대 CCTV 설치",
+      "category": "안전",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-007",
+      "name": "안심이 운영",
+      "description": "앱과 자치구 CCTV 관제센터 연계",
+      "category": "안전",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-008",
+      "name": "골목길 스마트보안등 설치",
+      "description": "안심이 앱과 연동한 보안등",
+      "category": "안전",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-009",
+      "name": "안심귀가스카우트 운영",
+      "description": "안전 귀가 동행",
+      "category": "안전",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-010",
+      "name": "안심택배함 운영",
+      "description": "무인 택배보관함",
+      "category": "안전",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-011",
+      "name": "범죄예방 인프라 구축",
+      "description": "불안도가 높은 지역의 안전시설",
+      "category": "안전",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-012",
+      "name": "중장년 1인가구 정리수납 컨설팅",
+      "description": "교육·컨설팅·챌린지",
+      "category": "자립",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-013",
+      "name": "1인가구 멘토링",
+      "description": "멘토·멘티 프로그램",
+      "category": "자립",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-014",
+      "name": "1인가구 경제자립 교육 및 일자리 연계",
+      "description": "경제교육·서울동행일자리",
+      "category": "자립",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-015",
+      "name": "자립준비청년 생활·경제 지원",
+      "description": "보호종료 청년의 경제적 자립 지원",
+      "category": "자립",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-016",
+      "name": "전월세 안심계약 도움서비스",
+      "description": "계약상담·집보기 동행",
+      "category": "주거",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-017",
+      "name": "청년 중개보수 및 이사비",
+      "description": "최대 40만원으로 기재",
+      "category": "주거",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-018",
+      "name": "청년 월세 지원",
+      "description": "12개월간 월 최대 20만원으로 기재",
+      "category": "주거",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-019",
+      "name": "1인가구 주택관리서비스",
+      "description": "소규모 집수리·주거환경 개선",
+      "category": "주거",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-020",
+      "name": "주거취약계층 주거상향지원",
+      "description": "비주택 거주 취약계층 임대주택 연계",
+      "category": "주거",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-021",
+      "name": "청년안심주택 공급",
+      "description": "청년·신혼부부 역세권 임대주택",
+      "category": "주거",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-022",
+      "name": "청년 공공주택 확대 공급",
+      "description": "매입·소규모주택정비 등",
+      "category": "주거",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-023",
+      "name": "세대통합형 주거모델 개발",
+      "description": "여러 계층·세대의 공공주택 모델",
+      "category": "주거",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-024",
+      "name": "1인가구지원센터 운영",
+      "description": "1인가구 프로그램",
+      "category": "관계망",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-025",
+      "name": "고독 중장년 혼밥탈출",
+      "description": "공동식사로 외로움·고립 예방",
+      "category": "관계망",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-026",
+      "name": "1인가구 커뮤니티 활성화",
+      "description": "종합사회복지관 자조모임",
+      "category": "관계망",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-027",
+      "name": "씽글벙글 사랑방 확대",
+      "description": "공공시설 유휴공간의 소통공간",
+      "category": "관계망",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-028",
+      "name": "우리동네 펫위탁소",
+      "description": "반기별 마리당 최대 5일 위탁보호로 기재",
+      "category": "관계망",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-029",
+      "name": "사회적 고립위험 1인가구 실태조사",
+      "description": "조사로 고립가구 발굴·지원",
+      "category": "발굴·상담",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-030",
+      "name": "지역단위 고립가구 전담기구",
+      "description": "맞춤 서비스",
+      "category": "발굴·상담",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-031",
+      "name": "생명이음청진기·우울 고위험군 전문검진",
+      "description": "1차 의료기관 검사·전문검진 연계",
+      "category": "발굴·상담",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-032",
+      "name": "마음돌봄상담사·외로움돌봄동행단",
+      "description": "취약 1인가구 발굴·상담",
+      "category": "발굴·상담",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-033",
+      "name": "우리동네돌봄단",
+      "description": "고립가구 안부확인",
+      "category": "발굴·상담",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "seoul-034",
+      "name": "스마트 안부확인서비스",
+      "description": "스마트 기술을 활용한 안부확인",
+      "category": "발굴·상담",
+      "reference_region": "서울시",
+      "source_id": "R3",
+      "source_file": "공개연구보고서/청년1인가구심야주거안전강화방안연구_최종제출본_판권포함.pdf",
+      "source_pdf_pages": [
+        40
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 시행계획 재수록",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "계획 당시 정보. 기존 지역사업과 중복될 수 있음. 목표 규모는 개인 한도가 아님. 최신 접수·자격·이용 범위 확인 필요."
+    },
+    {
+      "id": "gangnam-001",
+      "name": "세곡동행",
+      "description": "세곡동 주민센터·태화기독교사회복지관 신청·접수, 체크리스트 분류, 초기면접·심층상담으로 지원 결정. 고위험 사례관리, 식생활·병원동행, 정신건강 상담 연계, 건강증진, 태화밥상, 나들이·소그룹 취미활동",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G2",
+      "source_file": "강남구계획서/공개청구_승인/2025년 강남구 고립가구 전담기구 운영사업 추진 계획_공개용.pdf",
+      "source_pdf_pages": [
+        3,
+        4,
+        5
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "접수처·서비스 세분화·선정절차 보강; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-002",
+      "name": "세곡동행의 활동지역",
+      "description": "사업명은 세곡동 중심이나 사업대상은 강남구 내 사회적 고립가구로 기재. 세곡동 외 이용 가능 여부와 접수 범위는 별도 확인",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G2",
+      "source_file": "강남구계획서/공개청구_승인/2025년 강남구 고립가구 전담기구 운영사업 추진 계획_공개용.pdf",
+      "source_pdf_pages": [
+        3,
+        4
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "지역을 세곡동만으로 확정하지 않기; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-003",
+      "name": "편의점 등 생활거점 위기가구 발굴",
+      "description": "본인·이웃의 도움 요청을 현장에서 접수하는 신고체계 구축 계획, 지역 밀착기관과 협력",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        7
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "신규, 발굴 경로; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-004",
+      "name": "우리동네돌봄단",
+      "description": "위기가구 방문·전화로 주 1회 이상 정기 안부확인 계획",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        7
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "신규, 정기 방문·전화; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-005",
+      "name": "고독사 예방 컨트롤 타워",
+      "description": "구·동 사업과 명단 현행화, 미지원자 파악, 2025~2027 단계별 확대 계획",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        8
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "신규, 담당자 업무 기능 참고; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-006",
+      "name": "고독사 예방관제센터",
+      "description": "실시간 모니터링 → 동·1인가구 커뮤니티센터 통보 → 현장 확인·사후조치 → 행복e음 등록",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        10
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "기존 스마트 안부확인의 대응 절차 보강; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-007",
+      "name": "주거취약 반지하 가구 조사",
+      "description": "2025년 5~6월 예정, 주거·생활·경제 위기 확인 후 주거상향 등 연계",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        11
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "신규, 조사·연계 경로; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-008",
+      "name": "행복e음 정기·계절 조사",
+      "description": "연 6회 정기조사, 한파·폭염 취약가구 등 조사와 통합 추진, 초기상담·필요서비스 연계",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        11,
+        12
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "신규, 담당자 조사 업무; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-009",
+      "name": "취약계층 정기 모니터링",
+      "description": "수급자·차상위 및 신규 발굴 대상, 실거주·보호자 확인, 2인 1조 대면 방문 원칙, 위기도별 사후관리",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        12
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "신규, 조사 이후 관리; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-010",
+      "name": "동별 사회관계망 사업",
+      "description": "22개 동 협의체가 수행, 동별 1개 이상 사업과 공간 마련 계획. 협의체가 수행주체라는 뜻이며 모든 주민의 이용 자격을 뜻하지 않음",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        12
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "지원대상·수행주체 구분; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-011",
+      "name": "청년 특화사업",
+      "description": "관내 19~39세 고독사 위기가구. 마음회복(상담·치료), 관계회복(자조모임·멘토링), 일상회복(정리수납·재정·취업), 위기 시 긴급복지 연계 등의 예시",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        13
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "비공개로 뭉뚱그린 지원내용 보강; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-012",
+      "name": "사회복지시설 청년 예방 공모",
+      "description": "관내 19~39세 위기가구 대상, 2개 기관 선정 계획. 시민 개인의 신청 절차가 아니라 시설 사업 공모 절차",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        13
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "청년 특화와 별도 사업 유형; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-013",
+      "name": "스마트 안부확인",
+      "description": "KT 음성 주 2회 이상, TV 이용, 스마트플러그 조도·전력, AI 전화대화의 방식 차이",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        14
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "4개 서비스 구분; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-014",
+      "name": "독거어르신 스마트 돌봄",
+      "description": "65세 이상 독거어르신 등 대상 조건과 어르신복지과 담당. AI 스피커, 반려로봇 다솜이, 약비서, 초롱이, 동작센서의 응급·정서·복약·활동 기능",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        14
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "신규, 기존 중장년 스마트 안부와 구분; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-015",
+      "name": "생활행태 개선 공모사업",
+      "description": "사회적 고립 1인가구·고독사 위험가구, 현물지원·외출유도 생활쿠폰 등의 동별 특화사업",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        15
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "신규; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-016",
+      "name": "홈케어",
+      "description": "일반청소, 저장강박 가구 특수청소, 방역·소독, 도배·장판·방충망, 싱크대·수전·배관·안전바·방문·전등 등 수선. 수급자·차상위 조건 및 가구 특성 확인",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        15
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "세부 서비스·조건 보강; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-017",
+      "name": "세탁 지원",
+      "description": "수급자·차상위 중 세탁시설이 없거나 세탁이 어려운 가구. 월 6만원 이내, 의류·이불, 수거가방, 집 앞 수거·배달. 계획규모 150가구",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        16
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "금액·대상·신청 보강; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-018",
+      "name": "짐 보관 지원",
+      "description": "수급자·차상위 중 협소한 주거공간으로 보관이 어려운 가구. 대형상자 4~20개, 상자당 왕복 배송 2회, 전용상자. 계획규모 30가구",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        16
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "세탁과 별도 서비스로 분리 가능; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-019",
+      "name": "세탁·보관 신청",
+      "description": "동주민센터 접수 → 자격·서류 검토 및 사회보장과 의뢰 → 생활보장위원회 소위원회 심의·선정 → 통보. 선정 후 모바일 앱·콜센터 이용",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        16
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "절차 보강, 신청과 이용 구분; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-020",
+      "name": "무연고 사망자 사후지원",
+      "description": "유품정리·특수청소, 서울형 추모서비스 ‘그리다’, 안치료·운구비 등 연계. 상담 → 내부 검토 → 장례 → 사망신고·유품정리",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        16
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "신규, 일반 예방 서비스와 구분; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "gangnam-021",
+      "name": "인식개선·역량강화",
+      "description": "담당자·주민 대상 교육, 대응 매뉴얼·홍보물품",
+      "category": null,
+      "reference_region": "강남구",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        17,
+        18
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 계획",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "신규, 교육·행정 자원; 세부 기능·행정절차도 포함한 추출 항목이며 모두 독립된 개인 신청사업은 아님."
+    },
+    {
+      "id": "independent_youth-001",
+      "name": "자립수당",
+      "description": "2025년 설명에서 월 50만원, 최대 60개월. 보호 이력과 종료 시점 등 조건은 원문 참조",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        33
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-002",
+      "name": "대중교통비",
+      "description": "서울 주민등록, 보호종료 5년 이내 및 과거 연속 2년 이상 보호 이력 등. 월 6만원으로 기재",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        34
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-003",
+      "name": "자립정착금",
+      "description": "서울시 마스터플랜 표에 2천만원 기재. 지급절차·교육·분할 조건은 별도 확인",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        30
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-004",
+      "name": "주거비",
+      "description": "보호종료 5년 이내 월 최대 20만원 신규 지원으로 기재",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        30
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-005",
+      "name": "취업 성공 새 출발 응원금",
+      "description": "50만원 지원으로 기재",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        30
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-006",
+      "name": "디딤씨앗통장",
+      "description": "적립액에 1:2 정부 매칭, 정부 월 최대 10만원. 보호아동·위탁아동·저소득 아동별 대상 차이 존재",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        33
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-007",
+      "name": "영플러스서울(0+SEOUL)",
+      "description": "상담·교육·주거·생활·일자리 연계, 자조모임·공간·카페 등",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        34
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-008",
+      "name": "자립지원통합서비스",
+      "description": "보호종료 5년 이내 서울시 자립준비청년의 안전·건강·취업·주거 등 맞춤형 사례관리",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        53
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-009",
+      "name": "배움마켓",
+      "description": "예비 청년 필수 5시간, 보호종료 1년차 심화 3시간 30분, 금융·주거·법률 등. 정착금 지급 단계와 연계",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        54
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-010",
+      "name": "사후관리",
+      "description": "보호종료 후 주소지가 서울시인 청년의 5년간 자립수준·생활상태 점검과 서비스 연계",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        54
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-011",
+      "name": "바람개비서포터즈",
+      "description": "당사자 자조모임·멘토링·사회적 지지",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        8,
+        55
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-012",
+      "name": "인생버디·꿀립소통토크",
+      "description": "관심 직업 전문가와의 멘토링",
+      "category": "자립준비청년",
+      "reference_region": "서울시",
+      "source_id": "R5",
+      "source_file": "공개연구보고서/「서울시자립준비청년지원을위한운영체계분석과발전방안연구」최종보고서.pdf",
+      "source_pdf_pages": [
+        9,
+        55
+      ],
+      "source_year": 2025,
+      "information_kind": "2025년 연구의 당시 제도·계획 설명",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    },
+    {
+      "id": "independent_youth-013",
+      "name": "강남형 자립준비주택",
+      "description": "2024년 시범운영 주택 1호, 심사로 입주자 선정, 강남구 보증금·임대료 지원, 1년 이상 거주 설명",
+      "category": "자립준비청년",
+      "reference_region": "강남구",
+      "source_id": "R4",
+      "source_file": "공개연구보고서/(최종)자립준비청년자립역량설계와서울형지원모델연구.pdf",
+      "source_pdf_pages": [
+        80
+      ],
+      "source_year": 2024,
+      "information_kind": "2024년 지역사례",
+      "current_operation_verified": false,
+      "latest_verified_date": null,
+      "official_application_url": null,
+      "eligible_regions": null,
+      "eligibility_reviewed": false,
+      "application_details_verified": false,
+      "import_ready": false,
+      "notes": "일반 1인가구 청년과 대상 구분. 보호 이력·종료시점·거주지역 등 최신 조건 확인 필요."
+    }
+  ],
+  "historical_programs": [
+    {
+      "source_row_number": 1,
+      "provider_region_or_department": "복지정책과",
+      "name": "KT 음성안부확인 서비스",
+      "reported_count": 1373,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 2,
+      "provider_region_or_department": "복지정책과",
+      "name": "TV 안부확인 서비스",
+      "reported_count": 95,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 3,
+      "provider_region_or_department": "복지정책과",
+      "name": "스마트 플러그 모니터링",
+      "reported_count": 56,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 4,
+      "provider_region_or_department": "복지정책과",
+      "name": "AI 안부확인서비스",
+      "reported_count": 728,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 5,
+      "provider_region_or_department": "복지정책과",
+      "name": "어르신 안부를 묻는 우유배달",
+      "reported_count": 143,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 6,
+      "provider_region_or_department": "어르신복지과",
+      "name": "노인맞춤돌봄서비스",
+      "reported_count": 1200,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 7,
+      "provider_region_or_department": "어르신복지과",
+      "name": "AI 스피커",
+      "reported_count": 1240,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 8,
+      "provider_region_or_department": "어르신복지과",
+      "name": "IoT 동작센서 감지기",
+      "reported_count": 903,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 9,
+      "provider_region_or_department": "장애인복지과",
+      "name": "장애인 응급안전안심서비스",
+      "reported_count": 83,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 10,
+      "provider_region_or_department": "논현1동",
+      "name": "건강살피미",
+      "reported_count": 26,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 11,
+      "provider_region_or_department": "압구정동",
+      "name": "저소득 밑반찬 지원",
+      "reported_count": 5,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 12,
+      "provider_region_or_department": "압구정동",
+      "name": "홀몸가구 건강음료 배달",
+      "reported_count": 10,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 13,
+      "provider_region_or_department": "압구정동",
+      "name": "HAPPY BOX(과일꾸러미) 지원",
+      "reported_count": 5,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 14,
+      "provider_region_or_department": "청담동",
+      "name": "정성 담은 기운찬(饌) 밥상",
+      "reported_count": 22,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 15,
+      "provider_region_or_department": "청담동",
+      "name": "사랑의 야쿠르트 안부 묻기",
+      "reported_count": 24,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 16,
+      "provider_region_or_department": "대치1동",
+      "name": "어르신과 함께하는 행복한 세상만들기",
+      "reported_count": 100,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 17,
+      "provider_region_or_department": "대치1동",
+      "name": "복지사각지대 위기가구 발굴",
+      "reported_count": 4,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 18,
+      "provider_region_or_department": "대치4동",
+      "name": "건강음료(야쿠르트) 배달",
+      "reported_count": 8,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 19,
+      "provider_region_or_department": "대치4동",
+      "name": "건강영양식(삼계탕·설렁탕·콩비지) 배달",
+      "reported_count": 30,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 20,
+      "provider_region_or_department": "대치4동",
+      "name": "꽈배기 배달",
+      "reported_count": 10,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 21,
+      "provider_region_or_department": "역삼1동",
+      "name": "건강음료 지원",
+      "reported_count": 30,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 22,
+      "provider_region_or_department": "역삼2동",
+      "name": "역삼2동 마을밥상",
+      "reported_count": 100,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 23,
+      "provider_region_or_department": "도곡1동",
+      "name": "나눔가게 후원연계",
+      "reported_count": 130,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 24,
+      "provider_region_or_department": "도곡2동",
+      "name": "사랑의 빵 나눔",
+      "reported_count": 10,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 25,
+      "provider_region_or_department": "도곡2동",
+      "name": "각종 기부물품 나눔",
+      "reported_count": 40,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 26,
+      "provider_region_or_department": "개포1동",
+      "name": "적십자 희망풍차 정기안부확인",
+      "reported_count": 9,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 28,
+      "provider_region_or_department": "개포2동",
+      "name": "사랑가득! 영양가득! 찬(饌) 나눔 사업",
+      "reported_count": 20,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 29,
+      "provider_region_or_department": "개포2동",
+      "name": "나혼자 개포2동에 산다",
+      "reported_count": 10,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 30,
+      "provider_region_or_department": "개포2동",
+      "name": "천사들의 방문",
+      "reported_count": 6,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 31,
+      "provider_region_or_department": "개포3동",
+      "name": "홀몸가구 건강음료 지원",
+      "reported_count": 100,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 32,
+      "provider_region_or_department": "개포3동",
+      "name": "복지소통의 날",
+      "reported_count": 40,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 33,
+      "provider_region_or_department": "개포3동",
+      "name": "희망에너지 후원플러스",
+      "reported_count": 61,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 34,
+      "provider_region_or_department": "개포3동",
+      "name": "활동감지 모니터링 사업 ‘맥케어’",
+      "reported_count": 100,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 35,
+      "provider_region_or_department": "일원1동",
+      "name": "민·관서비스 미이용 1인가구 모니터링",
+      "reported_count": 133,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 36,
+      "provider_region_or_department": "수서동",
+      "name": "똑똑방문 건강음료 지원",
+      "reported_count": 100,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 37,
+      "provider_region_or_department": "수서동",
+      "name": "따숨 영양죽 지원사업",
+      "reported_count": 17,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    },
+    {
+      "source_row_number": 38,
+      "provider_region_or_department": "수서동",
+      "name": "반찬지원사업",
+      "reported_count": 10,
+      "unit": "원문: 지원인원(가구); 개별 단위 미확인",
+      "source_id": "G1",
+      "source_file": "강남구계획서/공개청구_승인/2025년도 강남구 고독사 대책 종합계획_부분공개용.pdf",
+      "source_pdf_pages": [
+        9
+      ],
+      "reference_period": "2024-12",
+      "current_operation_verified": false,
+      "deduplication_verified": false
+    }
+  ],
+  "historical_table_issues": [
+    "원문 사업 수 38개이나 실제 기재행은 37개(27번 누락)",
+    "인원·가구 혼재 및 중복 배제 미확인",
+    "스마트플러그 수치 6쪽 156명/9쪽 56 차이"
+  ]
+}

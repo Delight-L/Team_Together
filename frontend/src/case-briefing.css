@@ -1,0 +1,268 @@
+/* 이번 달 브리핑: 지리적 위치 대신 분석 근거를 조사 파일로 보여줍니다. */
+/* 본문 13px, 지역 목록 14px, 배지와 보조 정보 11px을 사용합니다. */
+/* 좁은 화면에서 메뉴가 고정 패널로 바뀌어도 본문은 두 번째 열에 유지합니다. */
+.briefing-shell > .main-wrap { grid-column: 2; grid-row: 1; }
+.briefing-shell .main-content { overflow-y: auto; background: radial-gradient(ellipse at 12% 5%, #fff9ef85, transparent 55%), #f6f8fc; padding-top: 27px; gap: 25px; }
+.briefing-shell .page-heading { align-items: center; flex-wrap: wrap; gap: 16px 22px; }
+.briefing-shell .page-heading > div:first-child { flex: 1 1 350px; }
+.briefing-shell .page-heading h1 { font-size: clamp(26px, 1.9vw, 36px); line-height: 1.35; letter-spacing: -1px; }
+.briefing-shell .page-heading p { display: block; font-size: 13px; line-height: 1.7; color: #7e8fa9; }
+.heading-tools { display: flex; align-items: center; gap: 14px; }
+.case-heading-tools { flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
+.case-heading-tools .filters { gap: 10px; }
+.case-heading-tools .filters select { min-width: 105px; height: 42px; font-size: 13px; border-radius: 10px; padding: 9px 12px; color: #183154; }
+.case-heading-tools .filters label { font-size: 11px; }
+.case-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+/* 같은 상태에는 상단 요약·폴더·배지 모두 같은 색상을 사용합니다. */
+.briefing-shell .new-candidate { --case-status-fill: #f5cf63; --case-status-tab: #e9b944; --case-status-ink: #80621c; --case-status-soft: #fff2c2; }
+.briefing-shell .continuing-candidate { --case-status-fill: #9ed5c2; --case-status-tab: #79bba5; --case-status-ink: #276451; --case-status-soft: #e1f1eb; }
+.briefing-shell .pending-region { --case-status-fill: #c8bde8; --case-status-tab: #b1a0d5; --case-status-ink: #66508e; --case-status-soft: #ece6f7; }
+.case-stat { min-width: 134px; min-height: 70px; padding: 11px 10px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--case-status-soft); border-radius: 10px; background: linear-gradient(120deg, white, var(--case-status-soft)); color: var(--case-status-ink); }
+.case-stat-icon { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: var(--case-status-fill); }
+.case-board .status-tag:is(.new-candidate, .continuing-candidate, .pending-region) { background: var(--case-status-soft); color: var(--case-status-ink); }
+.case-board .status-tag.quiet { background: #f0f2f5; color: #727e8f; }
+.case-stat > div > span { font-size: 11px; font-weight: 700; white-space: nowrap; display: block; }
+.case-stat strong { display: block; font-size: 27px; line-height: 1.2; margin-top: 5px; }
+.case-stat strong small { margin-left: 3px; font-size: 11px; font-weight: 600; }
+.briefing-case-view { flex: 1; min-height: 0; container-type: inline-size; padding-top: 13px; padding-bottom: 15px; }
+.case-board { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) clamp(225px, 22%, 280px); gap: 17px; padding: 22px 16px 14px 14px; border: 1px solid #ece5d8; border-radius: 14px;
+  background: radial-gradient(ellipse at 30% 0%, #e9e1d4, transparent 85%), linear-gradient(130deg, #e4daca, #ece4d8 65%, #dfd5c7); box-shadow: 0 7px 16px #594b3220, inset 0 1px 0 #fffaf0; min-height: 560px; }
+.case-board::before { content: ''; position: absolute; left: 7px; top: -14px; width: 28%; height: 50px; background: #ece4d4; border-radius: 12px 18px 0 0; z-index: -1; box-shadow: 0 -2px 12px #5f523015; }
+.case-document { position: relative; min-width: 0; padding: 17px 13px 0 12px; border-radius: 13px; background: linear-gradient(105deg, #fffaf1, #fff7eb); box-shadow: 0 5px 12px #78634320; }
+.case-document::before { content: ''; position: absolute; z-index: -1; inset: -3px 6px 7px 4px; border-radius: 10px; background: #fdf8f0; transform: rotate(-.6deg); }
+.case-tab { position: absolute; left: 44px; top: -29px; width: 175px; height: 44px; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 11px 11px 3px 3px; background: linear-gradient(#fffbf5, #f2e8da); box-shadow: 0 -3px 13px #6b584417; color: #153659; font-size: 16px; font-weight: 800; }
+.case-tab b { color: #246bff; }
+.case-paperclip { position: absolute; top: -10px; left: 14px; width: 18px; height: 51px; border: 3px solid #b7bbbc; border-radius: 13px; transform: rotate(-9deg); box-shadow: 1px 1px 2px #44506026, inset 0 0 2px white; z-index: 2; }
+.case-paperclip::after { content: ''; position: absolute; top: 7px; left: 4px; width: 9px; height: 34px; border: 2px solid #d5d9da; border-top: 0; border-radius: 0 0 6px 6px; }
+.case-paper { height: 100%; min-width: 0; border: 1px solid #f4eee7; border-radius: 10px 10px 8px 8px; padding: 12px 22px 14px; background: linear-gradient(115deg, #fffefcf0, #fff 64%, #fffcf7); }
+.case-document-caption { display: flex; justify-content: flex-end; gap: 8px; color: #8c9ab0; font-size: 11px; margin-bottom: 9px; }
+.case-document-caption span { color: #cbd1dc; }
+.case-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.case-title-row h2 { font-size: clamp(28px, 3.1cqw, 38px); color: #102950; letter-spacing: -1.2px; margin-right: 5px; }
+.case-clipboard { width: 49px; height: 54px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; color: #a38a6c; background: linear-gradient(125deg, #f5ebdc, #fffaf2); }
+.case-title-row .status-tag { border-radius: 30px; padding: 6px 12px; font-size: 11px; }
+.case-evidence-count { display: inline-block; border-radius: 30px; padding: 6px 10px; background: #f0edf5; color: #8a83a2; font-size: 11px; white-space: nowrap; }
+.case-narrative { font-size: 13px; color: #7484a2; line-height: 1.85; margin: 14px 0; min-height: 43px; }
+.case-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.case-metric { min-width: 0; border: 1px solid #efe7ed; border-radius: 13px; background: linear-gradient(135deg, #fffdfd, white); padding: 15px 14px 11px; color: #ff4778; }
+.case-metric.sky { color: #246bff; border-color: #e5ecf8; background: linear-gradient(135deg, #fcfdff, white); }
+.case-metric > header { display: flex; align-items: flex-start; gap: 10px; position: relative; }
+.case-metric-icon { width: 46px; height: 46px; border-radius: 13px; background: #ffeaf1; display: grid; place-items: center; flex-shrink: 0; }
+.case-metric.sky .case-metric-icon { background: #e8f0ff; }
+.case-metric h3 { display: flex; align-items: center; gap: 6px; color: #162d52; font-size: 16px; margin: 0; }
+.case-help { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; color: #8a9ebd; line-height: 0; flex-shrink: 0; vertical-align: middle; cursor: help; }
+.case-help svg { display: block; width: 14px; height: 14px; }
+.case-metric strong { display: flex; align-items: center; gap: 6px; font-size: clamp(32px, 3.4cqw, 44px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.35; margin-top: 4px; }
+.case-direction { display: flex; align-items: center; }
+.case-comparison { position: absolute; right: 0; top: 0; border-radius: 8px; padding: 5px 8px; font-size: 11px; font-weight: 600; background: #fff0f5; white-space: nowrap; }
+.case-metric.sky .case-comparison { background: #edf4ff; }
+.case-value-chart { width: 100%; display: block; margin-top: 11px; overflow: visible; }
+.case-value-chart text { font-family: inherit; font-size: 18px; fill: #7e91b0; }
+.case-value-chart .case-chart-bubble text { fill: white; font-size: 18px; font-weight: 800; }
+.case-value-chart circle:focus-visible { outline: none; stroke: #0c2348; stroke-width: 3; }
+.case-metric > footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: 11px; color: #98a4b7; line-height: 1.5; margin-top: 4px; }
+.case-metric > footer > span:last-child { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.case-metric > footer b { font-weight: 600; color: #6c7d98; }
+.case-metric > footer > span > span { border-radius: 5px; padding: 2px 5px; background: #f2f4f8; }
+.case-metric > footer .signal { background: #fff0f5; color: #ef5f87; }
+.case-chart-empty { height: 138px; display: grid; place-items: center; color: #92a0b5; font-size: 13px; }
+.case-investigation { display: flex; align-items: center; gap: 12px; padding: 15px 13px; margin-top: 14px; border: 1px solid #e4edff; border-radius: 12px; background: linear-gradient(115deg, #eff5ff, #f6f9ff); }
+.case-question-icon { display: grid; place-items: center; width: 44px; height: 50px; border-radius: 12px; color: #246bff; background: #e0ecff; flex-shrink: 0; }
+.case-investigation > div { flex: 1; min-width: 0; }
+.case-investigation > div > span { color: #246bff; font-size: 11px; font-weight: 700; }
+.case-investigation h3 { font-size: 14px; line-height: 1.6; color: #183154; margin: 4px 0; }
+.case-investigation p { margin: 0; font-size: 11px; color: #8a9ab5; line-height: 1.6; }
+.case-investigation .primary { padding: 12px 13px; font-size: 13px; border-radius: 10px; white-space: nowrap; background: linear-gradient(110deg, #2879ff, #1d5eff); box-shadow: 0 5px 10px #246bff15; flex-shrink: 0; }
+.case-document-footer { margin-top: 11px; }
+.case-document-footer p { font-size: 11px; color: #9a9fac; line-height: 1.65; margin: 0; }
+.case-document-footer > div { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 7px; }
+.case-document-footer .text-button { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #8193af; padding: 0; }
+.case-directory { min-width: 0; display: flex; flex-direction: column; gap: 10px; padding-top: 2px; }
+.case-directory > header { display: flex; justify-content: space-between; padding: 0 2px; color: #948b7d; font-size: 11px; }
+.case-directory > header small { font-size: 11px; }
+.case-directory-list { display: flex; flex-direction: column; gap: 10px; }
+.case-directory-item { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 11px; border-radius: 11px; border: 1px solid #e8e7e3; background: #ffffffdc; text-align: left; min-height: 83px; color: #193357; box-shadow: 0 2px 5px #7d6b4510; }
+.case-directory-item.active { border: 2px solid #3679ff; padding: 11px 10px; background: linear-gradient(110deg, white, #f5f9ff); box-shadow: 0 4px 12px #3679ff18; }
+.case-directory-item:hover { background: white; }
+.case-folder-icon { position: relative; display: grid; place-items: center; width: 48px; height: 51px; flex-shrink: 0; background: linear-gradient(120deg, #e6e5e4, #eeedec); border-radius: 5px; color: #929ca8; margin-top: 7px; }
+.case-folder-icon::before { content: ''; position: absolute; top: -7px; left: 0; width: 25px; height: 12px; border-radius: 6px 7px 0 0; background: #d9d9d8; }
+/* 파일 색은 후보 상태를 표시하고, 선택 여부는 카드의 파란 테두리로 표시합니다. */
+.case-folder-icon:is(.new-candidate, .continuing-candidate, .pending-region) { color: var(--case-status-ink); background: linear-gradient(120deg, var(--case-status-fill), var(--case-status-soft)); }
+.case-folder-icon:is(.new-candidate, .continuing-candidate, .pending-region)::before { background: var(--case-status-tab); }
+.case-folder-icon > span { font-size: 17px; font-weight: 800; text-shadow: 1px 1px 0 white; }
+.case-directory-label { display: grid; gap: 7px; min-width: 0; }
+.case-directory-label > b { display: flex; align-items: center; gap: 5px; font-size: 14px; white-space: nowrap; }
+.case-directory-label > span { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.case-directory-label .status-tag { font-size: 11px; padding: 4px 7px; white-space: nowrap; border-radius: 14px; }
+.case-directory-label small { font-size: 11px; padding: 4px 5px; border-radius: 6px; background: #eef1f6; color: #8794a6; white-space: nowrap; }
+.case-all-regions { font-size: 11px; color: #8e8d8b; gap: 6px; margin-top: 2px; }
+.case-all-regions select { width: 100%; padding: 8px 9px; font-size: 11px; color: #586d8b; border-color: #e9e6de; }
+.case-directory-note { margin: 0; font-size: 11px; color: #928d86; line-height: 1.65; }
+.case-pagination { display: grid; grid-template-columns: 26px 1fr 26px; align-items: center; gap: 5px; flex-shrink: 0; }
+.case-pagination button { height: 26px; border: 1px solid #dcd8d0; border-radius: 7px; background: #ffffffc9; font-size: 20px; line-height: 1; }
+.case-pagination span { text-align: center; font-size: 11px; color: #817d76; }
+.case-pagination button:hover:not(:disabled) { border-color: #3779ff; color: #246bff; background: white; }
+.case-no-data { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 340px; border: 1px dashed #dce4ef; border-radius: 16px; color: #8a9cb5; background: #ffffffb0; padding: 24px; text-align: center; }
+.case-no-data h2 { margin: 18px 0 8px; font-size: 20px; color: #435e80; }
+.case-no-data p { font-size: 13px; line-height: 1.7; }
+.case-sr-only { position: absolute; top: 0; left: 0; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@container (max-width: 880px) {
+  .case-board { grid-template-columns: minmax(0, 1fr) 225px; padding: 19px 10px 10px; gap: 10px; }
+  .case-document { padding: 14px 7px 0; }
+  .case-paper { padding: 12px 14px; }
+  .case-title-row { gap: 7px; }
+  .case-clipboard { width: 41px; height: 45px; }
+  .case-title-row h2 { font-size: 28px; }
+  .case-evidence-count { font-size: 11px; }
+  .case-metric { padding: 12px 10px 9px; }
+  .case-metric-icon { width: 36px; height: 36px; }
+  .case-metric > header { gap: 7px; }
+  .case-metric h3 { font-size: 13px; }
+  .case-comparison { display: none; }
+  .case-metric strong { font-size: 34px; }
+  .case-value-chart text, .case-value-chart .case-chart-bubble text { font-size: 22px; }
+  .case-investigation { flex-wrap: wrap; }
+  .case-investigation .primary { margin-left: auto; }
+  .case-directory-item { gap: 9px; padding: 11px 8px; }
+  .case-directory-item.active { padding: 10px 7px; }
+  .case-folder-icon { width: 38px; height: 43px; }
+  .case-directory-label > b { font-size: 14px; }
+}
+@container (max-width: 660px) {
+  .case-board { display: flex; flex-direction: column-reverse; gap: 22px; }
+  .case-directory { gap: 8px; padding-bottom: 3px; }
+  .case-directory-list { display: grid; grid-auto-flow: column; grid-auto-columns: 210px; overflow-x: auto; gap: 8px; padding: 3px 1px; }
+  .case-directory-item { min-height: 72px; }
+  .case-directory .case-all-regions { max-width: 300px; }
+  .case-directory-note { font-size: 11px; }
+  .case-document-caption { font-size: 11px; }
+  .case-title-row h2 { font-size: 29px; }
+  .case-narrative { font-size: 13px; }
+  .case-investigation h3 { font-size: 13px; }
+}
+@container (max-width: 430px) {
+  .case-metrics { grid-template-columns: minmax(0, 1fr); }
+  .case-evidence-count { white-space: normal; }
+  .case-paper { padding: 12px; }
+  .case-investigation { padding: 12px 10px; }
+  .case-question-icon { width: 34px; height: 40px; }
+  .case-investigation .primary { width: 100%; justify-content: center; }
+}
+@media (min-width: 1600px) {
+  .briefing-shell { --assistant-width: 360px; }
+  .briefing-shell .main-content { padding: 25px 32px 15px; gap: 14px; }
+  .case-paper { padding-top: 10px; padding-bottom: 10px; }
+  .case-narrative { margin: 12px 0; }
+  .case-metric strong { font-size: 36px; }
+  .case-value-chart { height: 122px; }
+  .case-investigation { padding-top: 12px; padding-bottom: 12px; }
+  .case-board { min-height: 580px; }
+}
+@media (max-width: 1100px) {
+  .briefing-shell .page-heading > div:first-child { flex-basis: 100%; }
+  .case-heading-tools { width: 100%; justify-content: space-between; }
+  .case-stat { min-width: 130px; }
+}
+@media (max-width: 850px) {
+  .briefing-shell .main-content { padding-top: 18px; gap: 18px; }
+  .case-heading-tools .filters { margin-left: 0; }
+  .case-heading-tools .case-stats { width: 100%; }
+  .case-stat { min-width: 0; }
+  .case-stat > div > span { white-space: normal; font-size: 11px; }
+  .case-stat strong { font-size: 25px; }
+}
+
+/* PC에서는 남는 화면 높이를 문서/그래프에 배분합니다. 목록은 7개씩 페이지로 넘깁니다. */
+@media (min-width: 1201px) {
+  .briefing-shell .main-content { overflow: hidden; padding-top: 18px; padding-bottom: 8px; gap: 12px; }
+  .briefing-case-view { padding-top: 13px; padding-bottom: 6px; }
+  .case-board { height: 100%; min-height: 0; padding-top: 18px; padding-bottom: 10px; }
+  .case-document { min-height: 0; padding-top: 12px; }
+  .case-paper { display: flex; flex-direction: column; min-height: 0; padding-top: 10px; padding-bottom: 10px; }
+  .case-document-caption, .case-title-row, .case-narrative, .case-investigation, .case-document-footer { flex-shrink: 0; }
+  .case-document-caption { margin-bottom: 6px; }
+  .case-title-row h2 { font-size: clamp(27px, 2.8cqw, 36px); }
+  .case-clipboard { width: 43px; height: 46px; }
+  .case-narrative { margin: 9px 0; min-height: 0; line-height: 1.7; }
+  .case-metrics { flex: 1; min-height: 0; }
+  .case-metric { display: flex; flex-direction: column; min-height: 0; padding: 11px 12px 9px; }
+  .case-metric > header, .case-metric > footer { flex-shrink: 0; }
+  .case-metric strong { font-size: clamp(32px, 3.2cqw, 40px); line-height: 1.2; }
+  .case-value-chart { flex: 1 1 0; flex-shrink: 1; height: 0; min-height: 0; margin-top: 5px; }
+  .case-chart-empty { flex: 1; height: auto; min-height: 0; }
+  .case-investigation { flex-wrap: nowrap; padding: 10px 12px; margin-top: 10px; gap: 10px; }
+  .case-question-icon { width: 36px; height: 40px; }
+  .case-investigation h3 { font-size: 13px; line-height: 1.5; }
+  .case-investigation .primary { padding: 10px 11px; }
+  .case-document-footer { margin-top: 8px; }
+  .case-document-footer > div { margin-top: 5px; }
+  .case-directory { min-height: 0; gap: 7px; }
+  .case-directory > header, .case-all-regions, .case-directory-note { flex-shrink: 0; }
+  .case-directory-list { flex: 1; min-height: 0; display: grid; grid-template-rows: repeat(var(--case-count), minmax(0, 1fr)); gap: 6px; }
+  .case-directory-item { min-height: 0; padding: 6px 8px; gap: 8px; }
+  .case-directory-item.active { padding: 5px 7px; }
+  .case-folder-icon { width: 34px; height: 34px; margin-top: 5px; }
+  .case-folder-icon::before { top: -5px; width: 20px; height: 9px; }
+  .case-folder-icon > span { font-size: 16px; }
+  .case-directory-label { gap: 4px; }
+  .case-directory-label > b { font-size: 14px; }
+  .case-directory-label .status-tag { padding: 3px 6px; }
+  .case-directory-label small { padding: 3px 4px; }
+  .case-all-regions { gap: 4px; }
+  .case-all-regions select { padding: 6px 8px; }
+}
+@media (min-width: 1201px) and (max-height: 850px) {
+  .briefing-shell .main-content { padding-top: 12px; gap: 9px; }
+  .briefing-shell .page-heading { gap: 10px 18px; }
+  .briefing-shell .page-heading h1 { font-size: 28px; line-height: 1.3; }
+  .briefing-shell .page-heading p { font-size: 11px; }
+  .case-stat { min-height: 59px; padding: 7px 9px; }
+  .case-stat strong { font-size: 24px; margin-top: 2px; }
+  .case-document { padding-top: 10px; }
+  .case-paper { padding: 9px 14px; }
+  .case-document-caption { display: none; }
+  .case-title-row h2 { font-size: 28px; }
+  .case-clipboard { width: 36px; height: 38px; }
+  .case-narrative { font-size: 13px; margin: 7px 0; line-height: 1.6; }
+  .case-metric { padding: 9px 10px 7px; }
+  .case-metric-icon { width: 33px; height: 35px; }
+  .case-metric strong { font-size: 34px; }
+  .case-metric h3 { font-size: 13px; }
+  .case-investigation { margin-top: 8px; padding: 8px 10px; gap: 8px; }
+  .case-investigation p { display: none; }
+  .case-investigation h3 { margin: 2px 0; }
+  .case-investigation .primary { font-size: 11px; padding: 9px; }
+  .case-document-footer { margin-top: 6px; }
+  .case-directory { gap: 6px; }
+  .case-directory-list { gap: 4px; }
+  .case-directory-item { padding: 4px 7px; gap: 6px; }
+  .case-directory-item.active { padding: 3px 6px; }
+  .case-folder-icon { width: 23px; height: 24px; }
+  .case-folder-icon::before { width: 16px; }
+  .case-folder-icon > span { font-size: 16px; }
+  .case-directory-label { display: flex; align-items: center; justify-content: space-between; flex: 1; gap: 4px; }
+  .case-directory-label > b { font-size: 14px; }
+  .case-directory-label .case-help, .case-directory-label small, .case-directory-note { display: none; }
+  .case-directory-label .status-tag { font-size: 11px; padding: 3px 5px; }
+}
+
+/* 메뉴와 챗봇도 본문과 같은 가독성 기준을 사용합니다. */
+.app-shell .workspace-tag, .app-shell .sidebar-bottom { font-size: 11px; }
+.app-shell .nav-label, .app-shell .sidebar-bottom small, .app-shell .new-tag { font-size: 11px; }
+.app-shell .sidebar > button { font-size: 13px; }
+.app-shell .topbar { font-size: 13px; }
+.app-shell .connected, .app-shell .app-footer { font-size: 11px; }
+.app-shell .chat-heading h2 { font-size: 18px; }
+.app-shell .chat-heading .eyebrow { font-size: 11px; }
+.app-shell .chat-intro b { font-size: 14px; }
+.app-shell .chat-intro b, .app-shell .chat-intro p,
+.app-shell .suggestions button, .case-investigation h3 { word-break: keep-all; overflow-wrap: anywhere; }
+.app-shell .chat-intro p, .app-shell .welcome p, .app-shell .message,
+.app-shell .suggestions button { font-size: 13px; line-height: 1.7; }
+.app-shell .context-chip, .app-shell .context-chip > span:last-child,
+.app-shell .assistant-label, .app-shell .message small, .app-shell .typing,
+.app-shell .chat-footer > small, .app-shell .free-chat-note,
+.app-shell .welfare-status, .app-shell .welfare-status small { font-size: 11px; }
+.app-shell .chat-input textarea { font-size: 13px; height: 38px; }
+.app-shell .chat-topics button, .app-shell .chat-topics small { font-size: 11px; }
+.app-shell .chat-topics b { font-size: 13px; }

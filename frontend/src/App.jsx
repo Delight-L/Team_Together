@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { api, query, number } from './api';
 import { Icon, Bomi, RegionMap, EvidenceTable, Trend, ChatPanel } from './components';
 import { Missions, Activity, Upload } from './Workspace';
-import { Briefing, RegionalOverview, summarizeRegions } from './Briefing';
+import { Briefing, BriefingStats, RegionalOverview, summarizeRegions } from './Briefing';
 import { SupportDialog, ReviewWorkspace, Comparison, ReportQuality } from './Experience';
 
 const menus = [
@@ -25,7 +25,7 @@ const titles = {
   services: '필요한 지원으로 연결하는 첫걸음',
   report: '검토 결과를 보고서로 정리하세요',
   data: '분석 데이터와 실행 정보',
-  chat: '보미와 함께하는 분석 공간',
+  chat: '복지이음 · 복지지원 사업 안내',
   missions: '지역별 업무를 이어서 진행하세요',
   activity: '자료 반영 이력을 확인하세요',
 };
@@ -155,6 +155,7 @@ export default function App() {
     [chatOpen, setChatOpen] = useState(() => window.innerWidth >= 1500),
     [busy, setBusy] = useState(false),
     [trialError, setTrialError] = useState('');
+  const [chatDraft, setChatDraft] = useState(null);
   useEffect(() => {
     api('/session')
       .then((d) => setUser(d.user))
@@ -295,6 +296,12 @@ export default function App() {
     onSelect: select,
     onStart: start,
     onChat: () => setChatOpen(true),
+    onInspect: (name) => { setDistrict(name); setView('chart'); },
+    onAsk: (name, question) => {
+      setDistrict(name);
+      setChatDraft({ id: Date.now(), contextKey: JSON.stringify({ city, district: name, month }), question });
+      setChatOpen(true);
+    },
     busy,
     months: data?.months || [],
   };
@@ -347,11 +354,11 @@ export default function App() {
         <span className="nav-label assistant-nav">ASSISTANT</span>
         <button
           className={view === 'chat' ? 'active' : ''}
-          aria-label="보미 챗봇"
+          aria-label="복지이음 챗봇"
           onClick={expandChat}
         >
           <Icon name="chat" />
-          <span>보미 챗봇</span>
+          <span>복지이음 챗봇</span>
           <span className="new-tag">AI</span>
         </button>
         <div className="sidebar-bottom">
@@ -369,7 +376,7 @@ export default function App() {
         <header className="topbar">
           <span>
             복지정책과 <span className="separator">/</span>{' '}
-            {menus.find((m) => m[0] === view)?.[1] || '보미 챗봇'}
+            {menus.find((m) => m[0] === view)?.[1] || '복지이음 챗봇'}
           </span>
           <div>
             <button className="text-button support-trigger" disabled={!data} onClick={() => setSupportOpen(true)}>이용 안내{user.trial ? ' · 체험 중' : ''}</button>
@@ -402,8 +409,9 @@ export default function App() {
                   titles[view]
                 )}
               </h1>
-              <p>데이터에서 발견한 변화, 더 세심한 지역 돌봄으로 이어집니다.</p>
+              <p>{view === 'dashboard' ? '데이터에서 발견한 변화의 이유를 종합해, 이번 달의 조사 대상 지역을 제안합니다.' : '데이터에서 발견한 변화, 더 세심한 지역 돌봄으로 이어집니다.'}</p>
             </div>
+            <div className={`heading-tools ${view === 'dashboard' ? 'case-heading-tools' : ''}`}>
             <div className="filters">
               <label>
                 지역
@@ -430,6 +438,8 @@ export default function App() {
                     ))}
                 </select>
               </label>
+            </div>
+            {view === 'dashboard' && data && <BriefingStats {...briefingProps} />}
             </div>
           </div>
           {error ? (
@@ -629,7 +639,7 @@ export default function App() {
                 <div className="chat-context-view">
                   <span className="eyebrow">CONNECTED ANALYSIS</span>
                   <h2>선택 지역과 대화를 연결하세요</h2>
-                  <p>지도에서 선택한 동과 기준월을 보미가 함께 참고합니다.</p>
+                  <p>선택한 지역을 복지이음의 검색 맥락에 반영합니다. 기준월은 분석 자료의 기준이며 사업 운영 시점과는 다릅니다.</p>
                   <select
                     aria-label="챗봇 분석 지역"
                     value={district}
@@ -666,9 +676,9 @@ export default function App() {
       {data && (
         <ChatPanel
           key={user.id}
+          draft={chatDraft}
           visible={chatOpen || view === 'chat'}
           context={context}
-          hasEvidence={selectedRows.length > 0}
           expanded={view === 'chat'}
           onClose={closeChat}
           onExpand={view === 'chat' ? collapseChat : expandChat}

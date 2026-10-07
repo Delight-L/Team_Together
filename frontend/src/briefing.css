@@ -1409,19 +1409,52 @@
 .quiet-road-overview .roadmap-pin-label small { font-size: 9px; }
 .quiet-road-overview .roadmap-pin { gap: 0; }
 
-/* 주요 변화는 제목과 지표가 고정 높이 안에서 눌리지 않도록 합니다. */
-.briefing-v2 { grid-template-rows: minmax(320px, 1fr) minmax(132px, auto); }
-.briefing-v2 .mission-highlights { min-height: 132px; overflow: visible; }
-.briefing-v2 .mission-highlights > header { padding: 13px 16px 9px; gap: 12px; flex-wrap: wrap; }
-.briefing-v2 .mission-highlights h2 { font-size: 15px; line-height: 22px; margin: 0; }
-.briefing-v2 .mission-highlights > header > span { font-size: 11px; line-height: 18px; color: #748399; }
-.briefing-v2 .highlight-grid { padding: 0 12px 12px; gap: 10px; }
-.briefing-v2 .highlight-grid > button { min-height: 72px; padding: 10px 14px; gap: 12px; }
-.briefing-v2 .highlight-copy { min-width: 0; display: grid; gap: 3px; }
-.briefing-v2 .highlight-copy span { font-size: 12px; line-height: 18px; white-space: normal; overflow-wrap: anywhere; color: #63758c; }
-.briefing-v2 .highlight-copy strong { font-size: 24px; line-height: 28px; margin: 0; font-variant-numeric: tabular-nums; }
-.briefing-v2 .highlight-grid > button > svg { flex-shrink: 0; }
-@media (max-width: 600px) {
-  .briefing-v2 .highlight-grid { flex-direction: column; }
-  .briefing-v2 .mission-highlights h2 { font-size: 14px; }
+/* MapLibre: 사이트의 파스텔 팔레트와 카드 형태를 지도에도 공유합니다. */
+.mission-map.vector-map { background: #f7f9fc; }
+.vector-map .road-map-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.vector-map .maplibregl-map { font-family: inherit; }
+.vector-map .maplibregl-canvas { outline: none; }
+.vector-map .maplibregl-canvas:focus-visible { outline: 3px solid #7da8ea; outline-offset: -3px; }
+.vector-map .map-tools { top: 16px; left: 16px; border: 1px solid #e1e8f1; border-radius: 12px; box-shadow: 0 4px 16px #334b6b0c; }
+.vector-map .map-tools button { width: 34px; height: 34px; color: #59738d; }
+.vector-map .map-tools button:focus-visible { outline: 2px solid #3978d6; outline-offset: -3px; }
+.vector-region-picker { position: absolute; z-index: 2; top: 16px; right: 16px; display: flex; flex-direction: row; align-items: center; gap: 6px;
+  padding: 8px 10px; background: #fffffff2; border: 1px solid #e1e8f1; border-radius: 10px; color: #6e8aab; box-shadow: 0 4px 16px #334b6b08; }
+.vector-region-picker select { width: auto; max-width: 180px; height: 22px; margin: 0; padding: 0 3px; font: inherit; font-size: 11px; color: #425e7c; background: transparent; border: 0; cursor: pointer; }
+.vector-district-marker { padding: 3px 6px; border: 1px solid transparent; border-radius: 7px; background: #ffffffb8;
+  font: inherit; font-size: 11px; font-weight: 600; color: #667e94; white-space: nowrap; cursor: pointer; }
+.vector-district-marker:hover, .vector-district-marker.selected { color: #2866bf; background: #eff5ff; border-color: #9dbbe8; }
+.vector-priority-marker { display: flex; align-items: center; gap: 9px; padding: 9px 12px 9px 9px;
+  border: 1px solid color-mix(in srgb, var(--marker-color) 45%, white); border-radius: 13px;
+  background: #fffffffa; box-shadow: 0 5px 20px #35557514; cursor: pointer; text-align: left; font: inherit; }
+.vector-priority-number { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center;
+  color: white; background: var(--marker-color); font-size: 13px; font-weight: 800; flex-shrink: 0; }
+.vector-priority-marker > span:last-child { display: grid; gap: 3px; white-space: nowrap; }
+.vector-priority-marker b { color: #304b67; font-size: 12px; }
+.vector-priority-marker small { color: var(--marker-color); font-size: 10px; }
+.vector-priority-marker:hover { box-shadow: 0 6px 24px #35557526; }
+.vector-priority-marker.selected { border: 2px solid #3978d6; background: #f8fbff; }
+.vector-district-marker:focus-visible, .vector-priority-marker:focus-visible { outline: 3px solid #3978d6; outline-offset: 3px; }
+.vector-district-marker[hidden], .vector-priority-marker[hidden] { display: none; }
+.vector-map .map-jurisdiction { bottom: 52px; left: 16px; padding: 9px 12px; border-radius: 10px; background: #fffffff2; }
+.vector-map .map-zoom-hint { left: auto; right: 16px; bottom: 52px; border-radius: 10px; background: #fffffff2; }
+.vector-map .map-zoom-hint span { display: inline; }
+.vector-map .maplibregl-ctrl-attrib { font-family: inherit; font-size: 9px; color: #73849a; background: #fffffff0; }
+.vector-map .maplibregl-ctrl-attrib a { color: inherit; }
+.vector-map .maplibregl-ctrl-bottom-right { bottom: 36px; right: 6px; }
+.directory-map .vector-map .maplibregl-ctrl-bottom-right { bottom: 5px; }
+.mission-legend .rose { background: #f36e91; }
+.mission-legend .orange { background: #eda65d; }
+.mission-legend .sky { background: #78a9ed; }
+.vector-map .map-tile-error { top: 62px; left: 62px; right: 16px; line-height: 1.6; }
+.vector-map-fallback { height: 100%; position: relative; }
+.vector-map-fallback > p { position: absolute; top: 12px; left: 58px; right: 12px; background: #fffffff0; padding: 8px; font-size: 10px; border-radius: 8px; }
+@media (max-width: 850px) {
+  .vector-map .map-tools { top: 10px; left: 10px; }
+  .vector-region-picker { top: 10px; right: 10px; }
+  .vector-region-picker select { max-width: 145px; }
+  .vector-map .map-jurisdiction { left: 10px; bottom: 52px; }
+  .vector-map .map-zoom-hint { right: 10px; }
+  .vector-map .map-zoom-hint span { display: none; }
+  .vector-priority-marker { padding: 7px 9px; gap: 6px; }
 }
