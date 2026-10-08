@@ -4,9 +4,10 @@ const failed = new Set();
 let epoch = 0;
 export const draftEpoch = () => epoch;
 export const draftStorageFailed = key => failed.has(key);
+const isWritingDraft = key => key.startsWith(prefix) && !key.endsWith(',"group-workspace"]');
 export function hasDrafts() {
-  if (memory.size) return true;
-  try { return Object.keys(sessionStorage).some(key => key.startsWith(prefix)); } catch { return false; }
+  if ([...memory.keys()].some(isWritingDraft)) return true;
+  try { return Object.keys(sessionStorage).some(isWritingDraft); } catch { return false; }
 }
 if (typeof window !== 'undefined') window.addEventListener('beforeunload', event => {
   if (failed.size) { event.preventDefault(); event.returnValue = ''; }

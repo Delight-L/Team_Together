@@ -5,6 +5,9 @@
 .app-shell.group-shell .page-heading h1 { font-size: clamp(23px, 2.1vw, 34px); letter-spacing: -1.2px; }
 .app-shell.group-shell .page-heading h1 em { color: #162942; }
 .gd-root { color: #1e293b; width: 100%; min-width: 0; }
+.gd-workspace-tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.gd-workspace-tools p { font-size: 11px; color: #71829e; margin: 0; }
+.gd-workspace-tools label { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; }
 .gd-scope-note { padding: 10px 14px; background: #fff7e5; border: 1px solid #f4dcab; border-radius: 8px; font-size: 12px; line-height: 1.7; }
 .gd-root .gd-mode { display: flex; flex-direction: column; gap: 5px; }
 .gd-root .gd-mode select { width: 100%; font-size: 10px; padding: 7px; }

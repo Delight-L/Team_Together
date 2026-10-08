@@ -3,7 +3,7 @@ import { api, query } from './api';
 import { Icon } from './components';
 import { useDraft } from './useDraft';
 import { draftKey } from './draftStore.mjs';
-import { groupKey, groupLabel, openGroup, closeGroup } from './groupTabs.mjs';
+import { groupKey, groupLabel, openGroup, closeGroup, restoreWorkspace, availableWorkspace } from './groupTabs.mjs';
 import './group-dashboard.css';
 
 const fmt = (n, digits = 1) => Number.isFinite(n) ? n.toLocaleString('ko-KR', { maximumFractionDigits: digits }) : '—';
@@ -129,9 +129,12 @@ function GroupCase({ group, active, panel, user, onAsk, onRegion }) {
   </section><aside hidden={!active || panel !== 'chat'} className="gd-chat-slot"><GroupChat group={group} data={data} messages={messages} setMessages={setMessages} input={input} setInput={setInput} onServices={openServices} active={active && panel === 'chat'} /></aside></>;
 }
 
-export default function GroupDashboard({ city, month, assessment, user, onRegion, chatOpen, setChatOpen }) {
+export default function GroupDashboard({ city, month: preferredMonth, user, onRegion, chatOpen, setChatOpen }) {
   const [catalog, setCatalog] = useState(null), [loading, setLoading] = useState(true), [error, setError] = useState(''), [retry, setRetry] = useState(0);
-  const [state, setState] = useState(emptyTabs);
+  const [stored, setStored, , workspaceStorageFailed] = useDraft(draftKey(user, { city }, 'group-workspace'), emptyTabs);
+  const state = restoreWorkspace(stored, city);
+  const month = state.month || preferredMonth;
+  const setState = update => setStored(old => update(restoreWorkspace(old, city)));
   const searchRef = useRef(null), tabRefs = useRef({});
   const panel = chatOpen ? 'chat' : 'files';
   useEffect(() => {
@@ -141,15 +144,15 @@ export default function GroupDashboard({ city, month, assessment, user, onRegion
       if (!Array.isArray(result.groups)) throw new Error('집단별 자료 응답 형식을 확인하세요.');
       setCatalog(result);
       setState(old => {
-        if (old.tabs.length || !result.groups.length) return old;
+        const valid = availableWorkspace(old, result, month);
+        if (valid.initialized || !result.groups.length || valid.month !== month) return valid;
         const first = result.groups.find(g => g.district === '역삼2동' && g.age === '30대' && g.sex === '남성') || result.groups[0];
-        return openGroup(old, { city, code: first.code, district: first.district, age: first.age, sex: first.sex, month });
+        return openGroup({ ...valid, initialized: true }, { city, code: first.code, district: first.district, age: first.age, sex: first.sex, month });
       });
     }).catch(e => live && setError(e.message)).finally(() => live && setLoading(false));
     return () => { live = false; };
   }, [city, month, retry]);
-  useEffect(() => { setState(emptyTabs); }, [city]);
-  const open = group => setState(s => openGroup(s, group));
+  const open = group => setState(s => openGroup({ ...s, initialized: true }, group));
   const close = id => setState(s => closeGroup(s, id));
   const active = state.tabs.find(g => groupKey(g) === state.active);
   const changeTab = (event, index) => {
@@ -163,6 +166,10 @@ export default function GroupDashboard({ city, month, assessment, user, onRegion
     event.preventDefault(); const id = groupKey(state.tabs[i]); setState(s => ({ ...s, active: id })); tabRefs.current[id]?.focus();
   };
   return <div className="gd-root">
+    <div className="gd-workspace-tools"><p>열어 둔 탭과 기준월은 이 브라우저 탭에서 복원됩니다.</p><label>집단 자료 기준월<select aria-label="집단 자료 기준월" value={catalog?.months.includes(month) ? month : ''} disabled={loading || !catalog?.months.length} onChange={e => { const selected = e.target.value; setState(s => ({ ...s, month: selected })); }}>
+      {!catalog?.months.includes(month) && <option value="">{loading ? '기간 확인 중…' : '제공 자료 없음'}</option>}{catalog?.months.slice().reverse().map(m => <option key={m}>{m}</option>)}
+    </select></label></div>
+    {workspaceStorageFailed && <p className="gd-scope-note" role="status">탭 임시 저장에 실패했습니다. 새로고침 시 열린 탭을 복원하지 못할 수 있습니다.</p>}
     {active && active.month !== month && <p className="gd-scope-note">조사 파일 기준월은 {month}, 현재 열린 브리핑은 <b>{active.month} · {groupLabel(active)}</b>입니다.</p>}
     <div className="gd-stats"><article><span>연결된 관찰 그룹</span><strong>{loading ? '…' : catalog?.groups.length ?? '—'}<small>개</small></strong><p>{month} · 위험 후보 수가 아닙니다</p></article><article><span>열어 둔 브리핑</span><strong>{state.tabs.length}<small>개</small></strong><p>동 · 연령대 · 성별 · 기준월</p></article><article><span>집단별 통신 신호</span><strong className="gd-unavailable">미연결</strong><p>동 전체 결과는 참고 근거로 구분</p></article></div>
     <div className="gd-workspace"><div className="gd-tabbar" role="tablist" aria-label="관찰 그룹 브리핑 탭">{state.tabs.map((g, i) => { const id = groupKey(g); return <div className={`gd-tab ${id === state.active ? 'active' : ''}`} key={id}><button role="tab" id={'tab-' + id} aria-selected={id === state.active} aria-controls={'panel-' + id} tabIndex={id === state.active ? 0 : -1} ref={el => { tabRefs.current[id] = el; }} onKeyDown={e => changeTab(e, i)} onClick={() => setState(s => ({ ...s, active: id }))}><Icon name="report" size={18} /><span><b>{groupLabel(g)}</b><small>{g.month}</small></span></button><button aria-label={`${groupLabel(g)} ${g.month} 탭 닫기`} onClick={() => close(id)}>×</button></div>; })}<button className="gd-add" aria-label="관찰 그룹 탭 추가" onClick={() => { setChatOpen(false); setTimeout(() => searchRef.current?.focus(), 0); }}>＋</button></div>

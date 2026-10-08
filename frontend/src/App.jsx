@@ -423,7 +423,7 @@ export default function App() {
                   ))}
                 </select>
               </label>
-              <label>
+              {view !== 'dashboard' && <label>
                 기준월
                 <select value={month} onChange={(e) => setMonth(e.target.value)}>
                   {data?.months
@@ -433,7 +433,7 @@ export default function App() {
                       <option key={m}>{m}</option>
                     ))}
                 </select>
-              </label>
+              </label>}
             </div>
             </div>
           </div>
@@ -463,7 +463,7 @@ export default function App() {
               {!rows.length && <div className="notice" role="status">{city} · {month}의 분석 자료가 없습니다. 지역 또는 기준월을 확인해 주세요.</div>}
               {view === 'compare' && <Comparison key={city + month} data={data} context={context} />}
               {view === 'followup' && (district ? <ReviewWorkspace key={user.id + JSON.stringify(context) + (reviewSeed?.id || "")} context={context} user={user} onView={setView} seed={reviewSeed} onSaved={() => setReviewSeed(null)} /> : <div className="empty">지도나 지역 분석에서 동을 먼저 선택하세요.<button className="text-button" onClick={() => setView('map')}>지역 선택하기 →</button></div>)}
-              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} assessment={data.assessment} user={user} chatOpen={chatOpen} setChatOpen={setChatOpen} onRegion={group => {
+              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + !!user.trial + ':' + city} city={city} month={month} user={user} chatOpen={chatOpen} setChatOpen={setChatOpen} onRegion={group => {
                 const name = group.code === '1123074' ? '일원2동' : group.district;
                 const available = data.geometry[city]?.units.find(u => u.n === group.district || u.n === name);
                 setDistrict(available?.n || group.district); setMonth(group.month); setView('chart');

@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from db.group_repository import AGE_COLS, aggregate_age, clean_frame, group_detail
+from db.group_repository import AGE_COLS, aggregate_age, clean_frame, group_detail, catalogue
 from db.group_workspace import review, explain, services
 
 
@@ -49,6 +49,13 @@ class GroupDataTest(unittest.TestCase):
             with self.assertRaises(ValueError): group_detail(self.context | change, self.snapshot)
         d = group_detail(self.context, self.snapshot); d['current']['value'] = -1
         self.assertGreater(group_detail(self.context, self.snapshot)['current']['value'], 0)
+
+    def test_catalogue_periods_are_scoped_to_supported_city(self):
+        snapshot = self.snapshot | dict(months=['2025-07', '2025-08'], districts=[dict(code='1123065', name='역삼2동')])
+        self.assertEqual(catalogue('강남구', '2025-08', snapshot)['months'], snapshot['months'])
+        unsupported = catalogue('춘천시', '2025-08', snapshot)
+        self.assertEqual(unsupported['months'], [])
+        self.assertEqual(unsupported['groups'], [])
 
     def test_chat_does_not_claim_telecom_or_eligibility(self):
         d = group_detail(self.context, self.snapshot)

@@ -147,7 +147,7 @@ def load_snapshot():
 def catalogue(city, month, snapshot=None):
     data = snapshot if snapshot is not None else load_snapshot()
     groups = [row for row in data['groups'] if row['month'] == month] if city == '강남구' else []
-    return dict(source='DB1 · 집단별 유동인구', runId=data['run_id'], months=data['months'], ages=AGES, sexes=SEXES,
+    return dict(source='DB1 · 집단별 유동인구', runId=data['run_id'], months=data['months'] if city == '강남구' else [], ages=AGES, sexes=SEXES,
                 groups=deepcopy(groups), districts=data['districts'] if city == '강남구' else [],
                 note=data['note'], mapping=data['mapping'], telecomAvailable=False)
 

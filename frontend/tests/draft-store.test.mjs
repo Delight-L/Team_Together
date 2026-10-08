@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { draftKey, readDraft, writeDraft, removeDraft, clearDrafts, draftEpoch, draftStorageFailed } from '../src/draftStore.mjs';
+import { draftKey, readDraft, writeDraft, removeDraft, clearDrafts, draftEpoch, draftStorageFailed, hasDrafts } from '../src/draftStore.mjs';
 
 const data = {};
-globalThis.sessionStorage = {
+globalThis.sessionStorage = Object.assign(data, {
   getItem: key => data[key] ?? null,
   setItem: (key, value) => { data[key] = value; },
   removeItem: key => { delete data[key]; },
-};
+});
 const user = { id: 'a' }, context = { city: '강남구', district: '세곡동', month: '2025-01' };
 const key = draftKey(user, context, 'review');
 test('계정·체험·지역·월·작성 화면별 임시 보관 분리', () => {
@@ -26,6 +26,16 @@ test('새 실행에서도 세션 저장소에서 복원', async () => {
   const fresh = await import('../src/draftStore.mjs?reload');
   assert.equal(fresh.readDraft(key).note, '작성 중');
   fresh.removeDraft(key);
+});
+test('열린 탭만 있으면 작성 중 경고를 띄우지 않으며 로그아웃 시 정리한다', () => {
+  clearDrafts();
+  const workspace = draftKey(user, { city: '강남구' }, 'group-workspace');
+  writeDraft(workspace, { tabs: [], initialized: true });
+  assert.equal(hasDrafts(), false);
+  writeDraft(key, { note: '실제 작성 내용' });
+  assert.equal(hasDrafts(), true);
+  clearDrafts();
+  assert.equal(readDraft(workspace), null);
 });
 test('저장 성공 후 제거, 저장소 실패 시 메모리 보존, 로그아웃 시 폐기', () => {
   removeDraft(key);
