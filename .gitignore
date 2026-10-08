@@ -67,6 +67,7 @@ db/runtime/*.sqlite3*
 !preprocessing/regional_features/reference/weather_monthly.csv
 
 # Regenerable execution reports; CSV/reference baselines remain versioned.
+data/processed/group_dashboard.json
 agents/regional_analysis/analysis2_execution_report.json
 preprocessing/**/outputs/*manifest.json
 preprocessing/**/outputs/**/preprocessing_manifest.json

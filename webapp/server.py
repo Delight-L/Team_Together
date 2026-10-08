@@ -66,6 +66,15 @@ def evidence_for(data, context):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def group_context(self, body, user):
+        from db.group_repository import group_detail
+        context = {k: str(body.get(k, '')).strip() for k in ['city', 'code', 'month', 'age', 'sex']}
+        if not user['admin'] and context['city'] != user['org']:
+            raise PermissionError('소속 지역의 자료만 사용할 수 있습니다.')
+        detail = group_detail(context)
+        context['district'] = detail['current']['district']
+        return context, detail
+
     def chat_stream(self, messages, context):
         from chatbot.welfare.service import stream_reply
         self.send_response(200)
@@ -129,6 +138,26 @@ class Handler(BaseHTTPRequestHandler):
             if route.path.startswith('/api/'):
                 user = self.user()
                 if route.path == '/api/session': return self.reply(200, {'user':user})
+                if route.path.startswith('/api/groups'):
+                    if route.path == '/api/groups/config':
+                        from chatbot.welfare.app.config import settings
+                        return self.reply(200, {'aiAvailable': bool(settings.openai_api_key)})
+                    from db.group_repository import catalogue
+                    from db.group_workspace import review, services
+                    body = {k:v[0] for k,v in parse_qs(route.query).items()}
+                    if route.path == '/api/groups':
+                        city = str(body.get('city', ''))
+                        if not user['admin'] and city != user['org']:
+                            raise PermissionError('소속 지역의 자료만 사용할 수 있습니다.')
+                        return self.reply(200, catalogue(city, str(body.get('month', ''))))
+                    context, detail = self.group_context(body, user)
+                    if route.path == '/api/groups/detail':
+                        from db.group_repository import regional_context
+                        detail['regional'] = regional_context(context)
+                        return self.reply(200, detail)
+                    if route.path == '/api/groups/review': return self.reply(200, review(user, context))
+                    if route.path == '/api/groups/services': return self.reply(200, services(context, body.get('need')))
+                    return self.reply(404, {'error':'집단 API를 찾을 수 없습니다.'})
                 if route.path == '/api/feedback':
                     if not user['admin']: raise PermissionError('관리자만 의견을 조회할 수 있습니다.')
                     from db.experience_store import feedback_list
@@ -247,6 +276,16 @@ class Handler(BaseHTTPRequestHandler):
                     SESSIONS[token] = {'user':user, 'expires':time.time()+8*3600}
                 return self.reply(200, {'user':user}, cookie=f'welfind_session={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800')
             user = self.user()
+            if route in {'/api/groups/chat', '/api/groups/review'}:
+                from db.group_workspace import review, explain, ai_explain
+                context, detail = self.group_context(body, user)
+                if route.endswith('/chat'):
+                    if body.get('mode') == 'ai':
+                        return self.reply(200, ai_explain(context, body.get('question', ''), detail, body.get('history', [])))
+                    return self.reply(200, explain(context, body.get('question', ''), detail))
+                if body.get('sourceRun') != detail['runId']:
+                    raise ValueError('집단별 원자료가 갱신되었습니다. 근거를 다시 확인한 뒤 저장하세요.')
+                return self.reply(200, review(user, context, body))
             if route == '/api/feedback':
                 from db.experience_store import feedback
                 return self.reply(200, feedback(user, body))

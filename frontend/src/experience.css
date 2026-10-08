@@ -36,3 +36,78 @@ abbr[title] { cursor: help; text-decoration: underline dotted; }
 }
 button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
 @media (max-width: 800px) { .experience-guide,.data-summary,.feedback { padding: 12px; } .data-summary dl { grid-template-columns: 1fr; } .experience-steps { display: grid; grid-template-columns: 1fr 1fr; } }
+/* 업무 화면: 현재 단계와 주요 동작을 먼저 보여줍니다. */
+.workspace-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.workspace-heading h2 { margin: 0; }
+.workspace-heading p { margin-bottom: 0; }
+.form-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding-top: 24px; margin-top: 24px; border-top: 1px solid var(--border, #dbe3ed); }
+.form-actions .hint { margin: 0; }
+.report-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; gap: 12px; margin: 28px 0 12px; padding: 0; }
+.report-steps button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 12px 16px; border: 1px solid #dbe3ed; border-radius: 12px; background: #f7f9fc; color: #61718a; text-align: left; }
+.report-steps button > span { display: grid; place-items: center; flex: 0 0 26px; height: 26px; background: #e7edf4; border-radius: 50%; font-size: 13px; }
+.report-steps .current button { border-color: #547dd0; background: #eef4ff; color: #234c95; font-weight: 700; }
+.report-steps .current button > span { background: #345db0; color: white; }
+.report-stage { padding-top: 24px; }
+.report-stage > h3 { margin: 0 0 8px; font-size: 18px; }
+.report-stage > .report-form { margin-top: 24px; }
+.report-workspace .draft-caption { font-size: 12px; }
+.report-workspace .regenerate-section { margin-top: 28px; padding-top: 20px; border-top: 1px dashed #dbe3ed; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.saved-report { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 20px; margin-top: 20px; background: #eef7f3; border-radius: 12px; font-size: 13px; line-height: 1.6; }
+.report-file { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; padding: 24px; margin-top: 24px; background: #f5f8fc; border: 1px solid #dbe3ed; border-radius: 12px; }
+.report-file strong { overflow-wrap: anywhere; }
+.report-file small { display: block; margin-top: 8px; color: #6d809d; }
+.report-file > span { min-width: 0; flex: 1 1 240px; }
+.report-file a { text-decoration: none; }
+.report-workspace .report-confirm { margin: 24px 0 0; gap: 12px; line-height: 1.7; }
+.report-confirm input { flex-shrink: 0; }
+.report-quality summary, .secondary-details > summary, .region-picker > summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
+.secondary-details { border-top: 1px solid #e3e9f1; margin-top: 24px; padding-top: 12px; }
+.secondary-details > details { margin-top: 16px; }
+.secondary-details > button { margin: 12px 0; }
+.section-switch { display: flex; width: fit-content; max-width: 100%; gap: 4px; padding: 4px; margin: 24px 0; border-radius: 12px; background: #edf1f6; }
+.section-switch button { padding: 10px 24px; border-radius: 9px; color: #65758e; background: transparent; border: 0; }
+.section-switch button[aria-pressed='true'] { background: white; color: #234c95; box-shadow: 0 1px 4px #23365016; font-weight: 700; }
+.review-section h3 { font-size: 16px; margin: 0 0 20px; }
+.review-workspace .review-section fieldset { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; padding: 16px; margin: 0 0 24px; }
+.review-workspace .review-section .confirmation { margin: 0; gap: 8px; }
+.review-section textarea { min-height: 140px; }
+.review-section[hidden] { display: none; }
+.status-caption { font-size: 12px; border-radius: 20px; padding: 4px 10px; margin-left: 8px; background: #eff3f8; color: #516886; }
+.comparison-filters { display: grid; grid-template-columns: minmax(160px, 1.4fr) repeat(2, minmax(130px, 1fr)) auto; gap: 16px; align-items: end; margin: 24px 0 20px; }
+.comparison-selection { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.region-chip { display: flex; align-items: center; gap: 14px; background: #edf4ff; color: #30588d; border: 1px solid #d5e2f4; border-radius: 24px; padding: 8px 14px; }
+.region-chip span { font-size: 18px; }
+.region-picker { margin: 12px 0 24px; }
+.region-picker > label { max-width: 360px; margin: 12px 0; }
+.region-picker fieldset { border: 1px solid #dbe3ed; border-radius: 12px; padding: 16px; }
+.region-picker .comparison-options { gap: 14px 24px; max-height: 220px; overflow-y: auto; }
+.region-picker .comparison-options label { display: flex; flex-direction: row; align-items: center; gap: 4px; }
+.comparison-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.comparison-chart { min-width: 0; border: 1px solid #e0e7ef; border-radius: 14px; padding: 20px; }
+.comparison-chart:only-child { grid-column: 1/-1; }
+.comparison-chart h3 { margin: 0; font-size: 16px; }
+.comparison-chart .hint { margin: 6px 0 16px; font-size: 12px; }
+.comparison-chart .trend { width: 100%; height: auto; }
+.comparison-footnote { margin-top: 20px; font-size: 12px; }
+.data-source-strip { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 12px 0; font-size: 12px; color: #6d809d; }
+.data-source-strip > span { flex: 1 1 220px; overflow-wrap: anywhere; }
+.data-summary { line-height: 1.7; }
+.data-summary h3 { margin-top: 24px; font-size: 16px; }
+.data-summary dl { margin: 20px 0; }
+@media (max-width: 1000px) {
+  .comparison-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .comparison-charts { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .report-steps { gap: 6px; }
+  .report-steps button { flex-direction: column; gap: 8px; padding: 10px 4px; text-align: center; font-size: 12px; }
+  .report-steps button > span { flex-basis: auto; width: 24px; height: 24px; }
+  .review-workspace .review-section fieldset { grid-template-columns: 1fr; }
+  .form-actions { gap: 12px; }
+  .form-actions button { width: 100%; justify-content: center; }
+  .report-file { padding: 16px; }
+  .report-file a { width: 100%; text-align: center; }
+  .comparison-chart { padding: 14px; }
+}
+
+.comparison-chart .compact-trend text { font-size: 14px; }

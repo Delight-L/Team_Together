@@ -1,15 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api, query, number } from './api';
 import { Trend } from './components';
+import { useDraft } from './useDraft';
+import { draftKey } from './draftStore.mjs';
 import { reportChecks } from './experienceLogic.mjs';
 
 const steps = [['dashboard', '지역 선택'], ['chart', '분석 확인·근거 검토'], ['services', '사업 검토'], ['report', '보고서 저장']];
-export function SupportDialog({ onClose, data, context, rows, workflow, onView, onSelect, regions, user, onTrial, busy, trialError, page }) {
+export function SupportDialog({ onClose, data, context, rows, workflow, onView, onSelect, regions, user, onTrial, busy, trialError, page, initialTab = 'guide' }) {
   const dialog = useRef(null);
-  const [tab, setTab] = useState('guide');
+  const [tab, setTab] = useState(initialTab);
   useEffect(() => { const el = dialog.current; el.showModal(); return () => el.close(); }, []);
   const navigate = view => { onView(view); onClose(); };
-  return <dialog ref={dialog} className="support-dialog" aria-labelledby="support-title" onClose={onClose}>
+  return <dialog ref={dialog} className="support-dialog" aria-labelledby="support-title" onClose={() => { if (!dialog.current?.open) onClose(); }}>
     <header className="experience-toolbar"><h2 id="support-title">이용 안내</h2><button className="secondary" onClick={onClose} aria-label="이용 안내 닫기">닫기</button></header>
     <div className="support-tabs" role="group" aria-label="안내 종류">{[['guide', '체험·업무 안내'], ['data', '데이터 기준'], ['feedback', '체험 의견']].map(([id, label]) => <button className={tab === id ? 'primary' : 'secondary'} key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}</div>
     {tab === 'guide' && <ExperienceGuide context={context} workflow={workflow} onView={navigate} onSelect={onSelect} regions={regions} user={user} onTrial={async mode => { if (await onTrial(mode)) onClose(); }} busy={busy} trialError={trialError} trialSupported={data.capabilities?.isolatedTrial === true} />}
@@ -46,37 +48,84 @@ export function ExperienceGuide({ context, workflow, onView, onSelect, regions, 
 
 export function DataSummary({ data, context, rows, expanded = false }) {
   const previous = data.months.filter(m => m < context.month).at(-1);
-  return <details open={expanded || undefined} className="card data-summary"><summary>데이터 기준 · {context.month} · 출처 및 누락 확인</summary>
-    <dl><dt>분석 출처</dt><dd>{data.source}</dd><dt>이전 분석월</dt><dd>{previous || '이전 분석월 없음'} · 신규/연속 후보 비교에 사용합니다. 전월 변화율은 원자료에 계산된 값을 사용합니다.</dd>
-      <dt>결과 버전</dt><dd>{data.runId}</dd><dt>분석 파일 변경 시각</dt><dd>{data.analysisFileModifiedAt || '미확인'} · 원천자료 갱신일은 별도 확인 필요</dd><dt>연결 확인 시각</dt><dd>{data.dataCheckedAt || '미확인'}</dd>
-      <dt>선택 지역 자료</dt><dd>{context.district ? `${rows.length}개 지표 · 과거 이력 부족 ${rows.filter(r => !r.has_enough_history).length}개 · 전월 변화값 누락 ${rows.filter(r => !Number.isFinite(r.change_pct)).length}개` : '동을 선택하면 제공 범위를 확인할 수 있습니다.'}</dd></dl>
-    <p>변화 참고값(Z)은 과거 흐름에서 벗어난 정도입니다. 전화·문자 또는 평일·휴일 이동의 값이 모두 -2 이하일 때 후보로 표시하며, 최소 12회 과거 이력이 필요합니다. 지역 집계 결과이며 개인의 고립 여부를 판정하지 않습니다.</p>
+  return <details open={expanded || undefined} className="card data-summary"><summary>데이터 기준 · {context.month}</summary>
+    <dl><dt>분석 출처</dt><dd>{data.source}</dd>
+      <dt>제공 기간</dt><dd>{data.months[0] || '자료 없음'} ~ {data.months.at(-1) || '자료 없음'}</dd>
+      <dt>선택 지역 자료</dt><dd>{context.district ? `${context.district} · ${rows.length}개 지표` : '동을 선택하면 제공 범위를 확인할 수 있습니다.'}</dd>
+      <dt>누락·이력 부족</dt><dd>과거 이력 부족 {rows.filter(r => !r.has_enough_history).length}개 · 전월 변화값 누락 {rows.filter(r => !Number.isFinite(r.change_pct)).length}개</dd></dl>
+    <h3>확인 후보는 어떻게 정하나요?</h3>
+    <p>지역 전체의 공통 변화를 제외한 뒤, 과거 흐름과 얼마나 다른지 변화 참고값(Robust Z)으로 살펴봅니다. 전화·문자 또는 평일·휴일 이동의 값이 모두 -2 이하일 때 후보로 표시하며, 최소 12회 과거 이력이 필요합니다.</p>
+    <p className="hint">지역 집계 결과이며 개인의 고립 여부를 판정하지 않습니다. 춘천시의 실제 분석 결과는 아직 연결되지 않았습니다.</p>
+    <details className="secondary-details"><summary>분석 버전·갱신 정보</summary><dl>
+      <dt>분석 규칙</dt><dd>analysis2-v11 · 공통 변화 제거 후 Robust Z</dd>
+      <dt>이전 분석월</dt><dd>{previous || '이전 분석월 없음'} · 신규/연속 후보 비교 기준입니다. 전월 변화율은 원자료에 계산된 값을 사용합니다.</dd>
+      <dt>전체 근거 행</dt><dd>{data.assessment.length.toLocaleString()}개</dd>
+      <dt>결과 버전</dt><dd>{data.runId}</dd>
+      <dt>분석 파일 변경</dt><dd>{data.analysisFileModifiedAt || '미확인'} · 원천자료 갱신일은 별도 확인이 필요합니다.</dd>
+      <dt>연결 확인</dt><dd>{data.dataCheckedAt || '미확인'}</dd>
+    </dl></details>
   </details>;
 }
 
 const blank = { version: 0, checks: {}, assignee: '', due: '', note: '', followup: '', status: '확인 예정', history: [] };
-export function ReviewWorkspace({ context, onView, seed }) {
+export function ReviewWorkspace({ context, onView, seed, user, onSaved }) {
+  const [localDraft, setLocalDraft, clearLocalDraft, storageFailed] = useDraft(draftKey(user, context, 'review'), null);
   const [record, setRecord] = useState(blank), [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(true);
-  const [timeline, setTimeline] = useState([]);
-  async function loadTimeline() { try { setTimeline((await api('/experience/history?' + query(context))).items); } catch (e) { setError(e.message); } }
-  const update = (key, value) => { setRecord(r => ({ ...r, [key]: value })); setNotice('미저장 변경 사항이 있습니다.'); };
+  const [timeline, setTimeline] = useState([]), [timelineLoaded, setTimelineLoaded] = useState(false), [section, setSection] = useState('review');
+  async function loadTimeline() { try { setTimeline((await api('/experience/history?' + query(context))).items); setTimelineLoaded(true); } catch (e) { setError(e.message); } }
+  const update = (key, value) => { const next = { ...record, [key]: value }; setRecord(next); setLocalDraft({ record: next, seedId: localDraft?.seedId }); setNotice('작성 내용을 임시 보관했습니다.'); };
   async function reload() {
+    if (localDraft && !window.confirm('작성 중인 내용을 버리고 서버에 저장된 기록을 불러올까요?')) return;
     setBusy(true); setError('');
-    try { setRecord({ ...blank, ...await api('/experience?' + query(context)) }); setNotice('최신 기록을 불러왔습니다.'); }
+    try { setRecord({ ...blank, ...await api('/experience?' + query(context)) }); clearLocalDraft(); setNotice('최신 기록을 불러왔습니다.'); }
     catch (e) { setError(e.message); } finally { setBusy(false); }
   }
-  useEffect(() => { let active = true; api('/experience?' + query(context)).then(r => { if (active) { const imported = seed && ['city','district','month'].every(k => seed.context[k] === context[k]); setRecord({ ...blank, ...r, ...(imported ? { note: [r.note, seed.text].filter(Boolean).join('\n\n').slice(0, 2000) } : {}) }); if (imported) setNotice('챗봇 답변을 검토 의견에 가져왔습니다. 내용을 검토한 뒤 저장하세요.'); } }).catch(e => active && setError(e.message)).finally(() => active && setBusy(false)); return () => { active = false; }; }, []);
-  async function save() { setBusy(true); setError(''); try { setRecord({ ...blank, ...await api('/experience', { ...record, ...context }) }); setNotice('검토·후속 조치 기록을 저장했습니다.'); } catch (e) { setError(e.message); } finally { setBusy(false); } }
-  return <section className="card info-card review-workspace"><h2>담당자 검토·후속 조치</h2><p>{context.district} · {context.month}의 기록입니다. 업무 공간에서는 같은 지역 담당자와 공유되며, 체험 공간에서는 이번 체험에만 저장됩니다.</p>
-    <fieldset disabled={busy}><legend>확인한 사항만 체크하세요</legend>{[['season', '계절에 따른 변화 확인'], ['event', '지역 행사·휴일 영향 확인'], ['definition', '집계 기준 변경 확인'], ['source', '분석 출처·기간 확인']].map(([key, label]) => <label className="confirmation" key={key}><input type="checkbox" checked={!!record.checks[key]} onChange={e => update('checks', { ...record.checks, [key]: e.target.checked })} />{label}</label>)}</fieldset>
-    <div className="report-form"><label>담당자·인계 대상<input maxLength={80} disabled={busy} value={record.assignee} onChange={e => update('assignee', e.target.value)} /></label><label>확인 기한<input type="date" disabled={busy} value={record.due} onChange={e => update('due', e.target.value)} /></label>
-      <label className="full">검토 의견·인계 내용<textarea maxLength={2000} disabled={busy} value={record.note} onChange={e => update('note', e.target.value)} /></label>
-      <label>후속 조치 상태<select disabled={busy} value={record.status} onChange={e => update('status', e.target.value)}>{['확인 예정', '기관 문의 중', '조치 진행', '후속 확인 완료'].map(s => <option key={s}>{s}</option>)}</select></label>
-      <label className="full">실제 조치·다음 확인 내용<textarea maxLength={2000} disabled={busy} value={record.followup} onChange={e => update('followup', e.target.value)} placeholder="기관 문의 결과, 실시한 조치와 다음 달 확인할 지표를 기록하세요." /></label></div>
-    {error && <p className="error" role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
-    <div className="experience-toolbar"><button className="primary" disabled={busy} onClick={save}>{busy ? '처리 중…' : '검토·후속 조치 저장'}</button><button className="secondary" disabled={busy} onClick={reload}>최신 기록 다시 불러오기</button><button className="text-button" onClick={() => onView('compare')}>월별 변화 비교하기 →</button></div>
-    <details><summary>변경 이력 {record.history.length}건</summary>{[...record.history].reverse().map((h, i) => <article className="service-card" key={i}><strong>{h.at} · {h.actor} · {h.status}</strong><p>담당자 {h.assignee || '미지정'} · 기한 {h.due || '미지정'}</p><p>{h.note}</p><p>{h.followup}</p></article>)}</details>
-    <details><summary>다른 기준월의 후속 조치</summary><button className="secondary" onClick={loadTimeline}>월별 기록 불러오기</button>{timeline.map(item => <article className="service-card" key={item.month}><b>{item.month} · {item.record.status}</b><p>담당자 {item.record.assignee || '미지정'} · 기한 {item.record.due || '미지정'}</p><p>{item.record.followup || '후속 조치 내용 미입력'}</p></article>)}</details>
+  useEffect(() => {
+    let active = true;
+    api('/experience?' + query(context)).then(r => {
+      if (!active) return;
+      const restored = localDraft?.record;
+      const imported = seed && seed.id !== localDraft?.seedId && ['city','district','month'].every(k => seed.context[k] === context[k]);
+      const next = { ...blank, ...(restored || r) };
+      if (imported) next.note = [next.note, seed.text].filter(Boolean).join('\n\n').slice(0, 2000);
+      setRecord(next);
+      if (imported) setLocalDraft({ record: next, seedId: seed.id });
+      if (restored) setNotice(restored.version !== r.version
+        ? '작성 중인 내용을 복원했습니다. 서버 기록이 변경되어 바로 저장할 수 없습니다. 작성 내용을 복사해 둔 뒤 최신 기록을 불러오세요.'
+        : '작성 중인 내용을 복원했습니다.');
+      else if (imported) setNotice('챗봇 답변을 검토 의견에 가져왔습니다. 내용을 검토한 뒤 저장하세요.');
+    }).catch(e => { if (active) { if (localDraft?.record) setRecord(localDraft.record); setError(e.message); } })
+      .finally(() => active && setBusy(false));
+    return () => { active = false; };
+  }, []);
+  async function save() { setBusy(true); setError(''); try { setRecord({ ...blank, ...await api('/experience', { ...record, ...context }) }); clearLocalDraft(); onSaved?.(); setNotice('검토·후속 조치 기록을 저장했습니다.'); } catch (e) { setError(e.message); } finally { setBusy(false); } }
+  return <section className="card info-card review-workspace">
+    <div className="workspace-heading"><div><h2>검토·후속 조치</h2><p>{context.district} · {context.month} <span className="status-caption">{record.status}</span></p></div>
+      <button className="text-button" onClick={() => onView('compare')}>월별 변화 비교 →</button></div>
+    <p className="hint">{storageFailed ? '브라우저 임시 보관에 실패했습니다. 새로고침 전에 기록을 저장하세요.' : '작성 중인 내용은 이 탭에 임시 보관됩니다. 로그아웃 전에 저장해 주세요.'}</p>
+    <div className="section-switch" role="group" aria-label="작성 구역">
+      <button aria-pressed={section === 'review'} onClick={() => setSection('review')}>검토 기록</button>
+      <button aria-pressed={section === 'followup'} onClick={() => setSection('followup')}>후속 조치</button>
+    </div>
+    <div className="review-section" hidden={section !== 'review'}>
+      <h3>변화의 근거를 확인하고 의견을 남겨 주세요.</h3>
+      <fieldset disabled={busy}><legend>확인한 사항만 체크하세요</legend>{[['season', '계절에 따른 변화 확인'], ['event', '지역 행사·휴일 영향 확인'], ['definition', '집계 기준 변경 확인'], ['source', '분석 출처·기간 확인']].map(([key, label]) => <label className="confirmation" key={key}><input type="checkbox" checked={!!record.checks[key]} onChange={e => update('checks', { ...record.checks, [key]: e.target.checked })} />{label}</label>)}</fieldset>
+      <label>검토 의견·인계 내용<textarea rows={5} maxLength={2000} disabled={busy} value={record.note} onChange={e => update('note', e.target.value)} placeholder="변화의 원인으로 살펴본 내용과 추가로 확인할 사항을 적어 주세요." /></label>
+    </div>
+    <div className="review-section" hidden={section !== 'followup'}>
+      <h3>누가, 언제, 무엇을 확인할지 정리해 주세요.</h3>
+      <div className="report-form"><label>담당자·인계 대상<input maxLength={80} disabled={busy} value={record.assignee} onChange={e => update('assignee', e.target.value)} /></label><label>확인 기한<input type="date" disabled={busy} value={record.due} onChange={e => update('due', e.target.value)} /></label>
+        <label className="full">후속 조치 상태<select disabled={busy} value={record.status} onChange={e => update('status', e.target.value)}>{['확인 예정', '기관 문의 중', '조치 진행', '후속 확인 완료'].map(s => <option key={s}>{s}</option>)}</select></label>
+        <label className="full">실제 조치·다음 확인 내용<textarea rows={5} maxLength={2000} disabled={busy} value={record.followup} onChange={e => update('followup', e.target.value)} placeholder="기관 문의 결과와 다음에 확인할 내용을 적어 주세요." /></label></div>
+    </div>
+    {error && <p className="error" role="alert">{error}</p>}{notice && <p className="hint" role="status">{notice}</p>}
+    <div className="form-actions"><button className="primary" disabled={busy} onClick={save}>{busy ? '처리 중…' : '검토·후속 조치 저장'}</button><span className="hint">두 구역의 내용을 함께 저장합니다.</span></div>
+    <details className="secondary-details"><summary>이전 기록·다시 불러오기</summary>
+      <p className="hint">{user.trial ? '이번 체험에만 저장되는 연습 기록입니다.' : '저장한 기록은 같은 지역 담당자와 공유합니다.'}</p>
+      <button className="secondary" disabled={busy} onClick={reload}>최신 기록 다시 불러오기</button>
+      <details><summary>변경 이력 {record.history.length}건</summary>{record.history.length === 0 && <p className="hint">아직 저장된 변경 이력이 없습니다.</p>}{[...record.history].reverse().map((h, i) => <article className="service-card" key={i}><strong>{h.at} · {h.actor} · {h.status}</strong><p>담당자 {h.assignee || '미지정'} · 기한 {h.due || '미지정'}</p><p>{h.note}</p><p>{h.followup}</p></article>)}</details>
+      <details><summary>다른 기준월의 후속 조치</summary><button className="secondary" onClick={loadTimeline}>월별 기록 불러오기</button>{timelineLoaded && !timeline.length && <p className="hint">저장된 월별 기록이 없습니다.</p>}{timeline.map(item => <article className="service-card" key={item.month}><b>{item.month} · {item.record.status}</b><p>담당자 {item.record.assignee || '미지정'} · 기한 {item.record.due || '미지정'}</p><p>{item.record.followup || '후속 조치 내용 미입력'}</p></article>)}</details>
+    </details>
   </section>;
 }
 
@@ -84,14 +133,37 @@ export function Comparison({ data, context }) {
   const units = data.geometry[context.city]?.units || [];
   const [selected, setSelected] = useState(context.district ? [context.district] : units.slice(0, 2).map(u => u.n));
   const metrics = [...new Set(data.assessment.map(r => r.metric_label))];
-  const [metric, setMetric] = useState(metrics[0] || ''), [from, setFrom] = useState(data.months[0]), [to, setTo] = useState(context.month);
+  const recentStart = end => {
+    const [year, month] = end.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 6, 1));
+    const start = date.toISOString().slice(0, 7);
+    return data.months.find(m => m >= start && m <= end) || end;
+  };
+  const [metric, setMetric] = useState(metrics[0] || ''), [from, setFrom] = useState(() => context.month ? recentStart(context.month) : ''), [to, setTo] = useState(context.month);
+  const [search, setSearch] = useState('');
   const rows = context.city === '강남구' ? data.assessment.filter(r => r['기준연월'] >= from && r['기준연월'] <= to) : [];
-  const values = rows.filter(r => selected.includes(r['행정동명']) && r.metric_label === metric).map(r => r.change_pct).filter(Number.isFinite);
+  const chosenRows = rows.filter(r => selected.includes(r['행정동명']) && r.metric_label === metric);
+  const values = chosenRows.map(r => r.change_pct).filter(Number.isFinite);
   const extent = [Math.min(0, ...values), Math.max(0, ...values)];
-  return <section className="card info-card"><h2>지역·기간 비교</h2><p>최대 4개 동의 실제 월별 전월 변화율을 비교합니다. 그래프는 같은 세로축을 사용하며, 누락은 0으로 채우지 않습니다. 변화율은 조치의 효과를 직접 증명하지 않습니다.</p>
-    <div className="experience-toolbar"><label>지표<select value={metric} onChange={e => setMetric(e.target.value)}>{metrics.map(m => <option key={m}>{m}</option>)}</select></label><label>시작월<select value={from} onChange={e => setFrom(e.target.value)}>{data.months.map(m => <option key={m}>{m}</option>)}</select></label><label>종료월<select value={to} onChange={e => setTo(e.target.value)}>{data.months.map(m => <option key={m}>{m}</option>)}</select></label></div>
-    <fieldset><legend>비교할 동 선택 (최대 4개)</legend><div className="comparison-options">{units.map(u => <label key={u.n}><input type="checkbox" checked={selected.includes(u.n)} disabled={!selected.includes(u.n) && selected.length >= 4} onChange={e => setSelected(s => e.target.checked ? [...s, u.n] : s.filter(n => n !== u.n))} />{u.n}</label>)}</div></fieldset>
-    {from > to ? <p className="error">시작월은 종료월보다 늦을 수 없습니다.</p> : selected.length ? selected.map(n => <article key={n}><h3>{n} · {metric}</h3><Trend assessment={rows} district={n} metric={metric} maxRows={null} extent={extent} /><div className="table-scroll"><table><thead><tr><th>기준월</th><th>전월 변화율</th><th>판단</th></tr></thead><tbody>{rows.filter(r => r['행정동명'] === n && r.metric_label === metric).map(r => <tr key={r['기준연월']}><td>{r['기준연월']}</td><td>{number(r.change_pct)}{Number.isFinite(r.change_pct) ? '%' : ''}</td><td>{!r.has_enough_history ? '이력 부족' : r.is_risk_signal ? '확인 후보' : '기준 미해당'}</td></tr>)}</tbody></table></div></article>) : <p className="empty">비교할 동을 선택하세요.</p>}
+  const options = units.filter(u => u.n.includes(search.trim()));
+  const period = data.months.filter(m => m >= from && m <= to);
+  return <section className="card info-card comparison-workspace"><h2>지역·기간 비교</h2><p className="hint">최대 4개 동의 전월 변화율을 같은 눈금으로 비교합니다.</p>
+    <div className="comparison-filters"><label>지표<select aria-label="지표" value={metric} onChange={e => setMetric(e.target.value)}>{metrics.map(m => <option key={m}>{m}</option>)}</select></label><label>시작월<select aria-label="시작월" value={from} onChange={e => setFrom(e.target.value)}>{data.months.map(m => <option key={m}>{m}</option>)}</select></label><label>종료월<select aria-label="종료월" value={to} onChange={e => setTo(e.target.value)}>{data.months.map(m => <option key={m}>{m}</option>)}</select></label>
+      <button className="secondary" disabled={!to} onClick={() => setFrom(recentStart(to))}>최근 6개월</button></div>
+    <div className="comparison-selection" aria-label="선택한 지역">{selected.map(n => <button className="region-chip" key={n} aria-label={`${n} 비교에서 제외`} onClick={() => setSelected(s => s.filter(v => v !== n))}>{n}<span aria-hidden="true">×</span></button>)}<span className="hint">{selected.length}/4개 동</span></div>
+    <details className="region-picker"><summary>비교 지역 선택·변경</summary>
+      <label>동 검색<input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="동 이름을 입력하세요" /></label>
+      <fieldset><legend>비교할 동 선택 (최대 4개)</legend><div className="comparison-options">{options.map(u => <label key={u.n}><input type="checkbox" checked={selected.includes(u.n)} disabled={!selected.includes(u.n) && selected.length >= 4} onChange={e => setSelected(s => e.target.checked ? [...s, u.n] : s.filter(n => n !== u.n))} />{u.n}</label>)}</div>{!options.length && <p className="hint">검색한 동이 없습니다.</p>}</fieldset>
+    </details>
+    {from > to ? <p className="error" role="alert">시작월은 종료월보다 늦을 수 없습니다.</p> : !selected.length ? <p className="empty">비교 지역 선택·변경을 열어 동을 선택하세요.</p> : <>
+      <div className="comparison-charts">{selected.map(n => {
+        const districtRows = chosenRows.filter(r => r['행정동명'] === n);
+        const aligned = period.map(month => districtRows.find(r => r['기준연월'] === month) || { '행정동명': n, '기준연월': month, metric_label: metric, change_pct: null });
+        return <article className="comparison-chart" key={n}><h3>{n}</h3><p className="hint">{metric} · {from} ~ {to}</p><Trend compact assessment={aligned} district={n} metric={metric} maxRows={null} extent={extent} /></article>;
+      })}</div>
+      <details className="secondary-details"><summary>월별 상세 수치 보기</summary>{chosenRows.length ? <div className="table-scroll"><table><thead><tr><th>지역</th><th>기준월</th><th>전월 변화율</th><th>판단</th></tr></thead><tbody>{[...chosenRows].sort((a,b) => a['행정동명'].localeCompare(b['행정동명']) || a['기준연월'].localeCompare(b['기준연월'])).map(r => <tr key={r['행정동명'] + r['기준연월']}><td>{r['행정동명']}</td><td>{r['기준연월']}</td><td>{number(r.change_pct)}{Number.isFinite(r.change_pct) ? '%' : ''}</td><td>{!r.has_enough_history ? '이력 부족' : r.is_risk_signal ? '확인 후보' : '기준 미해당'}</td></tr>)}</tbody></table></div> : <p className="hint">선택한 조건에 해당하는 자료가 없습니다.</p>}</details>
+    </>}
+    <p className="hint comparison-footnote">누락된 값은 그래프에서 연결하지 않습니다. 변화율만으로 조치의 효과를 판단할 수는 없습니다.</p>
   </section>;
 }
 
@@ -105,5 +177,5 @@ export function Feedback({ page, user, expanded = false }) {
 export function ReportQuality({ content, workflow }) {
   if (!content) return null;
   const { strong, unmatched, missingServiceSource } = reportChecks(content, workflow);
-  return <aside className="report-quality"><h3>보고서 검토 도움말</h3><ul><li>{workflow.analysis_source ? `분석 출처: ${workflow.analysis_source}` : '분석 출처가 기록되어 있는지 확인하세요.'}</li><li>{unmatched.length ? `저장된 분석값과 바로 대조되지 않는 수치: ${unmatched.map(n => n + '%').join(', ')}. 사업 지원 비율 등 별도 출처가 있는 값인지 확인하세요.` : '입력된 백분율에서 저장된 분석값과 다른 수치가 발견되지 않았습니다. 지표·기간의 연결은 직접 확인하세요.'}</li><li>{missingServiceSource ? '원문 출처가 누락된 사업 기록이 있습니다. 운영기관에 확인하세요.' : '저장된 사업 원문 링크를 참고해 자격·접수 여부를 확인하세요.'}</li><li>{strong ? '고립 판정 또는 효과 단정으로 읽힐 수 있는 표현이 있습니다. 지역 변화 근거에 맞게 수정하세요.' : '지역 집계 신호이며 개인의 고립 판정으로 표현하지 않았는지 확인하세요.'}</li></ul><p className="hint">자동 점검은 보조 안내입니다. 전체 수치의 정확성이나 문장 의미를 보증하지 않습니다.</p></aside>;
+  return <details className="report-quality" open={strong || unmatched.length > 0 || missingServiceSource || undefined}><summary>보고서 검토 도움말{strong || unmatched.length > 0 || missingServiceSource ? ' · 확인할 항목 있음' : ''}</summary><ul><li>{workflow.analysis_source ? `분석 출처: ${workflow.analysis_source}` : '분석 출처가 기록되어 있는지 확인하세요.'}</li><li>{unmatched.length ? `저장된 분석값과 바로 대조되지 않는 수치: ${unmatched.map(n => n + '%').join(', ')}. 사업 지원 비율 등 별도 출처가 있는 값인지 확인하세요.` : '입력된 백분율에서 저장된 분석값과 다른 수치가 발견되지 않았습니다. 지표·기간의 연결은 직접 확인하세요.'}</li><li>{missingServiceSource ? '원문 출처가 누락된 사업 기록이 있습니다. 운영기관에 확인하세요.' : '저장된 사업 원문 링크를 참고해 자격·접수 여부를 확인하세요.'}</li><li>{strong ? '고립 판정 또는 효과 단정으로 읽힐 수 있는 표현이 있습니다. 지역 변화 근거에 맞게 수정하세요.' : '지역 집계 신호이며 개인의 고립 판정으로 표현하지 않았는지 확인하세요.'}</li></ul><p className="hint">자동 점검은 보조 안내입니다. 전체 수치의 정확성이나 문장 의미를 보증하지 않습니다.</p></details>;
 }

@@ -184,7 +184,7 @@ export function EvidenceTable({ rows }) {
 }
 
 // 실제 분석값만 그립니다. null은 0으로 바꾸지 않고 선을 끊어 누락을 표시합니다.
-export function Trend({ assessment, district, metric = '전화 연락', maxRows = 12, extent }) {
+export function Trend({ assessment, district, metric = '전화 연락', maxRows = 12, extent, compact = false }) {
   const allRows = assessment
     .filter((r) => r['행정동명'] === district && r.metric_label === metric)
     .sort((a, b) => a['기준연월'].localeCompare(b['기준연월']));
@@ -194,7 +194,8 @@ export function Trend({ assessment, district, metric = '전화 연락', maxRows 
   const low = extent?.[0] ?? Math.min(0, ...values),
     high = extent?.[1] ?? Math.max(0, ...values),
     range = high - low || 1;
-  const x = (i) => 40 + (i * 660) / Math.max(1, rows.length - 1),
+  const chartWidth = compact ? 400 : 740;
+  const x = (i) => 40 + (i * (chartWidth - 80)) / Math.max(1, rows.length - 1),
     y = (v) => 150 - ((v - low) * 120) / range;
   const segments = [];
   let current = [];
@@ -208,14 +209,14 @@ export function Trend({ assessment, district, metric = '전화 연락', maxRows 
   if (current.length) segments.push(current);
   return (
     <svg
-      className="trend"
-      viewBox="0 0 740 195"
+      className={`trend${compact ? ' compact-trend' : ''}`}
+      viewBox={`0 0 ${chartWidth} 195`}
       role="img"
       aria-label={`${district} ${metric} ${maxRows ? '최근 분석월' : '선택 기간'} 전월 변화율`}
     >
       {[low, (low + high) / 2, high].map((v, i) => (
         <g key={i}>
-          <line x1="40" y1={y(v)} x2="700" y2={y(v)} stroke="#e8edf6" />
+          <line x1="40" y1={y(v)} x2={chartWidth - 40} y2={y(v)} stroke="#e8edf6" />
           <text x="0" y={y(v) + 4}>
             {number(v)}%
           </text>
@@ -232,7 +233,7 @@ export function Trend({ assessment, district, metric = '전화 연락', maxRows 
                 {r['기준연월']} · {number(r.change_pct)}%
               </title>
             </circle>
-            {(i % Math.max(1, Math.ceil(rows.length / 6)) === 0 || i === rows.length - 1) && (
+            {(i % Math.max(1, Math.ceil(rows.length / (compact ? 3 : 6))) === 0 || i === rows.length - 1) && (
               <text x={x(i)} y="181" textAnchor="middle">
                 {r['기준연월']}
               </text>
