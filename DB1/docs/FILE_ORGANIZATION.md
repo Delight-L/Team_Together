@@ -45,3 +45,8 @@
 - `outputs/handoff/agent_signal_evidence.json`, `isolation_signal_explanations.json`: 기상 비교가 포함된 최신 10건 근거·설명.
 
 현재 코드·운영 DB는 기상 추적을 포함한다. 기상 값이 누락되었을 때 분석을 허용하는 별도의 미반영 코드와는 구분한다. 기존 예시·검증 기록은 참고·이력으로 보존하며 최신 설명은 ISOLATION_SIGNAL_EXPLANATIONS.md를 사용한다. DB 변경 전 백업은 DB1_backups/weather_tracking_<시각>/에, 이번 문서 정리 전 백업은 DB1_backups/weather_publish_<시각>/에 있다.
+
+
+## 인계 문서 통합 (2026-10-08)
+
+팀원의 연결·조회·설명 규칙과 예시는 `docs/AI_AGENT_HANDOFF.md` 한 문서에 모았다. 별도 QUICKSTART·EXPLANATION_RULES·EXPLANATION_EXAMPLES 문서는 본문을 통합한 후 제거했다. 루트의 같은 이름 파일은 본문으로 연결하는 안내만 제공한다. 분석 결과·검증 기록·업데이트 안내는 각 기능별 기존 위치를 유지한다. 네 지표 수준 추적의 운영 결과는 `docs/ACTIVITY_TRACKING_RESULT_20261007.md`이며 이전 소통 전용 결과는 과거 이력이다.

@@ -4,7 +4,7 @@
 
 실제 2025년 신호 3건의 설명 예시, 읽기 전용 조회 도구, 분리 DB 업데이트 검증 기록을 추가했다. 운영 DB에 모의 자료를 넣지 않았다. 원천 정의 정정 문서와 설명 규칙을 함께 읽는다.
 
-- 실제 설명 예시: `docs/AI_AGENT_EXPLANATION_EXAMPLES.md`, 기계가 읽는 근거: `outputs/handoff/agent_explanation_examples.json`.
+- 실제 설명 예시: `docs/AI_AGENT_HANDOFF.md`, 기계가 읽는 근거: `outputs/handoff/agent_explanation_examples.json`.
 - 조회 도구: `tools/read_agent_context.py`. 동일 기준월의 활동 추적과 조사·독거노인 배경을 결합한다. 미래의 최신 추적값을 과거 질의에 암묵적으로 붙이지 않는다.
 - 모의 검증: `outputs/validation/handoff_20261007/UPDATE_ACCEPTANCE_SYNTHETIC.json`. 통계 분석 결과로 사용하지 않는다.
 

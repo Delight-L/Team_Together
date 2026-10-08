@@ -255,13 +255,72 @@ Analysis2는 중간 월을 건너뛰지 않고 순서대로 처리한다. 예를
 새 조사 원본은 연도별 문항·가중치를 확인하고 `config/db1_config.json`의 `survey_context`에 등록한다. 갱신은 `run_db1.ps1 -Command survey-context`이며 일반 `scan`/`watch`에 연결했다. 상세 정의·질의·정정 절차는 [Context/README.md](../Context/README.md), 실행 결과는 [docs/SURVEY_CONTEXT_RESULT.md](SURVEY_CONTEXT_RESULT.md)에 있다.
 
 
-## 신호 이후 소통 활동 수준·회복 추적 (2026-10-07)
+## 신호 이후 네 지표 수준·회복 추적 (2026-10-07)
 
-`v_a2_activity_followup_latest`에서 각 동·연령의 최초 신호 이후 최신 소통 수준을 조회합니다. `raw_state`(원자료), `seasonal_state`(고정 과거 같은 달 정규화), `local_state`(구 같은 연령 공통 변화 분리)를 함께 설명하세요. `both_below_reference`, `recovered_to_reference`, `mixed_recovery`, `unavailable`은 신호 발생 직전 비교 수준과의 관계이며 위험 등급·유의성·고립 확정이 아닙니다. NULL을 0으로 바꾸지 마세요. 작은 부호 차이만으로 악화나 회복을 단정하지 마세요.
+DB1은 통화 상대 수(`call_contacts`), 문자 상대 수(`text_contacts`), 평일 이동 횟수(`weekday_move_count`), 휴일 이동 횟수(`weekend_move_count`)의 비교값과 상태를 계산·저장한다. AI agent 설계·구현은 포함하지 않는다. 팀원은 이 데이터를 서비스 설명에 사용할 수 있다.
 
-추가 변화 신호가 없더라도 활동 수준이 발생 전보다 낮을 수 있습니다. 상대 상태가 회복됐다고 원자료 수준이 회복된 것으로 설명하지 마세요. 동일 개인의 지속 고립을 확인한 결과도 아닙니다. `consecutive_both_below_months`는 중첩 집계 창이 있을 수 있는 인접 집계월 수입니다. 소통/이동 변화 신호 및 결합 고립 후보는 기존 `v_a2_age_detection`에서 별도로 읽습니다.
+기존 감소 탐지와 후속 수준 비교는 별개다. 새 감소 신호가 없다는 이유로 회복했다고 판정하지 않는다. 기존 군집과 탐지 기준은 유지한다.
 
-`analysis2-activity`로 직접 계산할 수 있고 `scan`/`watch`의 분석 연결 및 `analysis2-age-detect`, 일반 월 처리·내보내기에도 연결돼 있습니다. 신규 월의 기존 전처리·DB 적재가 선행돼야 합니다. 자세한 기준·업데이트·해석 제한은 [Analysis2/ACTIVITY_LEVEL.md](Analysis2/ACTIVITY_LEVEL.md), 현재 결과는 [docs/ACTIVITY_LEVEL_RESULT_20261007.md](ACTIVITY_LEVEL_RESULT_20261007.md)를 참조하세요. 현재 기준은 사후 해석용이며 공휴일·장기 추세를 완전히 보정한 시계열 모형이나 고립 성능 검증 결과가 아닙니다.
+### 기간과 비교 기준
+
+통신 라벨월은 실제 관측월이 아니다. 실제 관측은 직전 3개월이며 인접 라벨의 관측 창은 중첩된다. 같은 라벨의 소비를 동시 변화로 해석하지 않는다. 기간 연결은 `v_a123_age_source_context`를 따른다.
+
+연속 신호는 첫 신호 직전 라벨에 기준을 고정한다. 신호가 없는 라벨을 거쳐 다시 발생하면 별도 사건을 저장하며 이전 사건의 추적도 유지한다. 따라서 조회 키에는 동·연령·후속 라벨 외에 `signal_date`와 탐지 버전을 포함한다.
+
+- `raw_change_pct`: 현재 원값 / 최초 신호 직전 원값 − 1, 백분율.
+- `seasonal_change_pct`: 각 값을 2022-01~2025-06 고정 이력의 같은 달 중앙값으로 나눈 뒤 현재/직전 수준 비교.
+- `common_change_pct`: 같은 연령의 동별 정규화 수준 비율 중앙값. 대상 동을 포함한다.
+- `local_change_pct`: 대상 동 정규화 수준 비율 / 지역 중앙값 비율 − 1, 백분율.
+
+지표별 같은 달 유효 이력은 최소 3개, 지역 비교는 최소 11개 동이 필요하다. 값은 양수·유한값, 유효 추정 인구 200 이상, 관측 비율 80~100%여야 한다. 기준값이 부족하면 이전 유효 월로 건너뛰지 않고 비교 불가로 둔다. 단순 같은 달 정규화는 공휴일·추세·기상 등의 완전한 보정이 아니다.
+
+### 결과 필드
+
+`payload_json`에는 네 지표의 원값·기준값·비교값·품질이 보존된다.
+
+| 필드 | 의미 |
+|---|---|
+| `metric_states` | 지표별 원값·계절·지역 경로의 기준 미만/이상/자료 부족 |
+| `domain_states.communication` | 통화·문자의 상태와 연속 낮은 수준 라벨 수 |
+| `domain_states.mobility` | 평일·휴일 이동의 상태와 연속 낮은 수준 라벨 수 |
+| `overall_states` | 네 지표의 비교 경로별 상태 |
+| `overall_recovery_status` | 두 영역의 원값·계절 기준을 함께 비교한 기술적 상태 |
+| `consecutive_all_below_months` | 계절 경로에서 네 지표가 모두 낮은 연속 라벨 수 |
+
+영역별 `reference_level_reached`는 두 지표가 원값·계절 기준 모두 이상, `below_reference`는 모두 미만, `mixed_recovery_or_basis`는 지표나 경로가 엇갈림, `unavailable`은 비교 자료 부족이다. 전체 상태는 `reference_level_reached`, `below_reference`, `partial_recovery`, `mixed_recovery_or_basis`, `unavailable_or_partial`로 표시한다. 지역 상대 수준만으로 원값 미회복을 덮지 않는다.
+
+부호에 따른 기술적 비교이며 작은 차이의 유의성이나 지속적 회복을 확정하지 않는다. 연속 라벨 수는 독립적인 관측 횟수가 아니다. 고립 확정이나 확률·위험 점수를 생성하지 않는다.
+
+호환 필드 `raw_state`, `seasonal_state`, `local_state`, `consecutive_both_below_months`는 기존처럼 **소통 두 지표만** 의미한다. 네 지표 판단에는 새 필드를 사용한다. 기존 조회·설명 예시는 이 호환 의미를 유지한다.
+
+### DB와 내보내기
+
+- `a2_activity_model`: 설정과 고정 기준선 지문. 기존 v1 기록은 보존한다.
+- `a2_activity_active_model`: 기본 조회에 사용할 활성 v2 버전.
+- `a2_activity_level`, `a2_activity_followup`: 버전별 수준·사건 후속 기록.
+- `v_a2_activity_level`, `v_a2_activity_followup`: 활성 버전의 결과.
+- `v_a2_activity_followup_latest`: 사건별 최신 후속 결과.
+- `v_a2_activity_followup_all_versions`: 과거 버전까지 조회.
+
+```sql
+SELECT adm_cd, age_band, signal_date, date,
+       detection_model_version, version, overall_recovery_status, payload_json
+FROM v_a2_activity_followup_latest;
+```
+
+`Analysis2/outputs/activity_level/`의 `activity_level.csv`, `activity_followup.csv`, `activity_followup_latest.json`은 활성 버전 결과다. JSON에는 지표·영역별 상태가 모두 담긴다. 소비·조사·기상과의 종합 해석은 이 결과를 소비하는 서비스에서 수행한다.
+
+### 업데이트
+
+기존 `analysis2-activity`, `scan`, `watch`, `export` 실행 흐름을 사용한다. 새 원본은 기존 전처리·탐지 후 적재돼야 한다. 자동 다운로드 기능은 없다. 2026년 자료가 들어오면 고정 기준을 유지하면서 후속 행을 추가한다. 동일 입력 재실행은 중복을 만들지 않으며 과거 결과가 달라지면 덮어쓰기를 차단한다.
+
+v1에서 v2로 최초 이전할 때만 `activity_level.py --migrate-from-v1`을 명시한다. 운영 반영 시 이전을 수행하므로 이후 정기 실행에는 필요 없다. 기준선·설정 변경은 별도 명시적 모델 이전이 필요하다.
+
+### 검증
+
+네 지표의 엇갈린 수준, 이동 품질 부족, 지역 공통 하락, 고정 최초 기준, 별도 사건, 이전 버전 보존, 재실행·추가 월·과거 수정 차단을 검증한다. 운영 적용에서는 기존 분석 테이블과 v1 기록 불변성 및 DB 무결성을 확인한다.
+
+현재 적용 결과는 [ACTIVITY_TRACKING_RESULT_20261007.md](ACTIVITY_TRACKING_RESULT_20261007.md)를 참조하세요.
 
 
 ## 과거 재현·설정 민감도와 설명 보류 기준 (2026-10-07)
@@ -270,19 +329,19 @@ Analysis2는 중간 월을 건너뛰지 않고 순서대로 처리한다. 예를
 
 SNS 음수 제외 및 증감률 계산에 따른 기존 8건 보류 해석은 철회했습니다. SNS는 시점별 표준화 상대 지수여서 시간 비교에 사용할 수 없습니다. 같은 기준월·연령 내 지역 비교만 제공하고, 0값은 비사용으로 단정하지 않습니다.
 
-필수 설명·보류 기준은 [docs/AI_AGENT_EXPLANATION_RULES.md](AI_AGENT_EXPLANATION_RULES.md), 시나리오별 결과는 [docs/RETROSPECTIVE_VALIDATION_20261007.md](RETROSPECTIVE_VALIDATION_20261007.md)를 참조하세요. `outputs/validation/retrospective_20261007/agent_case_review.json`은 2025년까지 10건의 검증 스냅샷입니다. 새 월에 자동 적용되는 위험 결과나 정답 자료가 아닙니다. 재실행 방법은 `Analysis2/validation/README.md`에 있습니다. 원천 공개일·휴일 정의·SNS 품질 및 분모는 추가 확인이 필요합니다.
+필수 설명·보류 기준은 [docs/AI_AGENT_HANDOFF.md](AI_AGENT_HANDOFF.md), 시나리오별 결과는 [docs/RETROSPECTIVE_VALIDATION_20261007.md](RETROSPECTIVE_VALIDATION_20261007.md)를 참조하세요. `outputs/validation/retrospective_20261007/agent_case_review.json`은 2025년까지 10건의 검증 스냅샷입니다. 새 월에 자동 적용되는 위험 결과나 정답 자료가 아닙니다. 재실행 방법은 `Analysis2/validation/README.md`에 있습니다. 원천 공개일·휴일 정의·SNS 품질 및 분모는 추가 확인이 필요합니다.
 
 
 ## 원천 정의 정정 및 AI agent 인수 안내
 
 `v_a123_age_source_context`를 우선 조회하세요. 집계 기준월과 실제 관측 기간을 구분합니다. 2025-10 기준은 7~9월이므로 2025Q3 소비와 연결합니다. 2025-11 기준은 8~10월이어서 분기 상권 비교는 NULL입니다. 기존 같은 라벨월 소비 연결은 후속 기간 맥락입니다. SNS 음수는 유효하며 시계열 증감률은 계산하지 않습니다. 공휴일 포함 정의·실제 공개일은 미확인입니다.
 
-담당자 실행 안내: [docs/AI_AGENT_QUICKSTART.md](AI_AGENT_QUICKSTART.md). 정정된 10건: [docs/SOURCE_DEFINITIONS_RESULT_20261007.md](SOURCE_DEFINITIONS_RESULT_20261007.md). 자동 갱신 명령 `source-semantics`는 기존 분석 연결 뒤 실행되며 파일 확보·공개일 확인은 별도입니다.
+담당자 실행 안내: [docs/AI_AGENT_HANDOFF.md](AI_AGENT_HANDOFF.md). 정정된 10건: [docs/SOURCE_DEFINITIONS_RESULT_20261007.md](SOURCE_DEFINITIONS_RESULT_20261007.md). 자동 갱신 명령 `source-semantics`는 기존 분석 연결 뒤 실행되며 파일 확보·공개일 확인은 별도입니다.
 
 
 ## 최종 인수 검증 및 실제 설명 예시
 
-[실제 3건 설명 예시](AI_AGENT_EXPLANATION_EXAMPLES.md), [검증 범위와 전달 구성](DB1_HANDOFF_ACCEPTANCE_20261007.md)를 추가했습니다. `tools/read_agent_context.py`는 읽기 전용이며 같은 기준월의 활동 추적·조사 배경을 함께 반환합니다. 신규 2026-01·02 기준 자료와 카드 업데이트는 운영 DB와 분리한 모의 검증에서 통과했습니다. 운영 자료는 2025-12 기준까지 유지했습니다. Analysis1 신규 반기와 새 연도 조사는 이번 모의 검증 범위에 포함되지 않습니다. 모의 결합 신호를 실제 사례로 발표하지 마세요.
+[실제 3건 설명 예시](AI_AGENT_HANDOFF.md), [검증 범위와 전달 구성](DB1_HANDOFF_ACCEPTANCE_20261007.md)를 추가했습니다. `tools/read_agent_context.py`는 읽기 전용이며 같은 기준월의 활동 추적·조사 배경을 함께 반환합니다. 신규 2026-01·02 기준 자료와 카드 업데이트는 운영 DB와 분리한 모의 검증에서 통과했습니다. 운영 자료는 2025-12 기준까지 유지했습니다. Analysis1 신규 반기와 새 연도 조사는 이번 모의 검증 범위에 포함되지 않습니다. 모의 결합 신호를 실제 사례로 발표하지 마세요.
 
 
 ## 2026-10-07 근거 보완 반영
@@ -303,3 +362,165 @@ JSON `isolation_explanation_v2`의 `evidence_checks`는 자체 과거 기준·�
 ## 2026-10-07 기상 변화 추적
 
 기상은 2022년 1월~2025년 6월을 고정 기준으로 2025년 7월부터 같은 달·같은 3개월 계절 창을 비교합니다. 실제 기상 월별 결과는 `ctx_weather_month_tracking`, 행동 라벨의 실제 관측 창 비교는 `ctx_weather_window_tracking`입니다. AI 조회의 `weather_tracking`과 설명의 `evidence_checks.auxiliary.weather_tracking`을 사용합니다. 기존 군집·행동 탐지·점수는 유지합니다. [실제 결과와 갱신 안내](WEATHER_TRACKING_RESULT_20261007.md)를 확인하세요.
+
+
+
+
+## 연결·조회 실행 예시
+
+## AI agent 담당자 인수 안내
+
+### 최신 근거와 설명 조회
+
+아래 SQL은 핵심 저장 결과 조회 예시입니다. 기상 계절 비교·조사·추적을 모두 포함하려면 `python tools/read_agent_context.py --signals-only --limit 1000`을 우선 사용하세요. `weather_tracking`은 실제 관측 창의 비교이고 `observation_weather`는 그 창의 원값입니다. 읽을 결과는 [현재 10건 설명](ISOLATION_SIGNAL_EXPLANATIONS.md), 구조화 결과는 `outputs/handoff/isolation_signal_explanations.json`입니다. DB 업데이트 후 `tools/explain_signals.py`로 설명을 갱신합니다. [기상 결과와 갱신 방법](WEATHER_TRACKING_RESULT_20261007.md)을 함께 확인하세요.
+
+
+### 우선 조회
+
+`outputs/db1.sqlite`를 읽기 전용으로 열고 `v_a123_age_source_context`를 조회한다. 원천 기준월과 실제 관측 창을 함께 표시한다. 기존 공식 결과는 그대로 보존돼 있다.
+
+```python
+from pathlib import Path
+import sqlite3, json
+root = Path(r"C:\Users\user\Desktop\Team_Together\DB1")
+con = sqlite3.connect((root / "outputs/db1.sqlite").as_uri() + "?mode=ro", uri=True)
+con.row_factory = sqlite3.Row
+rows = con.execute("""SELECT * FROM v_a123_age_source_context
+ WHERE communication_signal=1 OR mobility_signal=1
+ ORDER BY source_label_date, adm_cd, age_band""").fetchall()
+for row in rows:
+    item = dict(row)
+    for key in ("observation_window_json", "same_period_sns_json", "observation_consumption_json"):
+        item[key] = json.loads(item[key]) if item[key] else None
+    print(item)
+con.close()
+```
+
+자료 계약은 `docs/AI_AGENT_HANDOFF.md`를 따른다. `assessment_status`, 모델 버전, 관측 창, 소비 비교 가능 여부를 보존한다. 소비 NULL을 0%로 바꾸지 않는다. SNS 증감률은 계산하지 않는다. 조사 맥락은 `v_a123_age_survey_context`, 수준 추적은 `v_a2_activity_followup_latest`에서 같은 동·연령·기준월로 별도 조회한다. 조사 공개일이 없으면 당시 이용 가능한 근거로 표시하지 않는다.
+
+### 업데이트
+
+원본 파일 확보 → 기존 설정의 입력 위치에 저장 → 기존 `scan`/월 처리 실행 → Analysis1 반기 갱신, Analysis2 전처리·탐지, Analysis3 적재 → 기간 정렬 맥락 갱신 순서다. 파일 다운로드와 원천 공개일 확인은 외부 담당자의 작업이다. DB1의 파일 처리 기능이 다운로드까지 자동 수행하지는 않는다.
+
+기간 정렬만 재실행: `./run_db1.ps1 -Command source-semantics`. 일반 분석 연결과 내보내기에도 연결돼 있다. 2026-01 기준 통신은 2025-10~12월을 관측하므로 2025Q4 소비에 연결한다. 실제 2026년 1월 행동 관측이 포함되는 기준월은 2026-02부터다. 원천 스키마·기간 정의가 유지되는 업데이트에 적용한다. 과거 적재값 변경은 자동 덮어쓰기하지 않고 명시적인 정정 절차로 처리한다.
+
+최종 설명에서 실제 사회적 고립 확정, 동일 주민 소비 감소, SNS 대체 소통 증가, 공휴일 보정 완료를 주장하지 않는다. 이 자료는 동·연령 집단의 고립 관련 행동 변화와 보조 근거를 전달한다.
+
+
+### 검증된 조회 도구와 담당자 실행 순서
+
+DB1 폴더에서 다음을 실행한다. 조회 도구는 Python 표준 라이브러리와 읽기 전용 SQLite만 사용한다.
+
+```powershell
+python .\tools\read_agent_context.py --signals-only --limit 10
+python .\tools\read_agent_context.py --label 2025-11-01 --dong 1123065 --age 30s
+.\run_db1.ps1 -Command status
+```
+
+설명 예시는 `docs/AI_AGENT_HANDOFF.md`, 인수 검증 범위는 `docs/DB1_HANDOFF_ACCEPTANCE_20261007.md`를 확인한다. 도구의 `activity_followup_same_label`은 같은 기준월의 후속 상태만 반환하며 신호 발생 전에 후속 추적이 없으면 NULL이다. 예시 문서의 최신 후속 상태는 별도의 명시적 사후 조회다. 모든 응답은 사후 설명용이고 실제 공개일 미확인을 유지한다.
+
+업데이트 담당자는 두 설정 JSON의 원본 경로와 파일 명명·스키마를 확인하고 파일을 확보한다. 상태 확인 → 전체 DB 백업 → 원본 저장 → scan → 다시 상태와 기간 정렬 결과 조회 → 로그·NULL·품질 검토 순서다. 오류가 났을 때 완료 로그를 확인하기 전 성공으로 간주하지 않는다. 여러 분석을 순서대로 실행하므로 전체 명령이 단일 트랜잭션은 아니다. 앞 단계만 적재된 경우 원인을 수정하고 동일 파일로 다시 실행하면 이미 적재된 기간은 중복 삽입하지 않는다. 원본 수정은 자동 덮어쓰지 않고 별도 정정 절차로 처리한다.
+
+2026-01·02 기준 자료의 모의 검증은 통과했지만 Analysis1 2026H1 새 반기 산출과 실제 2026년 자료로 실행한 것은 아니다. 모의 자료는 운영 원본 디렉터리와 운영 DB에 전달하지 않는다. 파일 처리 기능과 외부 다운로드·실제 공개일 확인을 구분한다.
+
+
+### 2026-10-07 근거 보완 반영
+
+청년 조사 세부 통계, 관측 기간 기상, 지연 소비 근거 보충, 공개일 기준 조회를 추가했습니다. [근거 사용 설명](../Context/EVIDENCE_CONTEXT.md)과 [검증 결과](../docs/DB1_IMPROVEMENTS_RESULT_20261007.md)를 함께 전달하세요. 기존 탐지 건수는 소통 10·이동 0·복합 0으로 유지됩니다.
+
+
+## 서비스 설명 규칙
+
+## AI agent 신호 설명 기준
+
+공식 신호는 집단의 고립 관련 변화 탐색이며 실제 개인의 고립 확정이 아니다. 동·연령·모델 버전, 소통/이동/결합 신호, 판정 가능 여부를 먼저 설명한다. NULL은 신호 없음(0)과 구분한다.
+
+### 기간과 자료 해석
+
+- `source_label_date`는 집계 기준월이다. 실제 관측 시작·종료는 `observation_start`/`observation_end`를 읽는다. 2025-10은 7~9월, 2025-11은 8~10월이다. 인접 월은 중첩되므로 독립 반복 사건으로 세지 않는다.
+- SNS는 공급자가 표준화한 상대 지수다. 음수는 유효하다. 같은 집계 기준월·연령 내 지역 상대 위치만 참고한다. 시점별 표준화 기준이 달라 시계열 증감률·차이로 사용 증가/감소를 설명하지 않는다. 0은 비사용으로 단정하지 않고 원천 주석 충돌을 표시한다. 집단 가중평균은 개인별 지수나 지원망을 복원하지 않는다.
+- 소비는 실제 관측 창과 맞춘다. 10월 기준 통신은 2025Q3 상권 자료와 연결한다. 11월 기준 통신은 분기를 걸치므로 분기 상권 증감은 NULL이다. 신한카드는 관측 3개월과 직전 3개월의 동일 업종·완전 관측 자료가 있어야 창별 비교한다. 현재 10건은 이전 창 자료 부족으로 비교 불가다. 구 단위 가맹점 소비와 동 단위 상권 소비를 동일 주민의 거래로 설명하지 않는다.
+- 기존 같은 라벨월 소비 뷰는 후속 기간 맥락이며 동시 변화 근거로 사용하지 않는다. `v_a123_age_source_context`를 우선 조회한다.
+- 평일/휴일의 공휴일 포함 여부는 미확인이다. 달력의 월~금·토/일 일수는 메타데이터이며 공급자의 휴일 정의나 공휴일 보정이 아니다.
+- 조사 자료는 강남구·연령별 연간 배경이다. 동별 고립률이나 탐지 정답으로 사용하지 않는다. 공개일 미확인은 사후 설명용이고 실시간 이용 가능성을 보장하지 않는다.
+
+### 민감도와 추적
+
+원값·계절 기준·구 공통 분리 수준을 구분한다. 추가 신호 없음과 수준 회복은 다르다. 설정별 유지 건수는 확률·정확도가 아니다. 작은 상대 부호 차이를 유의한 회복으로 단정하지 않는다. 소통만 감소한 사례를 이동도 감소한 결합 후보로 승격하지 않는다.
+
+공식 탐지: `v_a2_age_detection`. 수준 추적: `v_a2_activity_followup_latest`. 기간 정렬·SNS·소비: `v_a123_age_source_context`. 조사: `v_a123_age_survey_context` 및 공개일 제한 뷰. 새로운 기간의 실제 공개일은 별도 확인한다.
+
+
+### 2026-10-07 근거 보완 반영
+
+청년 조사 세부 통계, 관측 기간 기상, 지연 소비 근거 보충, 공개일 기준 조회를 추가했습니다. [근거 사용 설명](../Context/EVIDENCE_CONTEXT.md)과 [검증 결과](../docs/DB1_IMPROVEMENTS_RESULT_20261007.md)를 함께 전달하세요. 기존 탐지 건수는 소통 10·이동 0·복합 0으로 유지됩니다.
+
+
+### 근거별 확인 상태 표시
+
+자체 과거 기준, 지역 비교, 지속성, 보조 근거는 독립된 확인 항목으로 표시합니다. 위험 등급이나 순차 통과 조건으로 사용하지 않습니다. 지역 비교만 확인된 지표도 숨기지 않습니다. `confirmed`·`not_detected`·`not_assessable`을 구분합니다. 겹치는 관측 창 또는 같은 라벨의 추적만으로 지속성 확인 완료를 판정하지 않습니다. 소비의 기간 불일치·부분 관측·이전 창 부족은 명시하고, 연간 조사 배경이나 소비 감소로 기존 신호·복합 후보를 승격하지 않습니다. 자동 출력은 `tools/explain_signals.py`와 `docs/ISOLATION_EXPLANATION_USAGE.md`를 참조하세요.
+
+
+### 기상 변화 비교 해석
+
+실제 관측 기간에 맞춘 `weather_tracking`을 사용합니다. 기준은 2022-01~2025-06의 같은 계절이며 미래 자료는 기준에 포함하지 않습니다. 강수량은 mm, 강수·눈일수는 일 차이로 설명합니다. 기준 평균 0의 변화율 NULL을 0%로 바꾸지 않습니다. 과거 범위 초과는 기술통계이며 기상 이상 판정이나 인과 보정이 아닙니다. 공통 환경 자료를 여러 동에 연결한 것은 독립된 반복 근거가 아닙니다. 기상만으로 기존 신호를 취소·승격하지 않습니다.
+
+
+## 이전 설명 예시와 활용 제한
+
+## 실제 신호 3건의 AI agent 설명 예시
+
+> 이전 3건 설명의 참고자료입니다. 기상 추적과 근거별 확인 상태가 포함된 최신 전체 결과는 [10건 설명](ISOLATION_SIGNAL_EXPLANATIONS.md)과 [기상 비교](WEATHER_TRACKING_RESULT_20261007.md)를 사용하세요.
+
+2026-10-07 운영 DB1을 읽기 전용으로 조회했다. 아래 사례는 실제 2025년 자료이며 이후 업데이트 모의 검증 자료와 구분한다. 신호를 사회적 고립 확정으로 설명하지 않는다. 기준월은 직전 3개월 관측의 라벨이다.
+
+### 1. 역삼2동 40대 · 2025-10 기준
+
+실제 관측: 2025-07-01~2025-09-30. 모델: `a2_age_detection_v1_bd2dbf881a54`. 소통 신호 1, 이동 신호 0, 결합 신호 0. 판정 상태: `assessed`.
+
+근거: 전화 상대 수 -4.22%, 문자 상대 수 -4.35% 변화가 직전 중첩 관측 창 대비 나타났고, 해당 동·연령의 과거 변화 기준에서 소통 감소를 탐지했다. 두 경로는 실제 결과 JSON에서 각각 확인한다.
+
+소비: 외식카페 / 여가운동 / 대면생활서비스 = -7.7% / -4.2% / -11.6%. 정확히 일치하는 분기만 연결했고 과거 2022~2024년 같은 분기의 동일 업종 기준과 비교했다. 카드는 직전 3개월 비교 창이 부족해 변화율을 보류한다.
+
+후속 상태: 2025-12 기준(실제 관측은 직전 3개월) 원자료 `both_below_reference`, 같은 기준월 정규화 `both_below_reference`, 구 공통 분리 `mixed_recovery`. 신호 직전 수준 대비 상태이며 새 위험 등급이 아니다.
+
+조사 배경: 2025년 강남구 해당 연령의 가족 밖 관계에서 외로움 동의 가중 비율 8.75%, 유효 응답 399명. 이는 동별 통계나 신호의 정답이 아니다. 공개일 미확인으로 사후 배경만 제공한다. 표본설계를 반영한 유의성은 검증하지 않았다.
+
+설명 예시: “역삼2동 40대 집단에서 소통 감소 신호가 탐지됐습니다. 세 상권 도메인의 감소가 같은 관측 기간에 겹치므로 생활 활동 축소를 추가로 검토할 근거가 있습니다. 이동 감소를 포함한 결합 신호는 없고, 같은 개인의 소비와 관계 변화를 연결한 자료도 아닙니다. 현재 근거로 실제 사회적 고립을 확정할 수 없습니다.”
+
+SNS 참고 지수 +0.043, 품질 표시 `zero_semantics_review`. 음수를 오류로 처리하거나 시점 간 증감률을 계산하지 않는다. 0 검토 표시는 SNS 비사용을 뜻하지 않는다.
+
+### 2. 삼성2동 30대 · 2025-10 기준
+
+실제 관측: 2025-07-01~2025-09-30. 모델: `a2_age_detection_v1_bd2dbf881a54`. 소통 신호 1, 이동 신호 0, 결합 신호 0. 판정 상태: `assessed`.
+
+근거: 전화 상대 수 -4.26%, 문자 상대 수 -4.69% 변화가 직전 중첩 관측 창 대비 나타났고, 해당 동·연령의 과거 변화 기준에서 소통 감소를 탐지했다. 두 경로는 실제 결과 JSON에서 각각 확인한다.
+
+소비: 외식카페 / 여가운동 / 대면생활서비스 = +3.6% / +28.9% / -40.1%. 정확히 일치하는 분기만 연결했고 과거 2022~2024년 같은 분기의 동일 업종 기준과 비교했다. 카드는 직전 3개월 비교 창이 부족해 변화율을 보류한다.
+
+후속 상태: 2025-12 기준(실제 관측은 직전 3개월) 원자료 `both_below_reference`, 같은 기준월 정규화 `both_below_reference`, 구 공통 분리 `both_below_reference`. 신호 직전 수준 대비 상태이며 새 위험 등급이 아니다.
+
+조사 배경: 2025년 강남구 해당 연령의 가족 밖 관계에서 외로움 동의 가중 비율 6.17%, 유효 응답 381명. 이는 동별 통계나 신호의 정답이 아니다. 공개일 미확인으로 사후 배경만 제공한다. 표본설계를 반영한 유의성은 검증하지 않았다.
+
+설명 예시: “삼성2동 30대 집단에서 소통 감소 신호가 탐지됐습니다. 대면생활서비스는 감소하지만 외식카페와 여가운동은 증가해 소비 축소가 일관되게 겹친다고 설명할 수 없습니다. 이동 감소를 포함한 결합 신호는 없고, 같은 개인의 소비와 관계 변화를 연결한 자료도 아닙니다. 현재 근거로 실제 사회적 고립을 확정할 수 없습니다.”
+
+SNS 참고 지수 +0.099, 품질 표시 `same_period_relative_only`. 음수를 오류로 처리하거나 시점 간 증감률을 계산하지 않는다. 0 검토 표시는 SNS 비사용을 뜻하지 않는다.
+
+### 3. 역삼2동 30대 · 2025-11 기준
+
+실제 관측: 2025-08-01~2025-10-31. 모델: `a2_age_detection_v1_bd2dbf881a54`. 소통 신호 1, 이동 신호 0, 결합 신호 0. 판정 상태: `assessed`.
+
+근거: 전화 상대 수 -2.25%, 문자 상대 수 -4.00% 변화가 직전 중첩 관측 창 대비 나타났고, 같은 연령의 구 공통 변화와 분리한 지역 변화 기준에서 소통 감소를 탐지했다. 두 경로는 실제 결과 JSON에서 각각 확인한다.
+
+소비: 외식카페 / 여가운동 / 대면생활서비스 = 비교 불가 / 비교 불가 / 비교 불가. 정확히 일치하는 분기만 연결했고 과거 2022~2024년 같은 분기의 동일 업종 기준과 비교했다. 카드는 직전 3개월 비교 창이 부족해 변화율을 보류한다.
+
+후속 상태: 2025-12 기준(실제 관측은 직전 3개월) 원자료 `both_below_reference`, 같은 기준월 정규화 `both_below_reference`, 구 공통 분리 `mixed_recovery`. 신호 직전 수준 대비 상태이며 새 위험 등급이 아니다.
+
+조사 배경: 2025년 강남구 해당 연령의 가족 밖 관계에서 외로움 동의 가중 비율 6.17%, 유효 응답 381명. 이는 동별 통계나 신호의 정답이 아니다. 공개일 미확인으로 사후 배경만 제공한다. 표본설계를 반영한 유의성은 검증하지 않았다.
+
+설명 예시: “역삼2동 30대 집단에서 소통 감소 신호가 탐지됐습니다. 관측 기간이 분기를 걸쳐 상권 증감 비교를 보류합니다. 이전 Q4 소비 감소를 이 신호와 동시 발생한 근거로 설명하지 않습니다. 이동 감소를 포함한 결합 신호는 없고, 같은 개인의 소비와 관계 변화를 연결한 자료도 아닙니다. 현재 근거로 실제 사회적 고립을 확정할 수 없습니다.”
+
+SNS 참고 지수 +0.097, 품질 표시 `same_period_relative_only`. 음수를 오류로 처리하거나 시점 간 증감률을 계산하지 않는다. 0 검토 표시는 SNS 비사용을 뜻하지 않는다.
+
+
+통합 문서의 기존 조회·설명 예시는 호환 소통 상태를 유지합니다. 최신 네 지표의 후속 수준을 설명할 때는 이 문서의 **신호 이후 네 지표 수준·회복 추적** 절과 `v_a2_activity_followup_latest`의 `metric_states`, `domain_states`, `overall_states`를 함께 사용하세요. 신호가 발생한 라벨만 조회하면 최신 후속 상태를 놓칠 수 있으므로 사건 키의 `signal_date`를 보존해 최신 후속 결과를 조회합니다.

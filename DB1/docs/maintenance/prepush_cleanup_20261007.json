@@ -552,5 +552,18 @@
     }
   ],
   "push_performed": false,
-  "lfs_initialized": false
+  "lfs_initialized": false,
+  "latest_cleanup": {
+    "date": "2026-10-08",
+    "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1_backups\\publish_20261008_092911",
+    "integrated_documents": [
+      "AI_AGENT_QUICKSTART.md",
+      "AI_AGENT_EXPLANATION_RULES.md",
+      "AI_AGENT_EXPLANATION_EXAMPLES.md"
+    ],
+    "removed_runtime_files": [],
+    "db_sha256_unchanged": "ea99aba84a62b7061b62eb191d41d0dd9d13add1084360e22c5d323180d9417d",
+    "signals": 10,
+    "four_metric_followup_events": 10
+  }
 }

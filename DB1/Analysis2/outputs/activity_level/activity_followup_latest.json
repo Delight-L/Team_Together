@@ -5,38 +5,117 @@
     "age_band": "30s",
     "common_change_pct": {
       "call_contacts": -0.5886892650431741,
-      "text_contacts": -12.013764591602726
+      "text_contacts": -12.013764591602726,
+      "weekday_move_count": -40.77010170162914,
+      "weekend_move_count": -28.808680379341688
     },
     "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_all_below_months": 0,
     "consecutive_both_below_months": 0,
     "date": "2025-12-01",
     "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "domain_states": {
+      "communication": {
+        "consecutive_both_below_months": 0,
+        "local_state": "mixed_recovery",
+        "metrics": [
+          "call_contacts",
+          "text_contacts"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "mixed_recovery_or_basis",
+        "seasonal_state": "mixed_recovery"
+      },
+      "mobility": {
+        "consecutive_both_below_months": 2,
+        "local_state": "recovered_to_reference",
+        "metrics": [
+          "weekday_move_count",
+          "weekend_move_count"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      }
+    },
+    "legacy_state_scope": "communication",
     "local_change_pct": {
       "call_contacts": 2.3836971378027094,
-      "text_contacts": -0.5882598159946295
+      "text_contacts": -0.5882598159946295,
+      "weekday_move_count": 1.6735870950436604,
+      "weekend_move_count": 0.8884580364255878
     },
     "local_state": "mixed_recovery",
+    "metric_states": {
+      "call_contacts": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "at_or_above_reference"
+      },
+      "text_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekday_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekend_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      }
+    },
     "months_since_signal": 2,
+    "overall_recovery_status": "mixed_recovery_or_basis",
+    "overall_states": {
+      "local_state": "mixed_recovery",
+      "raw_state": "all_below_reference",
+      "seasonal_state": "mixed_recovery"
+    },
     "peer_n": {
       "call_contacts": 22,
-      "text_contacts": 22
+      "text_contacts": 22,
+      "weekday_move_count": 22,
+      "weekend_move_count": 22
     },
     "quality": {
       "call_contacts": "ready",
-      "text_contacts": "ready"
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
     },
     "raw_change_pct": {
       "call_contacts": -2.448958890951569,
-      "text_contacts": -11.051921240906559
+      "text_contacts": -11.051921240906559,
+      "weekday_move_count": -39.220831500007655,
+      "weekend_move_count": -18.42122407447484
     },
     "raw_state": "both_below_reference",
+    "recovery_confirmation": "descriptive_level_comparison_only_not_sustained_recovery_confirmation",
     "reference_date": "2025-09-01",
+    "reference_quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
+    },
     "seasonal_change_pct": {
       "call_contacts": 1.7809753035981535,
-      "text_contacts": -12.531352258116769
+      "text_contacts": -12.531352258116769,
+      "weekday_move_count": -39.77883776730011,
+      "weekend_move_count": -28.17617537893453
     },
     "seasonal_state": "mixed_recovery",
     "signal_date": "2025-10-01",
+    "tracked_metrics": [
+      "call_contacts",
+      "text_contacts",
+      "weekday_move_count",
+      "weekend_move_count"
+    ],
     "trigger_domains": [
       "communication"
     ]
@@ -47,38 +126,117 @@
     "age_band": "30s",
     "common_change_pct": {
       "call_contacts": -0.5886892650431741,
-      "text_contacts": -12.013764591602726
+      "text_contacts": -12.013764591602726,
+      "weekday_move_count": -40.77010170162914,
+      "weekend_move_count": -28.808680379341688
     },
     "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_all_below_months": 2,
     "consecutive_both_below_months": 3,
     "date": "2025-12-01",
     "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "domain_states": {
+      "communication": {
+        "consecutive_both_below_months": 3,
+        "local_state": "both_below_reference",
+        "metrics": [
+          "call_contacts",
+          "text_contacts"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      },
+      "mobility": {
+        "consecutive_both_below_months": 2,
+        "local_state": "recovered_to_reference",
+        "metrics": [
+          "weekday_move_count",
+          "weekend_move_count"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      }
+    },
+    "legacy_state_scope": "communication",
     "local_change_pct": {
       "call_contacts": -2.7766379188958634,
-      "text_contacts": -2.5121401750186623
+      "text_contacts": -2.5121401750186623,
+      "weekday_move_count": 0.6133875554785728,
+      "weekend_move_count": 0.23048281680508875
     },
     "local_state": "both_below_reference",
+    "metric_states": {
+      "call_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "text_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekday_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekend_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      }
+    },
     "months_since_signal": 2,
+    "overall_recovery_status": "below_reference",
+    "overall_states": {
+      "local_state": "mixed_recovery",
+      "raw_state": "all_below_reference",
+      "seasonal_state": "all_below_reference"
+    },
     "peer_n": {
       "call_contacts": 22,
-      "text_contacts": 22
+      "text_contacts": 22,
+      "weekday_move_count": 22,
+      "weekend_move_count": 22
     },
     "quality": {
       "call_contacts": "ready",
-      "text_contacts": "ready"
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
     },
     "raw_change_pct": {
       "call_contacts": -3.690765893944481,
-      "text_contacts": -13.566932872952165
+      "text_contacts": -13.566932872952165,
+      "weekday_move_count": -41.81137173301182,
+      "weekend_move_count": -21.829725034404934
     },
     "raw_state": "both_below_reference",
+    "recovery_confirmation": "descriptive_level_comparison_only_not_sustained_recovery_confirmation",
     "reference_date": "2025-09-01",
+    "reference_quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
+    },
     "seasonal_change_pct": {
       "call_contacts": -3.3489814145813757,
-      "text_contacts": -14.22410215978357
+      "text_contacts": -14.22410215978357,
+      "weekday_move_count": -40.40679287634431,
+      "weekend_move_count": -28.64459662055928
     },
     "seasonal_state": "both_below_reference",
     "signal_date": "2025-10-01",
+    "tracked_metrics": [
+      "call_contacts",
+      "text_contacts",
+      "weekday_move_count",
+      "weekend_move_count"
+    ],
     "trigger_domains": [
       "communication"
     ]
@@ -89,38 +247,117 @@
     "age_band": "50s",
     "common_change_pct": {
       "call_contacts": -2.4448970326407915,
-      "text_contacts": -9.809814918584259
+      "text_contacts": -9.809814918584259,
+      "weekday_move_count": -41.98120424104547,
+      "weekend_move_count": -30.330582537958605
     },
     "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_all_below_months": 2,
     "consecutive_both_below_months": 3,
     "date": "2025-12-01",
     "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "domain_states": {
+      "communication": {
+        "consecutive_both_below_months": 3,
+        "local_state": "mixed_recovery",
+        "metrics": [
+          "call_contacts",
+          "text_contacts"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      },
+      "mobility": {
+        "consecutive_both_below_months": 2,
+        "local_state": "recovered_to_reference",
+        "metrics": [
+          "weekday_move_count",
+          "weekend_move_count"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      }
+    },
+    "legacy_state_scope": "communication",
     "local_change_pct": {
       "call_contacts": 0.2563660583775329,
-      "text_contacts": -2.625331667604136
+      "text_contacts": -2.625331667604136,
+      "weekday_move_count": 3.1135120732801447,
+      "weekend_move_count": 3.450585323100519
     },
     "local_state": "mixed_recovery",
+    "metric_states": {
+      "call_contacts": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "text_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekday_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekend_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      }
+    },
     "months_since_signal": 2,
+    "overall_recovery_status": "below_reference",
+    "overall_states": {
+      "local_state": "mixed_recovery",
+      "raw_state": "all_below_reference",
+      "seasonal_state": "all_below_reference"
+    },
     "peer_n": {
       "call_contacts": 22,
-      "text_contacts": 22
+      "text_contacts": 22,
+      "weekday_move_count": 22,
+      "weekend_move_count": 19
     },
     "quality": {
       "call_contacts": "ready",
-      "text_contacts": "ready"
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
     },
     "raw_change_pct": {
       "call_contacts": -4.152184879682508,
-      "text_contacts": -11.61235384298508
+      "text_contacts": -11.61235384298508,
+      "weekday_move_count": -40.10299586818097,
+      "weekend_move_count": -18.336605408713957
     },
     "raw_state": "both_below_reference",
+    "recovery_confirmation": "descriptive_level_comparison_only_not_sustained_recovery_confirmation",
     "reference_date": "2025-09-01",
+    "reference_quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
+    },
     "seasonal_change_pct": {
       "call_contacts": -2.1947988604172353,
-      "text_contacts": -12.177606408597452
+      "text_contacts": -12.177606408597452,
+      "weekday_move_count": -40.17478203031867,
+      "weekend_move_count": -27.926579844323772
     },
     "seasonal_state": "both_below_reference",
     "signal_date": "2025-10-01",
+    "tracked_metrics": [
+      "call_contacts",
+      "text_contacts",
+      "weekday_move_count",
+      "weekend_move_count"
+    ],
     "trigger_domains": [
       "communication"
     ]
@@ -131,38 +368,117 @@
     "age_band": "40s",
     "common_change_pct": {
       "call_contacts": -2.5233367999339062,
-      "text_contacts": -11.274770775892073
+      "text_contacts": -11.274770775892073,
+      "weekday_move_count": -41.76752992453399,
+      "weekend_move_count": -29.612221444985398
     },
     "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_all_below_months": 0,
     "consecutive_both_below_months": 3,
     "date": "2025-12-01",
     "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "domain_states": {
+      "communication": {
+        "consecutive_both_below_months": 3,
+        "local_state": "mixed_recovery",
+        "metrics": [
+          "call_contacts",
+          "text_contacts"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      },
+      "mobility": {
+        "consecutive_both_below_months": 0,
+        "local_state": "unavailable",
+        "metrics": [
+          "weekday_move_count",
+          "weekend_move_count"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "unavailable",
+        "seasonal_state": "unavailable"
+      }
+    },
+    "legacy_state_scope": "communication",
     "local_change_pct": {
       "call_contacts": -0.7998140893608174,
-      "text_contacts": 0.6704659166554494
+      "text_contacts": 0.6704659166554494,
+      "weekday_move_count": 3.7641931185260935,
+      "weekend_move_count": null
     },
     "local_state": "mixed_recovery",
+    "metric_states": {
+      "call_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "text_contacts": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekday_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekend_move_count": {
+        "local": "unavailable",
+        "raw": "below_reference",
+        "seasonal": "unavailable"
+      }
+    },
     "months_since_signal": 2,
+    "overall_recovery_status": "unavailable_or_partial",
+    "overall_states": {
+      "local_state": "unavailable",
+      "raw_state": "all_below_reference",
+      "seasonal_state": "unavailable"
+    },
     "peer_n": {
       "call_contacts": 22,
-      "text_contacts": 22
+      "text_contacts": 22,
+      "weekday_move_count": 22,
+      "weekend_move_count": 18
     },
     "quality": {
       "call_contacts": "ready",
-      "text_contacts": "ready"
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
     },
     "raw_change_pct": {
       "call_contacts": -2.5555991311882353,
-      "text_contacts": -8.749491972430611
+      "text_contacts": -8.749491972430611,
+      "weekday_move_count": -41.222617936196315,
+      "weekend_move_count": -20.26145595477342
     },
     "raw_state": "both_below_reference",
+    "recovery_confirmation": "descriptive_level_comparison_only_not_sustained_recovery_confirmation",
     "reference_date": "2025-09-01",
+    "reference_quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "insufficient_same_month_history"
+    },
     "seasonal_change_pct": {
       "call_contacts": -3.302968886046831,
-      "text_contacts": -10.67989835447002
+      "text_contacts": -10.67989835447002,
+      "weekday_move_count": -39.575547293205524,
+      "weekend_move_count": null
     },
     "seasonal_state": "both_below_reference",
     "signal_date": "2025-10-01",
+    "tracked_metrics": [
+      "call_contacts",
+      "text_contacts",
+      "weekday_move_count",
+      "weekend_move_count"
+    ],
     "trigger_domains": [
       "communication"
     ]
@@ -173,38 +489,117 @@
     "age_band": "40s",
     "common_change_pct": {
       "call_contacts": -2.5233367999339062,
-      "text_contacts": -11.274770775892073
+      "text_contacts": -11.274770775892073,
+      "weekday_move_count": -41.76752992453399,
+      "weekend_move_count": -29.612221444985398
     },
     "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_all_below_months": 2,
     "consecutive_both_below_months": 3,
     "date": "2025-12-01",
     "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "domain_states": {
+      "communication": {
+        "consecutive_both_below_months": 3,
+        "local_state": "mixed_recovery",
+        "metrics": [
+          "call_contacts",
+          "text_contacts"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      },
+      "mobility": {
+        "consecutive_both_below_months": 2,
+        "local_state": "recovered_to_reference",
+        "metrics": [
+          "weekday_move_count",
+          "weekend_move_count"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      }
+    },
+    "legacy_state_scope": "communication",
     "local_change_pct": {
       "call_contacts": -0.8088420002690166,
-      "text_contacts": 0.8728418974477403
+      "text_contacts": 0.8728418974477403,
+      "weekday_move_count": 2.2450478336475177,
+      "weekend_move_count": 2.582412297702996
     },
     "local_state": "mixed_recovery",
+    "metric_states": {
+      "call_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "text_contacts": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekday_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekend_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      }
+    },
     "months_since_signal": 2,
+    "overall_recovery_status": "below_reference",
+    "overall_states": {
+      "local_state": "mixed_recovery",
+      "raw_state": "all_below_reference",
+      "seasonal_state": "all_below_reference"
+    },
     "peer_n": {
       "call_contacts": 22,
-      "text_contacts": 22
+      "text_contacts": 22,
+      "weekday_move_count": 22,
+      "weekend_move_count": 18
     },
     "quality": {
       "call_contacts": "ready",
-      "text_contacts": "ready"
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
     },
     "raw_change_pct": {
       "call_contacts": -2.9860631193195375,
-      "text_contacts": -8.982488803590394
+      "text_contacts": -8.982488803590394,
+      "weekday_move_count": -40.80087979675119,
+      "weekend_move_count": -19.742545989567095
     },
     "raw_state": "both_below_reference",
+    "recovery_confirmation": "descriptive_level_comparison_only_not_sustained_recovery_confirmation",
     "reference_date": "2025-09-01",
+    "reference_quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
+    },
     "seasonal_change_pct": {
       "call_contacts": -3.3117689923568117,
-      "text_contacts": -10.50033980161752
+      "text_contacts": -10.50033980161752,
+      "weekday_move_count": -40.460183116625295,
+      "weekend_move_count": -27.794518795500757
     },
     "seasonal_state": "both_below_reference",
     "signal_date": "2025-10-01",
+    "tracked_metrics": [
+      "call_contacts",
+      "text_contacts",
+      "weekday_move_count",
+      "weekend_move_count"
+    ],
     "trigger_domains": [
       "communication"
     ]
@@ -215,38 +610,117 @@
     "age_band": "40s",
     "common_change_pct": {
       "call_contacts": -2.5233367999339062,
-      "text_contacts": -11.274770775892073
+      "text_contacts": -11.274770775892073,
+      "weekday_move_count": -41.76752992453399,
+      "weekend_move_count": -29.612221444985398
     },
     "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_all_below_months": 2,
     "consecutive_both_below_months": 3,
     "date": "2025-12-01",
     "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "domain_states": {
+      "communication": {
+        "consecutive_both_below_months": 3,
+        "local_state": "both_below_reference",
+        "metrics": [
+          "call_contacts",
+          "text_contacts"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      },
+      "mobility": {
+        "consecutive_both_below_months": 2,
+        "local_state": "recovered_to_reference",
+        "metrics": [
+          "weekday_move_count",
+          "weekend_move_count"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      }
+    },
+    "legacy_state_scope": "communication",
     "local_change_pct": {
       "call_contacts": -0.5103440449639396,
-      "text_contacts": -2.0697396006117974
+      "text_contacts": -2.0697396006117974,
+      "weekday_move_count": 0.8998946631684657,
+      "weekend_move_count": 0.9669274178054854
     },
     "local_state": "both_below_reference",
+    "metric_states": {
+      "call_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "text_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekday_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekend_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      }
+    },
     "months_since_signal": 2,
+    "overall_recovery_status": "below_reference",
+    "overall_states": {
+      "local_state": "mixed_recovery",
+      "raw_state": "all_below_reference",
+      "seasonal_state": "all_below_reference"
+    },
     "peer_n": {
       "call_contacts": 22,
-      "text_contacts": 22
+      "text_contacts": 22,
+      "weekday_move_count": 22,
+      "weekend_move_count": 18
     },
     "quality": {
       "call_contacts": "ready",
-      "text_contacts": "ready"
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
     },
     "raw_change_pct": {
       "call_contacts": -2.4967397773335454,
-      "text_contacts": -9.913463460424444
+      "text_contacts": -9.913463460424444,
+      "weekday_move_count": -40.601426905135355,
+      "weekend_move_count": -20.607595515183874
     },
     "raw_state": "both_below_reference",
+    "recovery_confirmation": "descriptive_level_comparison_only_not_sustained_recovery_confirmation",
     "reference_date": "2025-09-01",
+    "reference_quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
+    },
     "seasonal_change_pct": {
       "call_contacts": -3.0208031458049955,
-      "text_contacts": -13.111151980877022
+      "text_contacts": -13.111151980877022,
+      "weekday_move_count": -41.24349903409369,
+      "weekend_move_count": -28.931622715352745
     },
     "seasonal_state": "both_below_reference",
     "signal_date": "2025-10-01",
+    "tracked_metrics": [
+      "call_contacts",
+      "text_contacts",
+      "weekday_move_count",
+      "weekend_move_count"
+    ],
     "trigger_domains": [
       "communication"
     ]
@@ -257,38 +731,117 @@
     "age_band": "40s",
     "common_change_pct": {
       "call_contacts": -2.5233367999339062,
-      "text_contacts": -11.274770775892073
+      "text_contacts": -11.274770775892073,
+      "weekday_move_count": -41.76752992453399,
+      "weekend_move_count": -29.612221444985398
     },
     "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_all_below_months": 2,
     "consecutive_both_below_months": 3,
     "date": "2025-12-01",
     "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "domain_states": {
+      "communication": {
+        "consecutive_both_below_months": 3,
+        "local_state": "mixed_recovery",
+        "metrics": [
+          "call_contacts",
+          "text_contacts"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      },
+      "mobility": {
+        "consecutive_both_below_months": 2,
+        "local_state": "both_below_reference",
+        "metrics": [
+          "weekday_move_count",
+          "weekend_move_count"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      }
+    },
+    "legacy_state_scope": "communication",
     "local_change_pct": {
       "call_contacts": 0.37413990520520635,
-      "text_contacts": -0.5185610869665735
+      "text_contacts": -0.5185610869665735,
+      "weekday_move_count": -4.54980923963928,
+      "weekend_move_count": -1.3426729288682382
     },
     "local_state": "mixed_recovery",
+    "metric_states": {
+      "call_contacts": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "text_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekday_move_count": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekend_move_count": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      }
+    },
     "months_since_signal": 2,
+    "overall_recovery_status": "below_reference",
+    "overall_states": {
+      "local_state": "mixed_recovery",
+      "raw_state": "all_below_reference",
+      "seasonal_state": "all_below_reference"
+    },
     "peer_n": {
       "call_contacts": 22,
-      "text_contacts": 22
+      "text_contacts": 22,
+      "weekday_move_count": 22,
+      "weekend_move_count": 18
     },
     "quality": {
       "call_contacts": "ready",
-      "text_contacts": "ready"
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
     },
     "raw_change_pct": {
       "call_contacts": -2.264810374195736,
-      "text_contacts": -8.40352901141289
+      "text_contacts": -8.40352901141289,
+      "weekday_move_count": -42.972172130783136,
+      "weekend_move_count": -22.0776558188727
     },
     "raw_state": "both_below_reference",
+    "recovery_confirmation": "descriptive_level_comparison_only_not_sustained_recovery_confirmation",
     "reference_date": "2025-09-01",
+    "reference_quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
+    },
     "seasonal_change_pct": {
       "call_contacts": -2.1586377046399874,
-      "text_contacts": -11.734865288970187
+      "text_contacts": -11.734865288970187,
+      "weekday_move_count": -44.416996228497716,
+      "weekend_move_count": -30.5572990928753
     },
     "seasonal_state": "both_below_reference",
     "signal_date": "2025-10-01",
+    "tracked_metrics": [
+      "call_contacts",
+      "text_contacts",
+      "weekday_move_count",
+      "weekend_move_count"
+    ],
     "trigger_domains": [
       "communication"
     ]
@@ -299,38 +852,117 @@
     "age_band": "40s",
     "common_change_pct": {
       "call_contacts": -2.5233367999339062,
-      "text_contacts": -11.274770775892073
+      "text_contacts": -11.274770775892073,
+      "weekday_move_count": -41.76752992453399,
+      "weekend_move_count": -29.612221444985398
     },
     "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_all_below_months": 2,
     "consecutive_both_below_months": 3,
     "date": "2025-12-01",
     "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "domain_states": {
+      "communication": {
+        "consecutive_both_below_months": 3,
+        "local_state": "both_below_reference",
+        "metrics": [
+          "call_contacts",
+          "text_contacts"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      },
+      "mobility": {
+        "consecutive_both_below_months": 2,
+        "local_state": "both_below_reference",
+        "metrics": [
+          "weekday_move_count",
+          "weekend_move_count"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      }
+    },
+    "legacy_state_scope": "communication",
     "local_change_pct": {
       "call_contacts": -3.1922288655438447,
-      "text_contacts": -0.8136462100485908
+      "text_contacts": -0.8136462100485908,
+      "weekday_move_count": -4.829168060758738,
+      "weekend_move_count": -4.312217623657855
     },
     "local_state": "both_below_reference",
+    "metric_states": {
+      "call_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "text_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekday_move_count": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekend_move_count": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      }
+    },
     "months_since_signal": 2,
+    "overall_recovery_status": "below_reference",
+    "overall_states": {
+      "local_state": "all_below_reference",
+      "raw_state": "all_below_reference",
+      "seasonal_state": "all_below_reference"
+    },
     "peer_n": {
       "call_contacts": 22,
-      "text_contacts": 22
+      "text_contacts": 22,
+      "weekday_move_count": 22,
+      "weekend_move_count": 18
     },
     "quality": {
       "call_contacts": "ready",
-      "text_contacts": "ready"
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
     },
     "raw_change_pct": {
       "call_contacts": -5.175943429105145,
-      "text_contacts": -9.532065711897019
+      "text_contacts": -9.532065711897019,
+      "weekday_move_count": -42.04513975587821,
+      "weekend_move_count": -20.850005016171945
     },
     "raw_state": "both_below_reference",
+    "recovery_confirmation": "descriptive_level_comparison_only_not_sustained_recovery_confirmation",
     "reference_date": "2025-09-01",
+    "reference_quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
+    },
     "seasonal_change_pct": {
       "call_contacts": -5.635014979775366,
-      "text_contacts": -11.996680240830948
+      "text_contacts": -11.996680240830948,
+      "weekday_move_count": -44.57967377040928,
+      "weekend_move_count": -32.647495636736004
     },
     "seasonal_state": "both_below_reference",
     "signal_date": "2025-10-01",
+    "tracked_metrics": [
+      "call_contacts",
+      "text_contacts",
+      "weekday_move_count",
+      "weekend_move_count"
+    ],
     "trigger_domains": [
       "communication"
     ]
@@ -341,38 +973,117 @@
     "age_band": "40s",
     "common_change_pct": {
       "call_contacts": -2.5233367999339062,
-      "text_contacts": -11.274770775892073
+      "text_contacts": -11.274770775892073,
+      "weekday_move_count": -41.76752992453399,
+      "weekend_move_count": -29.612221444985398
     },
     "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_all_below_months": 2,
     "consecutive_both_below_months": 3,
     "date": "2025-12-01",
     "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "domain_states": {
+      "communication": {
+        "consecutive_both_below_months": 3,
+        "local_state": "both_below_reference",
+        "metrics": [
+          "call_contacts",
+          "text_contacts"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      },
+      "mobility": {
+        "consecutive_both_below_months": 2,
+        "local_state": "recovered_to_reference",
+        "metrics": [
+          "weekday_move_count",
+          "weekend_move_count"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      }
+    },
+    "legacy_state_scope": "communication",
     "local_change_pct": {
       "call_contacts": -0.9983284944119375,
-      "text_contacts": -1.7756411356802726
+      "text_contacts": -1.7756411356802726,
+      "weekday_move_count": 0.14881450695403142,
+      "weekend_move_count": 1.3097490548436452
     },
     "local_state": "both_below_reference",
+    "metric_states": {
+      "call_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "text_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekday_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekend_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      }
+    },
     "months_since_signal": 2,
+    "overall_recovery_status": "below_reference",
+    "overall_states": {
+      "local_state": "mixed_recovery",
+      "raw_state": "all_below_reference",
+      "seasonal_state": "all_below_reference"
+    },
     "peer_n": {
       "call_contacts": 22,
-      "text_contacts": 22
+      "text_contacts": 22,
+      "weekday_move_count": 22,
+      "weekend_move_count": 18
     },
     "quality": {
       "call_contacts": "ready",
-      "text_contacts": "ready"
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
     },
     "raw_change_pct": {
       "call_contacts": -3.432971778917304,
-      "text_contacts": -10.367483673121258
+      "text_contacts": -10.367483673121258,
+      "weekday_move_count": -41.029092496643734,
+      "weekend_move_count": -21.578796726708095
     },
     "raw_state": "both_below_reference",
+    "recovery_confirmation": "descriptive_level_comparison_only_not_sustained_recovery_confirmation",
     "reference_date": "2025-09-01",
+    "reference_quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
+    },
     "seasonal_change_pct": {
       "call_contacts": -3.4964741040621194,
-      "text_contacts": -12.850212443721954
+      "text_contacts": -12.850212443721954,
+      "weekday_move_count": -41.68087156130402,
+      "weekend_move_count": -28.690318180635654
     },
     "seasonal_state": "both_below_reference",
     "signal_date": "2025-10-01",
+    "tracked_metrics": [
+      "call_contacts",
+      "text_contacts",
+      "weekday_move_count",
+      "weekend_move_count"
+    ],
     "trigger_domains": [
       "communication"
     ]
@@ -383,38 +1094,117 @@
     "age_band": "30s",
     "common_change_pct": {
       "call_contacts": 0.36326699247624106,
-      "text_contacts": -7.7898378282478475
+      "text_contacts": -7.7898378282478475,
+      "weekday_move_count": -37.46955003728638,
+      "weekend_move_count": -37.17797739378602
     },
     "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+    "consecutive_all_below_months": 2,
     "consecutive_both_below_months": 2,
     "date": "2025-12-01",
     "detection_model_version": "a2_age_detection_v1_bd2dbf881a54",
+    "domain_states": {
+      "communication": {
+        "consecutive_both_below_months": 2,
+        "local_state": "mixed_recovery",
+        "metrics": [
+          "call_contacts",
+          "text_contacts"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      },
+      "mobility": {
+        "consecutive_both_below_months": 2,
+        "local_state": "recovered_to_reference",
+        "metrics": [
+          "weekday_move_count",
+          "weekend_move_count"
+        ],
+        "raw_state": "both_below_reference",
+        "recovery_status": "below_reference",
+        "seasonal_state": "both_below_reference"
+      }
+    },
+    "legacy_state_scope": "communication",
     "local_change_pct": {
       "call_contacts": -1.0979351360916767,
-      "text_contacts": 1.7124314258484485
+      "text_contacts": 1.7124314258484485,
+      "weekday_move_count": 2.5369579446180124,
+      "weekend_move_count": 5.344160604653281
     },
     "local_state": "mixed_recovery",
+    "metric_states": {
+      "call_contacts": {
+        "local": "below_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "text_contacts": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekday_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      },
+      "weekend_move_count": {
+        "local": "at_or_above_reference",
+        "raw": "below_reference",
+        "seasonal": "below_reference"
+      }
+    },
     "months_since_signal": 1,
+    "overall_recovery_status": "below_reference",
+    "overall_states": {
+      "local_state": "mixed_recovery",
+      "raw_state": "all_below_reference",
+      "seasonal_state": "all_below_reference"
+    },
     "peer_n": {
       "call_contacts": 22,
-      "text_contacts": 22
+      "text_contacts": 22,
+      "weekday_move_count": 22,
+      "weekend_move_count": 22
     },
     "quality": {
       "call_contacts": "ready",
-      "text_contacts": "ready"
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
     },
     "raw_change_pct": {
       "call_contacts": -0.3462160172747364,
-      "text_contacts": -6.943410237387204
+      "text_contacts": -6.943410237387204,
+      "weekday_move_count": -36.833743769148654,
+      "weekend_move_count": -31.673756457690672
     },
     "raw_state": "both_below_reference",
+    "recovery_confirmation": "descriptive_level_comparison_only_not_sustained_recovery_confirmation",
     "reference_date": "2025-10-01",
+    "reference_quality": {
+      "call_contacts": "ready",
+      "text_contacts": "ready",
+      "weekday_move_count": "ready",
+      "weekend_move_count": "ready"
+    },
     "seasonal_change_pct": {
       "call_contacts": -0.7386565795636568,
-      "text_contacts": -6.210802033392948
+      "text_contacts": -6.210802033392948,
+      "weekday_move_count": -35.88317881915193,
+      "weekend_move_count": -33.82066761061836
     },
     "seasonal_state": "both_below_reference",
     "signal_date": "2025-11-01",
+    "tracked_metrics": [
+      "call_contacts",
+      "text_contacts",
+      "weekday_move_count",
+      "weekend_move_count"
+    ],
     "trigger_domains": [
       "communication"
     ]

@@ -45,12 +45,12 @@ Analysis2의 동·연령대별 전처리 이력과 업데이트 경로를 추가
 강남구와 서울 전체의 연령별 서울서베이(2022~2025) 및 2022년 청년 고립 참고자료를 추가했다. `Context/README.md`에서 지표 정의와 조회 방법을 확인한다. `run_db1.ps1 -Command survey-context`로 갱신하며 `scan`/`watch`/`export`에도 연결된다. 연도별 원본과 코드 연결의 등록이 필요하다. 기존 탐지 신호와 점수는 보존한다. 통합 조회는 `v_a123_age_survey_context`이며 조사값은 동별 통계가 아닌 강남구 연령별 공통 맥락이다.
 
 
-소통 신호 이후 수준·회복 추적은 `analysis2-activity`로 실행하며 월 처리·scan/watch에도 연결됩니다. [Analysis2/ACTIVITY_LEVEL.md](Analysis2/ACTIVITY_LEVEL.md)와 [현재 적용 결과](docs/ACTIVITY_LEVEL_RESULT_20261007.md)를 참조하세요.
+신호 이후 네 지표 수준·회복 추적은 `analysis2-activity`로 실행하며 월 처리·scan/watch에도 연결됩니다. [AI_AGENT_HANDOFF.md](docs/AI_AGENT_HANDOFF.md)와 [현재 적용 결과](docs/ACTIVITY_LEVEL_RESULT_20261007.md)를 참조하세요.
 
 
 ## AI agent 담당자 인수
 
-먼저 [조회 실행 안내](docs/AI_AGENT_QUICKSTART.md), [현재 10건의 근거별 설명](docs/ISOLATION_SIGNAL_EXPLANATIONS.md), [인수 검증 결과](docs/DB1_HANDOFF_ACCEPTANCE_20261007.md)를 읽으세요. `tools/read_agent_context.py --signals-only`로 읽기 전용 통합 근거를 조회합니다. 집계 기준월과 실제 직전 3개월 관측을 구분하고 SNS 시계열 증감률을 계산하지 않습니다. 검증용 모의 DB와 원본 파일은 운영 DB1에 포함하지 않습니다.
+먼저 [조회 실행 안내](docs/AI_AGENT_HANDOFF.md), [현재 10건의 근거별 설명](docs/ISOLATION_SIGNAL_EXPLANATIONS.md), [인수 검증 결과](docs/DB1_HANDOFF_ACCEPTANCE_20261007.md)를 읽으세요. `tools/read_agent_context.py --signals-only`로 읽기 전용 통합 근거를 조회합니다. 집계 기준월과 실제 직전 3개월 관측을 구분하고 SNS 시계열 증감률을 계산하지 않습니다. 검증용 모의 DB와 원본 파일은 운영 DB1에 포함하지 않습니다.
 
 
 ## 2026-10-07 근거 보완 반영
