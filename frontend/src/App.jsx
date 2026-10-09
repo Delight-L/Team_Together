@@ -325,11 +325,11 @@ export default function App() {
           aria-expanded={!navCollapsed}
           title={navCollapsed ? '메뉴 펼치기' : '메뉴 접기'}
         >
-          <img
+          {view === 'dashboard' && !navCollapsed ? <span className="gd-brand"><img src="/brand/bomi-face.png" alt=""/><span><b>복지탐정</b><small>WELFIND</small></span></span> : <img
             className={navCollapsed ? 'bomi-face' : 'brand-logo'}
             src={navCollapsed ? '/brand/bomi-face.png' : '/brand/welfind_logo.png'}
             alt={navCollapsed ? '보미 얼굴' : 'WELFIND 복지탐정'}
-          />
+          />}
         </button>
         <div className="workspace-tag">
           <span className="online-dot" />
@@ -405,7 +405,7 @@ export default function App() {
                   titles[view]
                 )}
               </h1>
-              <p>{view === 'dashboard' ? '동·연령·성별의 활동 변화와 지역 여건을 살펴보고, 필요한 지원을 검토합니다.' : '데이터에서 발견한 변화, 더 세심한 지역 돌봄으로 이어집니다.'}</p>
+              <p>{view === 'dashboard' ? '지역의 변화와 생활 여건을 살펴보고, 필요한 지원을 검토합니다.' : '데이터에서 발견한 변화, 더 세심한 지역 돌봄으로 이어집니다.'}</p>
             </div>
             <div className={`heading-tools ${view === 'dashboard' ? 'case-heading-tools' : ''}`}>
             <div className="filters">
@@ -423,6 +423,7 @@ export default function App() {
                   ))}
                 </select>
               </label>
+              {view === 'dashboard' && <div id="group-period-slot" />}
               {view !== 'dashboard' && <label>
                 기준월
                 <select value={month} onChange={(e) => setMonth(e.target.value)}>
