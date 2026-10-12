@@ -90,7 +90,7 @@ export function ReviewWorkspace({ context, onView, seed, user, onSaved }) {
     {error && <p className="error" role="alert">{error}</p>}{notice && <p className="hint" role="status">{notice}</p>}
     <div className="form-actions"><button className="primary" disabled={busy} onClick={save}>{busy ? '처리 중…' : '검토·후속 조치 저장'}</button><span className="hint">두 구역의 내용을 함께 저장합니다.</span></div>
     <details className="secondary-details"><summary>이전 기록·다시 불러오기</summary>
-      <p className="hint">{user.trial ? '이번 체험에만 저장되는 연습 기록입니다.' : '저장한 기록은 같은 지역 담당자와 공유합니다.'}</p>
+      <p className="hint">저장한 기록은 같은 지역 담당자와 공유합니다.</p>
       <button className="secondary" disabled={busy} onClick={reload}>최신 기록 다시 불러오기</button>
       <details><summary>변경 이력 {record.history.length}건</summary>{record.history.length === 0 && <p className="hint">아직 저장된 변경 이력이 없습니다.</p>}{[...record.history].reverse().map((h, i) => <article className="service-card" key={i}><strong>{h.at} · {h.actor} · {h.status}</strong><p>담당자 {h.assignee || '미지정'} · 기한 {h.due || '미지정'}</p><p>{h.note}</p><p>{h.followup}</p></article>)}</details>
       <details><summary>다른 기준월의 후속 조치</summary><button className="secondary" onClick={loadTimeline}>월별 기록 불러오기</button>{timelineLoaded && !timeline.length && <p className="hint">저장된 월별 기록이 없습니다.</p>}{timeline.map(item => <article className="service-card" key={item.month}><b>{item.month} · {item.record.status}</b><p>담당자 {item.record.assignee || '미지정'} · 기한 {item.record.due || '미지정'}</p><p>{item.record.followup || '후속 조치 내용 미입력'}</p></article>)}</details>

@@ -178,15 +178,12 @@ export default function App() {
     if (window.innerWidth <= 760) setNavCollapsed(true);
   }
   const previousChatView = useRef('dashboard');
-  const originalWorkspace = useRef(null);
-  const pendingWorkspace = useRef(null);
   const [workflow, setWorkflow] = useState({}),
     [reportSeed, setReportSeed] = useState(null),
     [reviewSeed, setReviewSeed] = useState(null),
     [notice, setNotice] = useState(''),
     [chatOpen, setChatOpen] = useState(() => window.innerWidth >= 1500),
-    [busy, setBusy] = useState(false),
-    [trialError, setTrialError] = useState('');
+    [busy, setBusy] = useState(false);
   const [chatDraft, setChatDraft] = useState(null);
   useEffect(() => {
     api('/session')
@@ -204,19 +201,11 @@ export default function App() {
     api('/dashboard')
       .then((d) => {
         if (active) {
-          const target = pendingWorkspace.current;
-          pendingWorkspace.current = null;
-          const nextCity = target?.city && d.geometry[target.city] ? target.city : user.admin ? '강남구' : user.org;
-          const nextMonth = d.months.includes(target?.month) ? target.month : d.months.at(-1) || '';
-          const nextDistrict = d.geometry[nextCity]?.units.some(u => u.n === target?.district) ? target.district : '';
+          // 관리자는 강남구, 담당자는 소속 지역의 가장 최근 기준월로 시작합니다.
           setData(d);
-          setCity(nextCity);
-          setMonth(nextMonth);
-          setDistrict(nextDistrict);
-          if (target) {
-            go(target.view || 'dashboard');
-            setChatOpen(!!target.chatOpen);
-          }
+          setCity(user.admin ? '강남구' : user.org);
+          setMonth(d.months.at(-1) || '');
+          setDistrict('');
         }
       })
       .catch((e) => active && setError(e.message));
@@ -265,28 +254,6 @@ export default function App() {
       setBusy(false);
     }
   }
-  async function switchTrial(mode) {
-    if (busy) return false;
-    setBusy(true); setTrialError('');
-    try {
-      const result = await api('/trial/' + mode, {});
-      if (mode === 'start') {
-        if (!user.trial) originalWorkspace.current = { ...context, view, chatOpen };
-        const trialCity = result.user.org;
-        const candidates = summarizeRegions(data.assessment, data.geometry[trialCity], trialCity, month, data.months);
-        const first = candidates.find(r => r.count > 0) || candidates.find(r => r.rows.length);
-        pendingWorkspace.current = { city: trialCity, month, district: first?.name || '', view: first ? 'chart' : 'dashboard', chatOpen: false };
-      } else {
-        pendingWorkspace.current = originalWorkspace.current || { city: result.user.org, month, view: 'dashboard' };
-        originalWorkspace.current = null;
-      }
-      setWorkflow({}); setNotice(''); setUser(result.user);
-      return true;
-    } catch (e) {
-      setTrialError(e.message);
-      return false;
-    } finally { setBusy(false); }
-  }
   function expandChat() {
     if (view !== 'chat') previousChatView.current = view;
     setChatOpen(true);
@@ -308,8 +275,6 @@ export default function App() {
     setData(null);
     setView('dashboard');
     setSupportOpen(false);
-    originalWorkspace.current = null;
-    pendingWorkspace.current = null;
   }
   const regions = useMemo(() => summarizeRegions(
     data?.assessment || [], data?.geometry[city], city, month, data?.months || [],
@@ -419,7 +384,6 @@ export default function App() {
           </span>
           <div>
             <button className="icon-button guide-trigger" disabled={!data} onClick={openTour} aria-label="사용 안내 다시 보기" title="사용 안내 다시 보기"><Icon name="help" size={18} /></button>
-            {user.trial && <button className="text-button" disabled={busy || !data} onClick={async () => { if (!await switchTrial('end')) setNotice('체험 종료에 실패했습니다. 다시 시도해 주세요.'); }}>체험 종료</button>}
             <span className="connected">
               <span className="online-dot" />
               {data ? `분석 자료 ${data.months?.at(-1) || ''}까지 반영` : '분석 자료 확인 중'}
@@ -517,7 +481,7 @@ export default function App() {
                 onSelect={(item) => { setCity(item.city); setDistrict(item.district); setMonth(item.month); }}
                 onView={go}
               />}
-              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + !!user.trial + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onRegion={group => {
+              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onRegion={group => {
                 const name = group.code === '1123074' ? '일원2동' : group.district;
                 const available = data.geometry[city]?.units.find(u => u.n === group.district || u.n === name);
                 setDistrict(available?.n || group.district); setMonth(group.month); go('chart');

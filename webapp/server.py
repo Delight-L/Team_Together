@@ -158,10 +158,6 @@ class Handler(BaseHTTPRequestHandler):
                     if route.path == '/api/groups/review': return self.reply(200, review(user, context))
                     if route.path == '/api/groups/services': return self.reply(200, services(context, body.get('need')))
                     return self.reply(404, {'error':'집단 API를 찾을 수 없습니다.'})
-                if route.path == '/api/feedback':
-                    if not user['admin']: raise PermissionError('관리자만 의견을 조회할 수 있습니다.')
-                    from db.experience_store import feedback_list
-                    return self.reply(200, {'items':feedback_list()})
                 if route.path == '/api/chat/config':
                     from chatbot.welfare.app.agent.resources import RESOURCES
                     from chatbot.welfare.app.config import settings
@@ -286,19 +282,6 @@ class Handler(BaseHTTPRequestHandler):
                 if body.get('sourceRun') != detail['runId']:
                     raise ValueError('집단별 원자료가 갱신되었습니다. 근거를 다시 확인한 뒤 저장하세요.')
                 return self.reply(200, review(user, context, body))
-            if route == '/api/feedback':
-                from db.experience_store import feedback
-                return self.reply(200, feedback(user, body))
-            if route in {'/api/trial/start', '/api/trial/end'}:
-                cookie = SimpleCookie(self.headers.get('Cookie',''))
-                with SESSION_LOCK:
-                    session = SESSIONS[cookie['welfind_session'].value]
-                    base = session.setdefault('base_user', dict(user))
-                    session['user'] = (base | {'id':'trial:' + secrets.token_urlsafe(12), 'trial':True,
-                                              'account_id':base['id'], 'admin':False,
-                                              'org':'강남구' if base['admin'] else base['org']}) if route.endswith('start') else dict(base)
-                    new_user = dict(session['user'])
-                return self.reply(200, {'user':new_user})
             if route == '/api/logout':
                 cookie = SimpleCookie(self.headers.get('Cookie',''))
                 with SESSION_LOCK: SESSIONS.pop(cookie['welfind_session'].value, None)
@@ -306,7 +289,7 @@ class Handler(BaseHTTPRequestHandler):
             # 데이터 업로드는 기존 관리자 검사 → 미리보기 → DB1 반영 흐름을 유지합니다.
             # 파일을 서버에 직접 저장하지 않고 검사 성공 후에만 임시 초안을 만듭니다.
             if route in {'/api/upload/validate','/api/upload/publish'}:
-                if not user['admin'] or user.get('trial'): raise PermissionError('관리자만 자료를 반영할 수 있습니다.')
+                if not user['admin']: raise PermissionError('관리자만 자료를 반영할 수 있습니다.')
                 from db.analysis_repository import monthly_upload, structure_upload, publish, records
                 if route.endswith('publish'):
                     with WRITE_LOCK:

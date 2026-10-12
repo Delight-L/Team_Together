@@ -10,10 +10,9 @@ globalThis.sessionStorage = Object.assign(data, {
 });
 const user = { id: 'a' }, context = { city: '강남구', district: '세곡동', month: '2025-01' };
 const key = draftKey(user, context, 'review');
-test('계정·체험·지역·월·작성 화면별 임시 보관 분리', () => {
+test('계정·지역·월·작성 화면별 임시 보관 분리', () => {
   const keys = [key,
     draftKey({ id: 'b' }, context, 'review'),
-    draftKey({ ...user, trial: true }, context, 'review'),
     draftKey(user, { ...context, district: '수서동' }, 'review'),
     draftKey(user, { ...context, month: '2025-02' }, 'review'),
     draftKey(user, context, 'report')];
