@@ -63,6 +63,11 @@ class GroupDataTest(unittest.TestCase):
         self.assertIn('20.00%', explain(self.context, '변화 요약', d)['answer'])
         self.assertIn('확정할 수 없습니다', explain(self.context, '서비스', d)['answer'])
 
+    def test_beginner_questions_explain_scope_and_next_action(self):
+        d = group_detail(self.context, self.snapshot)
+        self.assertIn('실제 사람 수가 아닙니다', explain(self.context, '이 지표는 무슨 뜻인가요?', d)['answer'])
+        self.assertIn('지원 필요 확인하기', explain(self.context, '다음에 무엇을 확인하나요?', d)['answer'])
+
     def test_reviews_are_separate_by_user_age_sex_and_month(self):
         with tempfile.TemporaryDirectory() as temp, patch('db.group_workspace.STORE', Path(temp) / 'reviews.sqlite3'):
             user = {'id': 'tester'}

@@ -65,10 +65,14 @@ def explain(context, question, detail=None):
     detail = group_detail(context) if detail is None else detail
     row = detail['current']
     label = f"{row['district']} · {row['age']} · {row['sex']}"
-    if any(word in question for word in ['서비스', '사업', '지원', '복지']):
-        answer = f'{label}의 유동량만으로 필요한 서비스나 이용 자격을 확정할 수 없습니다. 아래 사업 검토에서 지원 목적을 선택하면 DB2의 실제 사업 설명과 관련어를 비교합니다. 추천 이유·대상 조건·신청 방법을 확인하세요.'
+    if any(word in question for word in ['뜻', '지표', '의미']):
+        answer = '유동량은 해당 지역에서 관측된 활동 규모이며 실제 사람 수가 아닙니다. 변화율은 지난달과 이번 달 모두 자료가 있는 작은 구역끼리 비교한 값이고, 비중은 동 전체 유동량에서 선택 집단이 차지하는 몫입니다. 가구 구성과 연락·이동 비교는 동 전체 자료이므로 선택한 연령·성별만의 특성으로 해석하지 마세요.'
+    elif any(word in question for word in ['다음', '무엇을 확인']):
+        answer = '먼저 월별 추이에서 변화가 이어지는지 확인하세요. 이어 가구 구성과 동 전체 변화를 함께 살펴보세요. 실제 지원 필요를 확인한 뒤 «지원 필요 확인하기»에서 메모를 남기고 지원 목적을 선택하면 관련 복지사업의 조건을 검토할 수 있습니다.'
+    elif any(word in question for word in ['서비스', '사업', '지원', '복지']):
+        answer = f'{label}의 유동량만으로 필요한 서비스나 이용 자격을 확정할 수 없습니다. 아래 사업 검토에서 지원 목적을 선택하면 실제 복지사업 설명과 관련어를 비교합니다. 추천 이유·대상 조건·신청 방법을 확인하세요.'
     elif any(word in question for word in ['통화', '문자', '연락', '위험', '신호', '고립']):
-        answer = '현재 이 집단에 연결된 자료는 유동인구입니다. 집단별 통화·문자·이동 횟수의 탐지 결과는 아직 없습니다. Analysis2는 동 전체 참고 근거이며, 해당 결과를 특정 연령·성별의 고립 신호로 해석할 수 없습니다.'
+        answer = '현재 이 집단에 연결된 자료는 유동인구입니다. 집단별 통화·문자·이동 횟수의 탐지 결과는 아직 없습니다. 동 전체 분석은 동 전체 참고 근거이며, 해당 결과를 특정 연령·성별의 고립 신호로 해석할 수 없습니다.'
     elif any(word in question for word in ['요일', '시간', '주말', '평일']):
         answer = '요일·시간대 그래프는 같은 지역 전체의 별도 집계입니다. 선택한 연령·성별이 그 요일이나 시간에 활동했다는 뜻은 아닙니다. 요일은 7개 요일 평균=100, 시간은 가장 큰 시간대=100 지수로 표시합니다.'
     elif any(word in question for word in ['변화', '감소', '증가', '추이', '요약', '왜', '근거']):
@@ -76,9 +80,9 @@ def explain(context, question, detail=None):
         if change is None:
             change_text = '전월 자료가 없거나 비교 기준이 0이어서 전월 변화율을 계산하지 않습니다.'
         else:
-            change_text = f"전월과 공통으로 관측된 {row['matched_points']:,}개 격자에서, 격자당 유동량은 {abs(change):.2f}% {'증가' if change >= 0 else '감소'}했습니다."
+            change_text = f"전월과 공통으로 관측된 {row['matched_points']:,}개 구역에서, 구역별 평균 유동량은 {abs(change):.2f}% {'증가' if change >= 0 else '감소'}했습니다."
         share = f"{row['share']:.2f}%" if row['share'] is not None else '산출 불가'
-        answer = f"{row['month']} {label}의 지역 내 유동량 구성비는 {share}입니다. {change_text} 이는 고유 인원수나 고립 위험 점수가 아닙니다. 관측 격자 수와 연속 월의 추이를 함께 확인하세요."
+        answer = f"{row['month']} {label}의 지역 내 유동량 구성비는 {share}입니다. {change_text} 이는 고유 인원수나 고립 위험 점수가 아닙니다. 관측 구역 수와 연속 월의 추이를 함께 확인하세요."
     else:
         answer = '현재 도우미는 선택 집단의 실제 집계 근거를 안내합니다. «변화 요약», «요일·시간 해석», «통화 신호», «서비스 검토» 중 하나로 질문해 주세요. 임의의 원인이나 개인 상태는 추정하지 않습니다.'
     return dict(answer=answer, context=context, mode='데이터 근거 안내 · 외부 AI 호출 없음',

@@ -399,13 +399,13 @@ export default function App() {
               <h1>
                 {view === 'dashboard' ? (
                   <>
-                    우리 지역의 작은 변화를 <em>발견하세요</em>
+                    지역의 변화를 발견하고, <em>필요한 복지로 연결합니다</em>
                   </>
                 ) : (
                   titles[view]
                 )}
               </h1>
-              <p>{view === 'dashboard' ? '지역의 변화와 생활 여건을 살펴보고, 필요한 지원을 검토합니다.' : '데이터에서 발견한 변화, 더 세심한 지역 돌봄으로 이어집니다.'}</p>
+              <p>{view === 'dashboard' ? '복지 담당자가 지역의 고립 위험 신호와 생활 여건을 살펴보고, 필요한 지원을 검토하도록 돕습니다.' : '데이터에서 발견한 변화, 더 세심한 지역 돌봄으로 이어집니다.'}</p>
             </div>
             <div className={`heading-tools ${view === 'dashboard' ? 'case-heading-tools' : ''}`}>
             <div className="filters">
