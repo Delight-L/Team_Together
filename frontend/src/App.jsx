@@ -178,14 +178,13 @@ export default function App() {
     setView(next);
     if (window.innerWidth <= 760) setNavCollapsed(true);
   }
-  const previousChatView = useRef('dashboard');
   const [workflow, setWorkflow] = useState({}),
     [reportSeed, setReportSeed] = useState(null),
     [reviewSeed, setReviewSeed] = useState(null),
     [notice, setNotice] = useState(''),
-    [chatOpen, setChatOpen] = useState(() => window.innerWidth >= 1500),
     [busy, setBusy] = useState(false);
   const [chatDraft, setChatDraft] = useState(null);
+  const [chatGroup, setChatGroup] = useState(null);
   useEffect(() => {
     api('/session')
       .then((d) => setUser(d.user))
@@ -256,17 +255,7 @@ export default function App() {
     }
   }
   function expandChat() {
-    if (view !== 'chat') previousChatView.current = view;
-    setChatOpen(true);
-    setView('chat');
-  }
-  function collapseChat() {
-    setChatOpen(true);
-    setView(previousChatView.current);
-  }
-  function closeChat() {
-    setChatOpen(false);
-    if (view === 'chat') setView(previousChatView.current);
+    document.querySelector('.bomi-chat textarea')?.focus();
   }
   async function logout() {
     if (hasDrafts() && !window.confirm('로그아웃하면 임시 보관 중인 작성 내용이 삭제됩니다. 로그아웃할까요?')) return;
@@ -308,12 +297,12 @@ export default function App() {
     selected: district,
     onSelect: select,
     onStart: start,
-    onChat: () => setChatOpen(true),
+    onChat: expandChat,
     onInspect: (name) => { setDistrict(name); go('chart'); },
     onAsk: (name, question) => {
       setDistrict(name);
       setChatDraft({ id: Date.now(), contextKey: JSON.stringify({ city, district: name, month }), question });
-      setChatOpen(true);
+      expandChat();
     },
     busy,
     months: data?.months || [],
@@ -321,8 +310,9 @@ export default function App() {
 
   return (
     <div
-      className={`app-shell ${(chatOpen && view !== 'dashboard') || view === 'chat' ? 'with-chat' : ''} ${view === 'chat' ? 'chat-view' : ''} ${navCollapsed ? 'nav-collapsed' : ''} ${view === 'dashboard' ? 'briefing-shell group-shell' : ''}`}
+      className={`app-shell with-chat ${navCollapsed ? 'nav-collapsed' : ''} ${view === 'dashboard' ? 'briefing-shell group-shell' : ''}`}
     >
+      <button className="panel-handle menu-handle" onClick={() => setNavCollapsed(v => !v)} aria-label={navCollapsed ? '왼쪽 메뉴 펼치기' : '왼쪽 메뉴 접기'} aria-expanded={!navCollapsed} title={navCollapsed ? '메뉴 펼치기' : '메뉴 접기'}>{navCollapsed ? '›' : '‹'}</button>
       <nav className="sidebar" aria-label="주 메뉴">
         <button
           className="logo-toggle"
@@ -391,8 +381,8 @@ export default function App() {
             </span>
             {view !== 'dashboard' && <button
               className="icon-button"
-              onClick={() => view === 'chat' ? closeChat() : setChatOpen(v => !v)}
-              aria-label="보미에게 질문 패널 열고 닫기"
+              onClick={expandChat}
+              aria-label="보미 질문 입력하기"
               title="보미에게 질문"
             >
               <Icon name="chat" /><span className="topbar-chat-label">보미</span>
@@ -482,7 +472,7 @@ export default function App() {
                 onSelect={(item) => { setCity(item.city); setDistrict(item.district); setMonth(item.month); }}
                 onView={go}
               />}
-              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onRegion={group => {
+              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onActiveGroup={setChatGroup} onRegion={group => {
                 const name = group.code === '1123074' ? '일원2동' : group.district;
                 const available = data.geometry[city]?.units.find(u => u.n === group.district || u.n === name);
                 setDistrict(available?.n || group.district); setMonth(group.month); go('chart');
@@ -645,16 +635,16 @@ export default function App() {
       {data && supportOpen && <DataDialog onClose={() => setSupportOpen(false)} data={data} context={context} rows={selectedRows} user={user} />}
       {data && tourOpen && <GuideTour onClose={closeTour} />}
       {data && (
+
         <BomiChat
           key={user.id}
           layout="panel"
           draft={chatDraft}
-          visible={(chatOpen && view !== 'dashboard') || view === 'chat'}
-          context={context}
-          expanded={view === 'chat'}
-          onClose={closeChat}
-          onExpand={view === 'chat' ? collapseChat : expandChat}
+          visible={true}
+          context={view === 'dashboard' && chatGroup ? {city: chatGroup.city, district: chatGroup.district, month: chatGroup.month} : context}
+          group={view === 'dashboard' ? chatGroup : undefined}
         />
+
       )}
     </div>
   );

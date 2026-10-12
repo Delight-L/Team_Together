@@ -105,7 +105,7 @@ function useWelfareChat(context) {
   return { messages, busy, error, send, reset, stop, status };
 }
 
-export default function BomiChat({ context, group, layout = 'embedded', expanded = false, onExpand, onClose, draft, actions = [], visible = true }) {
+export default function BomiChat({ context, group, layout = 'embedded', expanded = false, onExpand, draft, actions = [], visible = true }) {
   const [tab, setTab] = useState('analysis');
   const [inputs, setInputs] = useState({ analysis: '', welfare: '' });
   const analysis = useAnalysisChat(context, group);
@@ -135,9 +135,8 @@ export default function BomiChat({ context, group, layout = 'embedded', expanded
       <img src="/brand/bomi-face.png" alt="" />
       <div><strong>보미에게 질문</strong><small><span className="online-dot" />{place} · {month}</small></div>
       <button className="bomi-new" disabled={chat.busy} onClick={() => { chat.reset(); setInput(''); }}>새 대화</button>
-      {layout === 'panel' && <>
+      {onExpand && <>
         <button className="icon-button" onClick={onExpand} aria-label={expanded ? '챗봇 패널로 돌아가기' : '챗봇 크게 보기'}><Icon name={expanded ? 'minimize' : 'expand'} size={17} /></button>
-        <button className="icon-button" onClick={onClose} aria-label="챗봇 닫기"><Icon name="close" size={17} /></button>
       </>}
     </header>
     <div className="bomi-tabs" role="tablist" aria-label="질문 종류">
