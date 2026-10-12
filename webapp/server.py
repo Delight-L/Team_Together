@@ -26,7 +26,7 @@ from webapp.common import dashboard_data  # noqa: F401
 
 DIST = ROOT / 'frontend' / 'dist'
 BRAND_FILES = {'welfind_logo.png', 'welfind_character.png', 'bomi-face.png', 'bomi-waiting.gif'}
-DEV_ORIGINS = {'http://127.0.0.1:5173', 'http://localhost:5173'}  # Vite 개발 서버(pnpm run dev)
+DEV_ORIGINS = {'http://127.0.0.1:5173', 'http://localhost:5173'}  # Vite 개발 서버(npm run dev)
 MAX_BODY_BYTES = 30_000_000
 DOCX_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
@@ -235,7 +235,7 @@ class Handler(BaseHTTPRequestHandler):
                     # /map 같은 화면 주소는 모두 React 첫 화면(index.html)이 처리합니다.
                     file = DIST / 'index.html'
             if not file.is_file():
-                self.send_json(503, {'error': 'frontend 폴더에서 pnpm install 후 pnpm run build를 실행하세요.'})
+                self.send_json(503, {'error': 'frontend 폴더에서 npm ci 후 npm run build를 실행하세요.'})
                 return
             content = file.read_bytes()
             self.send_response(200)

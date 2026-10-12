@@ -447,7 +447,7 @@ DB1 / DB2 업데이트
 
 ### 준비물
 
-- Python 3 가상환경(`.venv`), Node.js 22.12 이상, pnpm(`npm install -g pnpm`)
+- Python 3 가상환경(`.venv`), Node.js 22.12 이상(npm 포함)
 - PostgreSQL 접속 정보: 루트에 `.env`를 만들고 `.env.example`을 참고해 `DB_HOST`, `DB_USER`, `DB_PASSWORD` 등을 넣습니다. `.env`는 Git에 올리지 않습니다.
 - (선택) `OPENAI_API_KEY`: 보미의 AI 해석·AI 대화에 사용합니다. 없으면 데이터 근거 안내와 자료 검색으로만 답합니다.
 
@@ -456,10 +456,12 @@ DB1 / DB2 업데이트
 ```powershell
 .venv/Scripts/python.exe -m pip install -r requirements.txt
 cd frontend
-pnpm install --frozen-lockfile
-pnpm run build
+npm ci
+npm run build
 cd ..
 ```
+
+`npm ci`는 `package-lock.json`에 고정된 버전 그대로 설치합니다. 패키지를 추가·변경할 때만 `npm install <패키지>`를 쓰고, 바뀐 `package-lock.json`을 함께 커밋합니다.
 
 ### 실행
 
@@ -469,7 +471,7 @@ cd ..
 
 브라우저에서 http://127.0.0.1:8503 을 열고 `gangnam01 / demo1234`(강남구 담당자) 또는 `admin / admin1234`(관리자)로 로그인합니다. 시연용 계정이며 실제 인증이 아닙니다. 처음 로그인하면 단계별 사용 안내가 열리고, 오른쪽 위 `?` 버튼으로 다시 볼 수 있습니다.
 
-화면 코드를 고칠 때는 터미널을 하나 더 열어 `frontend`에서 `pnpm run dev`를 실행하고 http://127.0.0.1:5173 에서 확인합니다. 8503 주소는 마지막 빌드 결과를 보여 주므로, 수정 후 `pnpm run build`를 다시 해야 반영됩니다.
+화면 코드를 고칠 때는 터미널을 하나 더 열어 `frontend`에서 `npm run dev`를 실행하고 http://127.0.0.1:5173 에서 확인합니다. 8503 주소는 마지막 빌드 결과를 보여 주므로, 수정 후 `npm run build`를 다시 해야 반영됩니다.
 
 ### 화면이 읽는 자료
 
@@ -539,7 +541,7 @@ DB2 정기 수집은 [DB2 지자체복지 정기 수집](docs/DB2_지자체복�
 ```powershell
 cd frontend
 node --test tests/*.test.mjs
-pnpm run build
+npm run build
 cd ..
 .venv/Scripts/python.exe -m unittest discover -s webapp/tests
 .venv/Scripts/python.exe -m unittest discover -s chatbot/tests -t .
