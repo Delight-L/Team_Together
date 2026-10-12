@@ -1,13 +1,12 @@
-# 복지이음 챗봇과 별도 분석 도구
+# 보미 챗봇
 
-기본 React 화면의 챗봇은 `chat_test2/backend/app`에서 가져온 코드를 사용합니다. 실행·이식 위치는 [복지이음 코드 안내](welfare/README.md)를 확인하세요. 팀 서버의 요청은 `welfare/service.py`를 거쳐 원본 `handle_chat`에 전달됩니다. 기본 채팅은 루트 `.env`의 `OPENAI_API_KEY`, `OPENAI_MODEL`을 사용합니다.
+화면의 «보미에게 질문»은 두 가지 질문을 받습니다.
 
-아래 Streamlit/CLI는 별도로 실행하는 분석 도구입니다.
+| 탭 | 처리하는 코드 | 내용 |
+|---|---|---|
+| 이 화면 분석 | `db/region_workspace.py`(동), `db/group_workspace.py`(연령·성별 그룹) | 지금 보는 동·그룹의 분석 근거를 설명합니다. 기본은 AI 없이 근거 숫자만 안내하고, 사용자가 «AI 해석»을 고르면 AI를 호출합니다. |
+| 복지사업 찾기 | `chatbot/welfare/` | 팀이 정리한 복지사업 자료(`welfare/data/*.json`)에서 관련 사업을 찾아 안내합니다. `.env`에 `OPENAI_API_KEY`가 있으면 AI가 답변을 만들고, 없으면 자료 검색 결과로 답합니다. |
 
-`python main.py --chatbot`은 저장된 Analysis2 결과를 설명하는 Streamlit 화면, `--chatbot-cli`는 콘솔 데이터 질의 도구입니다.
+요청 흐름: 화면(`frontend/src/BomiChat.jsx`) → `webapp/server.py` → 위 코드. 복지사업 찾기의 자세한 구조는 [welfare/README.md](welfare/README.md)를 참고하세요.
 
-`service.py`는 저장된 근거 안내를 제공합니다. 기본값 `allow_agent=False`에서는 API 클라이언트를 생성하지 않습니다. 사용자가 AI 모드를 켜고 질문을 보내면 `allow_agent=True`를 전달합니다. 연결 실패나 설정 부재 시 규칙 기반 근거 안내로 돌아갑니다.
-
-콘솔에서는 1 분석 기준, 2 전체 신호, 3 지역 요약 메뉴가 토큰 없이 동작합니다. `AI켜기`를 입력한 뒤 자유 질문을 보내야 호출이 허용되며 `AI끄기`로 해제합니다.
-
-루트 `.env`에 `GEMINI_API_KEY`, `GEMINI_MODEL`을 설정합니다. API 키를 저장소에 포함하지 않습니다.
+API 키는 서버의 `.env`에만 두며 저장소와 화면 코드에 넣지 않습니다.
