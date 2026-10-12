@@ -1,5 +1,5 @@
 from pathlib import Path
-import argparse,sys
+import argparse,sys,joblib
 import pandas as pd
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
@@ -18,7 +18,7 @@ def main():
     if effective<dates[-1]+pd.offsets.MonthBegin(1):raise ValueError('Context cannot apply before period completion')
     d=pd.read_csv(a.input,dtype={'adm_cd':str});f,b,x=detect_changes(d,a.baseline,a.period)
     c=f.copy();c['cluster']=x.current_cluster;c['cluster_type']=x.current_cluster_type
-    metadata={'feature_domains':{f:domain for domain,cols in CONFIG.domains.items() for f in cols},'input':str(Path(a.input).resolve())}
+    metadata={'model_version':joblib.load(a.baseline)['model_version'],'feature_domains':{f:domain for domain,cols in CONFIG.domains.items() for f in cols},'input':str(Path(a.input).resolve())}
     store.commit_a1(a.db,d,f,c,a.period,str(effective.date()),False,x,metadata)
     out=Path(a.out_dir);out.mkdir(parents=True,exist_ok=True)
     f.to_csv(out/f'analysis1_features_{a.period}.csv',index=False,encoding='utf-8-sig')

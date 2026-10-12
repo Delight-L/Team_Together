@@ -2,7 +2,7 @@ from pathlib import Path
 import math,joblib,numpy as np,pandas as pd
 from common.config import CONFIG
 def _features(df,bundle,config=CONFIG):
- df=df.rename(columns=config.input_feature_map).copy(); keys=[config.area_key,config.area_name]; out=df[keys+['activity_intensity','weekend_weekday_index','foreigner_ratio','disability_ratio','livelihood_recipient_ratio']].copy()
+ df=df.rename(columns=config.input_feature_map).copy(); keys=[config.area_key,config.area_name]; out=df[keys+['activity_intensity','weekend_weekday_index','foreigner_ratio','elderly_living_alone_rate_65plus','livelihood_recipient_ratio']].copy()
  for p,cols in bundle['pca_columns'].items():
   m=bundle['pca'][p]; sc=m['pca'].transform(m['scaler'].transform(df[cols].astype(float)))[:,:2]; out[p+'_pc1']=sc[:,0]; out[p+'_pc2']=sc[:,1]
  fc=[c for cs in config.domains.values() for c in cs]; return out[keys+fc]
@@ -11,7 +11,8 @@ def detect_changes(base_df,bundle_or_path,period,config=CONFIG):
  base_df=base_df.copy().reset_index(drop=True)
  base_df[config.area_key]=base_df[config.area_key].astype(str)
  loaded=joblib.load(bundle_or_path) if isinstance(bundle_or_path,(str,Path)) else bundle_or_path
- required=list(dict.fromkeys(['flow_per_point','weekend_weekday_index','foreigner_ratio','disability_ratio','livelihood_recipient_ratio']+[c for cs in loaded['pca_columns'].values() for c in cs]))
+ if loaded['domains']!=config.domains:raise ValueError('Analysis1 model feature domains differ; explicit model migration required')
+ required=list(dict.fromkeys(['flow_per_point','weekend_weekday_index','foreigner_ratio','elderly_living_alone_rate_65plus','livelihood_recipient_ratio']+[c for cs in loaded['pca_columns'].values() for c in cs]))
  require_pass(validate_table(base_df,[config.area_key,config.area_name]+required,area_key=config.area_key,expected_areas=22,unique_area=True,non_numeric_columns=[config.area_key,config.area_name]))
  if set(base_df[config.area_key])!=set(loaded['baseline_features'][config.area_key].astype(str)):
   raise ValueError('Current area codes must match baseline')

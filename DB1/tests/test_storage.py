@@ -65,7 +65,7 @@ def test_new_a1_period_persists_without_replacing_baseline(db,tmp_path):
     frame=pd.read_csv(ROOT/'Analysis1/data/reference/reference_pca_input_2025H2.csv')
     frame['flow_per_point']*=1.02
     path=tmp_path/'fixture_input.csv';frame.to_csv(path,index=False)
-    cmd=[sys.executable,str(ROOT/'Analysis1/run_change_detection.py'),'--input',str(path),'--baseline',str(ROOT/'Analysis1/models/2025H2/analysis1_baseline_2025H2.joblib'),'--period','2026H1','--db',str(db),'--out-dir',str(tmp_path/'outputs')]
+    cmd=[sys.executable,str(ROOT/'Analysis1/run_change_detection.py'),'--input',str(path),'--baseline',str(ROOT/'Analysis1/models/2025H2_elder_v2/analysis1_baseline_2025H2.joblib'),'--period','2026H1','--db',str(db),'--out-dir',str(tmp_path/'outputs')]
     subprocess.run(cmd,check=True,capture_output=True,text=True)
     subprocess.run(cmd,check=True,capture_output=True,text=True)
     with store.connect(db) as con:

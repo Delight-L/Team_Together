@@ -7,7 +7,7 @@ PCA_COLUMNS={'active_pop':['male_ratio','age_10_ratio','age_20_ratio','age_30_ra
 CLUSTER_TYPE={0:'고활동·청년유동·1인가구 중심형',1:'고령·2인가구·구조적 복지배경 특화형',2:'중간활동·다인가구 중심형'}
 def fit_baseline(base_df,config=CONFIG):
  f,a=build_feature_table(base_df,pca_columns=PCA_COLUMNS,config=config); b,s=balance_domains(f,config); c,k=fit_final_clusters(f,b,config); c['cluster_type']=c.cluster.map(CLUSTER_TYPE)
- bundle={'baseline_period':'2025H2','pca_columns':PCA_COLUMNS,'pca':a['pca'],'feature_scaler':s,'kmeans':k,'domains':config.domains,'cluster_type':CLUSTER_TYPE,'baseline_features':f.copy(),'baseline_balanced':b.copy(),'baseline_clusters':c[[config.area_key,config.area_name,'cluster','cluster_type']].copy()}
+ bundle={'model_version':'analysis1_2025H2_elder_v2','baseline_period':'2025H2','pca_columns':PCA_COLUMNS,'pca':a['pca'],'feature_scaler':s,'kmeans':k,'domains':config.domains,'cluster_type':CLUSTER_TYPE,'baseline_features':f.copy(),'baseline_balanced':b.copy(),'baseline_clusters':c[[config.area_key,config.area_name,'cluster','cluster_type']].copy()}
  return f,b,c,bundle
 def save_baseline(base_df,output_dir,config=CONFIG,results_dir=None):
  out=Path(output_dir); out.mkdir(parents=True,exist_ok=True)

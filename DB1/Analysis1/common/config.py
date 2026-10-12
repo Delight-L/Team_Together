@@ -52,7 +52,7 @@ class Analysis1Config:
                 "household_structure_pc2",
             ),
             "structural_welfare": (
-                "disability_ratio",
+                "elderly_living_alone_rate_65plus",
                 "livelihood_recipient_ratio",
             ),
         }

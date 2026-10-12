@@ -75,7 +75,7 @@ def build_feature_table(
     - activity_intensity
     - weekend_weekday_index
     - foreigner_ratio
-    - disability_ratio
+    - elderly_living_alone_rate_65plus
     - livelihood_recipient_ratio
     - raw columns required by each PCA block.
 
@@ -95,7 +95,7 @@ def build_feature_table(
         "activity_intensity",
         "weekend_weekday_index",
         "foreigner_ratio",
-        "disability_ratio",
+        "elderly_living_alone_rate_65plus",
         "livelihood_recipient_ratio",
     ]
     report = validate_table(

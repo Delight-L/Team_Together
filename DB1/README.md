@@ -77,3 +77,8 @@ python tools/explain_signals.py --output outputs/handoff/isolation_signal_explan
 ## 기상 변화 추적
 
 2022-01~2025-06 기상을 고정 기준으로 2025-07부터 실제 월별·행동 관측 3개월별 계절 비교를 저장합니다. 기존 `evidence-context` 및 scan/export 갱신 경로에 포함되며 행동 탐지는 유지합니다. [실제 결과와 사용 방법](docs/WEATHER_TRACKING_RESULT_20261007.md)을 확인하세요.
+
+
+## Analysis1 모델 갱신 (2026-10-12)
+
+장애인 비율을 고령인구 중 독거노인 비율로 대체했습니다. 공식 모델은 `analysis1_2025H2_elder_v2`이며 업데이트 입력·분모·반기 적용 규칙은 [Analysis1 안내](Analysis1/README.md)를 참조하세요. 과거의 독거노인 보조 연결 설명은 당시 버전의 기록입니다.

@@ -8,24 +8,28 @@
     "public": {
       "resident": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\원본\\등록인구(연령별_동별)_20260922163622.csv",
       "household": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\원본\\세대원수별+세대수_2025Q3_Q4.csv",
-      "disability": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\원본\\장애인 현황(장애유형별, 동별).csv",
       "welfare": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\원본\\국민기초생활 수급자 동별 현황(202405).xlsx"
     },
     "periods": {
       "2025H2": {
-        "disability_year": 2025,
-        "welfare_observation": "2024-05"
+        "welfare_observation": "2024-05",
+        "elder_year": 2025
       }
     },
-    "baseline_model": "Analysis1/models/2025H2/analysis1_baseline_2025H2.joblib",
+    "baseline_model": "Analysis1/models/2025H2_elder_v2/analysis1_baseline_2025H2.joblib",
     "elderly_living_alone": {
       "sources": [
         "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\원본\\201_DT_201004_F030011_*.csv"
       ],
       "available_from": {},
       "allow_non_gangnam_terminal_error": true,
-      "source_archive": "Analysis1/data/raw/elderly"
-    }
+      "source_archive": "Analysis1/data/raw/elderly",
+      "population_sources": [
+        "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\원본\\등록인구(연령별_동별)*.csv"
+      ],
+      "population_archive": "Analysis1/data/raw/elderly_population"
+    },
+    "model_version": "analysis1_2025H2_elder_v2"
   },
   "analysis2": {
     "telecom_dir": "C:\\Users\\user\\Desktop\\Team_Together\\서울시 공공데이터\\서울 시민생활 데이터\\29개 통신정보 7~12월",

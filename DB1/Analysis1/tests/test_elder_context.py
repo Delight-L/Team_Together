@@ -120,3 +120,39 @@ def test_archive_preserves_exact_source_bytes(fixture):
     db,path,settings,out=fixture;archive=out/'archive';settings['analysis1']['elderly_living_alone']['source_archive']=str(archive)
     original=path.read_bytes();elder.run(db,settings,out/'out')
     files=list(archive.glob('*.csv'));assert len(files)==1 and files[0].read_bytes()==original
+
+
+def test_cluster_annual_append_denominator_alignment_and_missing(fixture,monkeypatch):
+    import pandas as pd
+    from preprocessing import loader,resident
+    db,path,settings,out=fixture
+    population=out/'population.csv';population.write_text('synthetic denominator',encoding='utf-8')
+    settings['analysis1']['elderly_living_alone'].update(population_sources=[str(population)],population_archive=str(out/'population_archive'))
+    monkeypatch.setattr(loader,'read_local',lambda *a,**kw:pd.DataFrame(columns=['2025 4/4','2026 4/4']))
+    monkeypatch.setattr(resident,'preprocess_resident',lambda *a,**kw:pd.DataFrame({'dong_name':[f'동{i}' for i in range(22)],'resident_total':[1000]*22,'resident_ratio_65_plus':[.2]*22}))
+    frame=pd.DataFrame({'adm_cd':[str(i) for i in range(22)],'dong_name':[f'동{i}' for i in range(22)]})
+    first,meta=elder.attach_cluster_feature(db,settings,frame,'2026H1')
+    assert meta['elder_year']==2025 and first.elderly_living_alone_rate_65plus.eq(.5).all()
+    with sqlite3.connect(db) as c:before=c.execute('SELECT * FROM a1_elder_observation WHERE year=2025').fetchall()
+    write_source(path,years=(2024,2025,2026))
+    updated,meta=elder.attach_cluster_feature(db,settings,frame,'2026H2')
+    assert meta['elder_year']==2026 and updated.elderly_living_alone_rate_65plus.eq(.5).all()
+    assert elder.ingest(db,settings)['inserted_years']==[]
+    with sqlite3.connect(db) as c:assert before==c.execute('SELECT * FROM a1_elder_observation WHERE year=2025').fetchall()
+    with pytest.raises(ValueError,match='Future elderly'):elder.attach_cluster_feature(db,settings,frame,'2026H1',{'elder_year':2026})
+    with sqlite3.connect(db) as c:c.execute('DELETE FROM a1_elder_population WHERE year=2026')
+    settings['analysis1']['elderly_living_alone'].pop('population_sources')
+    with pytest.raises(ValueError,match='Missing elderly same-year'):elder.attach_cluster_feature(db,settings,frame,'2026H2')
+
+def test_denominator_revision_blocked(fixture,monkeypatch):
+    import pandas as pd
+    from preprocessing import loader,resident
+    db,path,settings,out=fixture
+    population=out/'population.csv';population.write_text('synthetic',encoding='utf-8')
+    settings['analysis1']['elderly_living_alone'].update(population_sources=[str(population)],population_archive=str(out/'archive'))
+    monkeypatch.setattr(loader,'read_local',lambda *a,**kw:pd.DataFrame(columns=['2025 4/4']))
+    def make(total):return pd.DataFrame({'dong_name':[f'동{i}' for i in range(22)],'resident_total':[total]*22,'resident_ratio_65_plus':[.2]*22})
+    monkeypatch.setattr(resident,'preprocess_resident',lambda *a,**kw:make(1000));elder.ingest(db,settings)
+    monkeypatch.setattr(resident,'preprocess_resident',lambda *a,**kw:make(1100))
+    with pytest.raises(ValueError,match='Historical elderly denominator changed'):elder.ingest(db,settings)
+    with sqlite3.connect(db) as c:assert c.execute('SELECT DISTINCT population FROM a1_elder_population').fetchall()==[(200.0,)]

@@ -117,6 +117,9 @@ def read_source(path,mapping,allow_terminal_error=False):
 def mappings(con):
     rows=con.execute('SELECT DISTINCT adm_nm,adm_cd FROM a1_context').fetchall()
     result=dict(rows)
+    if not result:
+        ref=pd.read_csv(ROOT/'Analysis1/data/reference/reference_pca_input_2025H2.csv',dtype={'adm_cd':str})
+        result=dict(zip(ref.dong_name,ref.adm_cd))
     if len(set(result.values()))!=22 or len(result)!=22:raise ValueError('Ambiguous DB1 region mapping')
     if '개포3동' in result:result['일원2동']=result['개포3동']
     return result
@@ -124,14 +127,69 @@ def mappings(con):
 def make_annual(con):
     rows=con.execute('SELECT adm_cd,year,category,sex,value FROM a1_elder_observation').fetchall()
     cells={(cd,y,cat,s):value for cd,y,cat,s,value in rows}
-    names={cd:n for n,cd in con.execute('SELECT DISTINCT adm_nm,adm_cd FROM a1_context')}
+    names={cd:n for n,cd in mappings(con).items() if n!='일원2동'}
     for cd,year in sorted({(r[0],r[1]) for r in rows}):
         def get(cat,sex='계'):return cells.get((cd,year,cat,sex))
         total=get('합계');prior=cells.get((cd,year-1,'합계','계'));benefit=get(CATEGORIES[1]);low=get(CATEGORIES[2])
         economic=None if benefit is None or low is None else benefit+low
         female=get('합계','여');male=get('합계','남')
         payload={'adm_cd':cd,'adm_nm':names[cd],'year':year,'source_age_minimum':65,'reference_precision':'year','elderly_living_alone_total':total,'male':male,'female':female,'female_share':ratio(female,total),'beneficiary_total':benefit,'low_income_total':low,'general_total':get('일반'),'beneficiary_share_among_living_alone_elderly':ratio(benefit,total),'low_income_share_among_living_alone_elderly':ratio(low,total),'economic_vulnerability_total':economic,'economic_vulnerability_share_among_living_alone_elderly':ratio(economic,total),'previous_year':year-1 if (cd,year-1,'합계','계') in cells else None,'previous_total':prior,'yoy_count_change':None if total is None or prior is None else total-prior,'yoy_count_change_pct':None if total is None else (None if ratio(total,prior) is None else (total/prior-1)*100),'rate_among_all_65plus_residents':None,'all_65plus_denominator_status':'not_added_reference_population_and_date_unverified','missing_cells':sum(cells[cd,year,cat,sex] is None for cat in CATEGORIES for sex in SEXES),'interpretation':'annual_structural_living_arrangement_and_economic_context_not_isolation_cases','version':VERSION}
+        if con.execute("SELECT 1 FROM sqlite_master WHERE name='a1_elder_population'").fetchone():
+            den=con.execute('SELECT population,source_sha256 FROM a1_elder_population WHERE adm_cd=? AND year=?',(cd,year)).fetchone()
+            if den:
+                if total is not None and total>den[0]:raise ValueError('Elderly living-alone count exceeds same-year 65plus denominator')
+                payload.update(rate_among_all_65plus_residents=ratio(total,den[0]),all_65plus_denominator_status='same_year_Q4_registered_population',all_65plus_population=den[0],denominator_reference=f'{year}Q4',denominator_source_sha256=den[1])
         con.execute('INSERT INTO a1_elder_annual VALUES(?,?,?) ON CONFLICT(adm_cd,year) DO UPDATE SET payload_json=excluded.payload_json',(cd,year,dumps(payload)))
+
+def ingest_populations(con,settings,mapping):
+    """Archive and append same-year Q4 age denominators; reject silent corrections."""
+    from preprocessing.loader import read_local
+    from preprocessing.resident import preprocess_resident
+    options=settings['analysis1']['elderly_living_alone']
+    if not options.get('population_sources'):return
+    con.execute('CREATE TABLE IF NOT EXISTS a1_elder_population(adm_cd TEXT,year INTEGER,population REAL NOT NULL,source_sha256 TEXT NOT NULL,metadata_json TEXT NOT NULL,PRIMARY KEY(adm_cd,year))')
+    candidates={Path(p).resolve() for pat in options['population_sources'] for p in glob.glob(pat)}
+    archive=ROOT/options.get('population_archive','Analysis1/data/raw/elderly_population')
+    candidates.update(archive.glob('*.csv'))
+    pending={}
+    for path in sorted(candidates):
+        raw=read_local(path)
+        years=sorted({int(m[1]) for col in raw.columns if (m:=re.match(r'(20\d{2})\s*4/4',str(col)))})
+        for year in years:
+            frame=preprocess_resident(path,year=year,quarters=(4,))
+            if len(frame)!=22 or set(frame.dong_name)!=(set(mapping)-{'일원2동'}):raise ValueError('Missing elderly denominator dong coverage')
+            sha=hashlib.sha256(path.read_bytes()).hexdigest()
+            for row in frame.itertuples():
+                value=float(row.resident_total*row.resident_ratio_65_plus)
+                if not pd.notna(value) or value<=0:raise ValueError('Invalid elderly population denominator')
+                key=(mapping[row.dong_name],year)
+                if key in pending and abs(pending[key][0]-value)>1e-7:raise ValueError('Conflicting elderly population exports')
+                pending[key]=(value,sha,{'source_path':str(path),'reference':f'{year}Q4','population_definition':'registered population aged 65plus; annual-to-Q4 alignment'})
+            archive.mkdir(parents=True,exist_ok=True)
+            saved=archive/(sha+'.csv')
+            if not saved.exists():saved.write_bytes(path.read_bytes())
+    for (cd,year),(value,sha,meta) in pending.items():
+        old=con.execute('SELECT population FROM a1_elder_population WHERE adm_cd=? AND year=?',(cd,year)).fetchone()
+        if old and abs(old[0]-value)>1e-7:raise ValueError('Historical elderly denominator changed; explicit migration required')
+        con.execute('INSERT OR IGNORE INTO a1_elder_population VALUES(?,?,?,?,?)',(cd,year,value,sha,dumps(meta)))
+
+def attach_cluster_feature(db,settings,frame,period,options=None):
+    """H1: latest previous year; H2: latest <= current year. Never use future data."""
+    ingest(db,settings)
+    options=options or {};limit=int(period[:4])-(1 if period.endswith('H1') else 0)
+    requested=options.get('elder_year')
+    if requested is not None and int(requested)>limit:raise ValueError('Future elderly year is not allowed')
+    with sqlite3.connect(db) as con:
+        years=[r[0] for r in con.execute('SELECT year FROM a1_elder_annual GROUP BY year HAVING COUNT(*)=22 AND year<=? ORDER BY year DESC',(limit,))]
+        year=int(requested) if requested is not None else (years[0] if years else None)
+        if year is None or year not in years:raise ValueError('Missing elderly annual source for '+period)
+        rows=[json.loads(r[0]) for r in con.execute('SELECT payload_json FROM a1_elder_annual WHERE year=?',(year,))]
+    values={r['adm_cd']:r.get('rate_among_all_65plus_residents') for r in rows}
+    out=frame.copy();out['adm_cd']=out.adm_cd.astype(str)
+    out['elderly_living_alone_rate_65plus']=out.adm_cd.map(values)
+    if len(out)!=22 or not out.elderly_living_alone_rate_65plus.between(0,1).all():raise ValueError('Missing elderly same-year Q4 denominator for '+str(year))
+    return out,{'elder_year':year,'denominator_reference':f'{year}Q4','age_minimum':65,'alignment':'retrospective_annual_to_Q4','annual_lag_years':int(period[:4])-year,'available_from':settings['analysis1']['elderly_living_alone'].get('available_from',{}).get(str(year)),'note':'annual context; not monthly or known-at-event-time; no automatic historical cluster overwrite'}
+
 
 def ingest(db,settings):
     options=settings.get('analysis1',{}).get('elderly_living_alone')
@@ -181,6 +239,7 @@ def ingest(db,settings):
                 con.execute('INSERT INTO a1_elder_year VALUES(?,?,?,?)',(year,p['fingerprint'],published,dumps(meta)))
                 con.executemany('INSERT INTO a1_elder_observation VALUES(?,?,?,?,?,?)',[(r['adm_cd'],year,r['category'],r['sex'],r['value'],r['raw_value']) for r in p['cells']]);inserted.append(year)
             for meta in assets:con.execute('INSERT OR IGNORE INTO a1_elder_source(sha256,source_path,metadata_json) VALUES(?,?,?)',(meta['sha256'],meta['source_path'],dumps(meta)))
+            ingest_populations(con,settings,mapping)
             make_annual(con)
         return {'inserted_years':inserted,'source_files':len(paths),'quarantined_outside_gangnam_records':sum(len(a['quarantined_records']) for a in assets)}
 

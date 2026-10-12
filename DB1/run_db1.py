@@ -17,8 +17,7 @@ def main():
     parser.add_argument('--period',help='Analysis1 half-year, e.g. 2026H1')
     parser.add_argument('--month',help='Analysis2 month, e.g. 2026-01')
     parser.add_argument('--effective-from',help='Analysis1 Context applicability month YYYY-MM')
-    parser.add_argument('--resident'); parser.add_argument('--household'); parser.add_argument('--disability'); parser.add_argument('--welfare')
-    parser.add_argument('--disability-year',type=int)
+    parser.add_argument('--resident'); parser.add_argument('--household'); parser.add_argument('--welfare')
     args=parser.parse_args()
     config=Path(args.config).resolve()
     def worker(kind,extra=()):
@@ -73,7 +72,7 @@ def main():
     elif args.command=='analysis1':
         if not args.period: parser.error('--period is required')
         extra=['--period',args.period]
-        for key in ['effective_from','resident','household','disability','welfare','disability_year']:
+        for key in ['effective_from','resident','household','welfare']:
             value=getattr(args,key)
             if value is not None: extra+=['--'+key.replace('_','-'),str(value)]
         worker('Analysis1',extra)

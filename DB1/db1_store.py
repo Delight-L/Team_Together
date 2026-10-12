@@ -123,7 +123,7 @@ def commit_a1(path, input_df, features, clusters, period, effective_from, baseli
         for row in records(clusters):
             code = str(row["adm_cd"])
             f = by_code[code]
-            con.execute("INSERT INTO a1_context VALUES(?,?,?,?,?,?,?,?)",(code,period,row["dong_name"],effective_from,BASELINE_VERSION,int(row["cluster"]),row["cluster_type"],payload(f)))
+            con.execute("INSERT INTO a1_context VALUES(?,?,?,?,?,?,?,?)",(code,period,row["dong_name"],effective_from,(metadata or {}).get("model_version",BASELINE_VERSION),int(row["cluster"]),row["cluster_type"],payload(f)))
             if baseline:
                 con.execute("INSERT INTO a1_region_baseline(adm_cd,adm_nm,baseline_period,cluster_id,cluster_label,centroid_distance) VALUES(?,?,?,?,?,?) ON CONFLICT(adm_cd,baseline_period) DO UPDATE SET adm_nm=excluded.adm_nm,cluster_id=excluded.cluster_id,cluster_label=excluded.cluster_label,centroid_distance=excluded.centroid_distance",(code,row["dong_name"],period,int(row["cluster"]),row["cluster_type"],row.get("centroid_distance")))
             for name, domain in (metadata or {})["feature_domains"].items():
@@ -137,7 +137,7 @@ def commit_a1(path, input_df, features, clusters, period, effective_from, baseli
                     delta = float(row["delta_"+name])
                     original = current-delta
                     con.execute("INSERT INTO a1_change_feature VALUES(?,?,?,?,?,?,?,?)",(code,period,name,domain,original,current,delta,None if original==0 else delta/original))
-        con.execute("INSERT INTO db1_run(analysis,period,fingerprint,model_version,metadata_json) VALUES(?,?,?,?,?)",("analysis1",period,digest,BASELINE_VERSION,payload(metadata or {})))
+        con.execute("INSERT INTO db1_run(analysis,period,fingerprint,model_version,metadata_json) VALUES(?,?,?,?,?)",("analysis1",period,digest,(metadata or {}).get("model_version",BASELINE_VERSION),payload(metadata or {})))
     return True
 
 
@@ -160,6 +160,9 @@ def commit_a2(path, current, result, evidence, context_period, metadata=None):
     digest = fingerprint(current,["date","행정동코드"])
     with connect(path) as con:
         con.execute("BEGIN IMMEDIATE")
+        versions=con.execute("SELECT DISTINCT model_version FROM a1_context WHERE period=?",(context_period,)).fetchall()
+        if len(versions)!=1: raise ValueError("Analysis1 context model version is missing or ambiguous")
+        context_model_version=versions[0][0]
         if already_processed(con,"analysis2",period,digest):
             return False
         last = con.execute("SELECT MAX(date) FROM a2_feature").fetchone()[0]
@@ -173,10 +176,10 @@ def commit_a2(path, current, result, evidence, context_period, metadata=None):
         for row in records(current):
             con.execute("INSERT INTO a2_feature VALUES(?,?,?,?,?)",(str(row["행정동코드"]),period,row["행정동"],0,payload(row)))
         for row in records(result):
-            con.execute("INSERT INTO a2_detection VALUES(?,?,?,?,?,?,?,?,?,?)",(str(row["행정동코드"]),period,context_period,BASELINE_VERSION,int(row["any_signal"]),int(row["communication_signal"]),int(row["mobility_signal"]),int(row["combined_signal"]),row["signal_status"],payload(row)))
+            con.execute("INSERT INTO a2_detection VALUES(?,?,?,?,?,?,?,?,?,?)",(str(row["행정동코드"]),period,context_period,context_model_version,int(row["any_signal"]),int(row["communication_signal"]),int(row["mobility_signal"]),int(row["combined_signal"]),row["signal_status"],payload(row)))
         for row in records(evidence):
             con.execute("INSERT INTO a2_evidence VALUES(?,?,?)",(str(row["행정동코드"]),period,payload(row)))
-        con.execute("INSERT INTO db1_run(analysis,period,fingerprint,model_version,metadata_json) VALUES(?,?,?,?,?)",("analysis2",period,digest,BASELINE_VERSION,payload(metadata or {})))
+        con.execute("INSERT INTO db1_run(analysis,period,fingerprint,model_version,metadata_json) VALUES(?,?,?,?,?)",("analysis2",period,digest,context_model_version,payload(metadata or {})))
     return True
 
 
