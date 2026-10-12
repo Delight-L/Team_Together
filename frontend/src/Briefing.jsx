@@ -114,7 +114,6 @@ export function RegionInsight({ region, city, month, onClose, onStart, onChat, b
   );
 }
 
-export { CaseBriefing as Briefing, BriefingStats } from './CaseBriefing';
 
 export function RegionalOverview({
   regions,

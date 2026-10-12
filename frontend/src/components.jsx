@@ -96,55 +96,6 @@ export function Bomi({ busy = false }) {
   );
 }
 
-// geometry=기존 SVG 경계, rows=선택 월 분석, selected=선택 동, onSelect=부모 상태 변경 함수.
-// 클릭하면 App의 district가 바뀌어 옆 상세 패널과 챗봇이 함께 갱신됩니다.
-export function RegionMap({ geometry, rows, selected, onSelect }) {
-  if (!geometry) return <div className="empty">연결된 지도 경계가 없습니다.</div>;
-  const count = (name) => rows.filter((r) => r['행정동명'] === name && r.is_risk_signal).length;
-  const hasHistory = (name) => rows.some((r) => r['행정동명'] === name && r.has_enough_history);
-  return (
-    <svg
-      className="region-map"
-      viewBox={`-18 -18 ${geometry.w + 36} ${geometry.h + 36}`}
-      aria-label="행정동별 확인 후보 분포"
-    >
-      <defs>
-        <filter id="map-shadow">
-          <feDropShadow dx="0" dy="5" stdDeviation="5" floodColor="#16336c" floodOpacity=".12" />
-        </filter>
-      </defs>
-      <g filter="url(#map-shadow)">
-        {geometry.units.map((u) => (
-          <g
-            key={u.n}
-            className={`map-region ${selected === u.n ? 'selected' : ''}`}
-            role="button"
-            tabIndex="0"
-            aria-label={`${u.n}, ${hasHistory(u.n) ? '확인 후보 ' + count(u.n) + '개' : '판단 보류'}`}
-            aria-pressed={selected === u.n}
-            onClick={() => onSelect(u.n)}
-            onKeyDown={(e) => {
-              if (['Enter', ' '].includes(e.key)) {
-                e.preventDefault();
-                onSelect(u.n);
-              }
-            }}
-          >
-            <path
-              d={u.d}
-              fill={!hasHistory(u.n) ? '#e7ebf1' : count(u.n) ? '#76a5ff' : '#dceaff'}
-            />
-            <text x={u.cx} y={u.cy} textAnchor="middle">
-              {u.n}
-            </text>
-            {count(u.n) > 0 && <circle cx={u.cx} cy={u.cy + 16} r="3.5" fill="#2563eb" />}
-          </g>
-        ))}
-      </g>
-    </svg>
-  );
-}
-
 export function EvidenceTable({ rows }) {
   return (
     <div className="table-scroll">

@@ -1,9 +1,0 @@
-{
-  "status": "PASS",
-  "rows": 22,
-  "unit": "강남구 행정동 1행",
-  "period": "2025H2 구조자료",
-  "requires_human_review": false,
-  "rule_version": "analysis1-raw-adapter-v1",
-  "note": "지역 유형 맥락용 전처리이며 사회적 고립 위험 점수가 아님"
-}

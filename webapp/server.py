@@ -221,7 +221,7 @@ class Handler(BaseHTTPRequestHandler):
             # Expose only build output and explicitly named brand files.
             if route.path.startswith('/brand/'):
                 name = route.path.rsplit('/',1)[-1]
-                if name not in {'welfind_logo.png','welfind_character.png','bomi-face.png','bomi-waiting.gif','bomi-direction.gif'}:
+                if name not in {'welfind_logo.png','welfind_character.png','bomi-face.png','bomi-waiting.gif'}:
                     return self.reply(404, {'error':'파일을 찾을 수 없습니다.'})
                 path = ROOT / 'ci' / name
             else:
