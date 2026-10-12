@@ -62,7 +62,7 @@ def prepare(folder):
     context['denominator_reference'] = '2025Q4'
     context['elder_available_from'] = None
     context['elder_time_alignment'] = 'retrospective_annual_to_Q4'
-    context['context_note'] = '2025년 연간 구조자료·65세 이상 인구의 2025Q4 기준. 공개 시점 미확인으로 과거 월 당시 정보나 개인 고립 판정에 사용하지 않습니다.'
+    context['context_note'] = '2025년 독거노인 수와 2025년 4분기 65세 이상 등록인구를 비교한 연간 지역 배경자료입니다. 공개 시점 미확인으로 과거 월 당시 정보나 개인 고립 판정에 사용하지 않습니다.'
     report = dict(status='PASS', rows=len(base), period='2025H2 구조자료',
                   rule_version=MODEL_VERSION, elderly_source=source,
                   denominator_reference='2025Q4', available_from=None,

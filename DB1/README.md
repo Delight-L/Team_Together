@@ -17,7 +17,7 @@ DB1 폴더의 PowerShell에서 실행합니다.
 - `outputs/db1.sqlite`: 세 분석이 공유하는 운영 DB. 유일한 운영 기준입니다.
 - `outputs/integrated/`: Analysis1·2 통합 CSV와 Analysis1·2·3 연결 CSV.
 - `outputs/figures/`: 기존 분석 그래프 PNG·SVG. CSV 갱신과 별도로 보존된 시각화입니다.
-- `Analysis1/data/reference/`: 고정 기준 입력; `models/2025H2/`: 기준 모델.
+- `Analysis1/data/reference/`: 고정 기준 입력; `models/2025H2_elder_v2/`: 기준 모델.
 - `Analysis1/data/processed/<반기>/`: 전처리 입력; `outputs/baseline/`, `outputs/periods/<반기>/`: 분석 결과.
 - `Analysis2/data/reference/`: 초기 이력·기준 비교 자료; `outputs/history.csv`, `detection.csv`, `evidence.csv`: DB 결과 내보내기; `outputs/monthly/<월>/`: 월별 특징·탐지 결과.
 - `Analysis2/tests/fixtures/`: 테스트에 필요한 작은 원본 예제. 운영 원본 폴더와 구분합니다.
@@ -35,7 +35,7 @@ Analysis2의 동·연령대별 전처리 이력과 업데이트 경로를 추가
 연결 구현과 실행을 완료했다. 동·연령별 행동과 소비의 같은 관측 기간 연결은 `v_a123_age_source_context`를 우선 사용한다. 기존 `v_a23_age_monthly`와 `v_a23_age_detail`은 같은 라벨월의 후속 기간 소비 맥락이다. 분기 집계는 `v_a23_age_quarter`, 공표일 기준 조회는 `v_a23_age_available_context`다. 상세 해석과 업데이트 규칙은 `Analysis3/docs/AGE_BEHAVIOR_CONSUMPTION.md`를 참조한다. 소비는 보조 근거이며 탐지 신호나 고립 점수에 합산하지 않는다.
 
 
-## 동별 독거노인 통계 연결 (2026-10-07)
+## 동별 독거노인 통계 연결 기록 (2026-10-07, 구 모델)
 
 동별 독거노인 관측 통계 연결을 완료했다. `v_a1_elder_annual`은 연간 지표, `v_a1_elder_context`는 반기 지역 유형 연결, `v_a123_age_elder_context`는 동·연령별 행동·소비와의 사후 연결이다. 독거노인은 65세 이상이므로 60plus에만 부분 연령 일치로 연결한다. 다른 연령대에는 직접 적용하지 않는다. 공표일 기준 조회는 `v_a123_age_elder_available_context`다. 독거 여부는 고립 판정이 아니며 기존 모형과 점수는 유지한다. 갱신 명령은 `run_db1.ps1 -Command analysis1-elder`와 일반 `scan`이고, 해석·DB 질의·정정 처리 규칙은 `Analysis1/ELDERLY_CONTEXT.md`에 있다.
 
@@ -81,4 +81,4 @@ python tools/explain_signals.py --output outputs/handoff/isolation_signal_explan
 
 ## Analysis1 모델 갱신 (2026-10-12)
 
-장애인 비율을 고령인구 중 독거노인 비율로 대체했습니다. 공식 모델은 `analysis1_2025H2_elder_v2`이며 업데이트 입력·분모·반기 적용 규칙은 [Analysis1 안내](Analysis1/README.md)를 참조하세요. 과거의 독거노인 보조 연결 설명은 당시 버전의 기록입니다.
+현재 지역 배경 지표는 **65세 이상 등록인구 중 독거노인 비율**입니다. 연간 독거노인 수를 같은 해 4분기 65세 이상 등록인구로 나눕니다. 공식 모델은 `analysis1_2025H2_elder_v2`이며 업데이트 입력·분모·반기 적용 규칙은 [Analysis1 안내](Analysis1/README.md)를 참조하세요. 과거의 독거노인 보조 연결 설명은 당시 버전의 기록입니다.

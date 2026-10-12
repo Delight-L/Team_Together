@@ -179,8 +179,8 @@ export function Upload() {
               setPrepared(null);
             }}
           >
-            <option value="monthly">Analysis2 탐지 결과 CSV 또는 Excel</option>
-            <option value="structure">2025H2 지역 구조자료 5종 · 독거노인 포함</option>
+            <option value="monthly">동별 통화·문자·이동 분석 결과 (CSV/Excel)</option>
+            <option value="structure">2025년 하반기 지역 배경자료 5종 · 독거노인 포함</option>
           </select>
         </label>
         <label>
@@ -201,7 +201,7 @@ export function Upload() {
           {busy ? '처리 중…' : '업로드 자료 검사 및 분석'}
         </button>
       </div>
-      {kind === 'structure' && <p className="hint">SKT 구조자료·등록인구·세대수·생계급여 수급자·독거노인 CSV/XLSX를 선택하세요. 독거노인 지표는 2025년 연간 자료와 2025Q4의 65세 이상 인구를 사용합니다.</p>}
+      {kind === 'structure' && <p className="hint">SKT 구조자료·등록인구·세대수·생계급여 수급자·독거노인 CSV/XLSX를 선택하세요. 65세 이상 등록인구 중 독거노인 비율은 2025년 독거노인 수와 2025년 4분기 인구를 기준으로 계산합니다.</p>}
       {notice && (
         <p className="notice" role="status">
           {notice}

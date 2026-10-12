@@ -26,8 +26,11 @@ export function DataSummary({ data, context, rows, user, expanded = false }) {
     <h3>확인 후보는 어떻게 정하나요?</h3>
     <p>시·군·구 전체의 공통 변화를 뺀 뒤, 과거 흐름과 얼마나 다른지(평소 대비 차이)를 살펴봅니다. 전화·문자 또는 평일·휴일 이동의 값이 모두 -2 이하일 때 후보로 표시하며, 최소 12회 과거 이력이 필요합니다.</p>
     <p className="hint">지역 집계 결과이며 개인의 고립 여부를 판정하지 않습니다. 춘천시의 실제 분석 결과는 아직 연결되지 않았습니다.</p>
+    <h3>지역 배경 지표는 무엇을 뜻하나요?</h3>
+    <p>새 지역 유형 분석은 65세 이상 등록인구 중 독거노인 비율을 사용합니다. 2025년 독거노인 수를 2025년 4분기 65세 이상 등록인구로 나눈 값이며, 월별 변화나 개인의 고립 여부를 뜻하지 않습니다.</p>
+    <p className="hint">연간 지역 배경자료의 공개 시점은 확인되지 않았습니다. 과거 월 당시 알려진 정보로 해석하지 않으며, 60세 이상 집단과 통계의 연령 범위도 다릅니다.</p>
     {user?.admin && <details className="secondary-details"><summary>분석 버전·갱신 정보 (관리자)</summary><dl>
-      <dt>분석 규칙</dt><dd>analysis2-v11 · 공통 변화 제거 후 Robust Z</dd>
+      <dt>분석 규칙</dt><dd>{data.runs?.[0]?.rule_version || '분석 버전 미확인'} · 공통 변화 제거 후 Robust Z</dd>
       <dt>이전 분석월</dt><dd>{previous || '이전 분석월 없음'} · 신규/연속 후보 비교 기준입니다. 전월 변화율은 원자료에 계산된 값을 사용합니다.</dd>
       <dt>전체 근거 행</dt><dd>{data.assessment.length.toLocaleString()}개</dd>
       <dt>결과 버전</dt><dd>{data.runId}</dd>
