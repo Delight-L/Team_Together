@@ -20,11 +20,20 @@ database_url = URL.create(
     database=os.environ["DB_NAME"],
 )
 
+# 원격(오라클 클라우드) DB는 DB_SSLMODE=require 이상을 권장합니다.
+# verify-full을 쓰면 DB_SSLROOTCERT에 서버 CA 인증서 경로를 지정하세요. 로컬 DB는 비워 둡니다.
+connect_args = {"connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT") or "10"), "application_name": "welfind"}
+if os.getenv("DB_SSLMODE"):
+    connect_args["sslmode"] = os.environ["DB_SSLMODE"]
+if os.getenv("DB_SSLROOTCERT"):
+    connect_args["sslrootcert"] = os.environ["DB_SSLROOTCERT"]
+
 # 엔진은 연결을 관리하는 객체입니다. 실제 접속은 쿼리를 실행할 때 발생합니다.
 engine = create_engine(
     database_url,
     pool_pre_ping=True,
-    connect_args={"connect_timeout": 10},
+    pool_recycle=1800,  # 클라우드 방화벽이 유휴 연결을 끊어도 다음 요청에서 새로 연결합니다.
+    connect_args=connect_args,
 )
 
 if __name__ == "__main__":

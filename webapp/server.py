@@ -244,7 +244,7 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, FileNotFoundError) as exc: self.reply(400, {'error':str(exc)})
         except Exception:
             logging.exception('GET failed')
-            self.reply(500, {'error':'자료를 읽지 못했습니다. 서버 로그와 분석 CSV를 확인하세요.'})
+            self.reply(500, {'error':'자료를 읽지 못했습니다. 서버 로그와 .env의 DB 접속 정보(또는 분석 CSV)를 확인하세요.'})
 
     # POST = 로그인/질문/저장. 브라우저의 입력을 그대로 신뢰하지 않고
     # 로그인·소속·지역·기준월·업무 단계 조건을 서버에서도 검사합니다.

@@ -31,7 +31,9 @@ Node.js 22.12 이상을 권장합니다. 의존성 설치는 pnpm으로 통일�
 
 ## 반드시 전달할 데이터
 
-CSV는 Git에서 제외됩니다. 새 PC에는 아래 데이터를 같은 경로로 별도 전달하세요.
+가장 간단한 방법은 팀 공용 DB(Oracle Cloud) 접속 정보를 `.env`에 넣는 것입니다. 대시보드는 `db1.analysis2_detections`를 우선 읽으므로 CSV 없이도 화면이 채워집니다. 구축·이전 방법은 [오라클 클라우드 DB 구축](docs/오라클_클라우드_DB_구축.md)을 참고하세요.
+
+공용 DB 없이 로컬 CSV로 실행하려면(`WELFIND_DATA_SOURCE=csv`) 아래 데이터를 같은 경로로 별도 전달하세요. CSV는 Git에서 제외됩니다.
 
 - `agents/regional_analysis/Analysis2/outputs/gangnam_analysis2_detection_2022_2025.csv` — 화면·챗봇에 직접 필요한 분석 결과
 - `agents/regional_analysis/Analysis2/outputs/`의 나머지 분석 결과 CSV

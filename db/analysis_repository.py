@@ -1,6 +1,9 @@
 """업로드 검사·분석·DB1 저장. 원본과 분석 결과는 실행 버전별로 보관합니다."""
 
 import json
+import logging
+import os
+import time
 from copy import deepcopy
 from functools import lru_cache
 from datetime import datetime
@@ -17,8 +20,14 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 ANALYSIS_DIR = ROOT_DIR / "agents" / "regional_analysis"
 DETECTION_FILE = ANALYSIS_DIR / "Analysis2/outputs/gangnam_analysis2_detection_2022_2025.csv"
 
+from dotenv import load_dotenv
+
+# DB 접속 정보와 WELFIND_DATA_SOURCE를 db.connection import 전에도 확인하므로 여기서 먼저 읽습니다.
+load_dotenv(ROOT_DIR / ".env")
+
 from preprocessing.regional_types.preprocessor import preprocess_raw_dir
 
+LOGGER = logging.getLogger(__name__)
 SCHEMA = "db1"  # PostgreSQL에서 확인한 실제 스키마 이름입니다.
 RULE_VERSION = "analysis2-v11"
 
@@ -107,8 +116,103 @@ def prepare_analysis2(data, source):
 
 
 def load_analysis2_data():
-    # 캐시 원본은 요청별 수정(지도 추가 등)으로부터 보호합니다.
+    """대시보드 자료를 읽습니다.
+
+    WELFIND_DATA_SOURCE (.env)
+      auto(기본): DB 접속 정보가 있으면 DB1을 먼저 읽고, 실패하면 로컬 CSV로 대체합니다.
+      db: DB1만 사용합니다. 실패하면 오류를 그대로 표시합니다(클라우드 DB 점검용).
+      csv: 로컬 Analysis2 CSV만 사용합니다(DB 없이 개발할 때).
+    CSV는 Git에서 제외되므로, 새로 clone한 PC는 DB(클라우드) 경로로 화면을 채웁니다.
+    """
+    mode = (os.getenv("WELFIND_DATA_SOURCE") or "auto").strip().lower()
+    if mode not in {"auto", "db", "csv"}:
+        raise ValueError("WELFIND_DATA_SOURCE는 auto, db, csv 중 하나여야 합니다.")
+    if mode in {"auto", "db"} and db_configured():
+        try:
+            run_id = _latest_detection_run()
+            if run_id:
+                # 캐시 원본은 요청별 수정(지도 추가 등)으로부터 보호합니다.
+                return deepcopy(_load_analysis2_from_db(run_id))
+            if mode == "db":
+                raise LookupError("db1.analysis2_detections에 적재된 결과가 없습니다.")
+        except Exception:
+            if mode == "db" or not DETECTION_FILE.exists():
+                raise
+            LOGGER.warning("DB1 분석 결과를 읽지 못해 로컬 CSV로 대체합니다.", exc_info=True)
+    elif mode == "db":
+        raise RuntimeError(".env에 DB_HOST, DB_NAME, DB_USER, DB_PASSWORD를 설정하세요.")
+    if not DETECTION_FILE.exists():
+        raise FileNotFoundError(
+            "분석 자료가 없습니다. .env에 공용 DB 접속 정보를 넣거나 " + str(DETECTION_FILE.relative_to(ROOT_DIR)) + " 파일을 받으세요."
+        )
     return deepcopy(_load_analysis2_data(str(DETECTION_FILE.resolve()), DETECTION_FILE.stat().st_mtime_ns))
+
+
+def db_configured():
+    return all(os.getenv(key) for key in ("DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD"))
+
+
+_RUN_CHECK = {"at": 0.0, "run_id": None}
+_RUN_CHECK_SECONDS = 60
+
+
+def _latest_detection_run():
+    """최신 run_id만 60초 간격으로 확인합니다. 원격 DB 왕복을 요청마다 반복하지 않습니다."""
+    now = time.monotonic()
+    if _RUN_CHECK["run_id"] and now - _RUN_CHECK["at"] < _RUN_CHECK_SECONDS:
+        return _RUN_CHECK["run_id"]
+    with get_engine().connect() as connection:
+        run_id = connection.execute(text(
+            f"SELECT run_id FROM {SCHEMA}.analysis2_detections GROUP BY run_id ORDER BY max(created_at) DESC LIMIT 1"
+        )).scalar()
+    _RUN_CHECK.update(at=now, run_id=run_id)
+    return run_id
+
+
+@lru_cache(maxsize=4)
+def _load_analysis2_from_db(run_id):
+    """DB1에 적재된 Analysis2 결과를 CSV와 같은 열 구조로 되돌려 같은 변환을 거칩니다."""
+    with get_engine().connect() as connection:
+        rows = connection.execute(text(
+            f"""SELECT reference_month, admin_dong_code, dong_name, communication_signal, mobility_signal,
+                       combined_signal, any_signal, signal_type, payload, source_file, created_at
+                FROM {SCHEMA}.analysis2_detections WHERE run_id = :run_id
+                ORDER BY reference_month, admin_dong_code"""
+        ), {"run_id": run_id}).mappings().all()
+    if not rows:
+        raise LookupError("run_id " + str(run_id) + "의 분석 결과가 없습니다.")
+    records_ = []
+    for row in rows:
+        payload = row["payload"] or {}
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        record = dict(payload)
+        record.update({
+            "date": row["reference_month"].isoformat(), "행정동코드": str(row["admin_dong_code"]),
+            "행정동": row["dong_name"], "communication_signal": bool(row["communication_signal"]),
+            "mobility_signal": bool(row["mobility_signal"]), "combined_signal": bool(row["combined_signal"]),
+            "any_signal": bool(row["any_signal"]), "signal_type": row["signal_type"],
+        })
+        records_.append(record)
+    data = pd.DataFrame.from_records(records_)
+    # JSON null은 None으로 오므로 숫자 열은 NaN으로 맞춥니다(CSV 경로와 동일한 결과).
+    for column in data.columns:
+        if column not in {"date", "행정동코드", "행정동", "signal_type"} and data[column].dtype == object:
+            converted = pd.to_numeric(data[column], errors="coerce")
+            if converted.notna().sum() == data[column].notna().sum():
+                data[column] = converted
+    source_file = rows[0]["source_file"] or "analysis2_detections"
+    prepared = prepare_analysis2(data, source_file)
+    created = max(row["created_at"] for row in rows)
+    return {
+        "connected": True, "isDemo": False, "source": "DB1 · Analysis2",
+        "runId": str(run_id),
+        "assessment": records(prepared["assessment"]),
+        "signals": records(prepared["signals"]), "alerts": records(prepared["alerts"]),
+        "activity": [], "runs": [{"run_id": str(run_id), "kind": "monthly", "source_name": f"{SCHEMA}.analysis2_detections ({source_file})",
+            "period": prepared["period"], "created_at": created.isoformat(timespec="seconds"), "rule_version": RULE_VERSION}],
+        "dataLoadedAt": created.isoformat(timespec="seconds"),
+    }
 
 @lru_cache(maxsize=4)
 def _load_analysis2_data(source_path, modified_ns):
