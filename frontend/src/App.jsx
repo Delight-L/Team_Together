@@ -9,6 +9,7 @@ import { RegionalOverview, summarizeRegions } from './Briefing';
 import { DataDialog, Comparison, ReportQuality } from './Experience';
 import GuideTour from './GuideTour';
 import GroupDashboard from './GroupDashboard';
+import { userName } from './personas.mjs';
 
 const menus = [
   ['dashboard', '종합 현황'],
@@ -369,7 +370,7 @@ export default function App() {
           <div className="user-avatar">{user.admin ? 'A' : user.org.slice(0, 1)}</div>
           <div>
             <b>{user.admin ? '전체 관리자' : user.org + ' 담당자'}</b>
-            <small>{user.account_id || user.id}</small>
+            <small>{userName(user)} 님</small>
           </div>
           <button disabled={busy} onClick={logout} aria-label="로그아웃">
             <Icon name="logout" size={18} />
@@ -856,7 +857,7 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
 
 // Word 문서 생성은 Python build_report(), 단계/해시 검증은 mission_store.py가 처리합니다.
 export function Report({ context, workflow, user, mutate, busy, seed, onSaved, onView }) {
-  const initial = { author: user.account_id || user.id, department: context.city + ' 복지정책과', contact: '', content: null, seedId: null };
+  const initial = { author: userName(user), department: context.city + ' 복지정책과', contact: '', content: null, seedId: null };
   const [localDraft, setLocalDraft, clearLocalDraft, storageFailed] = useDraft(draftKey(user, context, 'report'), initial);
   const { author, department, contact, content } = localDraft;
   const [step, setStep] = useState(() => localDraft.content ? 2 : 1);
@@ -864,6 +865,12 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   const setDepartment = department => setLocalDraft(prev => ({ ...prev, department }));
   const setContact = contact => setLocalDraft(prev => ({ ...prev, contact }));
   const setContent = content => setLocalDraft(prev => ({ ...prev, content: typeof content === 'function' ? content(prev.content) : content }));
+  useEffect(() => {
+    // 이미 임시 저장된 초안의 기본 계정명도 바꾸되, 직접 입력한 작성자는 유지합니다.
+    if (localDraft.author === user.id || localDraft.author === user.account_id) {
+      setLocalDraft(prev => ({ ...prev, author: userName(user) }));
+    }
+  }, [localDraft.author, user.id, user.account_id, user.name]);
   const [confirmed, setConfirmed] = useState(false),
     [draft, setDraft] = useState(null),
     [draftBusy, setDraftBusy] = useState(false),

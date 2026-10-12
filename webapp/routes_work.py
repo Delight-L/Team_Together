@@ -131,6 +131,10 @@ def report_preview(request):
         'department': request.text('department'),
         'opinion': request.text('opinion'),
     }
+    # 이전 화면이나 임시 초안이 계정 ID를 보내도 보고서에는 담당자 이름을 씁니다.
+    if fields['author'] == request.user['id']:
+        from shared.accounts import DEMO_ACCOUNTS
+        fields['author'] = DEMO_ACCOUNTS[request.user['id']]['name']
     content = None
     if 'content' in request.params:
         content = report_writer.validate_content(request.params['content'])

@@ -24,7 +24,7 @@
 .gd-stats article:nth-child(3)::before { background: #a8b8d1; }
 .gd-stats span { font-size: 13px; font-weight: 700; }.gd-stats strong { display: block; font-size: 30px; margin: 4px 0; letter-spacing: -1px; }.gd-stats strong small { font-size: 14px; margin-left: 5px; }.gd-stats strong.gd-unavailable { font-size: 24px; color: #64748b; }.gd-stats p { margin: 0; color: #71829e; font-size: 12px; }
 .gd-workspace { display: grid; grid-template-columns: minmax(0,1fr) minmax(300px, 31%); grid-template-rows: 62px auto; column-gap: 16px; align-items: start; }
-.gd-tabbar { grid-area: 1 / 1; display: flex; overflow-x: auto; align-items: stretch; background: #e4efff; border: 1px solid #d8e6fc; border-radius: 12px 12px 0 0; padding: 7px 7px 0; height: 62px; scrollbar-width: thin; }
+.gd-tabbar { grid-area: 1 / 1; display: flex; overflow-x: auto; overflow-y: hidden; align-items: stretch; background: #e4efff; border: 1px solid #d8e6fc; border-radius: 12px 12px 0 0; padding: 7px 7px 0; height: 62px; scrollbar-width: thin; }
 .gd-tab { display: flex; align-items: center; background: #edf4ff; border: 1px solid #d6e4f8; border-bottom: 0; border-radius: 10px 10px 0 0; margin-right: 5px; flex-shrink: 0; min-width: 195px; max-width: 260px; }
 .gd-tab.active { background: #fff; color: #2563eb; }.gd-tab > button:first-child { display: flex; align-items: center; gap: 8px; text-align: left; padding: 7px 6px 7px 11px; flex: 1; }.gd-tab b { font-size: 12px; white-space: nowrap; }.gd-tab small { display: block; font-size: 11px; color: #758ba9; margin-top: 2px; }.gd-tab > button:last-child { padding: 7px; color: #6881a5; font-size: 20px; }.gd-add { min-width: 35px; font-size: 24px !important; color: #2563eb; }
 .gd-case { grid-area: 2 / 1; border: 1px solid #dce8fa; border-top: 0; border-radius: 0 0 12px 12px; background: white; padding: 23px; min-width: 0; }
@@ -73,6 +73,8 @@
 .gd-stats p { font-size: 11px; line-height: 1.5; }
 .gd-tabbar { grid-area: 2 / 1; height: 70px; padding: 25px 12px 0; position: relative; border: 0; border-radius: 10px 10px 0 0; background: #e5f1fc; }
 .gd-tabs-label { position: absolute; top: 5px; left: 10px; font-size: 11px; color: #0865ff; font-weight: 700; }
+.gd-tabbar .gd-tab { min-height: 0; }
+.gd-tabbar .gd-tab > button:first-child { padding-top: 4px; padding-bottom: 4px; min-height: 0; }
 .gd-tab { min-width: 196px; border-color: #cfe3fa; border-radius: 9px 9px 0 0; transform: skewX(8deg); background: #f4f9ff; }
 .gd-tab > button { transform: skewX(-8deg); }
 .gd-tab.active { border-bottom: 1px solid white; }
