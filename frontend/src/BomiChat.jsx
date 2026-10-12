@@ -11,6 +11,25 @@ const ANALYSIS_SUGGESTIONS = {
   district: ['이 동의 변화를 요약해 줘', '후보 판정은 무슨 뜻인가요?', '다음에 무엇을 확인하나요?'],
   city: ['이번 달 후보 지역을 알려 줘', '후보 판정은 무슨 뜻인가요?', '다음에 무엇을 확인하나요?'],
 };
+// 답변을 기다리는 동안 보이는 말풍선: 움직이는 보미와 «. → .. → ...» 점.
+// 운영체제의 움직임 줄이기 설정을 켠 사용자에게는 멈춘 그림과 고정된 «…»을 보여 줍니다.
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(media.matches);
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  return reduced;
+}
+function Typing() {
+  const reduced = useReducedMotion();
+  return <article className="bomi-message assistant bomi-typing" role="status" aria-label="보미가 답변을 작성하고 있어요">
+    <img src={reduced ? '/brand/bomi-face.png' : '/brand/bomi-waiting.gif'} alt="" />
+    <p>보미가 답변을 작성하고 있어요<span className={`bomi-dots ${reduced ? 'still' : ''}`} aria-hidden="true" /></p>
+  </article>;
+}
 const WELFARE_SUGGESTIONS = ['혼자 사는 어르신 돌봄 지원', '병원에 함께 가줄 지원이 있나요?', '청년이 참여할 관계 모임을 찾아주세요'];
 
 function useAnalysisChat(context, group) {
@@ -138,15 +157,15 @@ export default function BomiChat({ context, group, layout = 'embedded', expanded
         <h3>{tab === 'analysis' ? '지금 보는 화면에 대해 물어보세요.' : '어떤 도움이 필요하신가요?'}</h3>
         <p>{tab === 'analysis' ? '변화의 크기, 판정의 뜻, 다음에 할 일을 근거와 함께 알려 드려요.' : '필요한 지원을 알려 주면 관련 사업과 확인할 다음 단계를 찾아 드려요.'}</p>
       </div>}
-      {chat.messages.map((m, i) => <article key={i} className={`bomi-message ${m.role}`}>
+      {chat.messages.map((m, i) => m.role === 'assistant' && !m.text && chat.busy && i === chat.messages.length - 1 ? <Typing key={i} /> : <article key={i} className={`bomi-message ${m.role}`}>
         <small>{m.role === 'user' ? '나' : '보미'}</small>
-        <p>{m.text || (chat.busy ? '관련 자료를 찾고 있어요…' : '답변을 완료하지 못했습니다.')}</p>
+        <p>{m.text || '답변을 완료하지 못했습니다.'}</p>
         {m.mode && <span className="bomi-meta">{m.mode.split(' · ')[0]}</span>}
         {m.sources?.length > 0 && <details className="bomi-sources"><summary>참고한 팀 자료 · {m.sources.length}건</summary>
           {m.sources.map(r => <div key={r.id}><strong>{r.name}</strong><p>{r.source} · p. {r.pages}</p><small>{r.status}</small></div>)}
         </details>}
       </article>)}
-      {tab === 'analysis' && analysis.busy && <p className="bomi-pending">근거를 확인하고 있어요…</p>}
+      {tab === 'analysis' && analysis.busy && <Typing />}
       {chat.error && <p role="alert" className="bomi-error">{chat.error}</p>}
       <div ref={end} />
     </div>
