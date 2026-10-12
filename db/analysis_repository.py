@@ -107,7 +107,7 @@ def prepare_analysis2(data, source):
         frame["risk_robust_z"] = pd.to_numeric(data[metric + "_residual_change_expanding_rz"])
         frame["has_enough_history"] = frame["risk_robust_z"].notna()
         frame["is_risk_signal"] = data[signal_column]
-        frame["explanation"] = frame["행정동명"] + " " + label + " · Analysis2 탐지 결과"
+        frame["explanation"] = frame["행정동명"] + " " + label + " · 전월 및 과거 흐름과 비교한 분석 결과"
         frame["context_note"] = "지역 집계자료의 변화이며 개인의 고립 판정이 아닙니다."
         rows.append(frame)
     assessment = pd.concat(rows, ignore_index=True)
@@ -211,7 +211,7 @@ def _load_analysis2_from_db(run_id):
     prepared = prepare_analysis2(data, source_file)
     created = max(row["created_at"] for row in rows)
     return {
-        "connected": True, "isDemo": False, "source": "DB1 · Analysis2",
+        "connected": True, "isDemo": False, "source": "동별 통화·문자·이동 분석 자료 (공용 저장 자료)",
         "runId": str(run_id),
         "assessment": records(prepared["assessment"]),
         "signals": records(prepared["signals"]), "alerts": records(prepared["alerts"]),
@@ -227,7 +227,7 @@ def _load_analysis2_data(source_path, modified_ns):
     prepared = monthly_upload(source.read_bytes(), source.name)
     run_id = "analysis2-" + str(modified_ns)
     return {
-        "connected": True, "isDemo": False, "source": "Analysis2 CSV",
+        "connected": True, "isDemo": False, "source": "동별 통화·문자·이동 분석 자료 (저장된 파일)",
         "runId": run_id,
         "assessment": records(prepared["assessment"]),
         "signals": records(prepared["signals"]), "alerts": records(prepared["alerts"]),

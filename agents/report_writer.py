@@ -1,8 +1,31 @@
 """보고서 탭과 챗봇이 공유하는 근거 기반 약식보고서 에이전트."""
+import math
 
 SECTIONS = (('summary', '검토 요지'), ('situation', '지역 현황'),
             ('proposal', '복지서비스 연계·추진 제안'), ('next_steps', '향후 조치'))
 LIMITS = {'title': 80, 'summary': 350, 'situation': 900, 'proposal': 1200, 'next_steps': 600}
+
+
+def evidence_sentence(row):
+    """저장된 내부 설명 대신 지표와 실제 변화값으로 담당자용 문장을 만듭니다."""
+    label = row.get('metric_label') or '해당 지표'
+    change = row.get('change_pct')
+    if isinstance(change, (int, float)) and math.isfinite(change):
+        if change < 0:
+            description = f'전월보다 {abs(change):.1f}% 감소'
+        elif change > 0:
+            description = f'전월보다 {change:.1f}% 증가'
+        else:
+            description = '전월과 같은 수준'
+        return f'{label}: {description}. 과거 흐름과 비교한 결과 추가 확인이 필요한 지표로 표시됨'
+    return f'{label}: 과거 흐름과 비교한 결과 추가 확인이 필요한 지표로 표시됨. 전월 변화율은 계산할 수 없어 상세 근거 확인 필요'
+
+
+def report_source_label(source):
+    """이전 기록의 개발용 출처 이름도 보고서에서는 자료의 내용으로 설명합니다."""
+    return str(source).replace('DB1 · Analysis2', '동별 통화·문자·이동 분석 자료 (공용 저장 자료)').replace(
+        'Analysis2 CSV', '동별 통화·문자·이동 분석 자료 (저장된 파일)').replace(
+        'Analysis2', '동별 통화·문자·이동 분석').replace('DB1', '분석 자료 저장소')
 
 
 def _fit_blocks(blocks, limit):
@@ -28,8 +51,7 @@ def generate_draft(context, workflow):
     signals = [r for r in workflow['analysis_evidence'] if r.get('is_risk_signal')]
     situation = [f"대상 지역: {region} / 기준월: {context['month']}"]
     for row in signals[:3]:
-        situation.append(str(row.get('explanation') or
-                             f"{row.get('metric_label', '지표')}: 변화 후보로 표시됨. 상세 근거 확인 필요"))
+        situation.append(evidence_sentence(row))
     if len(signals) > 3:
         situation.append(f'변화 후보 {len(signals)}건 중 3건 요약. 전체 근거는 지역 분석 화면에서 확인')
     if not signals:

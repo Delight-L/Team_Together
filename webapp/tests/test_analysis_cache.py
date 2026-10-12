@@ -46,7 +46,7 @@ class DataSourceTest(unittest.TestCase):
         with patch.dict('os.environ', dict(self.DB, WELFIND_DATA_SOURCE='auto')), \
                 patch.object(repository, '_latest_detection_run', side_effect=OSError('timeout')), \
                 self.assertLogs(repository.LOGGER, 'WARNING'):
-            self.assertEqual(repository.load_analysis2_data()['source'], 'Analysis2 CSV')
+            self.assertEqual(repository.load_analysis2_data()['source'], '동별 통화·문자·이동 분석 자료 (저장된 파일)')
 
     def test_db_mode_does_not_hide_db_errors(self):
         with patch.dict('os.environ', dict(self.DB, WELFIND_DATA_SOURCE='db')), \
