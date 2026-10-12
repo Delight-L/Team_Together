@@ -1,82 +1,200 @@
-"""Local React server; reuse the existing analysis/chat/workflow Python services."""
-from __future__ import annotations
+"""WELFIND 화면 서버: 빌드한 React 화면과 화면이 호출하는 API(/api/...)를 제공합니다.
+
+요청 처리 순서
+1. 주소가 /api/로 시작하면 아래 ROUTES 표에서 처리할 함수를 찾습니다.
+2. 로그인이 필요한 API이면 쿠키의 세션으로 사용자를 확인합니다.
+3. 함수가 돌려준 값을 JSON(또는 Word 파일, 글자 단위 스트림)으로 보냅니다.
+4. 함수에서 난 오류는 종류에 따라 401·400·500 등으로 알려 줍니다.
+그 밖의 주소는 frontend/dist의 화면 파일을 보내 줍니다.
+
+로컬 시연용 서버이므로 127.0.0.1에서만 접속을 받습니다. 공용 서버로 배포하려면
+인증, HTTPS, 세션 저장소 같은 운영 설정을 따로 갖춰야 합니다.
+"""
 import argparse
-import base64
-import hashlib
 import json
 import logging
 import mimetypes
-import secrets
-import threading
-import time
-import tempfile
-from datetime import date, datetime
-from zoneinfo import ZoneInfo
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, unquote, urlsplit, quote
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
-# 경로는 현재 터미널 폴더가 아닌 이 파일 위치 기준으로 계산합니다.
-# 다른 폴더에서 실행해도 CSV/브랜드 이미지 경로가 달라지지 않습니다.
-ROOT = Path(__file__).resolve().parents[1]
+from webapp import routes_account, routes_analysis, routes_chat, routes_groups, routes_work, sessions
+from webapp.common import ROOT, ApiError, Request, Response, StreamResponse
+# 테스트와 다른 모듈이 webapp.server.dashboard_data로 불러 씁니다.
+from webapp.common import dashboard_data  # noqa: F401
+
 DIST = ROOT / 'frontend' / 'dist'
-SESSIONS = {}
-SESSION_LOCK = threading.Lock()
-WRITE_LOCK = threading.Lock()
-PREVIEWS = {}
+BRAND_FILES = {'welfind_logo.png', 'welfind_character.png', 'bomi-face.png', 'bomi-waiting.gif'}
+DEV_ORIGINS = {'http://127.0.0.1:5173', 'http://localhost:5173'}  # Vite 개발 서버(pnpm run dev)
+MAX_BODY_BYTES = 30_000_000
+DOCX_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
+def health(request):
+    """GET /api/health: 서버가 켜져 있고 화면이 빌드되어 있는지 알려 줍니다."""
+    return {'status': 'ok', 'frontendBuilt': (DIST / 'index.html').is_file()}
 
 
-def store_preview(user, kind, value):
-    """검사/문서 초안은 30분 동안 해당 로그인 사용자에게만 제공합니다."""
-    token = secrets.token_urlsafe(24)
-    with WRITE_LOCK:
-        for key in list(PREVIEWS):
-            if PREVIEWS[key]['expires'] < time.time(): PREVIEWS.pop(key)
-        PREVIEWS[token] = {'user':user['id'],'kind':kind,'value':value,'expires':time.time()+1800}
-    return token
+# (방식, 주소) → 처리 함수
+ROUTES = {
+    ('GET', '/api/health'): health,
+    ('POST', '/api/login'): routes_account.login,
+    ('POST', '/api/logout'): routes_account.logout,
+    ('GET', '/api/session'): routes_account.current_user,
 
+    ('GET', '/api/dashboard'): routes_analysis.dashboard,
+    ('GET', '/api/activity'): routes_analysis.activity,
+    ('POST', '/api/upload/validate'): routes_analysis.upload_validate,
+    ('POST', '/api/upload/publish'): routes_analysis.upload_publish,
 
-def get_preview(token, user, kind):
-    item = PREVIEWS.get(token)
-    if not item or item['user'] != user['id'] or item['kind'] != kind or item['expires'] < time.time():
-        raise ValueError('초안이 만료되었거나 유효하지 않습니다. 다시 생성하세요.')
-    return item['value']
+    ('GET', '/api/groups'): routes_groups.catalogue,
+    ('GET', '/api/groups/config'): routes_groups.ai_config,
+    ('GET', '/api/groups/detail'): routes_groups.detail,
+    ('GET', '/api/groups/review'): routes_groups.review_load,
+    ('GET', '/api/groups/services'): routes_groups.services,
+    ('POST', '/api/groups/chat'): routes_groups.chat,
+    ('POST', '/api/groups/review'): routes_groups.review_save,
 
+    ('GET', '/api/chat/config'): routes_chat.config,
+    ('POST', '/api/chat'): routes_chat.welfare_chat,
+    ('POST', '/api/region/chat'): routes_chat.region_chat,
 
-# 프런트엔드는 CSV를 직접 읽지 않습니다. 이 함수가 기존 분석 어댑터를 재사용해
-# JSON으로 전달하므로 React로 옮겨도 탐지 계산/판정 기준이 달라지지 않습니다.
-def dashboard_data():
-    from db.analysis_repository import load_analysis2_data
-    data = load_analysis2_data()
-    data['geometry'] = json.loads((ROOT / 'shared/data/map_boundaries.json').read_text(encoding='utf-8'))
-    data['months'] = sorted({r['기준연월'] for r in data['assessment']})
-    data['availableCities'] = ['강남구']
-    data['capabilities'] = {'isolatedTrial': True}
-    data['dataCheckedAt'] = datetime.now(ZoneInfo('Asia/Seoul')).isoformat(timespec='seconds')
-    run_id = str(data.get('runId', ''))
-    if run_id.startswith('analysis2-') and run_id[10:].isdigit():
-        data['analysisFileModifiedAt'] = datetime.fromtimestamp(int(run_id[10:]) / 1e9, ZoneInfo('Asia/Seoul')).isoformat(timespec='seconds')
-    return data
+    ('GET', '/api/missions'): routes_work.missions,
+    ('GET', '/api/workflow'): routes_work.workflow,
+    ('GET', '/api/experience'): routes_work.experience,
+    ('GET', '/api/experience/history'): routes_work.experience_history,
+    ('GET', '/api/services'): routes_work.services,
+    ('GET', '/api/report'): routes_work.saved_report,
+    ('GET', '/api/report/draft'): routes_work.report_draft_file,
+    ('POST', '/api/experience'): routes_work.experience_save,
+    ('POST', '/api/report/content'): routes_work.report_content,
+    ('POST', '/api/report/preview'): routes_work.report_preview,
+    ('POST', '/api/workflow/start'): routes_work.workflow_start,
+    ('POST', '/api/workflow/confirm'): routes_work.workflow_confirm,
+    ('POST', '/api/workflow/review'): routes_work.workflow_review,
+    ('POST', '/api/report'): routes_work.report_save,
+}
+# 로그인 없이 부를 수 있는 API
+PUBLIC_ROUTES = {('GET', '/api/health'), ('POST', '/api/login')}
 
-
-def evidence_for(data, context):
-    return [r for r in data['assessment'] if context['city'] == '강남구'
-            and r['기준연월'] == context['month'] and r['행정동명'] == context['district']]
+# 예상하지 못한 오류일 때 화면에 보여 줄 안내
+SERVER_ERROR = {
+    'GET': '자료를 읽지 못했습니다. 서버 로그와 .env의 DB 접속 정보(또는 분석 CSV)를 확인하세요.',
+    'POST': '요청 처리에 실패했습니다. DB 연결과 서버 로그를 확인하세요.',
+}
 
 
 class Handler(BaseHTTPRequestHandler):
-    def group_context(self, body, user):
-        from db.group_repository import group_detail
-        context = {k: str(body.get(k, '')).strip() for k in ['city', 'code', 'month', 'age', 'sex']}
-        if not user['admin'] and context['city'] != user['org']:
-            raise PermissionError('소속 지역의 자료만 사용할 수 있습니다.')
-        detail = group_detail(context)
-        context['district'] = detail['current']['district']
-        return context, detail
 
-    def chat_stream(self, messages, context):
-        from chatbot.welfare.service import stream_reply
+    # ── 요청 받기 ─────────────────────────────────────────
+
+    def do_GET(self):
+        url = urlsplit(self.path)
+        if url.path.startswith('/api/'):
+            params = {}
+            for name, values in parse_qs(url.query).items():
+                params[name] = values[0]
+            self.run_api('GET', url.path, params)
+        else:
+            self.send_page_file(url.path)
+
+    def do_POST(self):
+        url = urlsplit(self.path)
+        try:
+            params = self.read_json_body()
+        except PermissionError as error:
+            self.send_json(401, {'error': str(error)})
+            return
+        except ValueError as error:
+            self.send_json(400, {'error': str(error)})
+            return
+        self.run_api('POST', url.path, params)
+
+    def read_json_body(self):
+        """POST로 보낸 JSON을 읽습니다. 다른 사이트에서 보낸 요청은 막습니다."""
+        origin = self.headers.get('Origin')
+        if origin and urlsplit(origin).netloc != self.headers.get('Host') and origin not in DEV_ORIGINS:
+            raise PermissionError('허용되지 않은 요청 출처입니다.')
+        if not self.headers.get('Content-Type', '').startswith('application/json'):
+            raise ValueError('JSON 요청이 필요합니다.')
+        size = int(self.headers.get('Content-Length', '0'))
+        if size <= 0 or size > MAX_BODY_BYTES:
+            raise ValueError('요청 크기가 유효하지 않습니다.')
+        body = json.loads(self.rfile.read(size))
+        if not isinstance(body, dict):
+            raise ValueError('JSON 객체가 필요합니다.')
+        return body
+
+    def session_token(self):
+        cookie = SimpleCookie(self.headers.get('Cookie', ''))
+        morsel = cookie.get('welfind_session')
+        if morsel is None:
+            return ''
+        return morsel.value
+
+    # ── API 실행 ──────────────────────────────────────────
+
+    def run_api(self, method, path, params):
+        try:
+            token = self.session_token()
+            user = None
+            if (method, path) not in PUBLIC_ROUTES:
+                user = sessions.find_user(token)
+            if (method, path) not in ROUTES:
+                self.send_json(404, {'error': 'API를 찾을 수 없습니다.'})
+                return
+            handler = ROUTES[(method, path)]
+            result = handler(Request(params, user, token))
+            self.send_result(result)
+        except PermissionError as error:
+            self.send_json(401, {'error': str(error)})
+        except (ValueError, FileNotFoundError) as error:
+            self.send_json(400, {'error': str(error)})
+        except ApiError as error:
+            self.send_json(error.status, {'error': str(error)})
+        except Exception:
+            logging.exception('%s %s failed', method, path)
+            self.send_json(500, {'error': SERVER_ERROR[method]})
+
+    # ── 응답 보내기 ───────────────────────────────────────
+
+    def send_result(self, result):
+        """API 함수가 돌려준 값의 종류에 맞게 응답을 보냅니다."""
+        if isinstance(result, StreamResponse):
+            self.send_stream(result.events)
+        elif isinstance(result, Response):
+            if result.filename:
+                self.send_file(result.payload, result.filename)
+            else:
+                self.send_json(result.status, result.payload, cookie=result.cookie)
+        else:
+            self.send_json(200, result)
+
+    def send_json(self, status, payload, cookie=None):
+        content = json.dumps(payload, ensure_ascii=False, allow_nan=False, default=str).encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        if cookie:
+            self.send_header('Set-Cookie', cookie)
+        self.send_header('Content-Length', str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def send_file(self, content, filename):
+        """Word 파일을 내려받게 합니다. 한글 파일 이름은 주소 형식으로 바꿔 보냅니다."""
+        self.send_response(200)
+        self.send_header('Content-Type', DOCX_TYPE)
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('Content-Disposition', "attachment; filename*=UTF-8''" + quote(filename))
+        self.send_header('Content-Length', str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def send_stream(self, events):
+        """보미 답변을 'event: 종류 / data: 내용' 형식으로 한 조각씩 보냅니다(Server-Sent Events)."""
         self.send_response(200)
         self.send_header('Content-Type', 'text/event-stream; charset=utf-8')
         self.send_header('Cache-Control', 'no-store')
@@ -85,351 +203,65 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Connection', 'close')
         self.end_headers()
         self.close_connection = True
-        events = stream_reply(messages, context)
         try:
             for event, payload in events:
-                self.wfile.write(f'event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n'.encode('utf-8'))
+                piece = f'event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n'
+                self.wfile.write(piece.encode('utf-8'))
                 self.wfile.flush()
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
-            pass  # 중지·지역 변경·탭 닫기로 브라우저가 요청을 취소했습니다.
+            pass  # 중지·지역 변경·탭 닫기로 브라우저가 요청을 취소한 경우입니다.
         finally:
             events.close()
 
-    def reply(self, status, payload, *, cookie=None, filename=None):
-        binary = isinstance(payload, bytes)
-        content = payload if binary else json.dumps(payload, ensure_ascii=False, allow_nan=False, default=str).encode('utf-8')
-        self.send_response(status)
-        self.send_header('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' if filename else 'application/json; charset=utf-8')
-        self.send_header('Cache-Control', 'no-store')
-        self.send_header('X-Content-Type-Options', 'nosniff')
-        if cookie: self.send_header('Set-Cookie', cookie)
-        if filename: self.send_header('Content-Disposition', "attachment; filename*=UTF-8''" + quote(filename))
-        self.send_header('Content-Length', str(len(content)))
-        self.end_headers()
-        self.wfile.write(content)
-
-    def user(self):
-        cookie = SimpleCookie(self.headers.get('Cookie', ''))
-        token = cookie.get('welfind_session')
-        with SESSION_LOCK:
-            session = SESSIONS.get(token.value if token else '')
-        if not session or session['expires'] < time.time():
-            raise PermissionError('로그인이 필요합니다.')
-        return session['user']
-
-    def context(self, body, user, data, *, optional_district=False):
-        context = {k: str(body.get(k, '')).strip() for k in ['city', 'district', 'month']}
-        if not user['admin'] and context['city'] != user['org']:
-            raise PermissionError('소속 지역의 자료만 사용할 수 있습니다.')
-        if context['month'] not in data['months']:
-            raise ValueError('유효한 기준월을 선택하세요.')
-        units = data['geometry'].get(context['city'], {}).get('units', [])
-        if not (optional_district and not context['district']) and context['district'] not in {u['n'] for u in units}:
-            raise ValueError('행정동을 선택하세요.')
-        return dict(context, user=user, workflow_mode='live')
-
-    # GET = 데이터 조회. /api/dashboard: 화면 데이터, /api/workflow: 저장된 업무,
-    # /api/services: DB2 사업, /api/report: 저장된 Word 다운로드.
-    def do_GET(self):
+    def send_page_file(self, path):
+        """화면 파일(frontend/dist)과 보미 이미지(ci)를 보냅니다."""
         try:
-            route = urlsplit(self.path)
-            if route.path == '/api/health':
-                return self.reply(200, {'status':'ok', 'frontendBuilt':(DIST / 'index.html').is_file()})
-            if route.path.startswith('/api/'):
-                user = self.user()
-                if route.path == '/api/session': return self.reply(200, {'user':user})
-                if route.path.startswith('/api/groups'):
-                    if route.path == '/api/groups/config':
-                        from chatbot.welfare.app.config import settings
-                        return self.reply(200, {'aiAvailable': bool(settings.openai_api_key)})
-                    from db.group_repository import catalogue
-                    from db.group_workspace import review, services
-                    body = {k:v[0] for k,v in parse_qs(route.query).items()}
-                    if route.path == '/api/groups':
-                        city = str(body.get('city', ''))
-                        if not user['admin'] and city != user['org']:
-                            raise PermissionError('소속 지역의 자료만 사용할 수 있습니다.')
-                        return self.reply(200, catalogue(city, str(body.get('month', ''))))
-                    context, detail = self.group_context(body, user)
-                    if route.path == '/api/groups/detail':
-                        from db.group_repository import regional_context
-                        detail['regional'] = regional_context(context)
-                        return self.reply(200, detail)
-                    if route.path == '/api/groups/review': return self.reply(200, review(user, context))
-                    if route.path == '/api/groups/services': return self.reply(200, services(context, body.get('need')))
-                    return self.reply(404, {'error':'집단 API를 찾을 수 없습니다.'})
-                if route.path == '/api/chat/config':
-                    from chatbot.welfare.app.agent.resources import RESOURCES
-                    from chatbot.welfare.app.config import settings
-                    return self.reply(200, {'mode': 'AI 대화' if settings.openai_api_key else '자료 검색',
-                                            'resourceCount': len(RESOURCES)})
-                if route.path == '/api/missions':
-                    from db.mission_store import load_all
-                    items = []
-                    for key, item in load_all().items():
-                        owner, city, district, month = json.loads(key)
-                        if owner == user['id']:
-                            items.append({'city':city,'district':district,'month':month,'workflow':item})
-                    return self.reply(200, {'items':items})
-                if route.path == '/api/activity':
-                    if not user['admin']: raise PermissionError('관리자만 조회할 수 있습니다.')
-                    from db.analysis_repository import load_dashboard_data
-                    try: activity = load_dashboard_data().get('activity', [])
-                    except Exception:
-                        logging.exception('DB1 activity lookup failed')
-                        return self.reply(503, {'error':'DB1 활동 이력을 조회하지 못했습니다. DB 연결을 확인하세요.'})
-                    return self.reply(200, {'activity':activity})
-                data = dashboard_data()
-                if route.path == '/api/dashboard':
-                    if not user['admin']:
-                        data['geometry'] = {k:v for k,v in data['geometry'].items() if k == user['org']}
-                        if user['org'] != '강남구':
-                            data.update(assessment=[], signals=[], alerts=[])
-                    return self.reply(200, data)
-                body = {k:v[0] for k,v in parse_qs(route.query).items()}
-                context = self.context(body, user, data)
-                from db.mission_store import load_all, identity, load_report
-                item = load_all().get(identity(context), {})
-                if route.path == '/api/report/draft':
-                    draft = get_preview(body.get('token'),user,'report')
-                    if draft['identity'] != identity(context): raise ValueError('초안 지역·월과 다릅니다.')
-                    return self.reply(200,draft['document'],filename=draft['record']['filename'])
-                if route.path == '/api/workflow': return self.reply(200, item)
-                if route.path == '/api/experience':
-                    from db.experience_store import load
-                    return self.reply(200, load(context))
-                if route.path == '/api/experience/history':
-                    from db.experience_store import regional_history
-                    return self.reply(200, {'items':regional_history(context)})
-                if route.path == '/api/services':
-                    if 1 not in item.get('done', []): raise ValueError('먼저 분석 근거를 확인하세요.')
-                    from agents.service_matching import match_services
-                    try: matches = match_services(context['city'], item['analysis_evidence'])
-                    except Exception:
-                        logging.exception('DB2 service lookup failed')
-                        return self.reply(503, {'error':'DB2 사업 조회에 실패했습니다. .env 연결 및 DB 권한을 확인하세요.'})
-                    return self.reply(200, {'matches':matches})
-                if route.path == '/api/report':
-                    document = load_report(context)
-                    if not document: raise ValueError('저장된 보고서가 없습니다.')
-                    return self.reply(200, document, filename=f"사업검토보고_{context['district']}_{context['month']}.docx")
-                return self.reply(404, {'error':'API를 찾을 수 없습니다.'})
-            # Expose only build output and explicitly named brand files.
-            if route.path.startswith('/brand/'):
-                name = route.path.rsplit('/',1)[-1]
-                if name not in {'welfind_logo.png','welfind_character.png','bomi-face.png','bomi-waiting.gif'}:
-                    return self.reply(404, {'error':'파일을 찾을 수 없습니다.'})
-                path = ROOT / 'ci' / name
+            if path.startswith('/brand/'):
+                name = path.rsplit('/', 1)[-1]
+                if name not in BRAND_FILES:
+                    self.send_json(404, {'error': '파일을 찾을 수 없습니다.'})
+                    return
+                file = ROOT / 'ci' / name
             else:
-                path = (DIST / unquote(route.path).lstrip('/')).resolve()
-                if not path.is_relative_to(DIST.resolve()):
-                    return self.reply(404, {'error':'파일을 찾을 수 없습니다.'})
-                if not path.is_file():
-                    if Path(route.path).suffix: return self.reply(404, {'error':'파일을 찾을 수 없습니다.'})
-                    path = DIST / 'index.html'
-            if not path.is_file():
-                return self.reply(503, {'error':'frontend 폴더에서 npm install 후 npm run build를 실행하세요.'})
-            content = path.read_bytes()
+                file = (DIST / unquote(path).lstrip('/')).resolve()
+                # ../ 같은 주소로 dist 폴더 밖의 파일을 읽지 못하게 막습니다.
+                if not file.is_relative_to(DIST.resolve()):
+                    self.send_json(404, {'error': '파일을 찾을 수 없습니다.'})
+                    return
+                if not file.is_file():
+                    if Path(path).suffix:
+                        self.send_json(404, {'error': '파일을 찾을 수 없습니다.'})
+                        return
+                    # /map 같은 화면 주소는 모두 React 첫 화면(index.html)이 처리합니다.
+                    file = DIST / 'index.html'
+            if not file.is_file():
+                self.send_json(503, {'error': 'frontend 폴더에서 pnpm install 후 pnpm run build를 실행하세요.'})
+                return
+            content = file.read_bytes()
             self.send_response(200)
-            self.send_header('Content-Type', mimetypes.guess_type(path)[0] or 'application/octet-stream')
+            self.send_header('Content-Type', mimetypes.guess_type(file)[0] or 'application/octet-stream')
             self.send_header('Content-Length', str(len(content)))
-            self.send_header('X-Content-Type-Options','nosniff')
+            self.send_header('X-Content-Type-Options', 'nosniff')
             self.end_headers()
             self.wfile.write(content)
-        except PermissionError as exc: self.reply(401, {'error':str(exc)})
-        except (ValueError, FileNotFoundError) as exc: self.reply(400, {'error':str(exc)})
         except Exception:
-            logging.exception('GET failed')
-            self.reply(500, {'error':'자료를 읽지 못했습니다. 서버 로그와 .env의 DB 접속 정보(또는 분석 CSV)를 확인하세요.'})
-
-    # POST = 로그인/질문/저장. 브라우저의 입력을 그대로 신뢰하지 않고
-    # 로그인·소속·지역·기준월·업무 단계 조건을 서버에서도 검사합니다.
-    def do_POST(self):
-        try:
-            # Same-origin JSON requests; no cross-origin form submissions.
-            origin = self.headers.get('Origin')
-            if origin and urlsplit(origin).netloc != self.headers.get('Host'):
-                # Vite development proxy preserves the originating browser host.
-                if origin not in {'http://127.0.0.1:5173','http://localhost:5173'}:
-                    raise PermissionError('허용되지 않은 요청 출처입니다.')
-            if not self.headers.get('Content-Type','').startswith('application/json'):
-                raise ValueError('JSON 요청이 필요합니다.')
-            size = int(self.headers.get('Content-Length', '0'))
-            if size <= 0 or size > 30_000_000: raise ValueError('요청 크기가 유효하지 않습니다.')
-            body = json.loads(self.rfile.read(size))
-            if not isinstance(body, dict): raise ValueError('JSON 객체가 필요합니다.')
-            route = urlsplit(self.path).path
-            if route == '/api/login':
-                from shared.accounts import DEMO_ACCOUNTS
-                account = DEMO_ACCOUNTS.get(body.get('id',''))
-                if not account or not secrets.compare_digest(str(body.get('password','')), account['password']):
-                    raise PermissionError('아이디 또는 비밀번호가 올바르지 않습니다.')
-                user = {k:v for k,v in account.items() if k != 'password'} | {'id':body['id']}
-                token = secrets.token_urlsafe(32)
-                with SESSION_LOCK:
-                    for key in list(SESSIONS):
-                        if SESSIONS[key]['expires'] < time.time(): SESSIONS.pop(key)
-                    SESSIONS[token] = {'user':user, 'expires':time.time()+8*3600}
-                return self.reply(200, {'user':user}, cookie=f'welfind_session={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800')
-            user = self.user()
-            if route in {'/api/groups/chat', '/api/groups/review'}:
-                from db.group_workspace import review, explain, ai_explain
-                context, detail = self.group_context(body, user)
-                if route.endswith('/chat'):
-                    if body.get('mode') == 'ai':
-                        return self.reply(200, ai_explain(context, body.get('question', ''), detail, body.get('history', [])))
-                    return self.reply(200, explain(context, body.get('question', ''), detail))
-                if body.get('sourceRun') != detail['runId']:
-                    raise ValueError('집단별 원자료가 갱신되었습니다. 근거를 다시 확인한 뒤 저장하세요.')
-                return self.reply(200, review(user, context, body))
-            if route == '/api/logout':
-                cookie = SimpleCookie(self.headers.get('Cookie',''))
-                with SESSION_LOCK: SESSIONS.pop(cookie['welfind_session'].value, None)
-                return self.reply(200, {}, cookie='welfind_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
-            # 데이터 업로드는 기존 관리자 검사 → 미리보기 → DB1 반영 흐름을 유지합니다.
-            # 파일을 서버에 직접 저장하지 않고 검사 성공 후에만 임시 초안을 만듭니다.
-            if route in {'/api/upload/validate','/api/upload/publish'}:
-                if not user['admin']: raise PermissionError('관리자만 자료를 반영할 수 있습니다.')
-                from db.analysis_repository import monthly_upload, structure_upload, publish, records
-                if route.endswith('publish'):
-                    with WRITE_LOCK:
-                        prepared = get_preview(body.get('token'),user,'upload')
-                        run_id = publish(prepared,user['id'])
-                        PREVIEWS.pop(body.get('token'),None)
-                    return self.reply(200,{'runId':run_id})
-                files = body.get('files',[])
-                if not isinstance(files,list) or not 1 <= len(files) <= 5: raise ValueError('파일 1~5개를 선택하세요.')
-                decoded = []
-                for file in files:
-                    name = Path(str(file['name']).replace('\\','/')).name
-                    if Path(name).suffix.lower() not in {'.csv','.xlsx'}: raise ValueError('CSV/XLSX만 사용할 수 있습니다.')
-                    content = base64.b64decode(file['content'],validate=True)
-                    if len(content) > 15_000_000: raise ValueError('파일당 15MB 이하를 선택하세요.')
-                    decoded.append((name,content))
-                if sum(len(content) for _,content in decoded) > 20_000_000:
-                    raise ValueError('전체 파일은 20MB 이하를 선택하세요.')
-                if body.get('kind') == 'monthly':
-                    if len(decoded) != 1: raise ValueError('탐지 결과는 한 파일씩 검사하세요.')
-                    name,content=decoded[0]
-                    prepared = monthly_upload(content,name)
-                elif body.get('kind') == 'structure':
-                    if len({name for name,_ in decoded}) != len(decoded): raise ValueError('파일 이름이 중복되었습니다.')
-                    with tempfile.TemporaryDirectory(prefix='welfind-upload-') as folder:
-                        for name,content in decoded: (Path(folder)/name).write_bytes(content)
-                        prepared = structure_upload(folder)
-                else: raise ValueError('자료 종류를 선택하세요.')
-                token = store_preview(user,'upload',prepared)
-                return self.reply(200,{'token':token,'period':prepared['period'],'rows':len(prepared['data']),
-                    'preview':records(prepared['data'].head(8))})
-            data = dashboard_data()
-            if route == '/api/experience':
-                from db.experience_store import save
-                context = self.context(body, user, data)
-                return self.reply(200, save(context, body))
-            if route == '/api/region/chat':
-                # 보미의 «이 화면 분석»: 동을 고르지 않았으면 구 전체 후보를, 골랐으면 그 동의 근거를 설명합니다.
-                from db.region_workspace import explain_region, ai_explain_region
-                context = self.context(body, user, data, optional_district=True)
-                if body.get('mode') == 'ai':
-                    return self.reply(200, ai_explain_region(context, body.get('question', ''), data, body.get('history', [])))
-                return self.reply(200, explain_region(context, body.get('question', ''), data))
-            if route == '/api/chat':
-                # 대화는 동 선택 없이도 가능합니다. 업무 저장의 필수 지역 검증은 그대로 유지합니다.
-                from chatbot.orchestrator import topic_reply, free_reply
-                context = self.context(body, user, data, optional_district=True)
-                public_context = {k:context[k] for k in ['city','district','month']}
-                if body.get('stream') is True:
-                    from chatbot.welfare.service import validate_messages
-                    messages = validate_messages(body.get('messages'))
-                    return self.chat_stream(messages, public_context)
-                evidence = evidence_for(data, context) if context['district'] else [
-                    r for r in data['assessment'] if context['city']=='강남구' and r['기준연월']==context['month']]
-                question = str(body.get('question','')).strip()
-                if not question or len(question)>2000: raise ValueError('질문은 1~2,000자로 입력하세요.')
-                history = body.get('history', [])
-                if not isinstance(history, list): raise ValueError('대화 이력이 유효하지 않습니다.')
-                # topic ID는 고정 안내 경로입니다. 자유 입력은 항상 총괄 에이전트 경로입니다.
-                from db.mission_store import load_all, identity
-                from agents.report_writer import is_draft_request
-                needs_report = body.get('topic') == 'report_draft' or (not body.get('topic') and is_draft_request(question))
-                workflow = load_all().get(identity(context), {}) if context['district'] and needs_report else {}
-                result = topic_reply(body['topic'], evidence, public_context, workflow) if body.get('topic') else free_reply(question,evidence,public_context,history[-4:], workflow=workflow)
-                return self.reply(200, dict(result, context=public_context))
-            context = self.context(body, user, data)
-            evidence = evidence_for(data, context)
-            if not evidence: raise ValueError('선택 지역·월의 실제 분석 결과가 없습니다.')
-            from db.mission_store import save_event, load_all, identity, review_revision
-            if route == '/api/report/content':
-                from agents.report_writer import generate_draft
-                item = load_all().get(identity(context), {})
-                return self.reply(200, generate_draft(context, item))
-            if route == '/api/report/preview':
-                from shared.report import build_report
-                from agents.report_writer import validate_content
-                item = load_all().get(identity(context), {})
-                if 2 not in item.get('done',[]):
-                    raise ValueError('사업 검토 기록을 먼저 저장하세요.')
-                fields = {k:str(body.get(k,'')).strip() for k in ['author','department','opinion']}
-                content = validate_content(body['content']) if 'content' in body else None
-                if content:
-                    fields['opinion'] = content['next_steps']
-                contact = str(body.get('contact', '')).strip()
-                if not all(fields.values()): raise ValueError('부서·작성자·최종 의견을 입력하세요.')
-                if len(fields['author']) > 60 or len(fields['department']) > 100 or len(contact) > 80:
-                    raise ValueError('작성자 60자·부서 100자·연락처 80자 이내로 입력하세요.')
-                if content and body.get('review_id') != review_revision(item):
-                    raise ValueError('사업 검토 내역이 변경되었습니다. 보고서 초안을 다시 생성하세요.')
-                document = build_report(context,item['analysis_evidence'],fields['author'],fields['department'],fields['opinion'],item['analysis_source'],workflow=item,content=content,contact=contact)
-                record = fields | {'content':content,'contact':contact,'template':'brief_report_v1','sha256':hashlib.sha256(document).hexdigest(),
-                    'filename':f"사업검토보고_{context['district']}_{context['month']}.docx",
-                    'review_id':review_revision(item),'_document':document}
-                token = store_preview(user,'report',{'identity':identity(context),'document':document,'record':record})
-                return self.reply(200,{'token':token})
-            # Existing SQLite workflow validates ordering and report integrity.
-            with WRITE_LOCK:
-                item = load_all().get(identity(context), {})
-                if route == '/api/workflow/start':
-                    save_event(context,0,{'run_id':data['runId'],'evidence':evidence,'source_note':data['source']})
-                elif route == '/api/workflow/confirm': save_event(context,1,{'confirmed':True})
-                elif route == '/api/workflow/review':
-                    from agents.service_matching import match_services
-                    match = next((m for m in match_services(context['city'], item.get('analysis_evidence',[])) if m['key'] == body.get('serviceKey')),None)
-                    if not match: raise ValueError('조회한 실제 사업을 선택하세요.')
-                    save_event(context,2,{'service_key':match['key'],'name':match['service']['name'],
-                        'decision':body.get('decision'),'note':str(body.get('note','')).strip(),'reasons':match['reasons'],
-                        'source_url':match['service'].get('source_url'),
-                        'service_snapshot':{key:(match['service'][key].isoformat()
-                            if isinstance(match['service'].get(key),(date,datetime))
-                            else match['service'].get(key)) for key in (
-                            'source_id','service_id','name','province','district','summary',
-                            'target_text','eligibility_text','benefit_text','application_text',
-                            'effective_start','effective_end','source_url','detail_pending',
-                            'detail_checked_at','source_modified','residency_text')}})
-                elif route == '/api/report':
-                    if body.get('confirmed') is not True: raise ValueError('보고서 최종 확인이 필요합니다.')
-                    draft = get_preview(body.get('token'),user,'report')
-                    if draft['identity'] != identity(context): raise ValueError('초안 지역·월과 다릅니다.')
-                    save_event(context,3,draft['record'] | {'confirmed':True})
-                    PREVIEWS.pop(body.get('token'),None)
-                else: return self.reply(404, {'error':'API를 찾을 수 없습니다.'})
-                return self.reply(200, load_all().get(identity(context), {}))
-        except PermissionError as exc: self.reply(401, {'error':str(exc)})
-        except (ValueError, FileNotFoundError) as exc: self.reply(400, {'error':str(exc)})
-        except Exception:
-            logging.exception('POST failed')
-            self.reply(500, {'error':'요청 처리에 실패했습니다. DB 연결과 서버 로그를 확인하세요.'})
+            logging.exception('GET %s failed', path)
+            self.send_json(500, {'error': SERVER_ERROR['GET']})
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--port',type=int,default=8503)
+    parser = argparse.ArgumentParser(description='WELFIND 화면 서버')
+    parser.add_argument('--port', type=int, default=8503)
     args = parser.parse_args(argv)
-    # 대회/팀원 PC 로컬 실행을 위한 서버입니다. 공용 서버 배포 시에는
-    # 인증, HTTPS, 세션 저장소, 운영용 서버 구성을 별도로 적용해야 합니다.
-    server = ThreadingHTTPServer(('127.0.0.1',args.port), Handler)
+    server = ThreadingHTTPServer(('127.0.0.1', args.port), Handler)
     print(f'WELFIND React: http://127.0.0.1:{args.port}', flush=True)
-    try: server.serve_forever()
-    except KeyboardInterrupt: pass
-    finally: server.server_close()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
 
-if __name__ == '__main__': main()
+
+if __name__ == '__main__':
+    main()
