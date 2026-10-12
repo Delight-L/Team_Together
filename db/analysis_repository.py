@@ -72,7 +72,10 @@ def prepare_analysis2(data, source):
     }
     for metric in metrics:
         required.extend([metric + "_log_change", metric + "_residual_change", metric + "_residual_change_expanding_rz"])
-    missing = [column for column in required if column not in data.columns]
+    missing = []
+    for column in required:
+        if column not in data.columns:
+            missing.append(column)
     if missing or data.empty:
         raise ValueError("version11의 Analysis2 탐지 결과 CSV를 사용하세요. 누락 열: " + ", ".join(missing))
     # 문자열 'False'를 bool()로 바꾸면 True가 되므로 명시적으로 검사합니다.
@@ -94,7 +97,10 @@ def prepare_analysis2(data, source):
         frame["metric_label"] = label
         # 브리핑 그래프는 변화율과 같은 CSV의 실제 입력값을 표시합니다.
         # 구버전 업로드에 원자료 열이 없으면 null로 전달하여 값을 만들어내지 않습니다.
-        frame["metric_value"] = pd.to_numeric(data[metric], errors="coerce") if metric in data.columns else np.nan
+        if metric in data.columns:
+            frame["metric_value"] = pd.to_numeric(data[metric], errors="coerce")
+        else:
+            frame["metric_value"] = np.nan
         frame["metric_unit"] = "명" if metric in ("call_contacts", "text_contacts") else "회"
         frame["change_pct"] = np.expm1(pd.to_numeric(data[metric + "_log_change"])) * 100
         frame["relative_change_pp"] = pd.to_numeric(data[metric + "_residual_change"]) * 100

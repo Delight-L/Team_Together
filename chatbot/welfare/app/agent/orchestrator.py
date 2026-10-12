@@ -20,7 +20,10 @@ SYSTEM = """당신은 팀 투게더의 복지지원 사업 안내 도우미 '보
 
 def search_question(history: list[ChatMessage]) -> str:
     """새 주제는 독립 검색하고 후속 질문에서는 원래 사업 맥락을 유지합니다."""
-    questions = [m.content for m in history if m.role == "user"]
+    questions = []
+    for message in history:
+        if message.role == "user":
+            questions.append(message.content)
     def followup(question):
         compact = re.sub(r"\s+", "", question).strip("?!？.!")
         return len(compact) <= 30 and bool(re.match(
@@ -28,7 +31,11 @@ def search_question(history: list[ChatMessage]) -> str:
             r"(?:대상|자격|조건|신청|서류|문의|연락처|담당기관|운영|기간|비용|지원금|어디로)", compact))
     query = questions[-1]
     if followup(query):
-        anchor = next((q for q in reversed(questions[:-1]) if not followup(q)), "")
+        anchor = ""
+        for previous_question in reversed(questions[:-1]):
+            if not followup(previous_question):
+                anchor = previous_question
+                break
         if anchor:
             query = anchor + " " + query
     return query[-3000:]

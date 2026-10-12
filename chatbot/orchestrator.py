@@ -21,7 +21,13 @@ def free_reply(question, evidence, context, history=None, workflow=None):
     from agents.report_writer import is_draft_request, report_reply
     if is_draft_request(question):
         return report_reply(context, workflow)
-    messages = [{'role': m.get('role'), 'content': m.get('content', m.get('text', ''))}
-                for m in (history or [])[-20:] if isinstance(m, dict)]
+    messages = []
+    # 예전 화면의 text 항목도 현재 챗봇의 content 항목으로 바꿔 전달합니다.
+    for message in (history or [])[-20:]:
+        if isinstance(message, dict):
+            messages.append({
+                'role': message.get('role'),
+                'content': message.get('content', message.get('text', '')),
+            })
     messages.append({'role': 'user', 'content': question})
     return complete_reply(messages, context)
