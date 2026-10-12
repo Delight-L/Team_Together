@@ -4,7 +4,7 @@ const failed = new Set();
 let epoch = 0;
 export const draftEpoch = () => epoch;
 export const draftStorageFailed = key => failed.has(key);
-const isWritingDraft = key => key.startsWith(prefix) && !key.endsWith(',"group-workspace"]');
+const isWritingDraft = key => key.startsWith(prefix) && !/,"group-workspace(-v2)?"]$/.test(key);
 export function hasDrafts() {
   if ([...memory.keys()].some(isWritingDraft)) return true;
   try { return Object.keys(sessionStorage).some(isWritingDraft); } catch { return false; }

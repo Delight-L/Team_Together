@@ -13,7 +13,7 @@ try {
     import React, { useState } from 'react';
     import { createRoot } from 'react-dom/client';
     import App, { Report, Services } from './src/App.jsx';
-    import { ReviewWorkspace, Comparison, SupportDialog } from './src/Experience.jsx';
+    import { ReviewWorkspace, Comparison, DataDialog } from './src/Experience.jsx';
     import './src/style.css';
     import './src/briefing.css';
     import './src/experience.css';
@@ -33,7 +33,7 @@ try {
         <button onClick={() => setDistrict(district === '세곡동' ? '수서동' : '세곡동')}>지역 변경</button>
         <button onClick={() => setWorkflow({ ...workflow, reviews: [{ note: '변경' }] })}>근거 변경</button></nav>
         {view === 'compare' && <Comparison data={data} context={context} />}
-        {view === 'data' && <SupportDialog initialTab="data" onClose={() => setView('away')} data={data} context={context} rows={[]} workflow={workflow} onView={setView} onSelect={() => {}} regions={[]} user={user} onTrial={() => {}} busy={false} page="data" />}
+        {view === 'data' && <DataDialog onClose={() => setView('away')} data={data} context={context} rows={[]} user={user} />}
         {view === 'review' && <ReviewWorkspace key={district} context={context} user={user} onView={setView} />}
         {view === 'services' && <Services key={district} context={context} user={user} workflow={workflow} busy={false} mutate={async () => true} />}
         {view === 'report' && <Report key={district} context={context} user={user} workflow={workflow} busy={false} mutate={async () => true} onSaved={() => {}} />}
@@ -135,14 +135,8 @@ try {
   await page.getByRole('button', { name: 'compare', exact: true }).click();
   assert.equal(await page.getByLabel('시작월', { exact: true }).inputValue(), '2024-08');
   assert.equal(await page.locator('table').isVisible(), false);
-  await page.getByText('비교 지역 선택·변경', { exact: true }).click();
-  await page.getByLabel('동 검색', { exact: true }).fill('수서');
-  await page.getByLabel('수서동', { exact: true }).check();
-  await page.getByLabel('동 검색', { exact: true }).fill('');
-  await page.getByLabel('개포동', { exact: true }).check();
-  await page.getByLabel('일원동', { exact: true }).check();
-  assert.equal(await page.getByLabel('논현동', { exact: true }).isDisabled(), true);
-  await page.getByText('비교 지역 선택·변경', { exact: true }).click();
+  for (const name of ['수서동', '개포동', '일원동']) await page.getByLabel('비교할 동 추가', { exact: true }).selectOption(name);
+  assert.equal(await page.getByLabel('비교할 동 추가', { exact: true }).isDisabled(), true);
   await page.getByText('월별 상세 수치 보기', { exact: true }).click();
   assert.equal(await page.locator('table tbody tr').count(), 24);
   await page.getByLabel('시작월', { exact: true }).selectOption('2025-01');
@@ -162,11 +156,11 @@ try {
   if (process.env.UI_SCREENSHOTS) await page.screenshot({ path: resolve(process.env.UI_SCREENSHOTS, 'followup.png'), fullPage: true, animations: 'disabled' });
   await page.getByRole('button', { name: 'data', exact: true }).click();
   await page.getByRole('dialog').waitFor();
-  assert.equal(await page.getByRole('button', { name: '데이터 기준', exact: true }).getAttribute('aria-pressed'), 'true');
-  assert.equal(await page.getByText('분석 버전·갱신 정보', { exact: true }).isVisible(), true);
-  assert.equal(await page.getByText('test-v1', { exact: true }).isVisible(), false);
+  await page.getByRole('heading', { name: '데이터 기준', exact: true }).waitFor();
+  assert.equal(await page.getByText('분석 버전·갱신 정보 (관리자)', { exact: true }).count(), 0);
+  assert.equal(await page.getByText('test-v1').count(), 0);
   if (process.env.UI_SCREENSHOTS) await page.screenshot({ path: resolve(process.env.UI_SCREENSHOTS, 'data-guide.png'), fullPage: true, animations: 'disabled' });
-  await page.getByRole('button', { name: '이용 안내 닫기' }).click();
+  await page.getByRole('button', { name: '데이터 기준 닫기' }).click();
   await page.getByRole('button', { name: 'report', exact: true }).click();
   if (process.env.UI_SCREENSHOTS) await page.screenshot({ path: resolve(process.env.UI_SCREENSHOTS, 'report-edit.png'), fullPage: true, animations: 'disabled' });
   await page.getByRole('button', { name: '작성 정보 수정' }).click();
@@ -179,21 +173,26 @@ try {
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('http://127.0.0.1:' + server.address().port + '/app');
+  const skipGuide = async () => {
+    const skip = page.getByRole('button', { name: '건너뛰기', exact: true });
+    await skip.waitFor({ timeout: 5000 }).then(() => skip.click(), () => {});
+  };
+  await skipGuide();
   await page.getByRole('button', { name: '지역 분석', exact: true }).click();
   assert.equal(await page.getByRole('button', { name: '데이터 안내', exact: true }).count(), 0);
   assert.equal(await page.getByRole('button', { name: '데이터 관리', exact: true }).count(), 0);
   await page.getByRole('button', { name: '데이터 기준 보기', exact: true }).click();
-  await page.getByRole('dialog').waitFor();
-  assert.equal(await page.getByRole('button', { name: '데이터 기준', exact: true }).getAttribute('aria-pressed'), 'true');
+  await page.getByRole('heading', { name: '데이터 기준', exact: true }).waitFor();
   await page.keyboard.press('Escape');
   await page.getByRole('dialog').waitFor({ state: 'detached' });
   appAdmin = true;
   await page.reload();
+  await skipGuide();
   await page.getByRole('button', { name: '데이터 관리', exact: true }).click();
   await page.getByRole('heading', { name: '데이터 검사와 DB1 반영' }).waitFor();
   assert.equal(await page.getByRole('button', { name: '업로드 자료 검사 및 분석', exact: true }).isDisabled(), true);
   assert.deepEqual(errors, []);
-  console.log('통과: 작성 내용 보존, 보고서 3단계·확인 초기화, 비교 기간·4개 제한·접힘, 검토 구역 전환, 모바일 가로 넘침, 데이터 안내 연결·관리자 메뉴');
+  console.log('통과: 작성 내용 보존, 보고서 3단계·확인 초기화, 비교 기간·4개 제한, 검토 구역 전환, 모바일 가로 넘침, 데이터 안내 연결·관리자 메뉴');
 } finally {
   await browser?.close();
   if (server) await new Promise(r => server.close(r));

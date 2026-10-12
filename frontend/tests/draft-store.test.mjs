@@ -29,7 +29,7 @@ test('새 실행에서도 세션 저장소에서 복원', async () => {
 });
 test('열린 탭만 있으면 작성 중 경고를 띄우지 않으며 로그아웃 시 정리한다', () => {
   clearDrafts();
-  const workspace = draftKey(user, { city: '강남구' }, 'group-workspace');
+  const workspace = draftKey(user, { city: '강남구' }, 'group-workspace-v2');
   writeDraft(workspace, { tabs: [], initialized: true });
   assert.equal(hasDrafts(), false);
   writeDraft(key, { note: '실제 작성 내용' });

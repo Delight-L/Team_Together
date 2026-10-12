@@ -1458,3 +1458,17 @@
   .vector-map .map-zoom-hint span { display: none; }
   .vector-priority-marker { padding: 7px 9px; gap: 6px; }
 }
+/* 지역 현황: 동 상세는 표 자리(왼쪽)에 열고 지도는 가리지 않습니다. */
+.region-detail { padding: 14px; gap: 8px; }
+.region-detail .back-to-list { align-self: flex-start; font-size: 13px; }
+.region-detail .region-insight { position: static; width: auto; flex: 1; min-height: 0; overflow: auto; box-shadow: none; border: 0; padding: 4px 2px; background: transparent; backdrop-filter: none; animation: none; }
+.vector-priority-marker { padding: 5px 9px 5px 5px; gap: 6px; }
+.vector-priority-marker .vector-priority-number { width: 22px; height: 22px; border-radius: 7px; font-size: 12px; }
+.vector-priority-marker b { font-size: 12px; white-space: nowrap; }
+.regional-overview { grid-template-columns: minmax(0, .95fr) minmax(320px, 1.25fr); }
+.directory-map .vector-district-marker { padding: 1px 4px; font-size: 10.5px; background: #ffffffd9; }
+.map-hover-label { position: absolute; z-index: 5; pointer-events: none; display: flex; gap: 6px; align-items: center; padding: 5px 8px; border-radius: 8px; background: #0f172ae6; color: #fff; font-size: 12px; white-space: nowrap; }
+.map-hover-label span { font-size: 11px; color: #cbd5e1; }
+.region-detail .region-insight > header .icon-button { display: none; }
+/* 지도 출처 표기는 이용 조건상 남기되 작고 흐리게 */
+.vector-map .maplibregl-ctrl-attrib { font-size: 9px; opacity: .7; }

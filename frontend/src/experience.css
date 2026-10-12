@@ -111,3 +111,74 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 }
 
 .comparison-chart .compact-trend text { font-size: 14px; }
+/* 지역·기간 비교: 한 그래프에 최대 4개 동을 겹쳐 그립니다. */
+.comparison-selection { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.region-chip .legend-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.region-add { width: auto; min-width: 130px; font-size: 13px; padding: 7px 10px; }
+.comparison-chart .compare-chart { position: relative; width: 100%; min-width: 0; }
+.compare-chart svg { display: block; overflow: visible; }
+.compare-chart svg text { font-size: 12px; fill: #64748b; }
+.compare-chart svg .series-label { font-size: 12px; font-weight: 700; fill: #1e293b; }
+.compare-chart svg .grid { stroke: #e8edf6; }
+.compare-chart svg .zero { stroke: #94a3b8; stroke-width: 1.2; }
+.compare-chart svg .crosshair { stroke: #94a3b8; stroke-dasharray: 3 3; }
+.compare-tooltip { position: absolute; top: 8px; width: 180px; background: #fff; border: 1px solid #dbe4f0; border-radius: 10px; box-shadow: 0 8px 24px rgba(15, 23, 42, .12); padding: 10px 12px; font-size: 12px; pointer-events: none; }
+.compare-tooltip b { display: block; margin-bottom: 6px; color: #0f172a; }
+.compare-tooltip span { display: flex; align-items: center; gap: 6px; color: #334155; margin-top: 4px; }
+.compare-tooltip i { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.compare-tooltip em { margin-left: auto; font-style: normal; font-weight: 700; color: #0f172a; }
+/* 메뉴 머리글: 종합 현황과 같은 톤으로 제목과 메뉴별 설명을 보여 줍니다. */
+.app-shell:not(.briefing-shell) .page-heading h1 { font-size: clamp(22px, 1.8vw, 28px); font-weight: 800; letter-spacing: -.8px; line-height: 1.3; color: #0c1837; }
+.app-shell:not(.briefing-shell) .page-heading p { font-size: 13px; color: #4b6488; line-height: 1.5; }
+@media (max-width: 760px) { .app-shell:not(.briefing-shell) .page-heading h1 { font-size: 21px; } .app-shell:not(.briefing-shell) .page-heading p { font-size: 12px; } }
+/* 사업 검토·보고서 상단의 진행 단계와 앞 단계 바로 가기 */
+.workflow-steps { margin-bottom: 18px; }
+.workflow-steps ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; list-style: none; margin: 0; padding: 0; }
+.workflow-steps li { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #dbe3ed; border-radius: 10px; background: #f7f9fc; color: #61718a; font-size: 13px; min-width: 0; }
+.workflow-steps li > span { display: grid; place-items: center; flex: 0 0 24px; height: 24px; border-radius: 50%; background: #e7edf4; font-size: 12px; font-weight: 700; }
+.workflow-steps li b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.workflow-steps li small { margin-left: auto; font-size: 11px; white-space: nowrap; }
+.workflow-steps li.done { background: #effaf5; border-color: #bfe8d4; color: #087c65; }
+.workflow-steps li.done > span { background: #0f9d76; color: #fff; }
+.workflow-steps li.current { background: #eef5ff; border-color: #4b89ff; color: #1d4ed8; }
+.workflow-steps li.current > span { background: #2563eb; color: #fff; }
+.workflow-steps > p { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 10px 0 0; padding: 12px 14px; border-radius: 10px; background: #fff8e9; color: #805f23; font-size: 13px; }
+.workflow-steps > p button { flex-shrink: 0; }
+@media (max-width: 760px) { .workflow-steps ol { grid-template-columns: 1fr; } }
+/* 지역 분석 하위 탭 */
+.view-tabs { display: flex; gap: 6px; flex-shrink: 0; border-bottom: 1px solid #dbe4f0; }
+.view-tabs button { padding: 10px 16px; margin-bottom: -1px; border: 1px solid transparent; border-radius: 10px 10px 0 0; color: #61718a; font-size: 14px; font-weight: 600; }
+.view-tabs button.active { background: #fff; border-color: #dbe4f0; border-bottom-color: #fff; color: #1d4ed8; }
+/* 지표별 추이 2×2 */
+.trend-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.trend-grid .trend-card { margin: 0; min-width: 0; }
+@media (max-width: 1100px) { .trend-grid { grid-template-columns: 1fr; } }
+/* 업무 기록: 목록 + 상세 */
+.records-layout { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.records-list { position: sticky; top: 0; }
+.records-list ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.records-list li button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 11px 12px; border: 1px solid #e0e9f6; border-radius: 10px; background: #fff; }
+.records-list li button.selected { background: #eef5ff; border-color: #4b89ff; }
+.records-list li button > span:first-child { flex: 1; min-width: 0; }
+.records-list b { display: block; font-size: 14px; color: #0f172a; }
+.records-list small { display: block; margin-top: 3px; font-size: 11px; color: #7d91af; }
+.record-status { font-size: 11px; padding: 4px 8px; border-radius: 20px; background: #fff4e0; color: #9a5b00; white-space: nowrap; }
+.record-status.done { background: #e1f7ef; color: #087c65; }
+.record-progress { font-size: 11px; color: #61718a; }
+.records-detail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.records-next { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 18px; font-size: 14px; font-weight: 600; color: #1e293b; }
+@media (max-width: 900px) { .records-layout { grid-template-columns: 1fr; } .records-list { position: static; } }
+/* 처음 쓰는 사람을 위한 안내 요소 */
+.help-button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid #bcd3f5; border-radius: 18px; background: #eef5ff; color: #1d4ed8; font-size: 12px; font-weight: 700; }
+.help-button:hover:not(:disabled) { background: #e0edff; }
+.topbar .icon-button { display: inline-flex; align-items: center; gap: 5px; width: auto; padding: 6px 10px; }
+.topbar-chat-label { font-size: 12px; font-weight: 700; }
+.status-legend { margin: 0 14px 10px; font-size: 12px; color: #4b6488; }
+.status-legend summary { cursor: pointer; color: #1d4ed8; font-weight: 600; }
+.status-legend p { margin: 8px 0; line-height: 1.6; }
+.status-legend dl { display: grid; gap: 4px; margin: 0; }
+.status-legend dl > div { display: grid; grid-template-columns: 72px 1fr; gap: 8px; }
+.status-legend dt { font-weight: 700; color: #1e293b; }
+.status-legend dd { margin: 0; }
+.status-tag[title] { cursor: help; }
+abbr[title] { text-decoration: underline dotted; cursor: help; }

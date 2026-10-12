@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { api, number, streamWelfareChat } from './api';
+import React, { useEffect, useState } from 'react';
+import { number } from './api';
 
 export function Icon({ name, size = 20 }) {
   const paths = {
@@ -17,6 +17,8 @@ export function Icon({ name, size = 20 }) {
         <path d="M9 3v15M15 6v15" />
       </>
     ),
+    compare: <path d="M3 21h18M6 21V11M10 21V5M14 21v-8M18 21V8" />,
+    history: <><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5M12 7v5l3 2" /></>,
     chart: (
       <>
         <path d="M4 3v17h17M8 15l4-6 4 3 5-8" />
@@ -151,7 +153,7 @@ export function EvidenceTable({ rows }) {
           <tr>
             <th>지표</th>
             <th>전월 변화</th>
-            <th><abbr title="과거 변화 흐름에서 얼마나 벗어났는지 나타내는 값입니다. 판정은 여러 지표를 묶어 수행합니다.">변화 참고값(Z)</abbr></th>
+            <th><abbr title="과거 흐름에서 얼마나 벗어났는지 나타내는 값입니다. 0에서 멀수록 평소와 다릅니다. 판정은 여러 지표를 묶어 수행합니다.">평소 대비 차이</abbr></th>
             <th>판단</th>
           </tr>
         </thead>
@@ -245,104 +247,3 @@ export function Trend({ assessment, district, metric = '전화 연락', maxRows 
   );
 }
 
-// App의 context로 지도와 같은 지역/월을 질문합니다.
-// messages=대화 상태, busy=처리 중 표시/중복 전송 방지. AI 키는 서버에만 있습니다.
-export function ChatPanel({ context, expanded, onExpand, onClose, visible, draft }) {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [mode, setMode] = useState('연결 확인 중');
-  const end = useRef(null), request = useRef(null), inputField = useRef(null), appliedDraft = useRef(null);
-  const contextKey = JSON.stringify(context);
-  useEffect(() => {
-    let active = true;
-    api('/chat/config').then(data => {
-      if (active) setMode(`${data.mode} · 사업 ${data.resourceCount}건`);
-    }).catch(() => { if (active) setMode('연결 확인 필요'); });
-    return () => { active = false; };
-  }, []);
-  useEffect(() => {
-    request.current?.abort(); request.current = null;
-    setMessages([]); setInput(''); setError(''); setBusy(false);
-    return () => { request.current?.abort(); request.current = null; };
-  }, [contextKey]);
-  useEffect(() => {
-    if (draft?.contextKey === contextKey && appliedDraft.current !== draft.id) {
-      appliedDraft.current = draft.id;
-      setInput(draft.question);
-      inputField.current?.focus();
-    }
-  }, [draft, contextKey]);
-  useEffect(() => { end.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [messages, busy]);
-  function stop() {
-    request.current?.abort(); request.current = null; setBusy(false);
-    setMessages(previous => previous.map((m, i) => i === previous.length - 1 && m.role === 'assistant'
-      ? { ...m, text: m.text || '응답이 중지되었습니다.', interrupted: true } : m));
-  }
-  async function send(value = input) {
-    const question = value.trim();
-    if (!question || request.current) return;
-    const controller = new AbortController(); request.current = controller;
-    const history = messages.filter(m => m.text && !m.interrupted).slice(-38);
-    const next = [...history, { role: 'user', text: question }];
-    const index = next.length;
-    setMessages([...next, { role: 'assistant', text: '', sources: [] }]);
-    setInput(''); setError(''); setBusy(true);
-    function update(fn) {
-      if (request.current !== controller) return;
-      setMessages(previous => previous.map((m, i) => i === index ? fn(m) : m));
-    }
-    try {
-      await streamWelfareChat(context, next.map(m => ({ role: m.role, content: m.text })), (event, payload) => {
-        if (request.current !== controller) return;
-        if (event === 'token') update(m => ({ ...m, text: m.text + payload.text }));
-        else if (event === 'sources') update(m => ({ ...m, sources: payload.records, mode: payload.mode }));
-        else if (event === 'replace') update(m => ({ ...m, text: payload.text, mode: payload.mode }));
-        else if (event === 'error') setError(payload.message);
-      }, controller.signal);
-    } catch (e) {
-      if (request.current === controller && e.name !== 'AbortError') {
-        setError(e.message); update(m => ({ ...m, interrupted: true }));
-      }
-    } finally {
-      if (request.current === controller) { request.current = null; setBusy(false); }
-    }
-  }
-  return <aside className={`chat-panel welfare-chat ${expanded ? 'expanded' : ''}`}
-    style={{ display: visible ? undefined : 'none' }} aria-label="복지이음 챗봇">
-    <header className="chat-heading"><div><span className="eyebrow">TEAM TOGETHER</span>
-      <h2>✳ 복지이음 <span className="online-dot" /></h2></div>
-      <button className="icon-button" onClick={onExpand} aria-label={expanded ? '챗봇 패널로 돌아가기' : '챗봇 크게 보기'}><Icon name={expanded ? 'close' : 'chat'} /></button>
-      <button className="icon-button" onClick={onClose} aria-label="챗봇 닫기"><Icon name="close" size={17} /></button>
-    </header>
-    <div className="chat-intro"><Bomi busy={busy} /><div><b>필요한 지원을 함께 찾아요</b><p>복지사업과 담당 기관을<br/>팀 자료에서 찾아 안내합니다.</p></div></div>
-    <div className="context-chip"><span className="online-dot"/>{context.city} {context.district || '전체'}<span>{context.month}</span></div>
-    <div className="welfare-status"><small>{mode}</small><button className="text-button" disabled={busy} onClick={() => { setMessages([]); setInput(''); setError(''); }}>＋ 새 대화</button></div>
-    <div className="chat-messages" aria-live="polite">
-      {!messages.length && <div className="welcome"><span className="assistant-label">당신의 일상에 필요한 연결</span><h3>어떤 도움이 필요하신가요?</h3>
-        <p>거주 지역과 필요한 지원을 알려주세요. 관련 사업과 확인할 다음 단계를 찾아드릴게요.</p>
-        <div className="suggestions">{['혼자 사는 어르신 돌봄 지원', '병원에 함께 가줄 지원이 있나요?', '청년이 참여할 관계 모임을 찾아주세요', '세곡동 식생활 지원이 궁금해요'].map(q =>
-          <button key={q} disabled={busy} onClick={() => send(q)}>{q}<Icon name="arrow" size={15}/></button>)}</div>
-        <p className="welfare-notice">계획·검토 자료가 포함되어 있습니다. 현재 운영·자격·접수는 담당 기관 확인이 필요합니다.</p>
-      </div>}
-      {messages.map((m, i) => <article className={`message ${m.role}`} key={i}>
-        {m.role === 'assistant' && <span className="assistant-label">✳ 복지이음</span>}
-        <div>{m.text || (busy ? '관련 자료를 찾고 있어요…' : '답변을 완료하지 못했습니다.')}</div>
-        {m.mode && <small>{m.mode}</small>}
-        {m.sources?.length > 0 && <details className="welfare-sources"><summary>참고한 팀 자료 · {m.sources.length}건</summary>
-          {m.sources.map(r => <div key={r.id}><strong>{r.name}</strong><p>{r.source} · p. {r.pages}</p><small>{r.status}</small></div>)}
-        </details>}
-      </article>)}
-      {error && <p className="error" role="alert">{error}</p>}<div ref={end}/>
-    </div>
-    <div className="chat-footer"><p className="free-chat-note">서울시·강남구 중심의 팀 자료를 검색합니다.</p>
-      <form className="chat-input" onSubmit={e => { e.preventDefault(); send(); }}>
-        <textarea ref={inputField} rows="2" value={input} maxLength={2000} onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
-          placeholder="예: 병원 동행 지원이 필요해요" aria-label="복지지원 질문"/>
-        {busy ? <button type="button" onClick={stop}>중지</button> : <button disabled={!input.trim()} aria-label="질문 보내기"><Icon name="send"/></button>}
-      </form><small>주민등록번호·정확한 주소 등 개인정보는 입력하지 마세요.</small>
-    </div>
-  </aside>;
-}

@@ -39,3 +39,16 @@ test('closing inactive tab keeps selection; closing active chooses neighbor and 
   state = closeGroup(state, groupKey(a)); assert.equal(state.active, groupKey(b));
   state = closeGroup(state, groupKey(b)); assert.deepEqual(state, { tabs: [], active: '' });
 });
+
+import { rankGroups, pickInitialGroup } from '../src/groupTabs.mjs';
+test('candidate districts come first and the largest decline opens first', () => {
+  const g = (district, age, change_pct) => ({ city: '강남구', code: district, district, month: '2025-12', age, sex: '남성', change_pct });
+  const groups = [g('신사동', '10대', -9), g('삼성1동', '20대', -1), g('삼성1동', '70대', -4), g('대치1동', '30대', -2), g('역삼1동', '40대', null)];
+  const statuses = { 삼성1동: { status: '신규 후보', count: 2 }, 대치1동: { status: '연속 후보', count: 3 }, 신사동: { status: '기준 미해당', count: 0 } };
+  const statusOf = x => statuses[x.district];
+  assert.deepEqual(rankGroups(groups, statusOf).map(x => `${x.district}/${x.age}`), ['삼성1동/70대', '삼성1동/20대', '대치1동/30대', '신사동/10대', '역삼1동/40대']);
+  assert.equal(pickInitialGroup(groups, statusOf).age, '70대');
+  // 후보가 없으면 전체에서 가장 많이 줄어든 그룹, 값이 없는 그룹은 뒤로
+  assert.equal(pickInitialGroup(groups, () => undefined).district, '신사동');
+  assert.equal(pickInitialGroup([], statusOf), null);
+});

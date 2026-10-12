@@ -32,3 +32,29 @@ export function availableWorkspace(state, catalog, preferredMonth) {
   return { ...state, tabs, active: tabs.some(g => groupKey(g) === state.active) ? state.active : tabs.length ? groupKey(tabs[0]) : '',
     month: catalog.months.includes(state.month || preferredMonth) ? state.month || preferredMonth : catalog.months.at(-1) || '' };
 }
+
+// 후보 판정 우선순위: 신규 → 연속 → 변화 후보. 그 밖의 판정은 같은 순위로 취급합니다.
+export const CANDIDATE_ORDER = ['신규 후보', '연속 후보', '변화 후보'];
+const candidateRank = status => { const i = CANDIDATE_ORDER.indexOf(status); return i < 0 ? CANDIDATE_ORDER.length : i; };
+const decline = g => (Number.isFinite(g.change_pct) ? g.change_pct : Infinity);
+
+// 조사 파일 목록 순서: 후보 동의 그룹이 먼저(판정 순위 → 후보 지표 수), 같은 동에서는 유동량이 많이 줄어든 그룹부터.
+// 후보가 아닌 동은 원래 순서를 유지합니다. statusOf(group)는 { status, count } 또는 undefined를 돌려줍니다.
+export function rankGroups(groups, statusOf) {
+  return groups.map((g, i) => ({ g, i, s: statusOf(g) })).sort((a, b) => {
+    const ra = candidateRank(a.s?.status), rb = candidateRank(b.s?.status);
+    if (ra !== rb) return ra - rb;
+    if (ra === CANDIDATE_ORDER.length) return a.i - b.i;
+    return (b.s.count || 0) - (a.s.count || 0) || a.g.district.localeCompare(b.g.district, 'ko') || decline(a.g) - decline(b.g) || a.i - b.i;
+  }).map(x => x.g);
+}
+
+// 처음 방문할 때 열 그룹: 1순위 후보 동에서 유동량이 가장 많이 줄어든 그룹.
+// 후보 동이 없으면(예: 후보 판정 자료가 없는 지역) 전체에서 유동량이 가장 많이 줄어든 그룹을 엽니다.
+export function pickInitialGroup(groups, statusOf) {
+  if (!groups.length) return null;
+  const ranked = rankGroups(groups, statusOf);
+  const top = ranked[0];
+  if (candidateRank(statusOf(top)?.status) < CANDIDATE_ORDER.length) return top;
+  return [...groups].sort((a, b) => decline(a) - decline(b))[0];
+}

@@ -1274,14 +1274,27 @@ tr:last-child td {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
 }
 .login-hero .brand-logo {
-  position: absolute;
-  top: 45px;
-  left: 65px;
+  position: static;
+  flex-shrink: 0;
   width: 170px;
+  margin-left: -5px;
+}
+.login-hero-body {
+  width: 100%;
+  margin-block: auto;
+  padding-top: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.login-hero .eyebrow {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #6f8db5;
 }
 .login-hero h1 {
   font-size: clamp(30px, 3vw, 50px);
@@ -1295,11 +1308,21 @@ tr:last-child td {
   color: #829bbc;
   margin-top: 24px;
 }
+/* 이미지가 자기 영역을 넘쳐 아래 문구를 덮지 않도록 영역 안에 고정하고,
+   창 높이에 맞춰 크기를 줄입니다. 비율은 캐릭터 원본(약 1:1.37)에 맞춥니다. */
 .login-hero .bomi {
   align-self: center;
-  width: 240px;
-  height: 260px;
-  margin-top: 25px;
+  height: clamp(150px, 32dvh, 320px);
+  width: auto;
+  aspect-ratio: 240 / 329;
+  margin-top: 24px;
+}
+.login-hero .bomi img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .hero-note {
   display: flex;
@@ -1741,15 +1764,13 @@ tr:last-child td {
     padding: 35px;
   }
   .login-hero .brand-logo {
-    left: 35px;
-    top: 30px;
+    width: 150px;
   }
   .login-hero h1 {
     font-size: 30px;
   }
   .login-hero .bomi {
-    width: 170px;
-    height: 200px;
+    height: clamp(140px, 28dvh, 240px);
   }
   .login-form {
     padding: 28px;
@@ -1936,13 +1957,14 @@ tr:last-child td {
     min-height: 0;
   }
   .login-hero {
-    padding: 90px 28px 30px;
+    padding: 24px 28px 30px;
     min-height: 380px;
   }
   .login-hero .brand-logo {
-    top: 25px;
-    left: 28px;
-    width: 135px;
+    width: 120px;
+  }
+  .login-hero-body {
+    padding-top: 12px;
   }
   .login-hero h1 {
     font-size: 28px;
@@ -1951,16 +1973,20 @@ tr:last-child td {
     font-size: 12px;
     margin-top: 14px;
   }
+  /* 모바일: 제목을 가리지 않도록 로고 옆 오른쪽 위 빈 곳에 작게 둡니다. */
   .login-hero .bomi {
     position: absolute;
-    width: 120px;
-    height: 150px;
-    right: 10px;
-    bottom: 35px;
-    opacity: 0.8;
+    top: 18px;
+    right: 20px;
+    height: 110px;
+    margin-top: 0;
+  }
+  .login-page .bomi-halo {
+    width: 80px;
+    height: 80px;
   }
   .hero-note {
-    margin-top: 40px;
+    margin-top: 28px;
   }
   .login-form {
     padding: 32px 28px;
@@ -2024,3 +2050,32 @@ tr:last-child td {
 .welfare-sources p { margin:5px 0; color:#64748b; }
 .welfare-sources small { color:#956100; }
 .welfare-chat .chat-input button { white-space:nowrap; min-width:38px; }
+
+/* 노트북처럼 세로가 짧은 창: 스크롤 없이 하단 안내까지 보이도록 여백과 크기를 줄입니다. */
+@media (max-height: 820px) and (min-width: 601px) {
+  .login-hero {
+    padding-top: 28px;
+    padding-bottom: 24px;
+  }
+  .login-hero .brand-logo {
+    width: 130px;
+  }
+  .login-hero-body {
+    padding-top: 12px;
+  }
+  .login-hero h1 {
+    margin-top: 10px;
+    font-size: clamp(28px, 2.6vw, 40px);
+    line-height: 1.4;
+  }
+  .login-hero p {
+    margin-top: 14px;
+  }
+  .login-hero .bomi {
+    height: clamp(120px, 26dvh, 220px);
+    margin-top: 12px;
+  }
+  .hero-note {
+    margin-top: 16px;
+  }
+}

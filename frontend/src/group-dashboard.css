@@ -138,11 +138,14 @@
 .gd-chat form input { min-height: 42px; }
 .gd-chat form button { padding: 8px 10px; }
 .gd-directory { min-height: 600px; }
+/* 왼쪽 메뉴바는 모든 메뉴에서 종합 현황과 같은 모양을 씁니다. */
+.app-shell .workspace-tag,.app-shell .nav-label { display: none; }
+.app-shell .sidebar > .nav-label + button { margin-top: 10px; position: relative; }
+.app-shell:not(.nav-collapsed) .sidebar > .nav-label + button::before { content: ''; position: absolute; left: 12px; right: 12px; top: -6px; border-top: 1px solid #e3ebf6; }
 @media (min-width: 1300px) {
-  .group-shell:not(.nav-collapsed) { --nav-width: 216px; }
-  .group-shell:not(.nav-collapsed) .sidebar > button:not(.logo-toggle) { font-size: 16px; padding: 16px 12px; color: #192c4f; }
-  .group-shell:not(.nav-collapsed) .sidebar > button.active { color: #0865ff; }
-  .group-shell .workspace-tag,.group-shell .nav-label { display: none; }
+  .app-shell:not(.nav-collapsed) { --nav-width: 216px; }
+  .app-shell:not(.nav-collapsed) .sidebar > button:not(.logo-toggle) { font-size: 16px; padding: 16px 12px; color: #192c4f; }
+  .app-shell:not(.nav-collapsed) .sidebar > button.active { color: #0865ff; }
 }
 @media (max-width: 1250px) and (min-width: 761px) {
   .gd-workspace { grid-template-columns: minmax(0, 1fr) 300px; }
@@ -201,3 +204,33 @@
 @media(max-width:1250px) { .gd-overview { grid-template-columns:1fr 1fr; }.gd-overview-copy { grid-column:1/-1; }.gd-context-cards { grid-template-columns:1fr; }.gd-process span { display:none; }.gd-process { gap:5px; padding:8px; }.gd-process li { gap:4px; }.gd-process li+li:before { display:none; } }
 @media(max-width:760px) { .gd-workspace { grid-template-rows:auto 70px auto 62px auto; }.gd-process { min-height:64px; }.gd-process strong { font-size:11px; }.gd-process li>b { width:28px; height:28px; border-width:3px; }.gd-context-cards >article { padding:14px; }.gd-case-footer >div { flex-wrap:wrap; }.gd-case-heading h2 { font-size:23px; } }
 .gd-context-cards > article { padding:15px; }.gd-senior { margin:14px 0; padding:11px; }.gd-context-cards h4 { margin-top:15px; }.gd-mini-trend .gd-line { height:80px; }.gd-overview { padding-bottom:14px; }
+/* 조사 파일은 왼쪽 첫 탭, 오른쪽은 보미에게 질문만 고정합니다. */
+.gd-chat-slot { grid-area: 1 / 2 / 4 / 3; margin-top: 0; border-top: 1px solid #d4e6fb; border-radius: 12px; overflow: hidden; }
+.gd-chat { height: max(600px, calc(100dvh - 170px)); }
+.gd-files-tab { min-width: 150px; }
+.gd-files-tab > button svg { color: #2563eb; }
+.gd-files-panel { padding: 0; }
+.gd-files-panel .gd-directory { min-height: 0; padding: 20px 22px; }
+.gd-files-panel .gd-directory > p { font-size: 12px; }
+.gd-files-panel .gd-directory > input { max-width: 420px; }
+.gd-files-panel .gd-directory-filters { max-width: 420px; }
+.gd-files-panel .gd-file-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.gd-chat-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; min-height: 600px; padding: 32px 24px; color: #6f85a4; }
+.gd-chat-empty img { width: 72px; height: 72px; }
+.gd-chat-empty h3 { margin: 6px 0 0; color: #12213e; font-size: 17px; }
+.gd-chat-empty p { margin: 0; font-size: 13px; line-height: 1.7; max-width: 260px; }
+@media (max-width: 760px) {
+  .gd-workspace { grid-template-rows: auto 70px auto auto; }
+  .gd-chat-slot { grid-area: 4 / 1; margin-top: 12px; position: static; }
+  .gd-chat-empty { min-height: 0; }
+  .gd-files-panel .gd-file-list { max-height: none; }
+}
+.gd-tabs-label small { font-weight: 400; color: #5b7193; }
+.gd-process li > button { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; text-align: left; padding: 4px 6px; border-radius: 10px; }
+.gd-process li > button:hover:not(:disabled) { background: #f0f6ff; }
+.gd-process li > button:disabled { opacity: 1; cursor: default; }
+.gd-process li > button > b { background:#1680ff; color:white; border:5px solid #eaf4ff; border-radius:50%; width:36px; height:36px; display:grid; place-items:center; flex-shrink:0; }
+/* 후보 동의 그룹 표시 */
+.gd-file-list .gd-candidate { font-style: normal; flex-shrink: 0; font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 12px; background: #ffe9ee; color: #c2264a; }
+.gd-candidate-badge { background: #ffe9ee; color: #c2264a; }
+.gd-candidate-note { margin: 0 0 8px; padding: 8px 11px; border-radius: 8px; background: #fff4f6; color: #7a2236; font-size: 12px; line-height: 1.6; }

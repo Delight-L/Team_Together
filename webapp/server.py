@@ -343,6 +343,13 @@ class Handler(BaseHTTPRequestHandler):
                 from db.experience_store import save
                 context = self.context(body, user, data)
                 return self.reply(200, save(context, body))
+            if route == '/api/region/chat':
+                # 보미의 «이 화면 분석»: 동을 고르지 않았으면 구 전체 후보를, 골랐으면 그 동의 근거를 설명합니다.
+                from db.region_workspace import explain_region, ai_explain_region
+                context = self.context(body, user, data, optional_district=True)
+                if body.get('mode') == 'ai':
+                    return self.reply(200, ai_explain_region(context, body.get('question', ''), data, body.get('history', [])))
+                return self.reply(200, explain_region(context, body.get('question', ''), data))
             if route == '/api/chat':
                 # 대화는 동 선택 없이도 가능합니다. 업무 저장의 필수 지역 검증은 그대로 유지합니다.
                 from chatbot.orchestrator import topic_reply, free_reply

@@ -112,6 +112,19 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(self.request('POST','/api/chat',body | {'messages':messages})[0],400)
         self.assertEqual(self.request('POST','/api/chat',self.context | {'question':'주제','topic':'unknown'})[0],400)
 
+    def test_region_chat_explains_selected_district_and_city(self):
+        payload = self.context | {'question':'변화 요약'}
+        self.assertEqual(self.request('POST','/api/region/chat',payload)[0],401)
+        self.login()
+        status, result = self.request('POST','/api/region/chat',payload)
+        self.assertEqual(status,200)
+        self.assertIn('삼성1동',result['answer']); self.assertIn('외부 AI 호출 없음',result['mode'])
+        status, result = self.request('POST','/api/region/chat',self.context | {'district':'','question':'요약'})
+        self.assertEqual(status,200); self.assertIn('강남구',result['answer'])
+        self.assertEqual(self.request('POST','/api/region/chat',self.context | {'question':''})[0],400)
+        self.assertEqual(self.request('POST','/api/region/chat',self.context | {'question':'요약','mode':'ai'})[0],400)
+        self.assertEqual(self.request('POST','/api/region/chat',self.context | {'city':'춘천시','question':'요약'})[0],401)
+
     def test_city_scope_and_admin_upload_guard(self):
         self.login('chuncheon01')
         status,data=self.request('GET','/api/dashboard')
