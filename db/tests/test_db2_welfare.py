@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import requests
 
-from collect_db2 import (ApiError, BudgetExhausted, CollectionError, WelfareApi,
+from db.collect_welfare import (ApiError, BudgetExhausted, CollectionError, WelfareApi,
                         collect, parse_date, parse_detail, parse_list, parse_xml)
 
 
@@ -53,7 +53,7 @@ class ParserTests(unittest.TestCase):
 
 
 class ClientTests(unittest.TestCase):
-    @patch('collect_db2.time.sleep')
+    @patch('db.collect_welfare.time.sleep')
     def test_retry_consumes_budget_and_key_is_not_double_encoded(self, sleep):
         session = Mock()
         good = Mock(status_code=200, content=listing([]).encode())

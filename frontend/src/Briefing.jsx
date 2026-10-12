@@ -51,6 +51,22 @@ const tone = (status) =>
         : status === '변화 후보'
           ? 'rose'
           : 'quiet';
+const STATUS_HELP = {
+  '신규 후보': '이번 달 처음 후보 기준에 해당한 동입니다.',
+  '연속 후보': '지난달에 이어 이번 달에도 후보 기준에 해당한 동입니다.',
+  '변화 후보': '비교 이력은 부족하지만 이번 달 기준에 해당한 동입니다.',
+  '판단 보류': '과거 자료가 부족해 판단하지 않은 동입니다.',
+  '기준 미해당': '후보 기준에 해당하지 않은 동입니다.',
+  '자료 없음': '이번 달 분석 자료가 없는 동입니다.',
+};
+// 판정 이름만 보고는 뜻을 알기 어려워, 표 위에 짧은 설명을 둡니다.
+export function StatusLegend() {
+  return <details className="status-legend"><summary>판정은 무슨 뜻인가요?</summary>
+    <p>통화·문자·평일 이동·휴일 이동 지표가 평소 흐름과 다른지 봅니다. «후보»는 추가로 확인해 볼 동이라는 뜻이며, 개인의 고립 여부를 판정하지 않습니다.</p>
+    <dl>{Object.entries(STATUS_HELP).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+  </details>;
+}
+
 export function RegionInsight({ region, city, month, onClose, onStart, onChat, busy }) {
   if (!region) return null;
   return (
@@ -65,7 +81,7 @@ export function RegionInsight({ region, city, month, onClose, onStart, onChat, b
         </button>
       </header>
       <div className="insight-summary">
-        <span className={`status-tag ${tone(region.status)}`}>{region.status}</span>
+        <span className={`status-tag ${tone(region.status)}`} title={STATUS_HELP[region.status]}>{region.status}</span>
         <small>
           {city} · {month}
         </small>
@@ -82,11 +98,8 @@ export function RegionInsight({ region, city, month, onClose, onStart, onChat, b
       ) : (
         <p className="empty">이 동의 실제 분석 자료가 없습니다.</p>
       )}
-      <p className="hint">
-        개인의 고립 판정이 아닙니다.
-        <br />
-        계절·행사·집계 변화는 추가 확인이 필요합니다.
-      </p>
+      <p className="hint">{region.count > 0 ? `과거 흐름과 비교하여 ${region.count}개 지표가 후보 기준에 해당합니다. 아래 지표를 함께 검토하세요.` : region.status === '자료 없음' ? '분석 자료가 없어 판단할 수 없습니다.' : region.pending ? '과거 이력이 부족한 지표가 있어 추가 자료 확인이 필요합니다.' : '현재 후보 기준에 해당하는 지표가 없습니다.'}</p>
+      <p className="hint">개인의 고립 판정이 아니며, 계절·행사 영향은 추가 확인이 필요합니다.</p>
       <div className="insight-actions">
         <button className="primary" disabled={busy || !region.rows.length} onClick={onStart}>
           상세 분석·업무 시작
@@ -135,6 +148,13 @@ export function RegionalOverview({
   const region = regions.find((r) => r.name === selected);
   return (
     <div className="regional-overview">
+      {/* 동을 고르면 표 자리에 상세가 열립니다. 지도는 가리지 않고 모든 동을 계속 보여 줍니다. */}
+      {region ? (
+        <section className="card region-directory region-detail">
+          <button className="text-button back-to-list" onClick={() => onSelect('')}>← 전체 동 목록</button>
+          <RegionInsight region={region} city={city} month={month} onClose={() => onSelect('')} onStart={onStart} onChat={onChat} busy={busy} />
+        </section>
+      ) : (
       <section className="card region-directory">
         <header>
           <div>
@@ -144,6 +164,7 @@ export function RegionalOverview({
             </h2>
           </div>
         </header>
+        <StatusLegend />
         <div className="directory-filters">
           <input
             aria-label="행정동 검색"
@@ -161,6 +182,7 @@ export function RegionalOverview({
               '확인 후보',
               '신규 후보',
               '연속 후보',
+              '변화 후보',
               '판단 보류',
               '자료 없음',
               '기준 미해당',
@@ -180,7 +202,7 @@ export function RegionalOverview({
                 <th>행정동</th>
                 <th>분석 상태</th>
                 <th>후보 지표</th>
-                <th>최저 Robust Z</th>
+                <th title="과거 흐름에서 얼마나 벗어났는지 나타내는 값입니다. 0에서 멀수록 평소와 다릅니다.">평소 대비 차이</th>
                 <th>근거</th>
               </tr>
             </thead>
@@ -193,7 +215,7 @@ export function RegionalOverview({
                     </button>
                   </td>
                   <td>
-                    <span className={`status-tag ${tone(r.status)}`}>{r.status}</span>
+                    <span className={`status-tag ${tone(r.status)}`} title={STATUS_HELP[r.status]}>{r.status}</span>
                   </td>
                   <td>{r.count}개</td>
                   <td>{number(r.minZ, 2)}</td>
@@ -212,8 +234,9 @@ export function RegionalOverview({
           </table>
           {!shown.length && <p className="empty">검색 조건에 맞는 지역이 없습니다.</p>}
         </div>
-        <footer>최저 Z는 정렬 참고값입니다. 지표 묶음의 판정 결과를 함께 확인하세요.</footer>
+        <footer>‘후보 우선’은 후보 지표가 많은 동, 그다음 평소와 차이가 큰 동 순서입니다.</footer>
       </section>
+      )}
       <section className="card directory-map">
         <header>
           <h2>지역 비교 지도</h2>
@@ -227,20 +250,9 @@ export function RegionalOverview({
             selected={selected}
             onSelect={onSelect}
           />
-          {region && (
-            <RegionInsight
-              region={region}
-              city={city}
-              month={month}
-              onClose={() => onSelect('')}
-              onStart={onStart}
-              onChat={onChat}
-              busy={busy}
-            />
-          )}
         </div>
         <footer className="hint">
-          표 또는 지도에서 동을 선택하면 해당 지역의 근거를 확인합니다.
+          표나 지도에서 동을 선택하면 왼쪽에 근거가 열립니다. 이름에 마우스를 올리면 판정이 보입니다.
         </footer>
       </section>
     </div>

@@ -75,7 +75,7 @@ Analysis2/
 │
 ├─ gangnam_analysis2_feature_table_2022_2025.csv
 ├─ run_analysis2.py
-├─ requirements.txt
+├─ (의존성: 프로젝트 루트 requirements.txt)
 │
 ├─ analysis/
 │  ├─ __init__.py
@@ -368,7 +368,7 @@ pytest 9.1.1
 
 ```bash
 conda activate analysis2
-pip install -r requirements.txt
+pip install -r requirements.txt  # 프로젝트 루트에서 실행
 ```
 
 ### 전체 분석 실행

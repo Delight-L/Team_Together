@@ -4,22 +4,22 @@
 
 ## 실행
 
-Python 3.10 이상을 설치한 후 이 폴더에서 실행하세요.
+프로젝트 루트에서 Python 의존성을 설치하고 실행하세요.
 
 ```powershell
 python -m pip install -r requirements.txt
-python main.py
+python main.py --preprocess
 ```
 
-기본 실행은 `최신 파일 확인/다운로드 → 새 월 전처리 → 기존 feature table에 추가 → Analysis2 실행`입니다. Analysis2는 `../Analysis2/run_analysis2.py`에 있어야 하며, 결과 CSV는 이 폴더의 `outputs`에 복사됩니다. 새 월에 필요한 날씨 행이 `reference/weather_monthly.csv`에 없으면 안전하게 중단하므로 날씨 자료를 먼저 추가해야 합니다. 전체 재생성이 필요할 때만 `python main.py --full`을 사용합니다.
+기본 실행은 `최신 파일 확인/다운로드 → 새 월 전처리 → 기존 feature table에 추가 → Analysis2 실행`입니다. Analysis2는 `agents/regional_analysis/Analysis2/run_analysis2.py`에 있어야 하며, 결과 CSV는 이 폴더의 `outputs`에 복사됩니다. 새 월에 필요한 날씨 행이 `reference/weather_monthly.csv`에 없으면 안전하게 중단하므로 날씨 자료를 먼저 추가해야 합니다. 전체 재생성이 필요할 때만 `python main.py --preprocess --full`을 사용합니다.
 
-`raw_data`에 2022~2025년 통신정보와 관심집단 원본 ZIP을 넣습니다. ZIP 안의 ZIP도 해제합니다. `run.bat`을 실행해도 됩니다. 원본을 복사하지 않고 사용할 수 있습니다.
+`raw_data`에 2022~2025년 통신정보와 관심집단 원본 ZIP을 넣습니다. ZIP 안의 ZIP도 해제합니다. 원본을 복사하지 않고 사용할 수 있습니다.
 
 ```powershell
-python main.py --input "C:\자료\원본.zip" --output "C:\결과\Analysis2"
-python main.py --input "C:\자료\2022.zip" --input "C:\자료\2023_2025.zip"
-python main.py --compare "C:\참고\gangnam_analysis2_feature_table_2022_2025.csv"
-python -m unittest discover -s tests -v
+python main.py --preprocess --input "C:\자료\원본.zip" --output "C:\결과\Analysis2"
+python main.py --preprocess --input "C:\자료\2022.zip" --input "C:\자료\2023_2025.zip"
+python main.py --preprocess --compare "C:\참고\gangnam_analysis2_feature_table_2022_2025.csv"
+python -m unittest discover -s preprocessing/regional_features/tests -v
 ```
 
 `--compare`는 기존 결과와 모든 숫자 열을 절대오차 1e-8로 비교합니다. 비교 결과가 DIFFERENT여도 원본 계산이 유효하면 CSV를 생성하며, 열별 차이와 불일치 개수를 보고합니다. 기존 CSV의 행동 지표를 계산 입력으로 쓰지 않습니다.

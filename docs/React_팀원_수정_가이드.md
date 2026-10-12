@@ -73,13 +73,13 @@ const [district, setDistrict] = useState('');
 
 | 증상 | 먼저 볼 곳 | 확인할 사항 |
 |---|---|---|
-| `frontend ... npm run build` 안내 | frontend 폴더 | 의존성 설치와 빌드가 완료됐는지 |
-| 화면이 하얗게 나오거나 JSX 오류 | Console, `npm run build` | 오류 파일/줄의 닫는 태그, 괄호, import 이름 |
+| `frontend ... pnpm run build` 안내 | frontend 폴더 | 의존성 설치와 빌드가 완료됐는지 |
+| 화면이 하얗게 나오거나 JSX 오류 | Console, `pnpm run build` | 오류 파일/줄의 닫는 태그, 괄호, import 이름 |
 | 수정한 내용이 안 보임 | 접속 URL | 8503에서는 다시 빌드해야 함. 개발은 5173 사용 |
 | 질문/조회에 `Failed to fetch`, `ECONNREFUSED` | Network, Python 터미널 | Python 서버가 8503에서 실행 중인지 |
 | 401 | 로그인 | 서버 재시작 시 메모리 세션이 초기화되므로 다시 로그인 |
 | 분석 CSV 누락 | Python 터미널 | `agents/regional_analysis/Analysis2/outputs`에 detection CSV가 있는지 |
-| 사업 조회 실패 | Python 터미널, `.env` | DB 주소·계정·권한과 `db2.reviewed_service_candidates` 조회 가능 여부 |
+| 사업 조회 실패 | Python 터미널, `.env` | DB 주소·계정·권한과 `db2.local_welfare_services` 조회 가능 여부 |
 | 복지이음이 자료 검색 안내로 돌아옴 | `.env`, 답변의 모드 표시 | `OPENAI_API_KEY`와 `OPENAI_MODEL`, 외부 연결 확인 |
 | 저장 버튼이 비활성화됨 | 지역 분석 화면 | 지역 선택 → 분석 확인 → 근거 검토 → 사업 검토 순서 |
 | `EADDRINUSE` 또는 Windows 10048 | 실행 터미널 | 같은 포트 서버가 이미 실행 중. 기존 터미널 Ctrl+C 또는 `python main.py --port 8504` |

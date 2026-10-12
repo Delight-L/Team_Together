@@ -17,3 +17,5 @@ export function MissionMap(props) {
       </Suspense>}
   </div>;
 }
+  </div>;
+}

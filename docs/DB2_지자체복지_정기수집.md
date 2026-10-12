@@ -44,14 +44,14 @@ DB 세션 잠금으로 동일 DB에 대한 중복 수집을 막습니다.
 기존 시설 API의 `DATA_API_ENDPOINT` 설정과 독립적으로 동작합니다.
 
 ```powershell
-.\.venv\Scripts\python.exe collect_db2.py init
-.\.venv\Scripts\python.exe collect_db2.py collect
+.\.venv\Scripts\python.exe -m db.collect_welfare init
+.\.venv\Scripts\python.exe -m db.collect_welfare collect
 
 # 소량 검증: 목록 한 페이지, 상세 최대 2건
-.\.venv\Scripts\python.exe collect_db2.py collect --max-pages 1 --rows 2 --max-details 2
+.\.venv\Scripts\python.exe -m db.collect_welfare collect --max-pages 1 --rows 2 --max-details 2
 
 # 특정 지역
-.\.venv\Scripts\python.exe collect_db2.py collect --province 서울특별시 --district 강남구
+.\.venv\Scripts\python.exe -m db.collect_welfare collect --province 서울특별시 --district 강남구
 ```
 
 예약 수집에도 지역을 적용하려면 `.env`의 `DB2_WELFARE_PROVINCE`, `DB2_WELFARE_DISTRICT`를 설정합니다.
@@ -69,7 +69,7 @@ PC가 켜져 있고 PostgreSQL/API에 연결할 수 있어야 합니다.
 
 ```powershell
 # 새 환경에 등록 (이미 같은 이름의 작업이 있으면 덮어쓰지 않고 중단)
-.\ci\install_db2_welfare_task.ps1
+.\scripts\install_db2_welfare_task.ps1
 
 Get-ScheduledTask -TaskName TeamTogether-DB2-Welfare
 Get-ScheduledTaskInfo -TaskName TeamTogether-DB2-Welfare
@@ -83,6 +83,18 @@ Unregister-ScheduledTask -TaskName TeamTogether-DB2-Welfare -Confirm:$false
 ```
 
 ## 조회와 검증
+
+웹의 관련 사업 조회와 챗봇의 사업 매칭은 `db2.local_welfare_services`를 직접 조회합니다.
+선택 시·군·구 및 같은 시·도의 시·군·구 미지정 자료(NULL, 빈 문자열, `-`)를 검토 후보로 표시합니다.
+강남구는 서울특별시, 춘천시는 강원특별자치도/강원도 자료를 조회합니다.
+지역 미지정 자료를 전국 사업이나 시·도 전체 주민 대상 사업으로 확정하지 않습니다.
+알려진 시행기간이 종료되었거나 시작 전인 사업은 한국 날짜 기준으로 제외하며,
+기간이 없으면 확인 필요로 표시합니다. 신청·모집 기간은 별도로 원문에서 확인해야 합니다.
+상세 수집·갱신 대기 자료도 목록 요약으로 표시하고 대기 상태를 안내합니다.
+`benefit_text`는 매칭과 화면의 지원 내용에 사용합니다.
+검토 저장 시 당시 사업 정보·출처·수집 상태를 함께 저장해 이후 API 갱신과 구분합니다.
+보고서에는 저장된 검토 의견과 원문 링크, 상세 확인 대기 여부가 반영됩니다.
+조회는 DB 읽기만 수행하며, 수집 API를 즉석에서 호출하지 않습니다.
 
 ```sql
 SELECT service_id, name, province, district, target_text, eligibility_text,

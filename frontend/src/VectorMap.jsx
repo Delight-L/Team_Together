@@ -24,6 +24,8 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
   const [zoom, setZoom] = useState(null);
   const [baseError, setBaseError] = useState(false);
   const [renderError, setRenderError] = useState(false);
+  // 지도가 좁아 이름이 숨겨진 동도 마우스를 올리면 이름과 판정을 보여 줍니다.
+  const [hover, setHover] = useState(null);
   const features = useMemo(() => {
     const names = new Set(geometry?.units?.map((unit) => unit.n) || []);
     const city = boundaries.features.find((feature) => names.has(feature.properties.name))?.properties.city;
@@ -74,7 +76,12 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
         if (name) latest.current.onSelect(name);
       });
       map.on('mouseenter', 'district-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'district-fill', () => { map.getCanvas().style.cursor = ''; });
+      map.on('mouseleave', 'district-fill', () => { map.getCanvas().style.cursor = ''; setHover(null); });
+      map.on('mousemove', 'district-fill', (event) => {
+        const name = event.features?.[0]?.properties.name;
+        const region = latest.current.regions?.find((r) => r.name === name);
+        setHover(name ? { name, status: region?.status, x: event.point.x, y: event.point.y } : null);
+      });
       let previousSize = [canvasRef.current.clientWidth, canvasRef.current.clientHeight];
       const resize = new ResizeObserver(() => {
         map.resize();
@@ -129,6 +136,9 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
         const badge = document.createElement('span');
         badge.className = 'vector-priority-number';
         badge.textContent = String(priority + 1);
+        const badge = document.createElement('span');
+        badge.className = 'vector-priority-number';
+        badge.textContent = String(priority + 1);
         const label = document.createElement('span');
         const name = document.createElement('b');
         name.textContent = region.name;
@@ -136,6 +146,7 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
         note.textContent = `${region.status} · ${region.count}개 지표`;
         label.append(name, note);
         button.append(badge, label);
+        button.title = `${region.name} · ${region.status} · 지표 ${region.count}개`;
       } else button.textContent = region.name;
       button.addEventListener('click', (event) => {
         event.stopPropagation();
@@ -145,21 +156,39 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
         .setLngLat([(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2]).addTo(map);
       return { marker, button, name: region.name, priority };
     }).filter(Boolean);
+    // 모든 동 이름을 먼저 보여 주고, 다른 이름과 겹치는 이름만 숨깁니다.
+    // 선택한 동과 후보 동이 먼저 자리를 차지하므로 항상 보입니다.
     const updateLabels = () => {
-      const threshold = (initialCamera.current?.zoom || 10) + 0.7;
-      markersRef.current.forEach(({ button, name, priority }) => {
+      const placed = [];
+      const ordered = [...markersRef.current].sort((a, b) => {
+        const rank = (m) => (m.name === latest.current.selected ? 0 : m.priority >= 0 ? 1 + m.priority : 10);
+        return rank(a) - rank(b);
+      });
+      ordered.forEach(({ button, name, priority }) => {
         const isSelected = name === latest.current.selected;
+        const threshold = (initialCamera.current?.zoom || 10) + 0.7;
         const show = flat || priority >= 0 || isSelected || map.getZoom() > threshold ||
           /압구정|청담|신사|논현1|역삼1|대치1|도곡1|수서|세곡|소양|신북|동면|동내|남산|서면/.test(name);
         button.hidden = !show;
         button.classList.toggle('selected', isSelected);
         button.setAttribute('aria-pressed', String(isSelected));
+        const box = button.getBoundingClientRect();
+        const overlaps = placed.some((p) => box.left < p.right + 2 && box.right > p.left - 2 && box.top < p.bottom + 1 && box.bottom > p.top - 1);
+        if (overlaps && !isSelected && priority < 0) { button.hidden = true; return; }
+        placed.push(box);
+      });
+    };
       });
     };
     updateLabels();
     map.on('zoomend', updateLabels);
+    map.on('moveend', updateLabels);
     return () => {
       map.off('zoomend', updateLabels);
+      map.off('moveend', updateLabels);
+      markersRef.current.forEach(({ marker }) => marker.remove());
+      markersRef.current = [];
+    };
       markersRef.current.forEach(({ marker }) => marker.remove());
       markersRef.current = [];
     };
@@ -174,15 +203,14 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
       if (name === selected) button.hidden = false;
     });
     const feature = features.find((item) => item.properties.name === selected);
-    if (feature) {
-      // 상세 카드는 지도 오른쪽에 열리므로 선택 지역을 왼쪽에 남겨 둡니다.
-      const width = canvasRef.current.clientWidth;
+    // 지역 현황(flat)은 다른 동과 비교하는 화면이므로 선택해도 확대하지 않고 강조만 합니다.
+    if (feature && !flat) {
       map.fitBounds(geometryBounds(feature.geometry), {
-        padding: { top: 60, bottom: 90, left: 42, right: width > 600 ? Math.min(300, width * 0.4) : 42 },
+        padding: { top: 60, bottom: 90, left: 42, right: 42 },
         maxZoom: 14, duration: reduceMotion() ? 0 : 650,
       });
     } else if (initialCamera.current) map.easeTo({ ...initialCamera.current, padding: 0, duration: reduceMotion() ? 0 : 450 });
-  }, [ready, features, selected]);
+  }, [ready, features, selected, flat]);
 
   const reset = () => {
     onSelect('');
@@ -195,6 +223,7 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
   </div>;
   return <div className="mission-map road-map vector-map" aria-label={`${city} 관할 지역 확인 후보 지도`}>
     <div className="road-map-canvas" ref={canvasRef} />
+    {hover && <div className="map-hover-label" style={{ left: hover.x + 12, top: hover.y + 12 }} aria-hidden="true"><b>{hover.name}</b>{hover.status && <span>{hover.status}</span>}</div>}
     <div className="map-tools">
       <button onClick={() => mapRef.current?.zoomIn()} aria-label="지도 확대">+</button>
       <button onClick={() => mapRef.current?.zoomOut()} aria-label="지도 축소">−</button>

@@ -1,66 +1,64 @@
 import React, { useEffect, useState } from 'react';
 import { api } from './api';
+import { ReviewWorkspace } from './Experience';
 
-// 기존 SQLite 기록에서 로그인한 담당자의 업무만 조회합니다.
-// onResume은 App에서 받은 함수로 지역/월/화면을 한 번에 바꿉니다.
-export function Missions({ onResume }) {
+const nextStep = (workflow) => workflow?.workflow_complete || workflow?.done?.includes(2)
+  ? ['report', '보고서 작성']
+  : workflow?.done?.includes(1) ? ['services', '사업 매칭 검토'] : ['chart', '지역 분석'];
+const statusOf = (workflow) => workflow.workflow_complete ? '업무 완료' : workflow.done?.includes(2) ? '보고서 대기' : '분석·검토 중';
+
+// 업무 기록: 왼쪽은 담당자가 저장한 지역 업무 목록, 오른쪽은 선택한 업무의 검토·후속 조치 기록입니다.
+// 목록에서 업무를 고르면 App의 지역·기준월이 함께 바뀌어 다른 메뉴도 같은 업무를 보게 됩니다.
+export function Records({ context, user, reviewSeed, onReviewSaved, onSelect, onView }) {
   const [items, setItems] = useState([]),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [loaded, setLoaded] = useState(false);
   useEffect(() => {
     let active = true;
     api('/missions')
       .then((d) => active && setItems(d.items))
-      .catch((e) => active && setError(e.message));
+      .catch((e) => active && setError(e.message))
+      .finally(() => active && setLoaded(true));
     return () => {
       active = false;
     };
   }, []);
+  const isCurrent = (item) => item.city === context.city && item.district === context.district && item.month === context.month;
+  const current = items.find(isCurrent);
+  const [nextView, nextLabel] = nextStep(current?.workflow);
   return (
-    <div className="scroll-view">
-      <section className="card info-card">
-        <h2>지역별 업무 현황</h2>
-        <p>담당자별로 저장된 지역·기준월 업무를 이어서 진행합니다.</p>
-        {error && <p className="error">{error}</p>}
-        <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>지역</th>
-                <th>기준월</th>
-                <th>진행</th>
-                <th>상태</th>
-                <th>업무</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, i) => (
-                <tr key={i}>
-                  <td>
-                    {item.city} · {item.district}
-                  </td>
-                  <td>{item.month}</td>
-                  <td>{(item.workflow.done || []).filter((n) => n > 0).length}/3</td>
-                  <td>
-                    {item.workflow.workflow_complete
-                      ? '업무 완료'
-                      : item.workflow.done?.includes(2)
-                        ? '보고서 대기'
-                        : '분석·검토 중'}
-                  </td>
-                  <td>
-                    <button className="text-button" onClick={() => onResume(item)}>
-                      이어서 보기 →
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {!items.length && !error && (
-          <p className="hint">저장된 업무가 없습니다. 지역 분석에서 분석 확인을 저장하세요.</p>
-        )}
+    <div className="scroll-view records-layout">
+      <section className="card info-card records-list" aria-label="지역별 업무 목록">
+        <h2>지역별 업무</h2>
+        <p className="hint">분석 확인을 저장한 지역·기준월이 여기에 쌓입니다.</p>
+        {error && <p className="error" role="alert">{error}</p>}
+        {!loaded && !error && <p className="hint" role="status">업무 목록을 불러오고 있습니다…</p>}
+        {loaded && !items.length && !error && <p className="hint">저장된 업무가 없습니다. 지역 분석에서 분석 확인을 저장하세요.</p>}
+        <ul>
+          {items.map((item) => (
+            <li key={item.city + item.district + item.month}>
+              <button className={isCurrent(item) ? 'selected' : ''} aria-current={isCurrent(item) || undefined} onClick={() => onSelect(item)}>
+                <span><b>{item.district}</b><small>{item.city} · {item.month}</small></span>
+                <span className={`record-status ${item.workflow.workflow_complete ? 'done' : ''}`}>{statusOf(item.workflow)}</span>
+                <span className="record-progress" title="근거 검토 → 사업 검토 → 보고서 중 마친 단계 수">{(item.workflow.done || []).filter((n) => n > 0).length}/3단계</span>
+              </button>
+            </li>
+          ))}
+        </ul>
       </section>
+      <div className="records-detail">
+        {context.district ? <>
+          <div className="records-next card">
+            <span>{context.district} · {context.month}{current ? ` · ${statusOf(current.workflow)}` : ' · 아직 저장된 업무 없음'}</span>
+            <button className="primary" onClick={() => onView(nextView)}>{current ? `${nextLabel} 이어서 하기` : '지역 분석에서 시작하기'} →</button>
+          </div>
+          <ReviewWorkspace key={user.id + JSON.stringify(context) + (reviewSeed?.id || '')} context={context} user={user} onView={onView} seed={reviewSeed} onSaved={onReviewSaved} />
+        </> : <section className="card info-card empty">
+          <h2>업무를 선택하세요</h2>
+          <p>왼쪽 목록에서 업무를 고르거나, 지역 현황에서 살펴볼 동을 선택하면 검토·후속 조치를 기록할 수 있습니다.</p>
+          <button className="text-button" onClick={() => onView('map')}>지역 선택하러 가기 →</button>
+        </section>}
+      </div>
     </div>
   );
 }

@@ -55,10 +55,4 @@ python main.py --input "data\gangnam_db1_dong_month_behavior_mart_2025_07_12(1).
 활동·이동·통화 대상은 **감소**, 집 체류·저외출·카카오톡 비사용 비율은 **증가**를 위험 방향으로 설정했다. 개인 판정이 아니라 동별 현장 확인 후보를 찾는 용도다.
 # 원본 CSV부터 실행하기
 
-`preprocessing_agent` 폴더가 새로 포함되어 있습니다. 원본 유동인구·통신정보·관심집단 CSV 3개를 넣으면 위험분석 입력 파일을 만들고, `--run-risk` 옵션으로 위험변화 탐지까지 한 번에 실행합니다.
-
-```powershell
-python preprocessing_agent\main.py --flow "raw_data\gangnam_db1_clustered_202507_202512.csv" --telecom "raw_data\gangnam_telecom_29info_2025_07_12.csv" --interest "raw_data\gangnam_interest_groups_2025_07_12.csv" --output "outputs\preprocessed_monthly_behavior.csv" --run-risk
-```
-
-세 원본 파일에 필요한 열과 검증 규칙은 `preprocessing_agent\README.md`에 정리했습니다.
+Analysis1 원본 전처리는 공용 `preprocessing/regional_types`를 사용합니다. 프로젝트 루트에서 `python main.py --preprocess-analysis1 --raw-dir "원본폴더"`로 실행하세요. 입력과 산출물은 [전처리 안내](../../preprocessing/regional_types/README.md)를 확인하세요.

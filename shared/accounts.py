@@ -1,4 +1,4 @@
-"""React와 기존 화면에서 사용하는 시연 계정."""
+"""React 로그인에서 사용하는 시연 계정."""
 
 DEMO_ACCOUNTS = {
     "gangnam01": {"password": "demo1234", "org": "강남구", "admin": False},

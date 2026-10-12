@@ -10,6 +10,8 @@ import secrets
 import threading
 import time
 import tempfile
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -49,6 +51,12 @@ def dashboard_data():
     data = load_analysis2_data()
     data['geometry'] = json.loads((ROOT / 'shared/data/map_boundaries.json').read_text(encoding='utf-8'))
     data['months'] = sorted({r['기준연월'] for r in data['assessment']})
+    data['availableCities'] = ['강남구']
+    data['capabilities'] = {'isolatedTrial': True}
+    data['dataCheckedAt'] = datetime.now(ZoneInfo('Asia/Seoul')).isoformat(timespec='seconds')
+    run_id = str(data.get('runId', ''))
+    if run_id.startswith('analysis2-') and run_id[10:].isdigit():
+        data['analysisFileModifiedAt'] = datetime.fromtimestamp(int(run_id[10:]) / 1e9, ZoneInfo('Asia/Seoul')).isoformat(timespec='seconds')
     return data
 
 
@@ -58,6 +66,14 @@ def evidence_for(data, context):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def group_context(self, body, user):
+        from db.group_repository import group_detail
+        context = {k: str(body.get(k, '')).strip() for k in ['city', 'code', 'month', 'age', 'sex']}
+        if not user['admin'] and context['city'] != user['org']:
+            raise PermissionError('소속 지역의 자료만 사용할 수 있습니다.')
+        detail = group_detail(context)
+        context['district'] = detail['current']['district']
+        return context, detail
     def chat_stream(self, messages, context):
         from chatbot.welfare.service import stream_reply
         self.send_response(200)
@@ -121,6 +137,30 @@ class Handler(BaseHTTPRequestHandler):
             if route.path.startswith('/api/'):
                 user = self.user()
                 if route.path == '/api/session': return self.reply(200, {'user':user})
+                if route.path.startswith('/api/groups'):
+                    if route.path == '/api/groups/config':
+                        from chatbot.welfare.app.config import settings
+                        return self.reply(200, {'aiAvailable': bool(settings.openai_api_key)})
+                    from db.group_repository import catalogue
+                    from db.group_workspace import review, services
+                    body = {k:v[0] for k,v in parse_qs(route.query).items()}
+                    if route.path == '/api/groups':
+                        city = str(body.get('city', ''))
+                        if not user['admin'] and city != user['org']:
+                            raise PermissionError('소속 지역의 자료만 사용할 수 있습니다.')
+                        return self.reply(200, catalogue(city, str(body.get('month', ''))))
+                    context, detail = self.group_context(body, user)
+                    if route.path == '/api/groups/detail':
+                        from db.group_repository import regional_context
+                        detail['regional'] = regional_context(context)
+                        return self.reply(200, detail)
+                    if route.path == '/api/groups/review': return self.reply(200, review(user, context))
+                    if route.path == '/api/groups/services': return self.reply(200, services(context, body.get('need')))
+                    return self.reply(404, {'error':'집단 API를 찾을 수 없습니다.'})
+                if route.path == '/api/feedback':
+                    if not user['admin']: raise PermissionError('관리자만 의견을 조회할 수 있습니다.')
+                    from db.experience_store import feedback_list
+                    return self.reply(200, {'items':feedback_list()})
                 if route.path == '/api/chat/config':
                     from chatbot.welfare.app.agent.resources import RESOURCES
                     from chatbot.welfare.app.config import settings
@@ -158,6 +198,12 @@ class Handler(BaseHTTPRequestHandler):
                     if draft['identity'] != identity(context): raise ValueError('초안 지역·월과 다릅니다.')
                     return self.reply(200,draft['document'],filename=draft['record']['filename'])
                 if route.path == '/api/workflow': return self.reply(200, item)
+                if route.path == '/api/experience':
+                    from db.experience_store import load
+                    return self.reply(200, load(context))
+                if route.path == '/api/experience/history':
+                    from db.experience_store import regional_history
+                    return self.reply(200, {'items':regional_history(context)})
                 if route.path == '/api/services':
                     if 1 not in item.get('done', []): raise ValueError('먼저 분석 근거를 확인하세요.')
                     from agents.service_matching import match_services
@@ -197,7 +243,7 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, FileNotFoundError) as exc: self.reply(400, {'error':str(exc)})
         except Exception:
             logging.exception('GET failed')
-            self.reply(500, {'error':'자료를 읽지 못했습니다. 서버 로그와 분석 CSV를 확인하세요.'})
+            self.reply(500, {'error':'자료를 읽지 못했습니다. 서버 로그와 .env의 DB 접속 정보(또는 분석 CSV)를 확인하세요.'})
 
     # POST = 로그인/질문/저장. 브라우저의 입력을 그대로 신뢰하지 않고
     # 로그인·소속·지역·기준월·업무 단계 조건을 서버에서도 검사합니다.
@@ -229,6 +275,29 @@ class Handler(BaseHTTPRequestHandler):
                     SESSIONS[token] = {'user':user, 'expires':time.time()+8*3600}
                 return self.reply(200, {'user':user}, cookie=f'welfind_session={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800')
             user = self.user()
+            if route in {'/api/groups/chat', '/api/groups/review'}:
+                from db.group_workspace import review, explain, ai_explain
+                context, detail = self.group_context(body, user)
+                if route.endswith('/chat'):
+                    if body.get('mode') == 'ai':
+                        return self.reply(200, ai_explain(context, body.get('question', ''), detail, body.get('history', [])))
+                    return self.reply(200, explain(context, body.get('question', ''), detail))
+                if body.get('sourceRun') != detail['runId']:
+                    raise ValueError('집단별 원자료가 갱신되었습니다. 근거를 다시 확인한 뒤 저장하세요.')
+                return self.reply(200, review(user, context, body))
+            if route == '/api/feedback':
+                from db.experience_store import feedback
+                return self.reply(200, feedback(user, body))
+            if route in {'/api/trial/start', '/api/trial/end'}:
+                cookie = SimpleCookie(self.headers.get('Cookie',''))
+                with SESSION_LOCK:
+                    session = SESSIONS[cookie['welfind_session'].value]
+                    base = session.setdefault('base_user', dict(user))
+                    session['user'] = (base | {'id':'trial:' + secrets.token_urlsafe(12), 'trial':True,
+                                              'account_id':base['id'], 'admin':False,
+                                              'org':'강남구' if base['admin'] else base['org']}) if route.endswith('start') else dict(base)
+                    new_user = dict(session['user'])
+                return self.reply(200, {'user':new_user})
             if route == '/api/logout':
                 cookie = SimpleCookie(self.headers.get('Cookie',''))
                 with SESSION_LOCK: SESSIONS.pop(cookie['welfind_session'].value, None)
@@ -236,7 +305,7 @@ class Handler(BaseHTTPRequestHandler):
             # 데이터 업로드는 기존 관리자 검사 → 미리보기 → DB1 반영 흐름을 유지합니다.
             # 파일을 서버에 직접 저장하지 않고 검사 성공 후에만 임시 초안을 만듭니다.
             if route in {'/api/upload/validate','/api/upload/publish'}:
-                if not user['admin']: raise PermissionError('관리자만 자료를 반영할 수 있습니다.')
+                if not user['admin'] or user.get('trial'): raise PermissionError('관리자만 자료를 반영할 수 있습니다.')
                 from db.analysis_repository import monthly_upload, structure_upload, publish, records
                 if route.endswith('publish'):
                     with WRITE_LOCK:
@@ -269,6 +338,17 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(200,{'token':token,'period':prepared['period'],'rows':len(prepared['data']),
                     'preview':records(prepared['data'].head(8))})
             data = dashboard_data()
+            if route == '/api/experience':
+                from db.experience_store import save
+                context = self.context(body, user, data)
+                return self.reply(200, save(context, body))
+            if route == '/api/region/chat':
+                # 보미의 «이 화면 분석»: 동을 고르지 않았으면 구 전체 후보를, 골랐으면 그 동의 근거를 설명합니다.
+                from db.region_workspace import explain_region, ai_explain_region
+                context = self.context(body, user, data, optional_district=True)
+                if body.get('mode') == 'ai':
+                    return self.reply(200, ai_explain_region(context, body.get('question', ''), data, body.get('history', [])))
+                return self.reply(200, explain_region(context, body.get('question', ''), data))
             if route == '/api/chat':
                 # 대화는 동 선택 없이도 가능합니다. 업무 저장의 필수 지역 검증은 그대로 유지합니다.
                 from chatbot.orchestrator import topic_reply, free_reply
@@ -284,22 +364,39 @@ class Handler(BaseHTTPRequestHandler):
                 if not question or len(question)>2000: raise ValueError('질문은 1~2,000자로 입력하세요.')
                 history = body.get('history', [])
                 if not isinstance(history, list): raise ValueError('대화 이력이 유효하지 않습니다.')
-                # 예시 주제와 자유 입력 모두 복지이음의 자료 검색·답변 경로를 사용합니다.
-                result = topic_reply(body['topic'], evidence, public_context) if body.get('topic') else free_reply(question,evidence,public_context,history[-4:])
+                # topic ID는 고정 안내 경로입니다. 자유 입력은 항상 총괄 에이전트 경로입니다.
+                from db.mission_store import load_all, identity
+                from agents.report_writer import is_draft_request
+                needs_report = body.get('topic') == 'report_draft' or (not body.get('topic') and is_draft_request(question))
+                workflow = load_all().get(identity(context), {}) if context['district'] and needs_report else {}
+                result = topic_reply(body['topic'], evidence, public_context, workflow) if body.get('topic') else free_reply(question,evidence,public_context,history[-4:], workflow=workflow)
                 return self.reply(200, dict(result, context=public_context))
             context = self.context(body, user, data)
             evidence = evidence_for(data, context)
             if not evidence: raise ValueError('선택 지역·월의 실제 분석 결과가 없습니다.')
             from db.mission_store import save_event, load_all, identity, review_revision
+            if route == '/api/report/content':
+                from agents.report_writer import generate_draft
+                item = load_all().get(identity(context), {})
+                return self.reply(200, generate_draft(context, item))
             if route == '/api/report/preview':
                 from shared.report import build_report
+                from agents.report_writer import validate_content
                 item = load_all().get(identity(context), {})
-                if 2 not in item.get('done',[]) or item.get('workflow_complete'):
-                    raise ValueError('사업 검토 기록을 먼저 저장하세요. 완료 업무는 수정할 수 없습니다.')
+                if 2 not in item.get('done',[]):
+                    raise ValueError('사업 검토 기록을 먼저 저장하세요.')
                 fields = {k:str(body.get(k,'')).strip() for k in ['author','department','opinion']}
+                content = validate_content(body['content']) if 'content' in body else None
+                if content:
+                    fields['opinion'] = content['next_steps']
+                contact = str(body.get('contact', '')).strip()
                 if not all(fields.values()): raise ValueError('부서·작성자·최종 의견을 입력하세요.')
-                document = build_report(context,item['analysis_evidence'],fields['author'],fields['department'],fields['opinion'],item['analysis_source'],workflow=item)
-                record = fields | {'sha256':hashlib.sha256(document).hexdigest(),
+                if len(fields['author']) > 60 or len(fields['department']) > 100 or len(contact) > 80:
+                    raise ValueError('작성자 60자·부서 100자·연락처 80자 이내로 입력하세요.')
+                if content and body.get('review_id') != review_revision(item):
+                    raise ValueError('사업 검토 내역이 변경되었습니다. 보고서 초안을 다시 생성하세요.')
+                document = build_report(context,item['analysis_evidence'],fields['author'],fields['department'],fields['opinion'],item['analysis_source'],workflow=item,content=content,contact=contact)
+                record = fields | {'content':content,'contact':contact,'template':'brief_report_v1','sha256':hashlib.sha256(document).hexdigest(),
                     'filename':f"사업검토보고_{context['district']}_{context['month']}.docx",
                     'review_id':review_revision(item),'_document':document}
                 token = store_preview(user,'report',{'identity':identity(context),'document':document,'record':record})
@@ -315,7 +412,15 @@ class Handler(BaseHTTPRequestHandler):
                     match = next((m for m in match_services(context['city'], item.get('analysis_evidence',[])) if m['key'] == body.get('serviceKey')),None)
                     if not match: raise ValueError('조회한 실제 사업을 선택하세요.')
                     save_event(context,2,{'service_key':match['key'],'name':match['service']['name'],
-                        'decision':body.get('decision'),'note':str(body.get('note','')).strip(),'reasons':match['reasons']})
+                        'decision':body.get('decision'),'note':str(body.get('note','')).strip(),'reasons':match['reasons'],
+                        'source_url':match['service'].get('source_url'),
+                        'service_snapshot':{key:(match['service'][key].isoformat()
+                            if isinstance(match['service'].get(key),(date,datetime))
+                            else match['service'].get(key)) for key in (
+                            'source_id','service_id','name','province','district','summary',
+                            'target_text','eligibility_text','benefit_text','application_text',
+                            'effective_start','effective_end','source_url','detail_pending',
+                            'detail_checked_at','source_modified','residency_text')}})
                 elif route == '/api/report':
                     if body.get('confirmed') is not True: raise ValueError('보고서 최종 확인이 필요합니다.')
                     draft = get_preview(body.get('token'),user,'report')

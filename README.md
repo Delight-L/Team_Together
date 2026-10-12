@@ -1,6 +1,6 @@
 # 사회적 고립 위험신호 탐지 AI Agent
 
-> **React 브랜치 실행:** 이 브랜치의 기본 화면은 React입니다. `frontend`에서 의존성 설치 및 빌드 후 `python main.py`로 실행합니다. [React 실행 안내](README_REACT.md)와 [팀원 수정·오류 확인 가이드](docs/React_팀원_수정_가이드.md)를 먼저 확인하세요. 기존 Streamlit 비교 실행은 `python main.py --streamlit`입니다.
+> **React 브랜치 실행:** 이 브랜치의 기본 화면은 React입니다. `frontend`에서 의존성 설치 및 빌드 후 `python main.py`로 실행합니다. [설치 및 실행](#최초-설치)와 [팀원 수정·오류 확인 가이드](docs/React_팀원_수정_가이드.md)를 먼저 확인하세요.
 
 > **2026 빅콘테스트 · AI데이터 활용 분야**
 >
@@ -323,9 +323,9 @@ AI Agent의 결과가 단순한 LLM 생성 문장이 아니라 **DB1의 분석 �
 
 카드 소비의 가맹점 지역은 시군구이므로 유동인구와의 결합 분석은 우선 시군구·월·호환 인구집단 단위로 설계합니다. 카드 주제1의 시간대와 주제2의 고객 거주 시도는 서로 다른 레이아웃이며 실제 제공 파일을 확인하여 선택합니다. 원천 테이블명은 추적을 위해 보존하되 정제·분석·운영 테이블은 별도로 구성합니다.
 
-- [대시보드 실행 및 구성 안내](legacy/streamlit_dashboard/README.md): 지역·집단별 변화 확인과 서비스 연계 흐름 시연
+- [React 실행 및 구성 안내](#최초-설치): 지역·집단별 변화 확인과 서비스 연계 흐름 시연
 
-현재는 Streamlit Custom Component v2 화면입니다. DB1 결과 검사·반영과 DB2 사업 후보 조회, 업무 기록과 Word 보고서 저장을 지원합니다. 실제 기관 연락 및 자동 지원 승인은 구현하지 않았습니다. 시연 점수와 Analysis2 결과를 데이터 모드로 구분합니다.
+현재는 React + Vite 화면입니다. DB1 결과 검사·반영과 DB2 사업 후보 조회, 업무 기록과 Word 보고서 저장을 지원합니다. 실제 기관 연락 및 자동 지원 승인은 구현하지 않았습니다. 시연 점수와 Analysis2 결과를 데이터 모드로 구분합니다.
 
 ---
 
@@ -450,14 +450,6 @@ main.py                       실행 명령 라우팅
 frontend/                     현재 React 화면·Vite 개발 서버
 webapp/                       React용 Python HTTP API
 shared/                       공용 시연 계정·보고서·지도 데이터
-legacy/streamlit_dashboard/
-  main.py                     화면 데이터 조립
-  common.py                   설정·자료 검사·분석 근거 선택 공통 함수
-  design_ui.py                Custom Component 등록
-  dialogs.py                  업로드·사업 검토·보고 대화상자
-  ui/                         HTML·CSS·JS 화면과 지도
-  tools/                      오프라인 검증·이전 시연 계산
-  tests/                      계산·업무 흐름 검증
 chatbot/                      로컬 안내와 선택적 AI 호출
 agents/                       지역·위험 분석·사업 매칭
 preprocessing/                지역 유형·행동자료 전처리
@@ -466,7 +458,7 @@ ci/                           브랜드 원본과 보미 이미지
 docs/                         설계·운영 문서
 ```
 
-React와 기존 화면의 공용 계정·보고서·지도는 `shared`에서 가져옵니다. 기존 Streamlit 전용 설정과 자료 검사는 `legacy.streamlit_dashboard.common`에 있습니다. DB 조회·저장은 `db`, AI 설명은 `chatbot.service`, 사업 매칭은 `agents.service_matching`이 담당합니다.
+React API의 계정·보고서·지도는 `shared`에서 가져옵니다. DB 조회·저장은 `db`, AI 설명은 `chatbot.service`, 사업 매칭은 `agents.service_matching`이 담당합니다.
 
 ## 14. 구현 현황과 현재 업무 흐름
 
@@ -496,85 +488,99 @@ flowchart LR
 
 ---
 
-## 현재 실행 및 운영 안내
 
+이 브랜치는 React + Vite 화면과 Python HTTP API를 사용합니다. Python 전처리·Analysis2·챗봇·사업 매칭·SQLite 업무 기록은 기존 모듈을 재사용합니다. 서버는 로컬 시연용이며 `127.0.0.1`에만 바인딩합니다.
 
-지역·인구집단의 행동 변화 근거를 확인하고 복지사업 검토와 보고로 연결하는 Streamlit 대시보드입니다. 개인의 사회적 고립을 판정하지 않습니다.
+## 폴더 구분
 
-## 실행
+- `frontend/`: 현재 React 화면과 Vite 개발 서버
+- `webapp/`: React용 Python HTTP API
+- `shared/`: React API에서 사용하는 시연 계정, 보고서 생성, 지도 경계 데이터
+- `db/`, `agents/`, `chatbot/`, `preprocessing/`: 기존 업무 저장·분석·AI·전처리 기능
 
-### 가상환경 설정 (Windows)
+현재 화면을 수정할 때는 `frontend/`와 `webapp/`를 확인하세요. 공용 지도 파일은 `shared/data/map_boundaries.json`, 보고서 생성은 `shared/report.py`, 시연 계정은 `shared/accounts.py`입니다.
 
-이 프로젝트는 **Python 3.13 환경에서 검증**했습니다. Python 3.13을 설치한 뒤, 터미널에서 `main.py`와 `requirements.txt`가 있는 프로젝트 루트로 이동합니다. 전역 Python과 프로젝트의 패키지가 섞이지 않도록 `.venv` 가상환경을 사용합니다.
+## 최초 설치
 
-**처음 한 번 — PowerShell에서 환경 생성 및 패키지 설치**
+프로젝트 루트에서 Python 가상환경을 준비한 후:
 
 ```powershell
-py -3.13 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python --version
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+.venv/Scripts/python.exe -m pip install -r requirements.txt
+cd frontend
+pnpm install --frozen-lockfile
+pnpm run build
+cd ..
+.venv/Scripts/python.exe main.py
 ```
 
-`python --version`이 `Python 3.13.x`로 표시되는지 확인합니다. 이미 Python 3.13으로 만든 `.venv`가 있다면 생성 단계는 생략합니다. `py -3.13`을 찾지 못하면 Python 3.13 설치 여부를 먼저 확인합니다.
+Node.js 22.12 이상을 권장합니다. 의존성 설치는 pnpm으로 통일합니다. pnpm으로 설치된 `node_modules`에서 `npm install`을 실행하면 `workspace:*` 오류가 발생할 수 있습니다. pnpm lockfile을 포함하며 esbuild의 설치 스크립트만 허용합니다. pnpm이 없다면 `npm install -g pnpm`으로 먼저 설치하세요.
 
-**이후 실행 — 새 터미널을 열 때마다 활성화**
+브라우저에서 http://127.0.0.1:8503 을 엽니다. 강남구 시연 계정은 `gangnam01 / demo1234`, 관리자는 `admin / admin1234`입니다. 춘천시는 실제 Analysis2 자료 미연결 상태를 표시합니다. 시연 계정은 실제 서비스 인증이 아닙니다.
+
+## 반드시 전달할 데이터
+
+기준 분석 CSV 일부는 Git에 포함되어 있습니다. 새 PC에서는 아래 파일이 실제로 있는지 확인하고, Git에서 제외된 원본 ZIP/XLSX·추가 결과·개인 업무 기록은 별도로 전달하세요.
+
+- `agents/regional_analysis/Analysis2/outputs/gangnam_analysis2_detection_2022_2025.csv` — 화면·챗봇에 직접 필요한 분석 결과
+- `agents/regional_analysis/Analysis2/outputs/`의 나머지 분석 결과 CSV
+- `preprocessing/regional_features/outputs/`의 기준 feature table과 결과 CSV
+- `agents/regional_analysis/Analysis2/gangnam_analysis2_feature_table_2022_2025.csv`
+
+원본 재생성이 필요하면 기존과 같이 `python main.py --preprocess --full`, `python main.py --analysis --no-download`를 실행합니다. 원본 ZIP/XLSX와 reference 자료가 필요합니다. 화면 실행 시 자동 전처리하거나 다운로드하지 않습니다.
+
+## 개발 실행
+
+터미널 1: 프로젝트 루트에서 `.venv/Scripts/python.exe main.py`
+
+터미널 2: `frontend`에서 `pnpm run dev`
+
+http://127.0.0.1:5173 에서 화면을 개발합니다. Vite가 API와 브랜드 이미지를 Python 서버(8503)로 전달합니다. 빌드 후에는 Python 서버 하나가 화면과 API를 함께 제공합니다. 프런트엔드 변경 후 빌드를 다시 실행하세요.
+
+## 화면과 동작
+
+- 메인 화면: 뷰포트 높이 안에 요약·지도·상세·주요 변화를 배치합니다. 본문 전체는 스크롤하지 않습니다. 긴 상세와 채팅 내용은 패널 내부에서 스크롤합니다.
+- 종합 현황: 요약 카드·입체 지도·후보 핀·주요 변화를 표시합니다. 지역 현황은 전체 동 검색·상태 필터·정렬과 평면 지도 중심으로 구성합니다.
+- 지역 상세: 동 클릭 시 지도 내부 옆에 REGION INSIGHT가 열립니다. 선택 지역은 챗봇과 공유합니다. 로고를 클릭하면 메뉴를 접고 펼치며, 접힌 상태에는 보미 얼굴이 표시됩니다.
+- 챗봇: 지역별 업무 진행 영역을 제거했습니다. 지도/분석/챗봇에서 지역과 기준월을 공유하며, 응답의 ‘분석 근거 보기’로 분석 화면을 엽니다. 지역·월 변경 시 이전 질의 요청을 취소하고 대화를 초기화합니다.
+- 보미: 평소에는 정지 이미지, 답변 처리 중에만 전달받은 동작 GIF를 표시합니다. 사용자 OS의 동작 줄이기 설정을 따릅니다. 답변은 완성 후 표시하며 실제 토큰 스트리밍은 아직 사용하지 않습니다.
+- 업무: 분석 확인 저장 → 근거 검토 완료 → 실제 DB2 사업 조회·검토 기록 → Word 초안 생성·다운로드 확인 → 최종 저장. 기존 SQLite의 단계 검증을 재사용합니다.
+- 업무 현황: 담당자의 저장된 지역·월별 업무를 다시 열어 진행합니다. 챗봇 안의 진행 영역은 제거하고 독립 메뉴로 제공합니다.
+- 관리자 데이터: CSV/XLSX 검사·미리보기·DB1 반영, DB1 활동 이력 조회를 연결했습니다. DB1 반영은 화면에 사용하는 저장소 CSV를 자동 교체하지 않습니다.
+- 기본 주제 버튼은 AI 호출 없이 저장 자료와 안내문으로 응답합니다. 자유 입력은 총괄 AI가 지역 분석·사업 매칭·보고서·업무 안내 에이전트를 선택하고 담당 에이전트가 답변합니다. 자유 입력에만 Gemini를 호출하며 `.env`의 `GEMINI_API_KEY`, `GEMINI_MODEL`이 필요합니다. DB2 조회에는 기존 DB 연결 설정이 필요합니다. 키는 프런트엔드에 노출하지 않습니다.
+
+## 현재 구현 범위
+
+기존 기본 메뉴의 React 메인 화면·지역 분석·업무 현황·사업 검토·보고서·챗봇·관리자 데이터 반영·DB1 활동 이력을 연결했습니다. 별도 도구의 전년 동월 현장 대응 화면은 기본 메뉴와 별개이며 이 React 화면에 포함하지 않습니다. 이 브랜치는 React 화면만 제공합니다.
+
+기존 업무 저장 DB는 `db/runtime/mission_records.sqlite3`이며 Git에서 제외합니다. 새 PC에서 개인 업무 기록이 필요하면 별도 전달하세요. React 챗봇 대화는 화면 세션 안에서만 유지되며 업무 질의 기록으로 자동 저장하지 않습니다.
+
+공유 상태 설계는 [React 공식 문서](https://react.dev/learn/sharing-state-between-components)를 따릅니다.
+
+팀원이 수정할 위치와 오류 확인 순서는 [React 팀원 수정 가이드](docs/React_팀원_수정_가이드.md)에 정리했습니다. 핵심 파일에 한국어 설명 주석을 넣었습니다.
+
+## 검증
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
-python main.py
+cd frontend
+pnpm run build
+cd ..
+.venv/Scripts/python.exe -m unittest discover -s webapp/tests -v
 ```
 
-작업이 끝나면 `deactivate`로 가상환경을 종료합니다. 가상환경 활성화는 현재 터미널에만 적용됩니다. CMD를 사용하는 경우 활성화 명령은 `.venv\Scripts\activate.bat`입니다.
+API 검사는 실제 분석 CSV를 읽고 임시 SQLite DB에서 로그인·지역 접근·챗봇 근거·업무 순서·Word 초안과 최종 저장을 검사합니다. DB2 경계는 테스트 사업으로 대체하며 실제 DB 쓰기와 Gemini 호출은 하지 않습니다.
 
-PowerShell에서 활성화가 차단되거나 활성화 없이 실행하려면 가상환경의 Python을 직접 지정할 수 있습니다.
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe main.py
-```
+## Python 도구
 
-`.venv/` 폴더 자체는 Git에 올리지 않습니다. 각 팀원이 자신의 컴퓨터에서 생성하고, 루트 `requirements.txt`로 패키지를 설치합니다. 패키지 목록이 변경되면 같은 설치 명령을 다시 실행합니다.
-
-### 실행 명령
-
-아래 명령은 가상환경을 활성화한 상태에서 실행합니다.
+프로젝트 루트에서 실행합니다.
 
 ```powershell
-python main.py
-python main.py --chatbot
 python main.py --chatbot-cli
 python main.py --analysis --no-download
 python main.py --preprocess-analysis1 --raw-dir "원본폴더"
 python main.py --preprocess --no-download
 python main.py --risk --input "월별행동.csv"
+python -m db.collect_welfare --help
 ```
 
-대시보드는 보관된 version11 Analysis2 결과를 읽습니다. `--analysis`는 전처리와 Analysis2를 다시 실행합니다. `--risk --input`은 기존 v1 월별 입력 분석을 유지한 별도 도구입니다. DB2 사업 조회에는 루트 `.env`의 DB 연결 설정이 필요합니다. 키와 개인 업로드 자료는 커밋하지 않습니다.
-
-## 폴더 안내
-
-| 폴더 | 역할 |
-| --- | --- |
-| `frontend/` | 현재 React 화면, Vite 개발 서버 |
-| `webapp/` | React용 Python HTTP API |
-| `shared/` | 공용 시연 계정, 보고서 생성, 지도 데이터 |
-| `legacy/streamlit_dashboard/` | 기존 Streamlit 화면, 컴포넌트, 업무 대화상자 |
-| `chatbot/` | 시작 메뉴, 근거 설명, 데이터 질의, 독립 실행 화면 |
-| `agents/` | Analysis2, v1 분석 도구, 복지사업 매칭 |
-| `preprocessing/` | 지역 유형·월별 행동 자료 전처리 |
-| `db/` | 공통 PostgreSQL 연결, 로컬 SQLite 업무 기록 |
-| `ci/` | 브랜드 가이드, 투명 로고·캐릭터, 컬러 팔레트 |
-| `docs/` | 사용자 안내와 변경 이력 |
-| `external/` | 공모전 참고 자료 |
-
-## 화면과 AI 동작
-
-브랜드 기본색은 `#2563EB`, 보조색은 `#60A5FA`, 연결 강조색은 `#10B981`, 텍스트는 `#1E293B`입니다. 지도는 원래 행정 경계를 유지하며 마우스·키보드로 지역을 강조합니다. 장식 높이는 분석 수치가 아닙니다.
-
-챗봇 메뉴 선택, 저장된 결과 확인, 기본 근거 안내는 AI를 호출하지 않습니다. ‘AI 에이전트 사용’을 켠 뒤 질문을 보낼 때만 호출을 허용합니다. 서버도 명시적인 호출 조건을 확인하며, Gemini 설정이 없으면 규칙 기반 안내를 제공합니다. `.env`의 `GEMINI_API_KEY`, `GEMINI_MODEL`로 연결합니다.
-
-이전 `legacy/streamlit_dashboard/data/mission_records.sqlite3`가 있으면 최초 실행 시 `db/runtime/`로 복사 이관하며 원본을 보존합니다.
-
-[화면 수정 안내](legacy/streamlit_dashboard/README.md) · [정리 및 검증 기록](docs/2026-10-06_대시보드_정리.md)
+[Python 모듈 안내](docs/Python_모듈_안내.md) · [DB2 수집 안내](docs/DB2_지자체복지_정기수집.md)

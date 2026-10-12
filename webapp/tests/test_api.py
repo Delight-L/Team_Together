@@ -11,6 +11,11 @@ import threading
 import unittest
 from unittest.mock import patch
 from http.server import ThreadingHTTPServer
+from io import BytesIO
+from zipfile import ZipFile
+from urllib.parse import urlencode
+from lxml import etree
+from shared.report import NS
 
 from webapp import server
 from db import mission_store
@@ -22,9 +27,7 @@ class ApiTest(unittest.TestCase):
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory()
         cls.store_patch = patch.object(mission_store, 'STORE', Path(cls.temp.name)/'test.sqlite3')
-        cls.legacy_patch = patch.object(mission_store, 'LEGACY_STORE', Path(cls.temp.name)/'missing.sqlite3')
         cls.store_patch.start()
-        cls.legacy_patch.start()
         cls.httpd = ThreadingHTTPServer(('127.0.0.1',0),server.Handler)
         cls.thread = threading.Thread(target=cls.httpd.serve_forever,daemon=True)
         cls.thread.start()
@@ -37,7 +40,6 @@ class ApiTest(unittest.TestCase):
         cls.httpd.server_close()
         cls.thread.join()
         cls.store_patch.stop()
-        cls.legacy_patch.stop()
         cls.temp.cleanup()
 
     def setUp(self):
@@ -110,6 +112,19 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(self.request('POST','/api/chat',body | {'messages':messages})[0],400)
         self.assertEqual(self.request('POST','/api/chat',self.context | {'question':'주제','topic':'unknown'})[0],400)
 
+    def test_region_chat_explains_selected_district_and_city(self):
+        payload = self.context | {'question':'변화 요약'}
+        self.assertEqual(self.request('POST','/api/region/chat',payload)[0],401)
+        self.login()
+        status, result = self.request('POST','/api/region/chat',payload)
+        self.assertEqual(status,200)
+        self.assertIn('삼성1동',result['answer']); self.assertIn('외부 AI 호출 없음',result['mode'])
+        status, result = self.request('POST','/api/region/chat',self.context | {'district':'','question':'요약'})
+        self.assertEqual(status,200); self.assertIn('강남구',result['answer'])
+        self.assertEqual(self.request('POST','/api/region/chat',self.context | {'question':''})[0],400)
+        self.assertEqual(self.request('POST','/api/region/chat',self.context | {'question':'요약','mode':'ai'})[0],400)
+        self.assertEqual(self.request('POST','/api/region/chat',self.context | {'city':'춘천시','question':'요약'})[0],401)
+
     def test_city_scope_and_admin_upload_guard(self):
         self.login('chuncheon01')
         status,data=self.request('GET','/api/dashboard')
@@ -141,12 +156,41 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(self.request('POST','/api/workflow/confirm',context)[0],400)
         self.assertEqual(self.request('POST','/api/workflow/start',context)[0],200)
         self.assertEqual(self.request('POST','/api/workflow/confirm',context)[0],200)
-        match={'key':'test-key','service':{'name':'테스트 교류 사업'},'reasons':[],'score':0}
+        from datetime import date, datetime
+        match={'key':'test-key','service':{'name':'테스트 교류 사업',
+            'source_url':'https://example.org/service','effective_start':date(2026,1,1),
+            'detail_checked_at':datetime(2026,10,7,3,0),'detail_pending':True},'reasons':[],'score':0}
         with patch('agents.service_matching.match_services',return_value=[match]):
-            self.assertEqual(self.request('POST','/api/workflow/review',context | {'serviceKey':'test-key','decision':'보류','note':'운영 조건 확인 필요'})[0],200)
+            status,saved=self.request('POST','/api/workflow/review',context | {'serviceKey':'test-key','decision':'보류','note':'운영 조건 확인 필요'})
+            self.assertEqual(status,200)
+            self.assertEqual(saved['reviews'][0]['service_snapshot']['effective_start'],'2026-01-01')
+            self.assertEqual(saved['reviews'][0]['source_url'],'https://example.org/service')
+        status,content=self.request('POST','/api/report/content',context)
+        self.assertEqual(status,200)
+        self.assertIn('운영 조건 확인 후 재검토',content['proposal'])
+        self.assertIn('상세정보 수집·재확인 대기',content['proposal'])
+        self.assertIn('https://example.org/service',content['proposal'])
+        with patch('chatbot.orchestrator.free_reply', side_effect=AssertionError('초안 버튼은 AI 경로 금지')):
+            status,chat=self.request('POST','/api/chat',context | {'question':'초안 작성','topic':'report_draft'})
+        self.assertEqual(status,200)
+        self.assertEqual(chat['actions'][0]['reportDraft'],content)
+        status,chat=self.request('POST','/api/chat',context | {'question':'보고서 작성해줘'})
+        self.assertEqual(status,200)
+        self.assertEqual(chat['actions'][0]['reportDraft'],content)
+        fields = context | {'author':'테스트','department':'검증용','content':content,'review_id':content['review_id']}
+        self.assertEqual(self.request('POST','/api/report/preview',fields | {'review_id':'stale'})[0],400)
+        self.assertEqual(self.request('POST','/api/report/preview',fields | {'content':content | {'title':'x'*81}})[0],400)
+        status,edited=self.request('POST','/api/report/preview',fields | {'content':content | {'next_steps':'기관 협의 후 연계 검토'}})
+        self.assertEqual(status,200)
+        status,edited_file=self.request('GET','/api/report/draft?'+urlencode(context | {'token':edited['token']}))
+        self.assertEqual(status,200)
+        with ZipFile(BytesIO(edited_file)) as package:
+            text=''.join(etree.fromstring(package.read('word/document.xml')).xpath('//w:t/text()',namespaces=NS))
+        self.assertIn('기관 협의 후 연계 검토',text)
+        # 기존 사용자·지역 경계는 생성 경로에서도 유지합니다.
+        self.assertEqual(self.request('GET','/api/report/draft?'+urlencode(context | {'district':'삼성1동','token':edited['token']}))[0],400)
         status,draft=self.request('POST','/api/report/preview',context | {'author':'테스트','department':'검증용','opinion':'현장 확인 후 검토'})
         self.assertEqual(status,200)
-        from urllib.parse import urlencode
         status,document=self.request('GET','/api/report/draft?'+urlencode(context | {'token':draft['token']}))
         self.assertEqual(status,200)
         self.assertTrue(document.startswith(b'PK'))
@@ -156,6 +200,22 @@ class ApiTest(unittest.TestCase):
         self.assertTrue(item['workflow_complete'])
         self.assertEqual(self.request('GET','/api/report?'+urlencode(context))[1],document)
         self.assertEqual(self.request('POST','/api/workflow/confirm',context)[0],400)
+        status,rewrite=self.request('POST','/api/report/content',context)
+        self.assertEqual(status,200)
+        status,new_draft=self.request('POST','/api/report/preview',context | {
+            'author':'테스트','department':'검증용','content':rewrite | {'next_steps':'수정한 후속 계획'},
+            'review_id':rewrite['review_id']})
+        self.assertEqual(status,200)
+        status,revised=self.request('POST','/api/report',context | {'token':new_draft['token'],'confirmed':True})
+        self.assertEqual(status,200)
+        self.assertEqual(revised['report']['revision'],2)
+        latest=self.request('GET','/api/report?'+urlencode(context))[1]
+        self.assertNotEqual(latest,document)
+        with mission_store.connection() as conn:
+            versions=conn.execute('SELECT revision,document FROM report_versions WHERE key=? ORDER BY revision',
+                                 (mission_store.identity(context | {'user':{'id':'admin'}}),)).fetchall()
+        self.assertEqual([(revision,file) for revision,file in versions],[(1,document),(2,latest)])
+        self.assertEqual(self.request('POST','/api/report',context | {'token':new_draft['token'],'confirmed':True})[0],400)
         missions=self.request('GET','/api/missions')[1]['items']
         self.assertEqual(len(missions),1)
 
