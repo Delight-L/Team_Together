@@ -462,7 +462,7 @@ DB1 / DB2 업데이트
 .venv/Scripts/python.exe -m pip install -r requirements.txt
 cd frontend
 npm ci
-pnpm run build
+npm run build
 cd ..
 ```
 
@@ -476,7 +476,7 @@ cd ..
 
 브라우저에서 http://127.0.0.1:8503 을 열고 `gangnam01 / demo1234`(강남구 담당자) 또는 `admin / admin1234`(관리자)로 로그인합니다. 시연용 계정이며 실제 인증이 아닙니다. 처음 로그인하면 단계별 사용 안내가 열리고, 오른쪽 위 `?` 버튼으로 다시 볼 수 있습니다.
 
-화면 코드를 고칠 때는 터미널을 하나 더 열어 `frontend`에서 `npm run dev`를 실행하고 http://127.0.0.1:5173 에서 확인합니다. 8503 주소는 마지막 빌드 결과를 보여 주므로, 수정 후 `pnpm run build`를 다시 해야 반영됩니다.
+화면 코드를 고칠 때는 터미널을 하나 더 열어 `frontend`에서 `npm run dev`를 실행하고 http://127.0.0.1:5173 에서 확인합니다. 8503 주소는 마지막 빌드 결과를 보여 주므로, 수정 후 `npm run build`를 다시 해야 반영됩니다.
 
 ### 화면이 읽는 자료
 
@@ -553,7 +553,7 @@ DB2 정기 수집은 [DB2 지자체복지 정기 수집](docs/DB2_지자체복�
 ```powershell
 cd frontend
 node --test tests/*.test.mjs
-pnpm run build
+npm run build
 cd ..
 .venv/Scripts/python.exe -m unittest discover -s backend/api/tests
 .venv/Scripts/python.exe -m unittest discover -s backend/chatbot/tests -t .

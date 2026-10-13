@@ -69,7 +69,7 @@ PostgreSQL의 `db1`, `db2`, `work` 스키마 이름과 테이블은 폴더 이�
 ## 팀원 실행 방법
 
 1. 변경이 반영된 브랜치를 받아 주세요.
-2. `frontend`에서 `pnpm install`, `pnpm run build`를 실행합니다. 잠금 파일이 있는 배포본에서는 설치에 `--frozen-lockfile`을 사용합니다.
+2. `frontend`에서 `npm ci`, `npm run build`를 실행합니다. 의존성을 추가하거나 변경할 때는 `npm install`을 사용하며, `package-lock.json`도 함께 저장합니다.
 3. 프로젝트 루트에서 기존 Python 서버를 종료하고 `python main.py`를 다시 실행합니다.
 4. 과거 명령의 Python 모듈 경로를 새 경로로 바꿉니다.
 
