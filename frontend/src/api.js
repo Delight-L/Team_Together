@@ -20,12 +20,13 @@ export async function api(path, body, options = {}) {
 export const query = (context) => new URLSearchParams(context).toString();
 export const number = (value, digits = 1) => (Number.isFinite(value) ? value.toFixed(digits) : '—');
 
-// 특강/chat_test2의 fetch SSE 방식을 기존 로그인 세션과 지역 맥락에 연결합니다.
-export async function streamWelfareChat(context, messages, onEvent, signal) {
+// 보미의 답변 스트림을 로그인 세션과 선택한 지역 맥락에 연결합니다.
+// body: 지역 맥락(city·district·month), messages, mode('ai'|'data'), 열어 둔 그룹(group)
+export async function streamChat(body, onEvent, signal) {
   const response = await fetch('/api/chat', {
     method: 'POST', credentials: 'same-origin', signal,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...context, messages, stream: true }),
+    body: JSON.stringify({ ...body, stream: true }),
   });
   if (!response.ok) {
     const data = await response.json();

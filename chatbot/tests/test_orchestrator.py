@@ -1,4 +1,4 @@
-"""chat_test2 원본 처리 코드와 팀 서버 연결 검사. 외부 AI는 호출하지 않습니다."""
+"""보미의 검색·대화 처리와 화면 서버 연결 검사. 외부 AI는 호출하지 않습니다."""
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace

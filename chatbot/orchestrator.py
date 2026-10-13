@@ -1,4 +1,4 @@
-"""기존 JSON 챗봇 호출도 복지이음으로 연결하는 호환 어댑터."""
+"""보미의 JSON 대화·보고서 초안 요청을 공통 처리 경로에 연결합니다."""
 from chatbot.welfare.service import complete_reply
 
 TOPICS = {

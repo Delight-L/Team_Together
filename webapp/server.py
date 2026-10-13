@@ -56,7 +56,7 @@ ROUTES = {
     ('POST', '/api/groups/review'): routes_groups.review_save,
 
     ('GET', '/api/chat/config'): routes_chat.config,
-    ('POST', '/api/chat'): routes_chat.welfare_chat,
+    ('POST', '/api/chat'): routes_chat.chat,
     ('POST', '/api/region/chat'): routes_chat.region_chat,
 
     ('GET', '/api/missions'): routes_work.missions,

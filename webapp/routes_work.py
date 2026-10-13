@@ -114,9 +114,12 @@ def experience_save(request):
 
 
 def report_content(request):
-    """POST /api/report/content: 저장된 분석·사업 검토로 보고서 문장 초안을 만듭니다."""
+    """POST /api/report/content: 저장된 분석·사업 검토로 보고서 문장 초안을 만듭니다.
+
+    ai=true이면 AI가 문장을 다듬고, 저장된 근거와 대조를 통과한 경우에만 그 문장을 씁니다.
+    """
     context, data, evidence = work_context(request)
-    return report_writer.generate_draft(context, load_workflow(context))
+    return report_writer.write_draft(context, load_workflow(context), use_ai=request.params.get('ai') is True)
 
 
 def report_preview(request):

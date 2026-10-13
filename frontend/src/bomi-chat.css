@@ -11,9 +11,6 @@
 .bomi-chat-head .online-dot { flex-shrink: 0; }
 .bomi-new { font-size: 11px; padding: 6px 9px; border: 1px solid #d6e4f8; border-radius: 8px; color: #2563eb; background: #fff; flex-shrink: 0; }
 .bomi-chat-head .icon-button { flex-shrink: 0; }
-.bomi-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: #eef4fd; border-radius: 10px; }
-.bomi-tabs button { padding: 8px 6px; border-radius: 7px; font-size: 13px; font-weight: 600; color: #5b7193; }
-.bomi-tabs button.active { background: #fff; color: #1d4ed8; box-shadow: 0 1px 3px rgba(15, 23, 42, .1); }
 .bomi-scope { margin: 0; font-size: 12px; color: #4b6488; }
 .bomi-mode { margin: 0; font-size: 11px; color: #7086a4; }
 .bomi-mode summary { cursor: pointer; }
@@ -37,6 +34,7 @@
 .bomi-suggestions { display: flex; flex-wrap: wrap; gap: 6px; }
 .bomi-suggestions button { font-size: 12px; padding: 6px 10px; border: 1px solid #d6e4f8; border-radius: 16px; background: #fff; color: #1d4ed8; }
 .bomi-suggestions .bomi-action { background: #eef5ff; }
+.bomi-message .bomi-action { display: block; margin-top: 8px; font-size: 12px; padding: 6px 10px; border: 1px solid #d6e4f8; border-radius: 16px; background: #eef5ff; color: #1d4ed8; }
 .bomi-input { display: flex; gap: 8px; align-items: stretch; }
 .bomi-input textarea { flex: 1; min-width: 0; resize: none; font-size: 13px; padding: 9px 11px; border-radius: 10px; }
 .bomi-input button { flex-shrink: 0; padding: 8px 12px; border-radius: 10px; }

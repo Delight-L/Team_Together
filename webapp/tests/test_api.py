@@ -115,6 +115,23 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(self.request('POST','/api/chat',body | {'messages':messages})[0],400)
         self.assertEqual(self.request('POST','/api/chat',self.context | {'question':'주제','topic':'unknown'})[0],400)
 
+    def test_chat_supervisor_routes_to_agents(self):
+        self.login()
+        base = self.context | {'stream': True, 'mode': 'data'}
+        def ask(question, **extra):
+            status, result = self.request('POST', '/api/chat', base | extra | {'messages': [{'role': 'user', 'content': question}]})
+            self.assertEqual(status, 200)
+            return result.decode('utf-8')
+        text = ask('이 동의 변화를 요약해 줘')
+        self.assertIn('"agent": "analysis"', text)
+        self.assertIn('삼성1동', text)
+        text = ask('보고서 초안 만들어 줘')
+        self.assertIn('"agent": "report"', text)
+        self.assertIn('event: actions', text)
+        self.assertTrue(text.endswith('event: done\ndata: {}\n\n'))
+        self.assertEqual(self.request('POST', '/api/chat', base | {'group': 'x', 'messages': [{'role': 'user', 'content': '요약'}]})[0], 400)
+        self.assertEqual(self.request('GET', '/api/chat/config')[1]['aiAvailable'], False)
+
     def test_region_chat_explains_selected_district_and_city(self):
         payload = self.context | {'question':'변화 요약'}
         self.assertEqual(self.request('POST','/api/region/chat',payload)[0],401)

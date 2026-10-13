@@ -1,24 +1,25 @@
 """보미 챗봇 API.
 
-- «이 화면 분석»: /api/region/chat (동·구 단위)  ※ 그룹 단위는 routes_groups.chat
-- «복지사업 찾기»: /api/chat (stream=True이면 글자 단위로 이어서 보냄)
+- 채팅 화면: /api/chat (stream=True) → 총괄 에이전트(agents/supervisor.py)가 담당 에이전트를 골라 답합니다.
+- 예전 호출 경로(화면에서는 더 이상 쓰지 않음): /api/chat JSON 방식, /api/region/chat, /api/groups/chat
 """
-from agents import report_writer
+from agents import report_writer, supervisor
 from chatbot import orchestrator
 from chatbot.welfare import service as welfare_service
 from chatbot.welfare.app.agent.resources import RESOURCES
 from chatbot.welfare.app.config import settings
 from db import mission_store, region_workspace
-from webapp.common import StreamResponse, dashboard_data, evidence_for, region_context, rows_for_month
+from webapp.common import (Request, StreamResponse, dashboard_data, evidence_for, group_context,
+                           region_context, rows_for_month)
 
 
 def config(request):
-    """GET /api/chat/config: 답변 방식과 검색할 복지사업 자료 수입니다."""
+    """GET /api/chat/config: 답변 방식, AI 사용 가능 여부, 검색할 복지사업 자료 수입니다."""
     if settings.openai_api_key:
         mode = 'AI 대화'
     else:
         mode = '자료 검색'
-    return {'mode': mode, 'resourceCount': len(RESOURCES)}
+    return {'mode': mode, 'aiAvailable': bool(settings.openai_api_key), 'resourceCount': len(RESOURCES)}
 
 
 def region_chat(request):
@@ -32,16 +33,23 @@ def region_chat(request):
     return region_workspace.explain_region(context, question, data)
 
 
-def welfare_chat(request):
-    """POST /api/chat: 보미 «복지사업 찾기». 동을 고르지 않아도 질문할 수 있습니다."""
+def chat(request):
+    """POST /api/chat: 보미 채팅. 동을 고르지 않아도 질문할 수 있습니다."""
     data = dashboard_data()
     context = region_context(request, data, district_required=False)
     public_context = {'city': context['city'], 'district': context['district'], 'month': context['month']}
 
-    # 화면에서 쓰는 방식: 대화 전체를 보내고 답변을 글자 단위로 받습니다.
+    # 화면에서 쓰는 방식: 대화 전체를 보내면 총괄 에이전트가 담당을 골라 답변을 이어서 보냅니다.
     if request.params.get('stream') is True:
         messages = welfare_service.validate_messages(request.params.get('messages'))
-        return StreamResponse(welfare_service.stream_reply(messages, public_context))
+        group = None
+        if request.params.get('group') is not None:
+            if not isinstance(request.params['group'], dict):
+                raise ValueError('그룹 정보가 유효하지 않습니다.')
+            group = group_context(Request(request.params['group'], request.user, request.session_token))
+        # mode='data'이면 담당 선택·답변 모두 외부 AI를 쓰지 않습니다.
+        use_ai = request.params.get('mode') != 'data'
+        return StreamResponse(supervisor.stream(messages, context, data, group, use_ai))
 
     # 아래는 한 번에 답변을 받는 예전 방식입니다(정해진 주제 버튼, 보고서 초안 요청).
     if context['district']:
