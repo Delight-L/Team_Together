@@ -101,23 +101,9 @@ def explain_region(context, question, data):
 
 
 def ai_explain_region(context, question, data, history):
-    """사용자가 AI 해석 모드를 선택한 경우에만 기존 LLM 클라이언트를 사용한다."""
-    import asyncio
-    from chatbot.welfare.app.config import settings
-    from chatbot.welfare.app.llm.openai_client import llm
-    if not settings.openai_api_key:
-        raise ValueError('AI 연결 설정이 없습니다. 데이터 근거 안내 모드를 사용하세요.')
+    """AI 사용 모드: 조회한 동 분석 결과를 근거로 AI가 설명합니다."""
+    from chatbot.explain_ai import ask_with_evidence
     grounded = explain_region(context, question, data)  # 질문 길이 검사
-    if not isinstance(history, list) or len(history) > 8:
-        raise ValueError('대화 이력은 최근 8개까지 전달하세요.')
-    cleaned = []
-    for item in history:
-        if not isinstance(item, dict) or item.get('role') not in {'user', 'assistant'}:
-            raise ValueError('대화 형식이 올바르지 않습니다.')
-        content = str(item.get('content', ''))
-        if len(content) > 4000:
-            raise ValueError('이전 대화가 너무 깁니다.')
-        cleaned.append({'role': item['role'], 'content': content})
     district = context.get('district')
     fields = ['행정동명', '기준연월', 'metric_label', 'change_pct', 'relative_change_pp', 'is_risk_signal', 'has_enough_history']
     if district:
@@ -134,18 +120,7 @@ def ai_explain_region(context, question, data, history):
               '모르는 정보는 모른다고 말하고 추가로 확인할 사항을 제시하세요.\n'
               + json.dumps(dict(context={k: context.get(k, '') for k in ['city', 'district', 'month']}, evidence=evidence),
                            ensure_ascii=False, allow_nan=False, default=str))
-
-    async def generate():
-        parts = []
-        async for token in llm.stream([{'role': 'system', 'content': prompt}, *cleaned, {'role': 'user', 'content': str(question).strip()}]):
-            parts.append(token)
-        return ''.join(parts)
-    answer = asyncio.run(generate())
-    if not answer.strip():
-        raise ValueError('AI 답변이 비어 있습니다. 데이터 근거 안내로 다시 시도하세요.')
-    # 분석 근거에는 연락처·URL·금액이 없으므로 답변에 나오면 가립니다.
-    from chatbot.guardrails import redact_unverified
-    answer, hidden = redact_unverified(answer, prompt)
+    answer, hidden = ask_with_evidence(prompt, question, history)
     result = grounded | {'answer': answer, 'mode': 'AI 해석 · 동별 분석 근거'}
     if hidden:
         result['notice'] = '답변에 분석 근거에서 확인되지 않은 ' + '·'.join(hidden) + '이(가) 있어 가렸어요.'

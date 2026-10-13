@@ -39,8 +39,16 @@ class GroupsApiTest(unittest.TestCase):
         conn.request(method, path, json.dumps(body).encode() if body is not None else None,
                      {'Content-Type': 'application/json', 'Cookie': self.cookie})
         response = conn.getresponse()
-        if response.getheader('Set-Cookie'): self.cookie = response.getheader('Set-Cookie').split(';')[0]
-        result = response.status, json.loads(response.read()); conn.close(); return result
+        if response.getheader('Set-Cookie'):
+            self.cookie = response.getheader('Set-Cookie').split(';')[0]
+        content = response.read()
+        conn.close()
+        # 보미 채팅은 스트림(text/event-stream)이므로 글자 그대로 돌려줍니다.
+        if 'application/json' in response.getheader('Content-Type', ''):
+            content = json.loads(content)
+        else:
+            content = content.decode('utf-8')
+        return response.status, content
 
     def test_auth_scope_chat_and_review_version(self):
         detail_url = '/api/groups/detail?' + urlencode(self.context)
@@ -50,8 +58,13 @@ class GroupsApiTest(unittest.TestCase):
         status, detail = self.request('GET', detail_url)
         self.assertEqual(status, 200); self.assertEqual(detail['current']['sex'], '남성')
         self.assertEqual(self.request('GET', '/api/groups/detail?' + urlencode(self.context | {'sex': '전체'}))[0], 400)
-        status, chat = self.request('POST', '/api/groups/chat', self.context | {'question': '변화 요약'})
-        self.assertEqual(status, 200); self.assertIn('20.00%', chat['answer']); self.assertIn('외부 AI 호출 없음', chat['mode'])
+        # 그룹을 열어 둔 채 보미에게 질문하면 그룹 근거로 답합니다.
+        chat_body = {'city': '강남구', 'district': '역삼2동', 'month': '2025-08', 'mode': 'data', 'group': self.context,
+                     'messages': [{'role': 'user', 'content': '변화 요약'}]}
+        status, chat = self.request('POST', '/api/chat', chat_body)
+        self.assertEqual(status, 200)
+        self.assertIn('20.00%', chat)
+        self.assertIn('외부 AI 호출 없음', chat)
         payload = self.context | {'note': '통신 신호와 구분하여 확인', 'need': '안부·상담', 'sourceRun': 'wrong'}
         self.assertEqual(self.request('POST', '/api/groups/review', payload)[0], 400)
         self.assertEqual(self.request('POST', '/api/groups/review', payload | {'sourceRun': 'test'})[0], 200)

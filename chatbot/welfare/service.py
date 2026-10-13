@@ -31,19 +31,3 @@ def stream_reply(messages, context, use_ai=True):
                 yield event
         finally:
             runner.run(events.aclose())
-
-
-def complete_reply(messages, context):
-    """기존 JSON 호출자도 같은 handle_chat 처리 결과를 받습니다."""
-    result = {'answer': '', 'mode': '', 'sources': [], 'actions': []}
-    for event, payload in stream_reply(messages, context):
-        # 스트림 조각을 합치되, AI 실패 시에는 검색 안내로 답변 전체를 바꿉니다.
-        if event == 'token':
-            result['answer'] += payload['text']
-        elif event == 'sources':
-            result.update(sources=payload['records'], mode=payload['mode'])
-        elif event == 'replace':
-            result.update(answer=payload['text'], mode=payload['mode'])
-        elif event in ('error', 'notice'):
-            result['notice'] = payload['message']
-    return result

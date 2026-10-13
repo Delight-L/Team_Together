@@ -48,16 +48,13 @@ ROUTES = {
     ('POST', '/api/upload/publish'): routes_analysis.upload_publish,
 
     ('GET', '/api/groups'): routes_groups.catalogue,
-    ('GET', '/api/groups/config'): routes_groups.ai_config,
     ('GET', '/api/groups/detail'): routes_groups.detail,
     ('GET', '/api/groups/review'): routes_groups.review_load,
     ('GET', '/api/groups/services'): routes_groups.services,
-    ('POST', '/api/groups/chat'): routes_groups.chat,
     ('POST', '/api/groups/review'): routes_groups.review_save,
 
     ('GET', '/api/chat/config'): routes_chat.config,
     ('POST', '/api/chat'): routes_chat.chat,
-    ('POST', '/api/region/chat'): routes_chat.region_chat,
 
     ('GET', '/api/missions'): routes_work.missions,
     ('GET', '/api/workflow'): routes_work.workflow,

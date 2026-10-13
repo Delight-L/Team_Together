@@ -1,4 +1,3 @@
-import copy
 import unittest
 from pathlib import Path
 import tempfile

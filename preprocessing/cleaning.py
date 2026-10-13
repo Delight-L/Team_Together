@@ -1,30 +1,46 @@
+"""공모전 제공 원본(유동인구·카드) → 종합 현황 그룹 자료용 CSV 변환.
+
+data/raw의 월별 원본(flow_age/time/wkdy_pop_2025MM.csv, 신한카드 자료)을 7~12월로 합쳐
+data/processed에 저장합니다. 종합 현황의 그룹 자료(db/group_repository.build_snapshot)가 이 결과를 읽습니다.
+
+실행: python preprocessing/cleaning.py
+"""
+from pathlib import Path
+
 import pandas as pd
-import os
 
-os.makedirs(r"./data/processed", exist_ok=True)
-months = ["07", "08", "09", "10", "11", "12"]
+ROOT = Path(__file__).resolve().parents[1]
+RAW_DIR = ROOT / "data" / "raw"
+PROCESSED_DIR = ROOT / "data" / "processed"
+MONTHS = ["07", "08", "09", "10", "11", "12"]
+CARD_FILE = "신한카드_빅콘테스트2026_데이터2.txt"
 
-# dedup -> 중복 제거 여부
-def load(month: str, kind: str, dedup: bool = False) -> pd.DataFrame:
-    df = pd.read_csv(f"./data/raw/flow_{kind}_pop_2025{month}.csv", sep="|", dtype={"BLOCK_CD": str})
-    return df.drop_duplicates() if dedup else df
 
-# ---------------------------------------------------------------------------------------#
-# 데이터셋1,2 변환
-def cvt2csv():
-    # 공지사항: flow_time_pop_202512.csv, flow_wkdy_pop_202512.csv 는 중복값 제거 후 사용
-    age_pop = pd.concat([load(m, "age") for m in months], ignore_index=True)
-    time_pop = pd.concat([load(m, "time", dedup=(m == "12")) for m in months], ignore_index=True)
-    wkdy_pop = pd.concat([load(m, "wkdy", dedup=(m == "12")) for m in months], ignore_index=True)
-    sh_data = pd.read_csv("./data/raw/신한카드_빅콘테스트2026_데이터2.txt", sep="\t", encoding="cp949")
-    # ---------------------------------------------------------------------------------------#
+def load_flow(month, kind, dedup=False):
+    """한 달치 유동인구 원본을 읽습니다. kind는 age·time·wkdy 중 하나입니다."""
+    frame = pd.read_csv(RAW_DIR / f"flow_{kind}_pop_2025{month}.csv", sep="|", dtype={"BLOCK_CD": str})
+    if dedup:
+        return frame.drop_duplicates()
+    return frame
 
-    #데이터 정제 (7월~12월 데이터 결합 및 )
-    age_pop.to_csv("./data/processed/age_pop.csv", index=False)
-    time_pop.to_csv("./data/processed/time_pop.csv", index=False)
-    wkdy_pop.to_csv("./data/processed/wkdy_pop.csv", index=False)
-    sh_data.to_csv("./data/processed/sh_data.csv", index=False)
+
+def combine_months(kind):
+    """7~12월을 하나로 합칩니다. 공지에 따라 12월 time·wkdy 자료는 중복 행을 지우고 씁니다."""
+    frames = []
+    for month in MONTHS:
+        dedup = kind in ("time", "wkdy") and month == "12"
+        frames.append(load_flow(month, kind, dedup))
+    return pd.concat(frames, ignore_index=True)
+
+
+def main():
+    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    for kind in ["age", "time", "wkdy"]:
+        combine_months(kind).to_csv(PROCESSED_DIR / f"{kind}_pop.csv", index=False)
+    card = pd.read_csv(RAW_DIR / CARD_FILE, sep="\t", encoding="cp949")
+    card.to_csv(PROCESSED_DIR / "sh_data.csv", index=False)
+    print(f"[완료] {PROCESSED_DIR}에 age_pop·time_pop·wkdy_pop·sh_data.csv를 저장했습니다.")
 
 
 if __name__ == "__main__":
-    cvt2csv()
+    main()

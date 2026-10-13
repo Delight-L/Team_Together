@@ -477,10 +477,10 @@ cd ..
 
 | 화면 | 자료 | 위치 |
 |---|---|---|
-| 지역 현황·지역 분석·보미 «이 화면 분석» | 동별 통화·문자·이동 분석 결과 | DB `db1.analysis2_detections` (없으면 `agents/regional_analysis/Analysis2/outputs/`의 CSV) |
+| 지역 현황·지역 분석·보미 분석 설명 | 동별 통화·문자·이동 분석 결과 | DB `db1.analysis2_detections` (없으면 `agents/regional_analysis/Analysis2/outputs/`의 CSV) |
 | 종합 현황 관찰 그룹 | 연령·성별 유동인구 집계 | DB `db1.group_flow_snapshots` (`python -m db.group_repository --build --publish`로 생성) |
 | 사업 매칭 검토 | 지자체 복지사업 목록 | DB `db2` (`python -m db.collect_welfare`로 수집) |
-| 보미 «복지사업 찾기» | 팀 정리 복지사업 자료 | `chatbot/welfare/data/*.json` |
+| 보미 복지사업 안내 | 팀 정리 복지사업 자료 | `chatbot/welfare/data/*.json` |
 | 업무 기록·보고서 | 담당자 업무 기록 | 각 PC의 `db/runtime/mission_records.sqlite3` (Git 제외, PC마다 따로 저장) |
 
 `.env`의 `WELFIND_DATA_SOURCE`로 분석 결과를 어디서 읽을지 정합니다: `auto`(DB 우선, 실패 시 CSV), `db`, `csv`. 팀 공용 DB 구축은 [오라클 클라우드 DB 구축](docs/오라클_클라우드_DB_구축.md)을 참고하세요.
@@ -495,7 +495,7 @@ cd ..
 | 사업 매칭 검토 | 확인한 필요에 맞는 지자체 복지사업을 찾아 검토 기록을 남깁니다. |
 | 업무 기록 | 저장한 지역 업무 목록과 검토·후속 조치 기록 |
 | 보고서 작성 | 분석과 사업 검토 결과로 Word 보고서 초안을 만들고 저장합니다. |
-| 보미에게 질문 | 모든 메뉴에서 같은 챗봇. «이 화면 분석»은 지금 보는 동·그룹의 근거를, «복지사업 찾기»는 필요한 지원과 담당 기관을 안내합니다. |
+| 보미에게 질문 | 모든 메뉴에서 같은 챗봇 하나. 총괄 에이전트가 질문마다 담당(분석 근거 설명·복지사업 찾기·보고서 초안)을 골라 답합니다. [챗봇 안내](chatbot/README.md) |
 | 데이터 관리·활동 이력 | 관리자 전용. 분석 자료 검사·반영과 반영 이력 |
 
 판정(신규·연속·변화 후보 등)은 동 단위 지표가 평소 흐름과 다른지 본 결과이며, 개인의 고립 여부를 판정하지 않습니다.
@@ -514,9 +514,10 @@ frontend/src/               React 화면
   BomiChat.jsx              보미 챗봇
   GuideTour.jsx             처음 방문 단계별 안내
 db/                         DB 연결, 분석 결과 조회, 업무 기록, 보미 분석 설명
-chatbot/welfare/            보미 «복지사업 찾기» 답변(자료 검색·AI 대화)
-agents/                     보고서 작성, 사업 매칭, 분석(Analysis2), 위험 분석
-preprocessing/              원본 자료 전처리 (cleaning.py: 공모전 제공 데이터 전처리)
+chatbot/                    보미 챗봇: 가드레일(guardrails.py), 분석 근거 AI 설명(explain_ai.py)
+  welfare/                  복지사업 찾기 답변(자료 검색·AI 대화)
+agents/                     총괄 에이전트(supervisor.py), 보고서 작성, 사업 매칭, 분석(Analysis2), 위험 분석
+preprocessing/              원본 자료 전처리 (cleaning.py: 공모전 유동인구 원본 → data/processed, 종합 현황 그룹 자료용)
 shared/                     시연 계정, Word 보고서, 지도 경계
 deploy/oracle/              팀 공용 DB 구축 스크립트
 docs/                       DB2 수집, 보고서 서식, 공용 DB 구축 문서

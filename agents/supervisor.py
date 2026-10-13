@@ -101,18 +101,25 @@ def _report(question, context, use_ai):
     return report_writer.report_reply(context, workflow, use_ai, question)
 
 
-def stream(messages, context, data, group=None, use_ai=True):
-    """검사를 먼저 끝낸 뒤 (이벤트, 내용) 생성기를 돌려줍니다. 검사 실패는 스트림 시작 전에 400이 됩니다."""
-    if len(messages[-1]['content']) > 2000:
-        raise ValueError('질문은 1~2,000자로 입력하세요.')
-    # 가드레일 1: 개인정보는 담당 선택·답변·외부 AI 전송 전에 모두 가립니다.
-    messages, pii = mask_messages(messages)
-    ai = use_ai and bool(settings.openai_api_key)
-    return _events(messages, messages[-1]['content'], context, data, group, ai, pii)
+def _answer(agent, question, history, context, data, group, use_ai):
+    """분석·보고서·안내 담당의 답(dict)과, 사용자에게 알릴 오류 문구(없으면 None)를 돌려줍니다."""
+    if agent == 'report':
+        return _report(question, context, use_ai), None
+    if agent == 'guide':
+        return {'answer': GUIDE, 'mode': '보미 안내 · 외부 AI 호출 없음'}, None
+    try:
+        return _analysis(question, history, context, data, group, use_ai), None
+    except (OpenAIError, ValueError) as exc:
+        if not use_ai:
+            raise
+        # AI 해석이 실패하면 외부 AI 없이 데이터 근거로 다시 답합니다.
+        LOGGER.warning('AI 분석 해석 실패, 데이터 근거 안내로 대체: %s', type(exc).__name__)
+        result = _analysis(question, history, context, data, group, False)
+        return result, 'AI 해석을 완료하지 못해 데이터 근거 안내로 답합니다.'
 
 
 def _flagged(question):
-    """가드레일 2: 유해 콘텐츠 검사. 검사 API가 실패하면 서비스를 멈추지 않고 통과시킵니다."""
+    """가드레일: 유해 콘텐츠 검사. 검사 API가 실패하면 서비스를 멈추지 않고 통과시킵니다."""
     from chatbot.welfare.app.llm.openai_client import llm
     try:
         return asyncio.run(llm.moderate(question))
@@ -121,44 +128,54 @@ def _flagged(question):
         return []
 
 
-def _events(messages, question, context, data, group, ai, pii=()):
-    history = messages[:-1]
-    public = {key: context[key] for key in ('city', 'district', 'month')}
+def stream(messages, context, data, group=None, use_ai=True):
+    """검사를 먼저 끝낸 뒤 (이벤트, 내용) 생성기를 돌려줍니다. 검사 실패는 스트림 시작 전에 400이 됩니다."""
+    if len(messages[-1]['content']) > 2000:
+        raise ValueError('질문은 1~2,000자로 입력하세요.')
+    # 가드레일: 개인정보는 담당 선택·답변·외부 AI 전송 전에 모두 가립니다.
+    messages, pii = mask_messages(messages)
+    use_ai = use_ai and bool(settings.openai_api_key)
+    return _events(messages, context, data, group, use_ai, pii)
+
+
+def _events(messages, context, data, group, use_ai, pii):
+    """화면으로 보낼 이벤트를 차례대로 만듭니다.
+
+    route(담당) → [sources·token(복지사업) 또는 replace(그 밖)] → notice·actions(있으면) → done
+    """
+    question, history = messages[-1]['content'], messages[:-1]
     if pii:
         yield 'notice', {'message': '개인정보로 보이는 내용(' + '·'.join(pii) + ')을 가리고 처리했어요. 개인정보는 입력하지 마세요.',
                          'question': question}
-    if ai and _flagged(question):
+
+    if use_ai and _flagged(question):
         yield 'route', {'agent': 'guide', 'label': AGENTS['guide'], 'by': '안전 검사'}
         yield 'replace', {'text': BLOCKED, 'mode': '보미 안내 · 안전 검사', 'source': ''}
         yield 'done', {}
         return
-    agent, how = route(question, history, context, ai)
+
+    agent, how = route(question, history, context, use_ai)
     yield 'route', {'agent': agent, 'label': AGENTS[agent], 'by': how}
+
+    # 복지사업 담당은 답변을 글자 단위로 이어서 보냅니다.
     if agent == 'welfare':
-        yield from welfare_service.stream_reply(messages, public, use_ai=ai)
+        public = {key: context[key] for key in ('city', 'district', 'month')}
+        yield from welfare_service.stream_reply(messages, public, use_ai=use_ai)
         return
+
     try:
-        if agent == 'analysis':
-            try:
-                result = _analysis(question, history, context, data, group, ai)
-            except (OpenAIError, ValueError) as exc:
-                if not ai:
-                    raise
-                LOGGER.warning('AI 분석 해석 실패, 데이터 근거 안내로 대체: %s', type(exc).__name__)
-                yield 'error', {'message': 'AI 해석을 완료하지 못해 데이터 근거 안내로 답합니다.'}
-                result = _analysis(question, history, context, data, group, False)
-        elif agent == 'report':
-            result = _report(question, context, ai)
-        else:
-            result = {'answer': GUIDE, 'mode': '보미 안내 · 외부 AI 호출 없음'}
+        result, error = _answer(agent, question, history, context, data, group, use_ai)
     except Exception:
         # 응답 머리글을 이미 보냈으므로 오류도 이벤트로 알립니다.
         LOGGER.exception('보미 %s 에이전트 처리 실패', agent)
         yield 'error', {'message': '답변을 만드는 중 문제가 생겼습니다. 잠시 후 다시 질문해 주세요.'}
         yield 'done', {}
         return
-    source = (result.get('sources') or [{}])[0].get('label', '')
-    yield 'replace', {'text': result['answer'], 'mode': result.get('mode', ''), 'source': source}
+
+    if error:
+        yield 'error', {'message': error}
+    sources = result.get('sources') or [{}]
+    yield 'replace', {'text': result['answer'], 'mode': result.get('mode', ''), 'source': sources[0].get('label', '')}
     if result.get('notice'):
         yield 'notice', {'message': result['notice']}
     if result.get('actions'):

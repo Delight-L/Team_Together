@@ -1,7 +1,6 @@
 import io
 import json
 from pathlib import Path
-import tempfile
 import unittest
 import zipfile
 import stat

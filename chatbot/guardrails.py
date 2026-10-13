@@ -38,50 +38,52 @@ def mask_messages(messages):
     for message in messages:
         content, kinds = mask_pii(message['content'])
         masked.append({**message, 'content': content})
-        found += [kind for kind in kinds if kind not in found]
+        for kind in kinds:
+            _add_once(found, kind)
     return masked, found
 
 
-def mask_question(question, history=None):
-    """예전 JSON 호출 경로용: 질문과 이력(content 또는 text 항목)의 개인정보를 가립니다."""
-    question = mask_pii(str(question))[0]
-    if isinstance(history, list):
-        history = [{**item, **{key: mask_pii(str(item[key]))[0] for key in ('content', 'text') if key in item}}
-                   if isinstance(item, dict) else item for item in history]
-    return question, history
-
-
 def _digits(value):
+    """'02-1234-5678'처럼 표기가 달라도 같은 번호로 비교하도록 숫자만 남깁니다."""
     return re.sub(r'\D', '', value)
 
 
+def _compact(value):
+    """'10 만원'·'100,000원'처럼 띄어쓰기·쉼표가 달라도 같은 금액으로 비교하도록 지웁니다."""
+    return re.sub(r'[\s,]', '', value)
+
+
 def redact_unverified(text, material):
-    """(가린 답변, 가린 정보 종류 목록)을 돌려줍니다. material은 AI에게 준 근거 자료 문자열입니다."""
-    found = []
-    known_phones = {_digits(p) for pattern in (PHONE, SERVICE_PHONE) for p in pattern.findall(material)}
-    compact_material = re.sub(r'[\s,]', '', material)
+    """(가린 답변, 가린 정보 종류 목록)을 돌려줍니다. material은 AI에게 준 근거 자료 문자열입니다.
 
-    def phone(match):
-        if _digits(match.group()) in known_phones:
-            return match.group()
-        found.append('연락처')
-        return UNVERIFIED
-
-    def url(match):
-        value = match.group().rstrip('.,;:')
-        if value in material:
-            return match.group()
-        found.append('URL')
-        return UNVERIFIED
-
-    def money(match):
-        if re.sub(r'[\s,]', '', match.group()) in compact_material:
-            return match.group()
-        found.append('금액')
-        return UNVERIFIED
-
-    text = URL.sub(url, text)
+    답변 속 URL·전화번호·금액을 하나씩 찾아, 근거 자료에 없으면 UNVERIFIED 문구로 바꿉니다.
+    """
+    hidden = []
+    known_phones = set()
     for pattern in (PHONE, SERVICE_PHONE):
-        text = pattern.sub(phone, text)
-    text = MONEY.sub(money, text)
-    return text, sorted(set(found), key=found.index)
+        for phone in pattern.findall(material):
+            known_phones.add(_digits(phone))
+
+    for url in URL.findall(text):
+        if url.rstrip('.,;:') not in material:
+            text = text.replace(url, UNVERIFIED)
+            _add_once(hidden, 'URL')
+
+    for pattern in (PHONE, SERVICE_PHONE):
+        for phone in pattern.findall(text):
+            if _digits(phone) not in known_phones:
+                text = text.replace(phone, UNVERIFIED)
+                _add_once(hidden, '연락처')
+
+    compact_material = _compact(material)
+    for money in MONEY.findall(text):
+        if _compact(money) not in compact_material:
+            text = text.replace(money, UNVERIFIED)
+            _add_once(hidden, '금액')
+
+    return text, hidden
+
+
+def _add_once(items, item):
+    if item not in items:
+        items.append(item)

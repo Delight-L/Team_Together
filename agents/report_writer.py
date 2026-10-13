@@ -13,6 +13,7 @@ import re
 LOGGER = logging.getLogger(__name__)
 SECTIONS = (('summary', '검토 요지'), ('situation', '지역 현황'),
             ('proposal', '복지서비스 연계·추진 제안'), ('next_steps', '향후 조치'))
+SECTION_KEYS = [key for key, label in SECTIONS]  # summary, situation, proposal, next_steps
 LIMITS = {'title': 80, 'summary': 350, 'situation': 900, 'proposal': 1200, 'next_steps': 600}
 DECISION_TEXT = {'적합': '연계 가능성 검토 제안', '보류': '운영 조건 확인 후 재검토', '부적합': '현재 연계 제안에서 제외'}
 LIMIT_NOTE = '개인의 고립 여부나 변화 원인을 확정할 수 없음'
@@ -146,10 +147,11 @@ def check_grounding(polished, draft):
             problems.append(f'{label} 글자 수 초과')
     if problems:
         return problems
-    material = '\n'.join(str(draft[key]) for key in ['title', *dict(SECTIONS)])
-    text = '\n'.join(polished[key] for key in dict(SECTIONS))
+    material = '\n'.join(str(draft[key]) for key in ['title'] + SECTION_KEYS)
+    text = '\n'.join(polished[key] for key in SECTION_KEYS)
+    # 기초 초안에 없던 숫자(금액·날짜·연락처 포함)가 생겼는지 봅니다.
     allowed_numbers = set(NUMBER.findall(material))
-    new_numbers = sorted({n for n in NUMBER.findall(text) if n not in allowed_numbers})
+    new_numbers = sorted(set(NUMBER.findall(text)) - allowed_numbers)
     if new_numbers:
         problems.append('근거에 없는 숫자 ' + ', '.join(new_numbers[:5]))
     if any(url not in material for url in URL.findall(text)):
@@ -168,8 +170,9 @@ def check_grounding(polished, draft):
 
 async def _polish(draft, request):
     from chatbot.welfare.app.llm.openai_client import llm
-    limits = {key: int(LIMITS[key] * 0.9) for key in dict(SECTIONS)}
-    material = {'기초_초안': {key: draft[key] for key in ['title', *dict(SECTIONS)]},
+    # 글자 수 상한을 넘지 않도록 AI에게는 상한의 90%를 알려 줍니다.
+    limits = {key: int(LIMITS[key] * 0.9) for key in SECTION_KEYS}
+    material = {'기초_초안': {key: draft[key] for key in ['title'] + SECTION_KEYS},
                 '담당자_요청': str(request or '')[:500]}
     answer = await llm.complete([
         {'role': 'system', 'content': POLISH_PROMPT.format(**limits)},
@@ -197,11 +200,15 @@ def write_draft(context, workflow, use_ai=False, request=''):
         LOGGER.info('보고서 AI 문장이 근거 대조를 통과하지 못함: %s', problems)
         return draft | {'notice': 'AI 문장이 저장된 근거와 맞지 않아(' + ', '.join(problems[:3]) +
                         ') 저장된 근거로 구성한 초안을 보여 드립니다.'}
-    return draft | {key: polished[key].strip() for key in dict(SECTIONS)} | {
-        'mode': 'AI 문장 다듬기 · 저장된 근거와 대조 완료'}
+    result = dict(draft)
+    for key in SECTION_KEYS:
+        result[key] = polished[key].strip()
+    result['mode'] = 'AI 문장 다듬기 · 저장된 근거와 대조 완료'
+    return result
 
 
 def report_reply(context, workflow, use_ai=False, request=''):
+    """챗봇용 답: 초안 본문과 «보고서 탭에서 수정» 버튼(초안 포함)을 돌려줍니다."""
     try:
         draft = write_draft(context, workflow or {}, use_ai, request)
     except ValueError as exc:
@@ -216,5 +223,6 @@ def report_reply(context, workflow, use_ai=False, request=''):
 
 
 def is_draft_request(question):
+    """'보고서 초안 만들어 줘'처럼 보고서를 쓰거나 다듬어 달라는 요청인지 봅니다."""
     text = question.replace(' ', '')
     return '보고서' in text and any(word in text for word in ('작성', '만들', '생성', '초안', '써', '다듬', '정리'))

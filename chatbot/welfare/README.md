@@ -7,7 +7,7 @@
 
 | 파일 | 역할 |
 |---|---|
-| `service.py` | 화면 서버와 비동기 대화를 연결하고 JSON·스트림 응답을 제공 |
+| `service.py` | 화면 서버와 비동기 대화를 연결하고 스트림 응답을 제공 |
 | `app/config.py` | 프로젝트 루트 `.env`의 AI 연결 설정 읽기 |
 | `app/schemas.py` | 사용자 질문과 대화 이력 형식 검사 |
 | `app/agent/orchestrator.py` | 검색·답변·출처·AI 실패 안내 처리 |
@@ -20,6 +20,7 @@
 ```text
 frontend/src/BomiChat.jsx
   → webapp/routes_chat.py
+  → agents/supervisor.py (총괄 에이전트가 복지사업 담당으로 고른 경우)
   → chatbot/welfare/service.py
   → app/agent/orchestrator.py:handle_chat
   → app/agent/resources.py + app/llm/openai_client.py
@@ -29,8 +30,7 @@ frontend/src/BomiChat.jsx
 AI 연결 실패나 빈 응답은 자료 검색 안내로 전환하며, 요청이 취소되면 응답 스트림을 종료합니다.
 같은 사업이 여러 자료에 있으면 상세 정보를 가진 자료를 사용하고, 후속 질문은 이전 사업 맥락을 이어 검색합니다.
 
-`chatbot/orchestrator.py`의 JSON 요청도 같은 대화 처리 함수를 사용합니다.
-「이 화면 분석」은 별도의 동·그룹 분석 경로를 사용하며, 자세한 구분은 [보미 챗봇 안내](../README.md)를 참고하세요.
+분석 근거 설명·보고서 초안 등 다른 담당은 [보미 챗봇 안내](../README.md)를 참고하세요.
 
 ## 검증
 

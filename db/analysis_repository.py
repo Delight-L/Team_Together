@@ -237,7 +237,7 @@ def _load_analysis2_data(source_path, modified_ns):
 
 
 def structure_upload(raw_dir, source="지역 구조자료 5종"):
-    data, profile, report = preprocess_raw_dir(raw_dir)
+    data, report = preprocess_raw_dir(raw_dir)
     return {
         "kind": "structure",
         "source": source,

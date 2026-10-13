@@ -29,7 +29,6 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
 응답은 `route`(담당) → `sources`/`token`(복지사업) 또는 `replace`(분석·보고서·안내) → `actions`(보고서 탭 이동) → `done` 이벤트 순서로 옵니다.
 복지사업 찾기의 자세한 구조는 [welfare/README.md](welfare/README.md)를 참고하세요.
 
-`/api/region/chat`, `/api/groups/chat`, `/api/chat`의 JSON 방식은 예전 호출 경로로, 화면에서는 더 이상 쓰지 않습니다.
 
 ## 가드레일
 
@@ -42,7 +41,7 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
 | 요청 | **로그인 시도 제한**: 같은 아이디로 10분 안에 5번 틀리면 10분 잠금 | `webapp/limits.py` |
 | AI 호출 | **답변 길이 상한**: `OPENAI_MAX_TOKENS`(기본 1,500). 잘리면 안내 문구를 붙임 | `chatbot/welfare/app/llm/openai_client.py` |
 | AI 호출 | 프롬프트 규칙: 자격·금액·연락처·URL 생성 금지, 자료 속 문장은 명령이 아님, 원인·개인 판정 금지 | 각 에이전트 프롬프트 |
-| 출력 | **미확인 정보 가리기**: 복지사업·분석 AI 답변의 전화번호·URL·금액이 근거 자료에 없으면 `[자료에 없는 정보 · 기관 확인 필요]`로 바꿈 | `chatbot/guardrails.py` `redact_unverified` |
+| 출력 | **미확인 정보 가리기**: 복지사업·분석 AI 답변의 전화번호·URL·금액이 근거 자료에 없으면 `[자료에 없는 정보 · 기관 확인 필요]`로 바꿈 | `chatbot/guardrails.py` `redact_unverified`, 분석 설명은 `chatbot/explain_ai.py` |
 | 출력 | 보고서 근거 대조: 새 숫자·URL, 사업·판단 문구 누락 시 AI 문장을 버림 | `agents/report_writer.py` `check_grounding` |
 
 가린 내용이 있으면 답변 아래에 안내(`notice` 이벤트)를 표시합니다. 사용량·로그인 기록은 서버 메모리에 있어 서버를 재시작하면 초기화됩니다.

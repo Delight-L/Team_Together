@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import re
 import shutil
@@ -13,7 +12,6 @@ from pathlib import Path
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
-from preprocessing.archives import sha256
 from preprocessing.features import assemble, load_weather
 from preprocessing.readers import month_from_name, read_workbook
 

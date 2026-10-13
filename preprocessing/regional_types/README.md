@@ -35,7 +35,6 @@ python main.py --preprocess-analysis1 --raw-dir "raw_data" --output-dir "outputs
 `outputs/analysis1_preprocessed`에 아래 파일이 생깁니다.
 
 - `analysis1_input.csv`: PCA·군집화 입력 파일
-- `analysis1_profile.csv`: 동별 전처리 프로필
 - `pca_columns.json`: PCA에 사용할 열 목록
 - `preprocessing_manifest.json`: 22개 동·결측 검증 결과
 

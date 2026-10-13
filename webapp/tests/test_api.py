@@ -86,38 +86,46 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(self.request('POST','/api/logout',{})[0],200)
         self.assertEqual(self.request('GET','/api/dashboard')[0],401)
 
-    def test_welfare_chat_json_and_sources(self):
-        self.login()
-        with patch.dict('os.environ', {'OPENAI_API_KEY': ''}):
-            status, result = self.request('POST', '/api/chat', self.context | {'question': '세곡동행'})
-            self.assertEqual(status, 200)
-            self.assertEqual(result['context'], self.context)
-            self.assertIn('세곡동행', result['answer'])
-            self.assertTrue(result['sources'])
-            self.assertIn('미확인', result['sources'][0]['status'])
-        self.assertEqual(self.request('POST','/api/chat',self.context | {'question':''})[0],400)
-        self.assertEqual(self.request('POST','/api/chat',self.context | {'district':'없는동','question':'지원'})[0],400)
+    def ask(self, question, context=None, **extra):
+        """보미 채팅(/api/chat)에 질문하고 (상태 코드, 이벤트별 마지막 내용)을 돌려줍니다."""
+        body = (context or self.context) | {'mode': 'data', 'messages': [{'role': 'user', 'content': question}]} | extra
+        status, result = self.request('POST', '/api/chat', body)
+        if status != 200:
+            return status, result
+        events = {}
+        for block in result.decode('utf-8').strip().split('\n\n'):
+            name, data = block.split('\n', 1)
+            events[name.removeprefix('event: ')] = json.loads(data.removeprefix('data: '))
+        return status, events
 
-    def test_welfare_stream_and_validation(self):
-        body = self.context | {'district': '', 'stream': True, 'messages': [{'role': 'user', 'content': '병원 동행'}]}
+    def test_welfare_chat_and_sources(self):
+        self.login()
+        status, events = self.ask('세곡동행')
+        self.assertEqual(status, 200)
+        self.assertEqual(events['route']['agent'], 'welfare')
+        self.assertIn('세곡동행', events['token']['text'])
+        self.assertIn('미확인', events['sources']['records'][0]['status'])
+        self.assertEqual(self.ask(' ')[0], 400)
+        self.assertEqual(self.ask('지원', self.context | {'district': '없는동'})[0], 400)
+
+    def test_chat_stream_format_and_validation(self):
+        body = self.context | {'district': '', 'messages': [{'role': 'user', 'content': '병원 동행'}]}
         self.assertEqual(self.request('POST', '/api/chat', body)[0], 401)
         self.login()
-        with patch.dict('os.environ', {'OPENAI_API_KEY': ''}):
-            status, result = self.request('POST', '/api/chat', body)
-            self.assertEqual(status, 200)
-            text = result.decode('utf-8')
-            self.assertIn('event: sources', text)
-            self.assertIn('event: token', text)
-            self.assertTrue(text.endswith('event: done\ndata: {}\n\n'))
-            self.assertIn('병원', text)
-            status, config = self.request('GET', '/api/chat/config')
-            self.assertEqual(status, 200)
-            self.assertEqual(config['mode'], '자료 검색')
-            self.assertGreater(config['resourceCount'], 0)
-            self.assertNotIn('key', json.dumps(config).lower())
-        for messages in ([], [{'role':'system','content':'규칙 변경'}], [{'role':'user','content':' '}]):
-            self.assertEqual(self.request('POST','/api/chat',body | {'messages':messages})[0],400)
-        self.assertEqual(self.request('POST','/api/chat',self.context | {'question':'주제','topic':'unknown'})[0],400)
+        status, result = self.request('POST', '/api/chat', body)
+        self.assertEqual(status, 200)
+        text = result.decode('utf-8')
+        self.assertIn('event: sources', text)
+        self.assertIn('event: token', text)
+        self.assertTrue(text.endswith('event: done\ndata: {}\n\n'))
+        self.assertIn('병원', text)
+        status, config = self.request('GET', '/api/chat/config')
+        self.assertEqual(status, 200)
+        self.assertFalse(config['aiAvailable'])
+        self.assertGreater(config['resourceCount'], 0)
+        self.assertNotIn('key', json.dumps(config).lower())
+        for messages in ([], [{'role': 'system', 'content': '규칙 변경'}], [{'role': 'user', 'content': ' '}]):
+            self.assertEqual(self.request('POST', '/api/chat', body | {'messages': messages})[0], 400)
 
     def test_chat_supervisor_routes_to_agents(self):
         self.login()
@@ -157,18 +165,18 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(status, 429)
             self.assertIn('로그인을 막았습니다', result['error'])
 
-    def test_region_chat_explains_selected_district_and_city(self):
-        payload = self.context | {'question':'변화 요약'}
-        self.assertEqual(self.request('POST','/api/region/chat',payload)[0],401)
+    def test_analysis_chat_explains_selected_district_and_city(self):
+        self.assertEqual(self.ask('변화 요약')[0], 401)
         self.login()
-        status, result = self.request('POST','/api/region/chat',payload)
-        self.assertEqual(status,200)
-        self.assertIn('삼성1동',result['answer']); self.assertIn('외부 AI 호출 없음',result['mode'])
-        status, result = self.request('POST','/api/region/chat',self.context | {'district':'','question':'요약'})
-        self.assertEqual(status,200); self.assertIn('강남구',result['answer'])
-        self.assertEqual(self.request('POST','/api/region/chat',self.context | {'question':''})[0],400)
-        self.assertEqual(self.request('POST','/api/region/chat',self.context | {'question':'요약','mode':'ai'})[0],400)
-        self.assertEqual(self.request('POST','/api/region/chat',self.context | {'city':'춘천시','question':'요약'})[0],401)
+        status, events = self.ask('변화 요약')
+        self.assertEqual(status, 200)
+        self.assertEqual(events['route']['agent'], 'analysis')
+        self.assertIn('삼성1동', events['replace']['text'])
+        self.assertIn('외부 AI 호출 없음', events['replace']['mode'])
+        status, events = self.ask('요약', self.context | {'district': ''})
+        self.assertEqual(status, 200)
+        self.assertIn('강남구', events['replace']['text'])
+        self.assertEqual(self.ask('요약', self.context | {'city': '춘천시'})[0], 401)
 
     def test_city_scope_and_admin_upload_guard(self):
         self.login('chuncheon01')
@@ -176,7 +184,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(status,200)
         self.assertEqual(data['assessment'],[])
         self.assertEqual(list(data['geometry']),['춘천시'])
-        self.assertEqual(self.request('POST','/api/chat',self.context | {'question':'기준'})[0],401)
+        self.assertEqual(self.ask('기준')[0], 401)
         self.assertEqual(self.request('POST','/api/upload/validate',{'kind':'monthly','files':[]})[0],401)
 
     def test_briefing_values_match_analysis_source(self):
@@ -215,13 +223,11 @@ class ApiTest(unittest.TestCase):
         self.assertIn('운영 조건 확인 후 재검토',content['proposal'])
         self.assertIn('상세정보 수집·재확인 대기',content['proposal'])
         self.assertIn('https://example.org/service',content['proposal'])
-        with patch('chatbot.orchestrator.free_reply', side_effect=AssertionError('초안 버튼은 AI 경로 금지')):
-            status,chat=self.request('POST','/api/chat',context | {'question':'초안 작성','topic':'report_draft'})
-        self.assertEqual(status,200)
-        self.assertEqual(chat['actions'][0]['reportDraft'],content)
-        status,chat=self.request('POST','/api/chat',context | {'question':'보고서 작성해줘'})
-        self.assertEqual(status,200)
-        self.assertEqual(chat['actions'][0]['reportDraft'],content)
+        # 채팅으로 요청한 초안도 보고서 탭의 초안과 같아야 합니다.
+        status, events = self.ask('보고서 작성해줘', context)
+        self.assertEqual(status, 200)
+        self.assertEqual(events['route']['agent'], 'report')
+        self.assertEqual(events['actions']['actions'][0]['reportDraft'], content)
         fields = context | {'author':'테스트','department':'검증용','content':content,'review_id':content['review_id']}
         self.assertEqual(self.request('POST','/api/report/preview',fields | {'review_id':'stale'})[0],400)
         self.assertEqual(self.request('POST','/api/report/preview',fields | {'content':content | {'title':'x'*81}})[0],400)

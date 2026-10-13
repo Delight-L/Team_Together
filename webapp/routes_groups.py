@@ -1,14 +1,6 @@
-"""종합 현황의 연령·성별 그룹 API."""
-from chatbot.guardrails import mask_question
-from chatbot.welfare.app.config import settings
-from webapp import limits
+"""종합 현황의 연령·성별 그룹 API. 그룹에 대한 보미 질문은 /api/chat(group 포함)으로 처리합니다."""
 from db import group_repository, group_workspace
 from webapp.common import check_city_access, group_context
-
-
-def ai_config(request):
-    """GET /api/groups/config: 보미의 «AI 해석»을 쓸 수 있는지(API 키가 있는지) 알려 줍니다."""
-    return {'aiAvailable': bool(settings.openai_api_key)}
 
 
 def catalogue(request):
@@ -35,16 +27,6 @@ def services(request):
     """GET /api/groups/services: 지원 목적에 맞는 복지사업 후보입니다."""
     context, group_detail = group_context(request)
     return group_workspace.services(context, request.params.get('need'))
-
-
-def chat(request):
-    """POST /api/groups/chat: 보미 «이 화면 분석»(그룹을 열었을 때)."""
-    context, group_detail = group_context(request)
-    question, history = mask_question(request.params.get('question', ''), request.params.get('history', []))
-    if request.params.get('mode') == 'ai':
-        limits.check_chat(request.user)
-        return group_workspace.ai_explain(context, question, group_detail, history)
-    return group_workspace.explain(context, question, group_detail)
 
 
 def review_save(request):
