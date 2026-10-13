@@ -26,71 +26,12 @@
 
 ## 2. 시스템 아키텍처
 
-```text
-┌──────────────────── 데이터 수집 / 갱신 ────────────────────┐
-│                                                            │
-│  빅콘테스트 제공 데이터             공공데이터 / API       │
-│  ├─ 통신 유동인구                  ├─ 인구·가구 데이터     │
-│  └─ 카드 소비 데이터               └─ 사회·지역 맥락 데이터│
-│                                                            │
-└─────────────────────────┬──────────────────────────────────┘
-                          │
-                          ▼
-                ┌───────────────────┐
-                │ Data Pipeline     │
-                │ 수집·정제·검증    │
-                │ 기준 통합         │
-                └─────────┬─────────┘
-                          │
-             ┌────────────┴────────────┐
-             ▼                         ▼
-┌────────────────────────┐  ┌────────────────────────┐
-│ DB1                    │  │ DB2                    │
-│ 분석 데이터            │  │ 복지 / 자원 데이터     │
-│                        │  │                        │
-│ • 원천/정제 데이터     │  │ • 복지시설             │
-│ • 행동지표             │  │ • 복지 프로그램        │
-│ • 분석 Feature         │  │ • 지원기관             │
-│ • 위험신호/분석 결과   │  │ • 지원서비스           │
-└───────────┬────────────┘  └───────────┬────────────┘
-            │                           │
-            ▼                           │
-┌────────────────────────┐              │
-│ ML / DL 분석           │              │
-│                        │              │
-│ • EDA                  │              │
-│ • Feature Engineering  │              │
-│ • 위험신호 탐지        │              │
-│ • 예측/분류 모델       │              │
-│ • 성능 및 설명         │              │
-└───────────┬────────────┘              │
-            │                           │
-            └─────────────┬─────────────┘
-                          ▼
-                ┌─────────────────────┐
-                │     AI Agent        │
-                │                     │
-                │     Supervisor      │
-                │          │          │
-                │  ┌───────┼────────┐ │
-                │  ▼       ▼        ▼ │
-                │ 위험/고립  맥락분석 │
-                │ 분석      Agent     │
-                │                     │
-                │ 자원검색 → 개입추천 │
-                └──────────┬──────────┘
-                           │
-                           ▼
-                ┌─────────────────────┐
-                │    Web Dashboard    │
-                │                     │
-                │ • 지역/연령별 신호  │
-                │ • 분석 근거         │
-                │ • 지원 필요성       │
-                │ • 복지자원 추천     │
-                │ • 결과 모니터링     │
-                └─────────────────────┘
-```
+![자료에서 담당자 검토까지 이어지는 WELFIND 시스템 아키텍처](docs/architecture/system_architecture.png)
+
+> 발표용 16:9 그림입니다. [고해상도 PNG](docs/architecture/system_architecture.png) · [편집 가능한 SVG](docs/architecture/system_architecture.svg) · [그림 안내](docs/architecture/README.md)
+
+- 웹 서비스의 업무 기록은 모두 공유 PostgreSQL `work` 스키마에 저장합니다. SQLite는 DB1 분석 실행기의 작업·전달 파일(`pipelines/db1/outputs/db1.sqlite`)과 테스트용 메모리 DB에만 씁니다.
+- 위험신호 수치는 Python 통계 분석으로 만들고, LLM은 수치를 계산하지 않고 근거를 설명합니다.
 
 ---
 
@@ -128,18 +69,14 @@ DB1은 프로젝트의 **데이터 분석 및 위험신호 탐지 영역**입니
 
 ### DB2 · 복지 / 자원 데이터
 
-DB2는 위험신호가 탐지된 이후 AI Agent가 실제 지원자원을 탐색할 수 있도록 구성합니다.
+DB2는 위험신호를 확인한 뒤 담당자와 챗봇이 실제 지원자원을 찾을 수 있도록 구성합니다.
 
-예상 데이터:
+| 자료 | 위치 | 사용처 |
+|---|---|---|
+| 지자체 복지사업(공공 API 정기 수집) | PostgreSQL `db2.local_welfare_services` 등 | 사업 매칭 검토 |
+| 팀 정리 복지사업·강남구 정책 자료 | `backend/chatbot/welfare/data/*.json` | 보미 복지사업 안내 |
 
-- 복지시설
-- 복지 프로그램
-- 지원기관
-- 상담·지원 서비스
-- 지역별 이용 가능한 자원
-- 기관 연락처 및 서비스 정보
-
-DB2의 정보는 AI Agent의 **자원 검색 및 개입 추천**에 사용됩니다.
+사업명·대상·이용 조건·담당 기관을 담고 있으며, 담당자가 조건을 검토해 기관 협의·프로그램 추진으로 연결합니다.
 
 ---
 
@@ -201,76 +138,44 @@ DB2의 정보는 AI Agent의 **자원 검색 및 개입 추천**에 사용됩니
 
 ---
 
-## 5. ML / DL 분석
+## 5. 분석 방법 (통계 탐지 + ML 군집)
 
-ML/DL은 **위험신호의 정량적 탐지와 분석**을 담당합니다.
+LLM에게 수치 계산이나 위험점수 산출을 맡기지 않고, Python 통계·ML 분석으로 결과를 만듭니다. 딥러닝(DL) 모델과 지도학습 예측 모델은 사용하지 않습니다. 고립 여부를 나타내는 정답(label)이 없기 때문입니다.
 
-LLM에게 수치 계산이나 위험점수 산출을 맡기지 않고, Python 기반 통계·ML/DL 분석을 통해 결과를 생성합니다.
+| 단계 | 방법 | 결과 |
+|---|---|---|
+| Analysis1 지역 유형 | scikit-learn `StandardScaler` → `PCA` → `KMeans` 군집. 실루엣 점수·ARI로 군집 수와 안정성 확인. 고정 모델 `analysis1_2025H2_elder_v2`(joblib) | 동별 지역 유형·배경 지표 (`db1.analysis1_region_typology`) |
+| Analysis2 변화 탐지 | 동별 월 변화에서 강남구 공통 변화를 뺀 잔차를 과거 중앙값·MAD로 표준화(robust z). 보정한 임계값 이하이고 감소 방향일 때 신호 | 신규·연속·변화 후보 판정 (`db1.analysis2_detections`) |
+| Analysis3 소비 맥락 | 상권·카드 소비영역별 과거 동일 분기·전월 대비 기술 통계 | 이동·통신 변화의 보조 맥락 |
 
-### 분석 단계
-
-1. EDA
-2. Feature Engineering
-3. 기준선(Baseline) 설정
-4. 변화량 분석
-5. 지속성 분석
-6. 다차원 Feature 구성
-7. 위험신호 탐지
-8. ML/DL 모델 비교
-9. 성능 평가
-10. Feature 및 결과 해석
-
-데이터 구조와 목표변수가 확정된 이후 적합한 문제 유형을 정의합니다.
-
-- 분류
-- 회귀
-- 군집화
-- 이상탐지
-- 시계열 기반 분석
-
-특정 알고리즘을 사전에 고정하지 않고 **EDA와 Feature 분석 결과를 바탕으로 모델을 결정**합니다.
+자세한 기준은 [DB1 서비스 통합](docs/db1-integration.md)과 `pipelines/db1/Analysis1`, `pipelines/db1/Analysis2`, `pipelines/db1/Analysis3`의 문서를 참고하세요.
 
 ---
 
-## 6. AI Agent
+## 6. AI Agent (보미 챗봇)
 
-AI Agent는 DB1의 분석 결과를 바탕으로 **상황을 해석하고 지원자원을 연결하는 역할**을 수행합니다.
-
-### Supervisor
-
-전체 Agent Workflow를 관리합니다.
+보미는 모든 메뉴에서 같은 채팅 하나로 질문을 받습니다. 총괄 에이전트([backend/agents/supervisor.py](backend/agents/supervisor.py))가 질문마다 담당 에이전트를 고릅니다. 별도 에이전트 프레임워크(LangGraph 등) 없이 Python으로 구현했습니다.
 
 ```text
-사용자 요청
+사용자 질문 + 화면 맥락(지역·기준월·그룹)
     ↓
-Supervisor
+가드레일: 개인정보 마스킹, 업무 무관 질문 차단
     ↓
-위험/고립 분석
+총괄 에이전트: 담당 선택 (외부 AI 사용 시 AI, 아니면 키워드 규칙)
     ↓
-맥락 분석
+지역 분석 │ 복지사업 │ 보고서 작성 │ 안내
     ↓
-지원 필요성 분석
-    ↓
-자원 검색
-    ↓
-개입 추천
-    ↓
-근거와 함께 결과 제공
+DB1 근거·DB2/팀 자료를 출처와 함께 답변
 ```
 
-### 주요 Agent
+| 담당 에이전트 | 하는 일 |
+|---|---|
+| 지역 분석 | 지금 보는 동·연령/성별 그룹의 판정·지표·변화 근거를 설명합니다. |
+| 복지사업 | 팀 정리 복지사업 자료에서 관련 사업과 담당 기관을 찾습니다. |
+| 보고서 작성 | 대화·업무 기록으로 «담당자 검토 전» 보고서 초안을 만듭니다. |
+| 보미 안내 | 업무와 무관한 질문에 도울 수 있는 일을 안내합니다. |
 
-**Risk / Isolation Analysis Agent**
-DB1의 위험신호 및 분석 결과를 조회하고 위험신호의 내용을 정리합니다.
-
-**Context Analysis Agent**
-인구·사회·지역 데이터를 함께 확인하여 위험신호가 나타난 지역과 집단의 맥락을 분석합니다.
-
-**Resource Search Agent**
-DB2에서 조건에 맞는 복지시설·프로그램·기관·서비스를 검색합니다.
-
-**Intervention Recommendation Agent**
-분석된 지원 필요성과 DB2의 자원을 연결하여 가능한 지원 방안을 제시합니다.
+외부 AI(OpenAI·Anthropic Claude·Google Gemini)는 기본 꺼짐입니다. 끄면 데이터 근거 안내와 자료 검색 결과로만 답합니다. 자세한 내용은 [챗봇 안내](backend/chatbot/README.md)를 참고하세요.
 
 ---
 
@@ -365,34 +270,16 @@ DB1 / DB2 업데이트
 
 ## 10. 기술 스택
 
-### Data
-- Python
-- Pandas / NumPy
-- SQL
-- Public Data API
-
-### ML / DL
-- Scikit-learn
-- PyTorch
-- XGBoost 등 비교 검토
-
-### AI Agent
-- LangGraph
-- LLM
-- Multi-Agent Architecture
-- Supervisor Pattern
-
-### Database
-- DB1: 분석 데이터
-- DB2: 복지 / 자원 데이터
-
-### Dashboard
-- Web Dashboard
-- 데이터 시각화
-
-### Development
-- Git / GitHub
-- Python Virtual Environment
+| 영역 | 사용 기술 |
+|---|---|
+| 데이터·분석 | Python, Pandas, NumPy, 공공데이터 API |
+| ML | scikit-learn (StandardScaler · PCA · KMeans), joblib |
+| 데이터베이스 | PostgreSQL (오라클 클라우드 VM, 스키마 `db1`·`db2`·`work`), SQLAlchemy, psycopg2. DB1 실행기 작업 파일은 SQLite |
+| 서버 | Python 표준 `http.server` 기반 HTTP API (`backend/api/server.py`) |
+| 화면 | React + Vite |
+| AI Agent | 총괄 에이전트(Python, 규칙/AI 라우팅), OpenAI·Anthropic·Gemini SDK (선택, 기본 꺼짐) |
+| 보고서 | python-docx (Word) |
+| 개발 | Git / GitHub, Python 가상환경, Node.js |
 
 ---
 
@@ -415,7 +302,7 @@ DB1 / DB2 업데이트
         ↓
 08. EDA
         ↓
-09. ML / DL 모델링
+09. 지역 유형 군집(KMeans) / 통계 변화 탐지
         ↓
 10. 위험신호 및 분석 결과 DB 저장
         ↓
@@ -423,7 +310,7 @@ DB1 / DB2 업데이트
         ↓
 12. AI Agent 구현
         ↓
-13. LangGraph Workflow 구성
+13. 총괄 에이전트 담당 선택 구성
         ↓
 14. Web Dashboard 연동
         ↓
@@ -559,7 +446,7 @@ cd ..
 .venv/Scripts/python.exe -m unittest discover -s backend/chatbot/tests -t .
 ```
 
-서버 테스트는 실제 분석 결과를 읽고 임시 SQLite에서 로그인·지역 접근·보미 답변·업무 순서·Word 보고서 저장을 검사합니다. 실제 DB 쓰기와 외부 AI 호출은 하지 않습니다. 화면을 브라우저로 직접 조작하는 검사는 `node tests/draft-browser.mjs`이며 Playwright와 Chrome이 필요합니다.
+서버 테스트는 실제 분석 결과를 읽고, 공유 PostgreSQL 대신 메모리 SQLite에 `work` 스키마를 붙여 로그인·지역 접근·보미 답변·업무 순서·Word 보고서 저장을 검사합니다. 실제 DB 쓰기와 외부 AI 호출은 하지 않습니다. 화면을 브라우저로 직접 조작하는 검사는 `node tests/draft-browser.mjs`이며 Playwright와 Chrome이 필요합니다.
 
 ## 17. Team
 

@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+  <title id="title">WELFIND 시스템 아키텍처</title>
+  <desc id="desc">통신·소비·공공자료를 분석하고 복지사업 자료를 수집하여 공유 PostgreSQL에 저장합니다. Python API가 대시보드와 보미를 연결하며, 담당자가 근거를 확인하고 지원사업과 보고서를 검토합니다.</desc>
+  <defs>
+    <style>
+      text { font-family: 'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif; }
+      .heading { font-size: 32px; font-weight: 700; fill: #12213e; }
+      .label { font-size: 28px; font-weight: 700; fill: #20304d; }
+      .body { font-size: 23px; fill: #4b6488; }
+      .small { font-size: 20px; fill: #4b6488; }
+      .white { fill: #fff; }
+      .icon { fill: none; stroke: currentColor; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+      .arrow { fill: none; stroke: #8fa9ce; stroke-width: 3; marker-end: url(#arrow); }
+      .panel { fill: #fff; stroke: #dce8fa; stroke-width: 2; }
+    </style>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="#8fa9ce" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <symbol id="data" viewBox="0 0 80 80"><g class="icon"><rect x="16" y="12" width="48" height="56" rx="8"/><path d="M28 27h24M28 40h24M28 53h10"/></g></symbol>
+    <symbol id="chart" viewBox="0 0 80 80"><g class="icon"><path d="M14 14v52h52M26 53V38M40 53V29M54 53V18"/><path d="m22 29 17-13 10 6 16-14"/></g></symbol>
+    <symbol id="resource" viewBox="0 0 80 80"><g class="icon"><path d="M16 34h48v32H16zM11 34 40 14l29 20M32 66V49h16v17M34 30h12M40 24v12"/></g></symbol>
+    <symbol id="database" viewBox="0 0 80 80"><g class="icon"><ellipse cx="40" cy="18" rx="26" ry="10"/><path d="M14 18v40c0 6 12 11 26 11s26-5 26-11V18M14 38c0 6 12 11 26 11s26-5 26-11"/></g></symbol>
+    <symbol id="dashboard" viewBox="0 0 80 80"><g class="icon"><rect x="10" y="14" width="60" height="44" rx="6"/><path d="M28 68h24M40 58v10M22 45V31M34 45V25M46 45V36M57 26v19"/></g></symbol>
+    <symbol id="chat" viewBox="0 0 80 80"><g class="icon"><path d="M15 14h50a7 7 0 0 1 7 7v29a7 7 0 0 1-7 7H34L19 70V57h-4a7 7 0 0 1-7-7V21a7 7 0 0 1 7-7z"/><path d="M26 33h28M26 44h18"/></g></symbol>
+    <symbol id="check" viewBox="0 0 80 80"><g class="icon"><rect x="18" y="12" width="44" height="57" rx="7"/><path d="m27 34 5 5 10-12M27 52h25M40 35h12"/></g></symbol>
+  </defs>
+  <rect width="1920" height="1080" fill="#f4f7fc"/>
+  <rect x="64" y="58" width="6" height="28" rx="3" fill="#2563eb"/>
+  <text x="88" y="81" font-size="22" font-weight="700" fill="#2563eb">WELFIND · 시스템 아키텍처</text>
+  <text x="64" y="153" font-size="48" font-weight="700" fill="#12213e">데이터를 근거로, 필요한 복지로 연결합니다</text>
+  <text x="1856" y="80" text-anchor="end" font-size="20" fill="#4b6488">2026 빅콘테스트</text>
+
+  <!-- Five stages, read from left to right. -->
+  <g text-anchor="middle">
+    <g><circle cx="226" cy="222" r="22" fill="#2563eb"/><text x="226" y="230" font-size="23" font-weight="700" fill="#fff">1</text><text x="226" y="290" class="heading">자료</text></g>
+    <g><circle cx="593" cy="222" r="22" fill="#2563eb"/><text x="593" y="230" font-size="23" font-weight="700" fill="#fff">2</text><text x="593" y="290" class="heading">분석·수집</text></g>
+    <g><circle cx="960" cy="222" r="22" fill="#2563eb"/><text x="960" y="230" font-size="23" font-weight="700" fill="#fff">3</text><text x="960" y="290" class="heading">공유 DB</text></g>
+    <g><circle cx="1327" cy="222" r="22" fill="#2563eb"/><text x="1327" y="230" font-size="23" font-weight="700" fill="#fff">4</text><text x="1327" y="290" class="heading">대시보드·보미</text></g>
+    <g><circle cx="1694" cy="222" r="22" fill="#2563eb"/><text x="1694" y="230" font-size="23" font-weight="700" fill="#fff">5</text><text x="1694" y="290" class="heading">담당자 검토</text></g>
+  </g>
+  <path d="M260 222h293" class="arrow"/>
+  <path d="M627 222h293" class="arrow"/>
+  <path d="M994 222h293" class="arrow"/>
+  <path d="M1361 222h293" class="arrow"/>
+
+  <!-- Source lane: analysis inputs and welfare resources remain distinct. -->
+  <rect x="64" y="332" width="324" height="242" rx="20" class="panel"/>
+  <rect x="64" y="602" width="324" height="226" rx="20" class="panel"/>
+  <use href="#data" x="99" y="363" width="64" height="64" color="#2563eb"/>
+  <text x="96" y="478" class="label">통신·소비·공공자료</text>
+  <text x="96" y="522" class="body">이동 · 소통 · 지역 배경</text>
+  <use href="#resource" x="98" y="627" width="64" height="64" color="#23866a"/>
+  <text x="96" y="733" class="label">복지사업 자료</text>
+  <text x="96" y="777" class="body">공공 API · 팀 정리 자료</text>
+
+  <!-- Evidence production is deterministic; no LLM calculation. -->
+  <rect x="431" y="332" width="324" height="242" rx="20" fill="#edf4ff" stroke="#c8dcfa" stroke-width="2"/>
+  <rect x="431" y="602" width="324" height="226" rx="20" fill="#edf7f2" stroke="#c8e5d8" stroke-width="2"/>
+  <use href="#chart" x="462" y="363" width="64" height="64" color="#2563eb"/>
+  <text x="463" y="468" class="label">지역 유형 · 변화 신호</text>
+  <text x="463" y="510" class="body">통계 분석 + 소비 맥락</text>
+  <text x="463" y="546" class="small">지역 × 인구집단 단위</text>
+  <use href="#resource" x="462" y="627" width="64" height="64" color="#23866a"/>
+  <text x="463" y="733" class="label">복지자원 정리</text>
+  <text x="463" y="777" class="body">대상 · 조건 · 기관 확인</text>
+  <path d="M391 453h33" class="arrow"/>
+  <path d="M391 715h33" class="arrow"/>
+
+  <!-- Service storage: three schemas, one shared PostgreSQL. -->
+  <rect x="798" y="332" width="324" height="496" rx="20" fill="#12213e"/>
+  <use href="#database" x="924" y="363" width="72" height="72" color="#aac9ff"/>
+  <text x="960" y="477" text-anchor="middle" font-size="28" font-weight="700" fill="#fff">PostgreSQL</text>
+  <rect x="830" y="507" width="260" height="74" rx="12" fill="#223858"/>
+  <rect x="830" y="600" width="260" height="74" rx="12" fill="#223858"/>
+  <rect x="830" y="693" width="260" height="74" rx="12" fill="#223858"/>
+  <text x="850" y="551" font-size="24" font-weight="700" fill="#aac9ff">DB1</text><text x="936" y="551" font-size="24" fill="#fff">분석 결과</text>
+  <text x="850" y="644" font-size="24" font-weight="700" fill="#9ee0c2">DB2</text><text x="936" y="644" font-size="24" fill="#fff">복지자원</text>
+  <text x="850" y="737" font-size="23" font-weight="700" fill="#c5d4ed">work</text><text x="936" y="737" font-size="24" fill="#fff">업무 기록</text>
+  <path d="M758 453h20v91h13" class="arrow"/>
+  <path d="M758 715h20v-78h13" class="arrow"/>
+
+  <!-- API mediates dashboard, agents and shared database. -->
+  <rect x="1165" y="332" width="324" height="54" rx="13" fill="#2563eb"/>
+  <text x="1327" y="368" text-anchor="middle" font-size="23" font-weight="700" fill="#fff">Python API로 연결</text>
+  <rect x="1165" y="407" width="324" height="175" rx="20" class="panel"/>
+  <use href="#dashboard" x="1189" y="431" width="64" height="64" color="#2563eb"/>
+  <text x="1262" y="469" class="label">대시보드</text>
+  <text x="1197" y="548" class="body">변화와 근거를 한눈에</text>
+  <path d="M1327 584v36" class="arrow"/>
+  <rect x="1165" y="636" width="324" height="192" rx="20" fill="#eef5ff" stroke="#c8dcfa" stroke-width="2"/>
+  <use href="#chat" x="1189" y="658" width="64" height="64" color="#2563eb"/>
+  <text x="1262" y="697" class="label">보미</text>
+  <text x="1197" y="753" class="body">근거 설명 · 사업 찾기</text>
+  <text x="1197" y="790" class="body">보고서 초안 작성</text>
+  <path d="M1125 580h20v-221h13" class="arrow"/>
+
+  <!-- Human review is the product outcome, not an automatic decision. -->
+  <rect x="1532" y="332" width="324" height="496" rx="20" class="panel"/>
+  <use href="#check" x="1658" y="371" width="72" height="72" color="#2563eb"/>
+  <text x="1694" y="490" text-anchor="middle" class="label">지원 방안 검토</text>
+  <g font-size="26" fill="#20304d">
+    <circle cx="1576" cy="553" r="5" fill="#2563eb"/><text x="1596" y="562">근거 확인</text>
+    <circle cx="1576" cy="621" r="5" fill="#2563eb"/><text x="1596" y="630">지원사업 검토</text>
+    <circle cx="1576" cy="689" r="5" fill="#2563eb"/><text x="1596" y="698">보고서 작성</text>
+  </g>
+  <rect x="1562" y="747" width="264" height="46" rx="23" fill="#f0f6ff"/>
+  <text x="1694" y="778" text-anchor="middle" font-size="21" font-weight="700" fill="#2563eb">최종 판단은 담당자가</text>
+  <path d="M1492 580h33" class="arrow"/>
+
+  <!-- One takeaway, readable from the back of a presentation room. -->
+  <rect x="64" y="884" width="1792" height="118" rx="22" fill="#e8f0ff"/>
+  <text x="960" y="932" text-anchor="middle" font-size="29" font-weight="700" fill="#12213e">분석이 수치를 만들고, 보미가 근거를 설명합니다</text>
+  <text x="960" y="975" text-anchor="middle" font-size="23" fill="#4b6488">지역·집단의 변화를 살펴보는 시스템 · 개인의 고립 여부를 판정하지 않습니다</text>
+  <text x="1856" y="1045" text-anchor="end" font-size="18" fill="#4b6488">WELFIND</text>
+</svg>
