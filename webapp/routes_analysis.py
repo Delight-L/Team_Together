@@ -29,6 +29,7 @@ def dashboard(request):
             data['assessment'] = []
             data['signals'] = []
             data['alerts'] = []
+            data['regionalStructures'] = []
     return data
 
 

@@ -209,6 +209,10 @@ def _load_analysis2_from_db(run_id):
                 FROM {SCHEMA}.analysis2_detections WHERE run_id = :run_id
                 ORDER BY reference_month, admin_dong_code"""
         ), {"run_id": run_id}).mappings().all()
+        structures = connection.execute(text('''SELECT adm_cd, dong_name, cluster_type, payload, source_file FROM (
+            SELECT *, ROW_NUMBER() OVER (PARTITION BY adm_cd ORDER BY created_at DESC) AS position
+            FROM db1.analysis1_region_typology) latest WHERE position=1 ORDER BY adm_cd''')).mappings().all()
+    structures = [dict(r, payload=json.loads(r["payload"]) if isinstance(r["payload"], str) else r["payload"]) for r in structures]
     if not rows:
         raise LookupError("run_id " + str(run_id) + "의 분석 결과가 없습니다.")
     records_ = []
@@ -243,6 +247,7 @@ def _load_analysis2_from_db(run_id):
         "activity": [], "runs": [{"run_id": str(run_id), "kind": "monthly", "source_name": f"{SCHEMA}.analysis2_detections ({source_file})",
             "period": prepared["period"], "created_at": created.isoformat(timespec="seconds"), "rule_version": ' / '.join(model_versions)}],
         "dataLoadedAt": created.isoformat(timespec="seconds"),
+        "regionalStructures": [dict(row) for row in structures],
     }
 
 @lru_cache(maxsize=4)

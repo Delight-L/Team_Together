@@ -9,6 +9,7 @@ import { RegionalOverview, summarizeRegions, exampleQuestion } from './Briefing'
 import { DataDialog, Comparison, ReportQuality } from './Experience';
 import GuideTour from './GuideTour';
 import GroupDashboard from './GroupDashboard';
+import ElderlyBackground from './ElderlyBackground';
 import { userName } from './personas.mjs';
 
 const menus = [
@@ -267,7 +268,7 @@ export default function App() {
     setSupportOpen(false);
   }
   const regions = useMemo(() => summarizeRegions(
-    data?.assessment || [], data?.geometry[city], city, month, data?.months || [],
+    data?.assessment || [], data?.geometry[city], city, month, data?.months || [], data?.regionalStructures || [],
   ), [data, city, month]);
   const dashboardAnalysis = useMemo(() => data && ({ assessment: data.assessment, geometry: data.geometry[city], months: data.months }), [data, city]);
   useEffect(() => {
@@ -499,6 +500,7 @@ export default function App() {
                         ))}
                       </select>
                     </header>
+                    <ElderlyBackground structure={city === '강남구' ? data.regionalStructures?.find(r => r.dong_name === district) : null} />
                     <div className="data-source-strip"><span>기준월 {month} · 동별 통화·문자·이동 분석 결과</span><button className="text-button" onClick={() => openSupport()}>데이터 기준 보기</button></div>
                     {selectedRows.length ? (
                       <>

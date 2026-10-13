@@ -17,3 +17,8 @@ test('shared scale puts decreases left and increases right of zero', () => {
   assert.deepEqual(signedBar(20,40), {left:'50%',width:'25%'});
   assert.deepEqual(signedBar(null,40), {left:'50%',width:'0%'});
 });
+
+test('new and legacy common changes use the same percentage scale, preserving zero', () => {
+  assert.ok(Math.abs(comparisonRows({call_contacts_common_change:Math.log(.9)})[0].common + 10) < 1e-10);
+  assert.equal(comparisonRows({call_contacts_gangnam_median_change:0,call_contacts_common_change:.2})[0].common, 0);
+});

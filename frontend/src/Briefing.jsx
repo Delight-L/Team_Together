@@ -2,11 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { Icon, EvidenceTable } from './components';
 import { number } from './api';
 import { MissionMap } from './MissionMap';
+import ElderlyBackground from './ElderlyBackground';
 export { MissionMap } from './MissionMap';
 
 // 종합 현황과 지역 현황은 같은 원자료를 사용하지만 다른 업무를 돕습니다.
 // 종합 현황=이번 달 우선 확인 지역을 발견 / 지역 현황=모든 동을 필터링·비교.
-export function summarizeRegions(assessment, geometry, city, month, months) {
+export function summarizeRegions(assessment, geometry, city, month, months, structures = []) {
   const current = city === '강남구' ? assessment.filter((r) => r['기준연월'] === month) : [];
   const previous = months.filter((m) => m < month).at(-1);
   const old = city === '강남구' ? assessment.filter((r) => r['기준연월'] === previous) : [];
@@ -30,6 +31,7 @@ export function summarizeRegions(assessment, geometry, city, month, months) {
           : '기준 미해당';
     const zValues = rows.map((r) => r.risk_robust_z).filter(Number.isFinite);
     return {
+      structure: city === '강남구' ? structures.find(r => r.dong_name === unit.n) : null,
       name: unit.n,
       unit,
       rows,
@@ -111,6 +113,7 @@ export function RegionInsight({ region, city, month, onClose, onStart, onChat, b
       )}
       <p className="hint">{region.count > 0 ? `과거 흐름과 비교하여 ${region.count}개 지표가 후보 기준에 해당합니다. 아래 지표를 함께 검토하세요.` : region.status === '자료 없음' ? '분석 자료가 없어 판단할 수 없습니다.' : region.pending ? '과거 이력이 부족한 지표가 있어 추가 자료 확인이 필요합니다.' : '현재 후보 기준에 해당하는 지표가 없습니다.'}</p>
       <p className="hint">개인의 고립 판정이 아니며, 계절·행사 영향은 추가 확인이 필요합니다.</p>
+      <ElderlyBackground structure={region.structure} />
       <div className="insight-actions">
         <button className="primary" disabled={busy || !region.rows.length} onClick={onStart}>
           상세 분석·업무 시작
