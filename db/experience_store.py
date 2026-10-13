@@ -1,7 +1,11 @@
 """지역 협업 기록(검토·후속 조치). 기존 업무/보고서를 변경하지 않습니다."""
 import json
 from datetime import date
-from db.mission_store import connection, timestamp
+
+from sqlalchemy import text
+
+from db.mission_store import timestamp
+from db.work_store import lock, transaction
 
 
 def scope(context):
@@ -11,18 +15,16 @@ def scope(context):
 
 
 def load(context):
-    with connection() as db:
-        db.execute('CREATE TABLE IF NOT EXISTS experience (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
-        row = db.execute('SELECT value FROM experience WHERE key=?', (scope(context),)).fetchone()
+    with transaction() as db:
+        row = db.execute(text('SELECT value FROM work.experience WHERE key=:key'), {'key': scope(context)}).fetchone()
         return json.loads(row[0]) if row else {'version': 0, 'checks': {}, 'history': []}
 
 
 def regional_history(context):
     namespace, city, district, _ = json.loads(scope(context))
-    with connection() as db:
-        db.execute('CREATE TABLE IF NOT EXISTS experience (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
+    with transaction() as db:
         items = []
-        for key, value in db.execute('SELECT key,value FROM experience'):
+        for key, value in db.execute(text('SELECT key,value FROM work.experience')):
             owner, saved_city, saved_district, month = json.loads(key)
             if (owner, saved_city, saved_district) == (namespace, city, district):
                 items.append({'month': month, 'record': json.loads(value)})
@@ -45,14 +47,16 @@ def save(context, body):
     fields['status'] = body.get('status', '확인 예정')
     if fields['status'] not in {'확인 예정', '기관 문의 중', '조치 진행', '후속 확인 완료'}:
         raise ValueError('후속 조치 상태가 유효하지 않습니다.')
-    with connection() as db:
-        db.execute('CREATE TABLE IF NOT EXISTS experience (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
-        db.execute('BEGIN IMMEDIATE')
-        row = db.execute('SELECT value FROM experience WHERE key=?', (scope(context),)).fetchone()
+    key = scope(context)
+    with transaction() as db:
+        lock(db, key)
+        row = db.execute(text('SELECT value FROM work.experience WHERE key=:key'), {'key': key}).fetchone()
         old = json.loads(row[0]) if row else {'version': 0, 'history': []}
         if body.get('version') != old['version']:
             raise ValueError('다른 담당자가 기록을 변경했습니다. 최신 기록을 불러온 뒤 다시 저장하세요.')
         event = fields | {'actor': context['user']['id'], 'at': timestamp()}
         result = fields | {'version': old['version'] + 1, 'history': old['history'] + [event]}
-        db.execute('INSERT OR REPLACE INTO experience VALUES (?,?)', (scope(context), json.dumps(result, ensure_ascii=False)))
+        db.execute(text('INSERT INTO work.experience (key,value) VALUES (:key,:value) '
+                        'ON CONFLICT (key) DO UPDATE SET value=excluded.value'),
+                   {'key': key, 'value': json.dumps(result, ensure_ascii=False)})
         return result

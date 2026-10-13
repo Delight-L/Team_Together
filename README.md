@@ -486,7 +486,7 @@ cd ..
 | 종합 현황 관찰 그룹 | 연령·성별 유동인구 집계 | DB `db1.group_flow_snapshots` (`python -m db.group_repository --build --publish`로 생성) |
 | 사업 매칭 검토 | 지자체 복지사업 목록 | DB `db2` (`python -m db.collect_welfare`로 수집) |
 | 보미 복지사업 안내 | 팀 정리 복지사업 자료 | `chatbot/welfare/data/*.json` |
-| 업무 기록·보고서 | 담당자 업무 기록 | 각 PC의 `db/runtime/mission_records.sqlite3` (Git 제외, PC마다 따로 저장) |
+| 업무 기록·보고서·협업 기록·집단 검토 메모 | 담당자 업무 기록 | DB `work` 스키마 (처음 사용할 때 자동 생성. 예전 PC별 SQLite 기록은 `python scripts/migrate_work_store.py --apply`로 옮김) |
 
 `.env`의 `WELFIND_DATA_SOURCE`로 분석 결과를 어디서 읽을지 정합니다: `auto`(DB 우선, 실패 시 CSV), `db`, `csv`. 팀 공용 DB 구축은 [오라클 클라우드 DB 구축](docs/오라클_클라우드_DB_구축.md)을 참고하세요.
 

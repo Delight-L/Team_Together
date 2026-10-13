@@ -1,4 +1,4 @@
-"""체험 격리·협업 충돌·권한·피드백 API 검사. 임시 SQLite 사용."""
+"""체험 격리·협업 충돌·권한·피드백 API 검사. 업무 기록은 메모리 SQLite로 격리."""
 import http.client
 import json
 import tempfile
@@ -9,7 +9,7 @@ from http.server import ThreadingHTTPServer
 from unittest.mock import patch
 from urllib.parse import urlencode
 from webapp import server
-from db import mission_store
+from db.tests.work_db import temporary_work_store
 
 
 class ExperienceTest(unittest.TestCase):
@@ -18,7 +18,7 @@ class ExperienceTest(unittest.TestCase):
         temp_root = Path(__file__).resolve().parents[2] / '.tmp'
         temp_root.mkdir(exist_ok=True)
         cls.temp = tempfile.TemporaryDirectory(dir=temp_root)
-        cls.store = patch.object(mission_store, 'STORE', Path(cls.temp.name) / 'store.sqlite3')
+        cls.store = temporary_work_store()
         cls.store.start()
         cls.httpd = ThreadingHTTPServer(('127.0.0.1', 0), server.Handler)
         cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)

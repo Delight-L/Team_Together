@@ -10,6 +10,7 @@ from http.server import ThreadingHTTPServer
 
 from webapp.server import Handler
 from db.tests.test_group_repository import sample
+from db.tests.work_db import temporary_work_store
 from db.group_repository import clean_frame, aggregate_age, AGE_COLS
 
 
@@ -22,7 +23,7 @@ class GroupsApiTest(unittest.TestCase):
                         months=['2025-07', '2025-08'], districts=[{'code': '1123065', 'name': '역삼2동'}])
         self.patches = [patch('db.group_repository.load_snapshot', return_value=snapshot),
                         patch('db.group_repository.regional_context', return_value={'scope': 'district', 'structure': None, 'detection': None}),
-                        patch('db.group_workspace.STORE', Path(self.temp.name) / 'reviews.sqlite3')]
+                        temporary_work_store()]
         for p in self.patches: p.start()
         self.server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True); self.thread.start()

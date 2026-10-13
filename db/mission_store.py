@@ -1,12 +1,12 @@
-"""담당자·지역·기준월별 미션 및 업무 기록 (로컬 SQLite 영구 저장)."""
+"""담당자·지역·기준월별 미션 및 업무 기록 (공유 PostgreSQL work 스키마에 저장)."""
 import hashlib
 import json
-from contextlib import contextmanager
-import sqlite3
-from pathlib import Path
 from datetime import datetime
 
-STORE = Path(__file__).resolve().parents[1] / "db" / "runtime" / "mission_records.sqlite3"
+from sqlalchemy import text
+
+from db.work_store import lock, transaction
+
 STEPS = ["분석 확인", "근거 검토·질의", "사업 매칭 검토", "보고서 완료"]
 WORKFLOW_VERSION = 3
 
@@ -32,19 +32,8 @@ def review_revision(item):
     reviews = json.dumps(item.get("reviews", []), sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(reviews.encode()).hexdigest()
 
-@contextmanager
-def connection():
-    STORE.parent.mkdir(parents=True, exist_ok=True)
-    db = sqlite3.connect(STORE)
-    db.execute("CREATE TABLE IF NOT EXISTS missions (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-    try:
-        with db:
-            yield db
-    finally:
-        db.close()
-
 def identity(request):
-    """기존 SQLite 키 형식을 유지하여 저장된 업무를 계속 찾습니다."""
+    """SQLite 시절의 키 형식을 유지하여 옮겨 온 업무를 계속 찾습니다."""
     owner = request["user"]["id"]
     if request.get("workflow_mode") == "demo":
         owner = "demo:" + owner
@@ -52,9 +41,9 @@ def identity(request):
     return json.dumps(fields, ensure_ascii=False, separators=(",", ":"))
 
 def load_all():
-    with connection() as db:
+    with transaction() as db:
         items = {}
-        for key, value in db.execute("SELECT key,value FROM missions"):
+        for key, value in db.execute(text("SELECT key,value FROM work.missions")):
             items[key] = normalize(json.loads(value))
         return items
 
@@ -69,9 +58,9 @@ def save_event(request, step, record=None):
     if not request.get("district"):
         raise ValueError("행정동을 먼저 선택하세요.")
     key = identity(request)
-    with connection() as db:
-        db.execute("BEGIN IMMEDIATE")
-        row = db.execute("SELECT value FROM missions WHERE key=?", (key,)).fetchone()
+    with transaction() as db:
+        lock(db, key)
+        row = db.execute(text("SELECT value FROM work.missions WHERE key=:key"), {"key": key}).fetchone()
         item = normalize(json.loads(row[0]) if row else {})
         done = set(item["done"])
         record = dict(record or {})
@@ -110,27 +99,28 @@ def save_event(request, step, record=None):
             document = record.pop("_document", b"")
             if not document or hashlib.sha256(document).hexdigest() != record["sha256"]:
                 raise ValueError("실제 보고서 파일을 생성한 후 저장하세요.")
-            db.execute("CREATE TABLE IF NOT EXISTS report_files (key TEXT PRIMARY KEY, document BLOB NOT NULL)")
-            db.execute("""CREATE TABLE IF NOT EXISTS report_versions (
-                key TEXT NOT NULL, revision INTEGER NOT NULL, document BLOB NOT NULL,
-                record TEXT NOT NULL, PRIMARY KEY (key, revision))""")
-            revision = db.execute("SELECT COALESCE(MAX(revision),0) FROM report_versions WHERE key=?", (key,)).fetchone()[0]
-            previous = db.execute("SELECT document FROM report_files WHERE key=?", (key,)).fetchone()
+            revision = db.execute(text("SELECT COALESCE(MAX(revision),0) FROM work.report_versions WHERE key=:key"),
+                                  {"key": key}).scalar_one()
+            previous = db.execute(text("SELECT document FROM work.report_files WHERE key=:key"), {"key": key}).fetchone()
+            insert_version = text("INSERT INTO work.report_versions (key,revision,document,record) "
+                                  "VALUES (:key,:revision,:document,:record)")
             # 이 기능 도입 전에 저장된 보고서도 첫 재작성 시 이력에 남깁니다.
             if previous and revision == 0:
                 revision = 1
-                db.execute("INSERT INTO report_versions VALUES (?,?,?,?)",
-                           (key, revision, previous[0], json.dumps(item.get('report', {}), ensure_ascii=False)))
+                db.execute(insert_version, dict(key=key, revision=revision, document=bytes(previous[0]),
+                                                record=json.dumps(item.get('report', {}), ensure_ascii=False)))
             record['revision'] = revision + 1
-            db.execute("INSERT INTO report_versions VALUES (?,?,?,?)",
-                       (key, record['revision'], document, json.dumps(record, ensure_ascii=False)))
-            db.execute("INSERT OR REPLACE INTO report_files VALUES (?,?)", (key, document))
+            db.execute(insert_version, dict(key=key, revision=record['revision'], document=document,
+                                            record=json.dumps(record, ensure_ascii=False)))
+            db.execute(text("""INSERT INTO work.report_files (key,document) VALUES (:key,:document)
+                ON CONFLICT (key) DO UPDATE SET document=excluded.document"""), {"key": key, "document": document})
             item["report"] = record
         done.add(step)
         item["done"] = sorted(done)
         item["card_earned"] = 3 in done
         item["workflow_complete"] = 3 in done
-        db.execute("INSERT OR REPLACE INTO missions VALUES (?,?)", (key, json.dumps(item, ensure_ascii=False)))
+        db.execute(text("""INSERT INTO work.missions (key,value) VALUES (:key,:value)
+            ON CONFLICT (key) DO UPDATE SET value=excluded.value"""), {"key": key, "value": json.dumps(item, ensure_ascii=False)})
     return item
 
 
@@ -170,7 +160,6 @@ def service_key(service):
 
 
 def load_report(request):
-    with connection() as db:
-        db.execute("CREATE TABLE IF NOT EXISTS report_files (key TEXT PRIMARY KEY, document BLOB NOT NULL)")
-        row = db.execute("SELECT document FROM report_files WHERE key=?", (identity(request),)).fetchone()
-        return row[0] if row else None
+    with transaction() as db:
+        row = db.execute(text("SELECT document FROM work.report_files WHERE key=:key"), {"key": identity(request)}).fetchone()
+        return bytes(row[0]) if row else None

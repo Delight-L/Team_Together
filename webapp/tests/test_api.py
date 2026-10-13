@@ -19,6 +19,8 @@ from shared.report import NS
 
 from webapp import limits, server
 from db import mission_store
+from db.tests.work_db import temporary_work_store
+from sqlalchemy import text as sql
 from chatbot.welfare.app.config import settings as welfare_settings
 from chatbot import ai_settings
 from chatbot.tests.ai_config import ai_key
@@ -30,7 +32,7 @@ class ApiTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory()
-        cls.store_patch = patch.object(mission_store, 'STORE', Path(cls.temp.name)/'test.sqlite3')
+        cls.store_patch = temporary_work_store()
         cls.store_patch.start()
         cls.httpd = ThreadingHTTPServer(('127.0.0.1',0),server.Handler)
         cls.thread = threading.Thread(target=cls.httpd.serve_forever,daemon=True)
@@ -266,9 +268,9 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(revised['report']['revision'],2)
         latest=self.request('GET','/api/report?'+urlencode(context))[1]
         self.assertNotEqual(latest,document)
-        with mission_store.connection() as conn:
-            versions=conn.execute('SELECT revision,document FROM report_versions WHERE key=? ORDER BY revision',
-                                 (mission_store.identity(context | {'user':{'id':'admin'}}),)).fetchall()
+        with self.store_patch.engine.connect() as conn:
+            versions=conn.execute(sql('SELECT revision,document FROM work.report_versions WHERE key=:key ORDER BY revision'),
+                                 {'key':mission_store.identity(context | {'user':{'id':'admin'}})}).fetchall()
         self.assertEqual([(revision,file) for revision,file in versions],[(1,document),(2,latest)])
         self.assertEqual(self.request('POST','/api/report',context | {'token':new_draft['token'],'confirmed':True})[0],400)
         missions=self.request('GET','/api/missions')[1]['items']

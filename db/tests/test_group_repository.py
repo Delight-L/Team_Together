@@ -1,12 +1,11 @@
 import unittest
-from pathlib import Path
-import tempfile
 from unittest.mock import patch
 
 import pandas as pd
 
 from db.group_repository import AGE_COLS, aggregate_age, clean_frame, group_detail, catalogue
 from db.group_workspace import review, explain, services
+from db.tests.work_db import temporary_work_store
 
 
 def sample():
@@ -83,7 +82,7 @@ class GroupDataTest(unittest.TestCase):
         self.assertIn('지원 필요 확인하기', explain(self.context, '다음에 무엇을 확인하나요?', d)['answer'])
 
     def test_reviews_are_separate_by_user_age_sex_and_month(self):
-        with tempfile.TemporaryDirectory() as temp, patch('db.group_workspace.STORE', Path(temp) / 'reviews.sqlite3'):
+        with temporary_work_store():
             user = {'id': 'tester'}
             review(user, self.context, dict(note='남성 집단 메모', need='안부·상담', sourceRun='test'))
             self.assertEqual(review(user, self.context)['note'], '남성 집단 메모')

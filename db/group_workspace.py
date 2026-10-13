@@ -1,13 +1,13 @@
 """집단별 근거 안내·검토 메모·DB2 탐색. 동별 업무 기록과 혼합하지 않는다."""
 import json
-import sqlite3
-from contextlib import closing
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from db.group_repository import group_detail, ROOT
+from sqlalchemy import text
 
-STORE = ROOT / 'db/runtime/group_reviews.sqlite3'
+from db.group_repository import group_detail
+from db.work_store import transaction
+
 NEEDS = {
     '관계·사회참여': ['교류', '사회참여', '사회 참여', '모임', '고립', '여가', '관계망'],
     '안부·상담': ['안부', '상담', '방문', '돌봄'],
@@ -23,9 +23,7 @@ def context_key(user, context):
 
 def review(user, context, body=None):
     """body가 있으면 검토 메모를 저장하고, 없으면 기존 메모를 읽습니다."""
-    STORE.parent.mkdir(parents=True, exist_ok=True)
-    with closing(sqlite3.connect(STORE)) as conn, conn:
-        conn.execute('CREATE TABLE IF NOT EXISTS group_reviews (identity TEXT PRIMARY KEY, payload TEXT NOT NULL)')
+    with transaction() as conn:
         key = context_key(user, context)
         if body is not None:
             note = str(body.get('note', '')).strip()
@@ -34,9 +32,10 @@ def review(user, context, body=None):
                 raise ValueError('검토 메모는 3,000자 이내, 지원 목적은 목록에서 선택하세요.')
             payload = dict(note=note, need=need, updatedAt=datetime.now(ZoneInfo('Asia/Seoul')).isoformat(),
                            context=context, sourceRun=body['sourceRun'])
-            conn.execute('INSERT INTO group_reviews VALUES (?,?) ON CONFLICT(identity) DO UPDATE SET payload=excluded.payload',
-                         (key, json.dumps(payload, ensure_ascii=False)))
-        row = conn.execute('SELECT payload FROM group_reviews WHERE identity=?', (key,)).fetchone()
+            conn.execute(text('INSERT INTO work.group_reviews (identity,payload) VALUES (:key,:payload) '
+                              'ON CONFLICT (identity) DO UPDATE SET payload=excluded.payload'),
+                         {'key': key, 'payload': json.dumps(payload, ensure_ascii=False)})
+        row = conn.execute(text('SELECT payload FROM work.group_reviews WHERE identity=:key'), {'key': key}).fetchone()
         return json.loads(row[0]) if row else dict(note='', need='', updatedAt=None)
 
 
