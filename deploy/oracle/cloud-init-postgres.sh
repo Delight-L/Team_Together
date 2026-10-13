@@ -4,7 +4,7 @@
 # 사용법: 인스턴스 생성 화면 > 고급 옵션 표시 > 관리 > "Cloud-init 스크립트 붙여넣기"에
 #         이 파일 전체를 붙여 넣습니다. 붙여 넣기 전에 아래 두 비밀번호를 반드시 바꾸세요.
 #         (영문·숫자만 20자 이상 권장. 따옴표/$/\ 문자는 쓰지 마세요.)
-# 확인:   인스턴스 부팅 5~10분 후, PC에서 python -m db.connection 으로 접속을 확인합니다.
+# 확인:   인스턴스 부팅 5~10분 후, PC에서 python -m backend.db.connection 으로 접속을 확인합니다.
 # 로그:   인스턴스 안의 /var/log/cloud-init-output.log
 set -euxo pipefail
 

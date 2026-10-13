@@ -10,7 +10,7 @@
     {
       "name": "api-preview",
       "runtimeExecutable": ".venv/Scripts/python.exe",
-      "runtimeArgs": ["-m", "webapp.server", "--port", "8513"],
+      "runtimeArgs": ["-m", "backend.api.server", "--port", "8513"],
       "port": 8513
     },
     {

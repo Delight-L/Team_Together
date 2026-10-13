@@ -1,6 +1,6 @@
 # 약식보고서 작성
 
-보고서 작성 탭과 챗봇은 `agents/report_writer.py`의 같은 에이전트를 호출합니다.
+보고서 작성 탭과 챗봇은 `backend/agents/report_writer.py`의 같은 에이전트를 호출합니다.
 검토 요지, 지역 현황, 복지서비스 연계·추진 제안, 향후 조치의 네 항목으로 작성합니다.
 적합은 연계 가능성 제안, 보류는 조건 확인 후 재검토, 부적합은 제안에서 제외로 구분합니다.
 변화 원인이나 개인의 사업 자격, 확정된 추진 계획을 생성하지 않습니다.
@@ -43,9 +43,9 @@ AI 문장은 `check_grounding`으로 기초 초안과 대조하고, 아래 중 �
 
 ## 연결 구조
 
-`frontend/src/App.jsx → webapp/routes_work.py → agents/report_writer.py` 경로로 보고서 초안을 작성합니다.
-Word 파일은 `shared/report.py`에서 생성합니다. 보미의 보고서 요청은 `webapp/routes_chat.py → agents/supervisor.py(총괄 에이전트) → agents/report_writer.py` 경로로 같은 초안 함수를 호출합니다.
-챗봇 구조는 [chatbot/README.md](../chatbot/README.md)를 참고하세요.
+`frontend/src/App.jsx → backend/api/routes_work.py → backend/agents/report_writer.py` 경로로 보고서 초안을 작성합니다.
+Word 파일은 `backend/services/report.py`에서 생성합니다. 보미의 보고서 요청은 `backend/api/routes_chat.py → backend/agents/supervisor.py(총괄 에이전트) → backend/agents/report_writer.py` 경로로 같은 초안 함수를 호출합니다.
+챗봇 구조는 [보미 챗봇 안내](../backend/chatbot/README.md)를 참고하세요.
 
 - `POST /api/report/content`: 서버에 저장된 기록으로 편집용 초안 생성(`ai: true`이면 AI 문장 다듬기)
 - `POST /api/chat`: 총괄 에이전트가 분석·복지사업·보고서·안내 중 담당을 골라 답변
@@ -53,5 +53,5 @@ Word 파일은 `shared/report.py`에서 생성합니다. 보미의 보고서 요
 - 기존 다운로드·최종 저장 API: 지역·사용자·사업 검토 버전 및 파일 해시 검사 유지
 
 첨부 문서의 안내와 예시는 서식 참고 자료입니다. 문서 안의 행사·일정·연락처는 보고서에 복사하지 않습니다.
-기본 템플릿은 `docs/약식보고서_서식_보고서.docx`, 서식 적용은 `shared/report.py`에 있습니다.
+기본 템플릿은 `docs/약식보고서_서식_보고서.docx`, 서식 적용은 `backend/services/report.py`에 있습니다.
 템플릿 문서가 누락되면 다른 양식으로 대체하지 않고 생성 오류로 안내합니다.

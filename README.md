@@ -462,7 +462,7 @@ DB1 / DB2 업데이트
 .venv/Scripts/python.exe -m pip install -r requirements.txt
 cd frontend
 npm ci
-npm run build
+pnpm run build
 cd ..
 ```
 
@@ -476,16 +476,16 @@ cd ..
 
 브라우저에서 http://127.0.0.1:8503 을 열고 `gangnam01 / demo1234`(강남구 담당자) 또는 `admin / admin1234`(관리자)로 로그인합니다. 시연용 계정이며 실제 인증이 아닙니다. 처음 로그인하면 단계별 사용 안내가 열리고, 오른쪽 위 `?` 버튼으로 다시 볼 수 있습니다.
 
-화면 코드를 고칠 때는 터미널을 하나 더 열어 `frontend`에서 `npm run dev`를 실행하고 http://127.0.0.1:5173 에서 확인합니다. 8503 주소는 마지막 빌드 결과를 보여 주므로, 수정 후 `npm run build`를 다시 해야 반영됩니다.
+화면 코드를 고칠 때는 터미널을 하나 더 열어 `frontend`에서 `npm run dev`를 실행하고 http://127.0.0.1:5173 에서 확인합니다. 8503 주소는 마지막 빌드 결과를 보여 주므로, 수정 후 `pnpm run build`를 다시 해야 반영됩니다.
 
 ### 화면이 읽는 자료
 
 | 화면 | 자료 | 위치 |
 |---|---|---|
-| 지역 현황·지역 분석·보미 분석 설명 | 동별 통화·문자·이동 분석 결과 | DB `db1.analysis2_detections` (없으면 `agents/regional_analysis/Analysis2/outputs/`의 CSV) |
+| 지역 현황·지역 분석·보미 분석 설명 | 동별 통화·문자·이동 분석 결과 | DB `db1.analysis2_detections` (없으면 `pipelines/regional_analysis/Analysis2/outputs/`의 CSV) |
 | 종합 현황 관찰 그룹 | 연령·성별 유동인구 집계 | DB `db1.group_flow_snapshots` (`python -m db.group_repository --build --publish`로 생성) |
-| 사업 매칭 검토 | 지자체 복지사업 목록 | DB `db2` (`python -m db.collect_welfare`로 수집) |
-| 보미 복지사업 안내 | 팀 정리 복지사업 자료 | `chatbot/welfare/data/*.json` |
+| 사업 매칭 검토 | 지자체 복지사업 목록 | DB `db2` (`python -m pipelines.welfare.collect`로 수집) |
+| 보미 복지사업 안내 | 팀 정리 복지사업 자료 | `backend/chatbot/welfare/data/*.json` |
 | 업무 기록·보고서·협업 기록·집단 검토 메모 | 담당자 업무 기록 | DB `work` 스키마 (처음 사용할 때 자동 생성. 예전 PC별 SQLite 기록은 `python scripts/migrate_work_store.py --apply`로 옮김) |
 
 `.env`의 `WELFIND_DATA_SOURCE`로 분석 결과를 어디서 읽을지 정합니다: `auto`(DB 우선, 실패 시 CSV), `db`, `csv`. 팀 공용 DB 구축은 [오라클 클라우드 DB 구축](docs/오라클_클라우드_DB_구축.md)을 참고하세요.
@@ -500,32 +500,38 @@ cd ..
 | 사업 매칭 검토 | 확인한 필요에 맞는 지자체 복지사업을 찾아 검토 기록을 남깁니다. |
 | 업무 기록 | 저장한 지역 업무 목록과 검토·후속 조치 기록 |
 | 보고서 작성 | 분석과 사업 검토 결과로 Word 보고서 초안을 만들고 저장합니다. |
-| 보미에게 질문 | 모든 메뉴에서 같은 챗봇 하나. 총괄 에이전트가 질문마다 담당(분석 근거 설명·복지사업 찾기·보고서 초안)을 골라 답합니다. [챗봇 안내](chatbot/README.md) |
+| 보미에게 질문 | 모든 메뉴에서 같은 챗봇 하나. 총괄 에이전트가 질문마다 담당(분석 근거 설명·복지사업 찾기·보고서 초안)을 골라 답합니다. [챗봇 안내](backend/chatbot/README.md) |
 | 데이터 관리·활동 이력 | 관리자 전용. 분석 자료 검사·반영과 반영 이력 |
 
 판정(신규·연속·변화 후보 등)은 동 단위 지표가 평소 흐름과 다른지 본 결과이며, 개인의 고립 여부를 판정하지 않습니다.
 
 ## 15. 폴더 구조
 
+폴더별 역할과 이전 위치는 [폴더 구성 안내](docs/folder-organization.md)를 참고하세요.
+
 ```text
-main.py                     실행 시작점 (화면 서버 + 분석 도구 실행)
-webapp/server.py            화면이 호출하는 Python API
-frontend/src/               React 화면
-  App.jsx                   메뉴·화면 전환·지역/기준월 공유
-  GroupDashboard.jsx        종합 현황(조사 파일·그룹 브리핑)
-  Briefing.jsx, VectorMap.jsx  지역 현황 표·지도
-  Experience.jsx            지역·기간 비교, 검토·후속 조치, 데이터 기준
-  Workspace.jsx             업무 기록, 데이터 관리, 활동 이력
-  BomiChat.jsx              보미 챗봇
-  GuideTour.jsx             처음 방문 단계별 안내
-db/                         DB 연결, 분석 결과 조회, 업무 기록, 보미 분석 설명
-chatbot/                    보미 챗봇: 가드레일(guardrails.py), 분석 근거 AI 설명(explain_ai.py)
-  welfare/                  복지사업 찾기 답변(자료 검색·AI 대화)
-agents/                     총괄 에이전트(supervisor.py), 보고서 작성, 사업 매칭, 분석(Analysis2), 위험 분석
-preprocessing/              원본 자료 전처리 (cleaning.py: 공모전 유동인구 원본 → data/processed, 종합 현황 그룹 자료용)
-shared/                     시연 계정, Word 보고서, 지도 경계
-deploy/oracle/              팀 공용 DB 구축 스크립트
-docs/                       DB2 수집, 보고서 서식, 공용 DB 구축 문서
+main.py                     공통 실행 시작점
+frontend/                   React 화면·화면 테스트
+backend/
+  api/                      Python HTTP API
+  chatbot/                  보미 대화·가드레일·AI 연결
+    welfare/app/dialogue/   복지사업 검색·대화 처리
+  agents/                   총괄·보고서 작성·사업 매칭
+  db/                       공유 DB 연결·조회·업무 기록 저장
+  services/                 계정·Word 보고서 생성
+  resources/                지도 자료·보고서 서식
+pipelines/
+  db1/                      Analysis1·2·3·맥락 분석·검증·모델
+  preprocessing/            원자료 전처리·재현 코드
+  regional_analysis/        DB1 실행 연결·기존 Analysis2 자료
+  risk_analysis/            별도 위험변화 분석
+  welfare/                  DB2 복지사업 수집
+data/                       공통 원자료·가공 자료
+assets/brand/               로고·캐릭터·브랜드 원본
+docs/                       팀 문서·아키텍처·외부 참고자료
+scripts/                    실행·이관·정기 수집 도구
+deploy/                     배포 설정
+runtime/                    로컬 실행 로그
 ```
 
 ### 분석 자료 다시 만들기
@@ -534,10 +540,10 @@ docs/                       DB2 수집, 보고서 서식, 공용 DB 구축 문�
 
 ```powershell
 python main.py --preprocess --no-download               # 월별 행동 자료 전처리
-python main.py --preprocess-analysis1 --raw-dir "preprocessing/regional_types/raw_data"  # 지역 유형(Analysis1) 전처리
+python main.py --preprocess-analysis1 --raw-dir "pipelines/preprocessing/regional_types/raw_data"  # 지역 유형(Analysis1) 전처리
 python main.py --analysis --no-download                 # Analysis2 변화 탐지
 python main.py --risk --input "월별행동.csv"             # 위험 분석
-python -m db.collect_welfare --help                      # 복지사업(DB2) 수집
+python -m pipelines.welfare.collect --help                      # 복지사업(DB2) 수집
 ```
 
 DB2 정기 수집은 [DB2 지자체복지 정기 수집](docs/DB2_지자체복지_정기수집.md)을 참고하세요.
@@ -547,10 +553,10 @@ DB2 정기 수집은 [DB2 지자체복지 정기 수집](docs/DB2_지자체복�
 ```powershell
 cd frontend
 node --test tests/*.test.mjs
-npm run build
+pnpm run build
 cd ..
-.venv/Scripts/python.exe -m unittest discover -s webapp/tests
-.venv/Scripts/python.exe -m unittest discover -s chatbot/tests -t .
+.venv/Scripts/python.exe -m unittest discover -s backend/api/tests
+.venv/Scripts/python.exe -m unittest discover -s backend/chatbot/tests -t .
 ```
 
 서버 테스트는 실제 분석 결과를 읽고 임시 SQLite에서 로그인·지역 접근·보미 답변·업무 순서·Word 보고서 저장을 검사합니다. 실제 DB 쓰기와 외부 AI 호출은 하지 않습니다. 화면을 브라우저로 직접 조작하는 검사는 `node tests/draft-browser.mjs`이며 Playwright와 Chrome이 필요합니다.

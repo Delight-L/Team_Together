@@ -5,7 +5,7 @@ import json
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from db.db1_snapshot import prepare_snapshot
+from backend.db.db1_snapshot import prepare_snapshot
 
 
 def main():
@@ -17,8 +17,8 @@ def main():
     result = dict(status='PASS', monthly_rows=len(monthly['data']), structure_rows=len(structure['context']),
                   period=monthly['period'], model_version=structure['report']['rule_version'], published=False)
     if args.publish:
-        from db import analysis_repository as repository
-        from db.db1_service import save_results
+        from backend.db import analysis_repository as repository
+        from backend.db.db1_service import save_results
         from uuid import uuid4
         run_id = str(uuid4())
         # Both result sets are published atomically; the snapshot is read-only.

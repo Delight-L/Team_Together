@@ -14,9 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from sqlalchemy import text
 
-from db import work_store
+from backend.db import work_store
 
-RUNTIME = ROOT / 'db/runtime'
+RUNTIME = ROOT / 'backend/db/runtime'
 # (SQLite 파일, 원래 테이블, 대상 테이블, 컬럼)
 SOURCES = [
     ('mission_records.sqlite3', 'missions', 'missions', ['key', 'value']),

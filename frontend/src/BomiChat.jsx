@@ -4,7 +4,7 @@ import { Icon } from './components';
 import './bomi-chat.css';
 
 // 보미 챗봇은 모든 메뉴에서 같은 화면을 씁니다.
-// 질문은 모두 /api/chat으로 보내고, 서버의 총괄 에이전트(agents/supervisor.py)가 담당을 고릅니다.
+// 질문은 모두 /api/chat으로 보내고, 서버의 총괄 에이전트(backend/agents/supervisor.py)가 담당을 고릅니다.
 // 지역 분석 설명 · 복지사업 찾기 · 보고서 초안 작성 중 하나가 답하고, 답변마다 담당을 표시합니다.
 const SUGGESTIONS = {
   group: ['이 그룹의 변화를 요약해 줘', '이 지표는 무슨 뜻인가요?', '관계 모임 지원사업을 찾아 줘'],

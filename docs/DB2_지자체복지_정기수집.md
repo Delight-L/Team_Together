@@ -1,6 +1,6 @@
 # DB2 지자체복지서비스 정기 수집
 
-2026-10-07 구현. 기존 PostgreSQL 연결(`db/connection.py`)을 사용합니다.
+2026-10-07 구현. 기존 PostgreSQL 연결(`backend/db/connection.py`)을 사용합니다.
 과거 DB2 문서의 `db2_storage.py`와 기존 수집 스키마 파일은 현재 체크아웃에 없어,
 기존 테이블을 바꾸지 않는 전용 테이블을 추가했습니다. 현재 실행 방법은 이 문서를 기준으로 합니다.
 
@@ -44,14 +44,14 @@ DB 세션 잠금으로 동일 DB에 대한 중복 수집을 막습니다.
 기존 시설 API의 `DATA_API_ENDPOINT` 설정과 독립적으로 동작합니다.
 
 ```powershell
-.\.venv\Scripts\python.exe -m db.collect_welfare init
-.\.venv\Scripts\python.exe -m db.collect_welfare collect
+.\.venv\Scripts\python.exe -m pipelines.welfare.collect init
+.\.venv\Scripts\python.exe -m pipelines.welfare.collect collect
 
 # 소량 검증: 목록 한 페이지, 상세 최대 2건
-.\.venv\Scripts\python.exe -m db.collect_welfare collect --max-pages 1 --rows 2 --max-details 2
+.\.venv\Scripts\python.exe -m pipelines.welfare.collect collect --max-pages 1 --rows 2 --max-details 2
 
 # 특정 지역
-.\.venv\Scripts\python.exe -m db.collect_welfare collect --province 서울특별시 --district 강남구
+.\.venv\Scripts\python.exe -m pipelines.welfare.collect collect --province 서울특별시 --district 강남구
 ```
 
 예약 수집에도 지역을 적용하려면 `.env`의 `DB2_WELFARE_PROVINCE`, `DB2_WELFARE_DISTRICT`를 설정합니다.

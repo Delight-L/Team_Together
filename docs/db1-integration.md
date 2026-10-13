@@ -1,7 +1,7 @@
 # DB1 서비스 통합
 
 `delightL`의 `671e86f` 전달본을 메인 서비스에 연결합니다. 두 브랜치에 공통 조상이 없어
-메인 기반 `codex/db1-integration`에 `DB1/`만 가져왔습니다. 기존 챗봇·업무 기록 변경은 별도 체크아웃에 보존합니다.
+메인 기반 `codex/db1-integration`에 `pipelines/db1/`만 가져왔습니다. 기존 챗봇·업무 기록 변경은 별도 체크아웃에 보존합니다.
 
 ## 동작
 
@@ -17,7 +17,7 @@
 ## 실행
 
 기존 앱 의존성을 설치합니다. 모델 파일의 scikit-learn 버전은 1.7.2로 고정했습니다.
-전체 원천자료 갱신은 `DB1/requirements.txt`의 공간·Parquet 의존성도 필요합니다.
+전체 원천자료 갱신은 `pipelines/db1/requirements.txt`의 공간·Parquet 의존성도 필요합니다.
 
 ```powershell
 python -m pip install -r requirements.txt
@@ -40,11 +40,11 @@ Analysis1·2 결과를 같은 트랜잭션으로 추가하고 `service_imports`�
 운영 SQLite에 업데이트된 결과를 읽어 반영할 때:
 
 ```powershell
-python scripts/import_db1.py --sqlite "DB1/outputs/db1.sqlite"
-python scripts/import_db1.py --sqlite "DB1/outputs/db1.sqlite" --publish
+python scripts/import_db1.py --sqlite "pipelines/db1/outputs/db1.sqlite"
+python scripts/import_db1.py --sqlite "pipelines/db1/outputs/db1.sqlite" --publish
 ```
 
-`DB1/outputs/db1.sqlite`는 약 380MB의 Git LFS 자산입니다. 실파일이 없는 체크아웃에서는
+`pipelines/db1/outputs/db1.sqlite`는 약 380MB의 Git LFS 자산입니다. 실파일이 없는 체크아웃에서는
 `git lfs pull`로 받아야 합니다. 포인터를 SQLite로 열거나 덮어쓰는 실행은 거절합니다.
 CSV 전달본 검사·반영은 대용량 SQLite 다운로드 없이도 가능합니다.
 
@@ -52,8 +52,8 @@ CSV 전달본 검사·반영은 대용량 SQLite 다운로드 없이도 가능�
 
 ```powershell
 $env:TEAM_TOGETHER_DATA_ROOT = "D:/Team_Together-data"
-python DB1/tools/configure_db1.py --source-root $env:TEAM_TOGETHER_DATA_ROOT --output DB1/config/db1_config.local.json
-python main.py --analysis --command analysis1 --period 2026H1 --config DB1/config/db1_config.local.json --db DB1/outputs/runtime/db1.sqlite
+python pipelines/db1/tools/configure_db1.py --source-root $env:TEAM_TOGETHER_DATA_ROOT --output pipelines/db1/config/db1_config.local.json
+python main.py --analysis --command analysis1 --period 2026H1 --config pipelines/db1/config/db1_config.local.json --db pipelines/db1/outputs/runtime/db1.sqlite
 ```
 
 별도 새 운영 파일은 필요한 원천자료를 갖춘 상태에서 `initialize`로 먼저 구성해야 합니다.
