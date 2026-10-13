@@ -9,7 +9,6 @@
 | backend/app/agent/orchestrator.py | chatbot/welfare/app/agent/orchestrator.py | 검색 결과, 안내 프롬프트, 스트리밍 답변 |
 | backend/app/agent/resources.py | chatbot/welfare/app/agent/resources.py | 자료 읽기, 사업 검색, API 없는 안내 |
 | backend/app/llm/openai_client.py | chatbot/welfare/app/llm/openai_client.py | 원본의 AsyncOpenAI 호출 |
-| backend/app/main.py | chatbot/welfare/app/main.py | 원본 FastAPI 진입점 보관. 팀 기본 실행에서는 별도 서버를 띄우지 않음 |
 | backend/data/*.json | chatbot/welfare/data/*.json | 원본 자료 사본 |
 | backend/requirements.txt | chatbot/welfare/requirements.txt | 원본 의존성 |
 

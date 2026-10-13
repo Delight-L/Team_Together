@@ -1,9 +1,5 @@
 /* 집단 브리핑 전용. 기존 지도/업무/보고서 레이아웃에는 적용하지 않는다. */
-.app-shell.group-shell { grid-template-columns: var(--nav-width) minmax(0, 1fr); }
-.app-shell.group-shell .main-content { background: #f1f8ff; padding: 24px 28px; gap: 20px; }
-.app-shell.group-shell .page-heading { align-items: center; margin: 0; }
-.app-shell.group-shell .page-heading h1 { font-size: clamp(23px, 2.1vw, 34px); letter-spacing: -1.2px; }
-.app-shell.group-shell .page-heading h1 em { color: #162942; }
+
 .gd-root { color: #1e293b; width: 100%; min-width: 0; }
 .gd-workspace-tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .gd-workspace-tools p { font-size: 11px; color: #71829e; margin: 0; }
@@ -24,7 +20,7 @@
 .gd-stats article:nth-child(3)::before { background: #a8b8d1; }
 .gd-stats span { font-size: 13px; font-weight: 700; }.gd-stats strong { display: block; font-size: 30px; margin: 4px 0; letter-spacing: -1px; }.gd-stats strong small { font-size: 14px; margin-left: 5px; }.gd-stats strong.gd-unavailable { font-size: 24px; color: #64748b; }.gd-stats p { margin: 0; color: #71829e; font-size: 12px; }
 .gd-workspace { display: grid; grid-template-columns: minmax(0,1fr) minmax(300px, 31%); grid-template-rows: 62px auto; column-gap: 16px; align-items: start; }
-.gd-tabbar { grid-area: 1 / 1; display: flex; overflow-x: auto; align-items: stretch; background: #e4efff; border: 1px solid #d8e6fc; border-radius: 12px 12px 0 0; padding: 7px 7px 0; height: 62px; scrollbar-width: thin; }
+.gd-tabbar { grid-area: 1 / 1; display: flex; overflow-x: auto; overflow-y: hidden; align-items: stretch; background: #e4efff; border: 1px solid #d8e6fc; border-radius: 12px 12px 0 0; padding: 7px 7px 0; height: 62px; scrollbar-width: thin; }
 .gd-tab { display: flex; align-items: center; background: #edf4ff; border: 1px solid #d6e4f8; border-bottom: 0; border-radius: 10px 10px 0 0; margin-right: 5px; flex-shrink: 0; min-width: 195px; max-width: 260px; }
 .gd-tab.active { background: #fff; color: #2563eb; }.gd-tab > button:first-child { display: flex; align-items: center; gap: 8px; text-align: left; padding: 7px 6px 7px 11px; flex: 1; }.gd-tab b { font-size: 12px; white-space: nowrap; }.gd-tab small { display: block; font-size: 11px; color: #758ba9; margin-top: 2px; }.gd-tab > button:last-child { padding: 7px; color: #6881a5; font-size: 20px; }.gd-add { min-width: 35px; font-size: 24px !important; color: #2563eb; }
 .gd-case { grid-area: 2 / 1; border: 1px solid #dce8fa; border-top: 0; border-radius: 0 0 12px 12px; background: white; padding: 23px; min-width: 0; }
@@ -43,21 +39,12 @@
 .gd-review label { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; font-weight: 600; }.gd-review textarea { resize: vertical; line-height: 1.8; }.gd-review-actions { display: flex; gap: 8px; margin-top: 12px; }.gd-services article { border: 1px solid #cde8de; border-radius: 8px; padding: 14px; margin-top: 12px; }.gd-services h4 { font-size: 15px; }.gd-services dl { line-height: 1.8; }.gd-services dt { font-weight: 700; margin-top: 10px; }.gd-services dd { margin: 0; white-space: pre-wrap; }.gd-services small,.gd-services a { display: block; margin: 7px 0; }.gd-services a { color: #2563eb; }
 .gd-error { background: #fff3ef; border-radius: 8px; padding: 14px; color: #ad3a2b; line-height: 1.8; font-size: 13px; }.gd-error button { display: block; color: #2563eb; }.gd-empty { padding: 24px; line-height: 1.8; color: #7086a4; }.gd-empty h2 { color: #223b5c; }.gd-empty button { margin-top: 12px; }.gd-empty span { display: block; }
 @media(min-width:1700px) { .gd-workspace { grid-template-columns: minmax(0,1fr) 380px; }.gd-case { padding: 28px; } }
-@media(max-width:1200px) { .app-shell.group-shell .main-content { padding: 20px 16px; }.gd-workspace { grid-template-columns: minmax(0,1fr) 300px; column-gap: 10px; }.gd-case { padding: 16px; }.gd-metrics strong { font-size: 21px; }.gd-ask { flex-wrap: wrap; }.gd-ask button { margin-left: auto; }.gd-tab { min-width: 190px; } }
+@media(max-width:1200px) { .gd-workspace { grid-template-columns: minmax(0,1fr) 300px; column-gap: 10px; }.gd-case { padding: 16px; }.gd-metrics strong { font-size: 21px; }.gd-ask { flex-wrap: wrap; }.gd-ask button { margin-left: auto; }.gd-tab { min-width: 190px; } }
 @media(max-width:900px) { .gd-workspace { grid-template-columns: minmax(0,1fr); grid-template-rows: 52px auto 62px auto; }.gd-tabbar { grid-area: 3 / 1; }.gd-case { grid-area: 4 / 1; }.gd-panel-switch { grid-area: 1 / 1; height: 52px; }.gd-chat-slot,.gd-directory-slot { grid-area: 2 / 1; position: static; margin-bottom: 16px; }.gd-chat { height: 480px; }.gd-file-list { max-height: 250px; overflow-y: auto; }.gd-stats article { padding: 12px; }.gd-stats p { font-size: 10px; }.gd-stats strong { font-size: 24px; } }
 @media(max-width:550px) { .gd-stats { gap: 6px; }.gd-stats span { font-size: 10px; }.gd-stats strong.gd-unavailable { font-size: 19px; }.gd-stats p { display: none; }.gd-metrics,.gd-activity { grid-template-columns: 1fr; }.gd-case-heading { flex-wrap: wrap; }.gd-case-footer { flex-direction: column; align-items: stretch; }.gd-tab { min-width: 180px; }.gd-ask button { width: 100%; }.gd-composition > div { grid-template-columns: 90px 1fr 50px; } }
 
 /* 승인 시안 16: 좌측 요약/브리핑, 우측 전체 높이 도우미. */
-.app-shell.group-shell .main-content { padding: 18px 28px 22px; gap: 18px; overflow-y: auto; background: radial-gradient(ellipse at 55% 0%, #fff 0%, #f1f8ff 75%); }
-.app-shell.group-shell .topbar { height: 42px; background: #f4f9ff; border: 0; }
-.group-shell .app-footer { display: none; }
-.app-shell.group-shell .page-heading { flex-wrap: nowrap; gap: 18px; }
-.app-shell.group-shell .page-heading > div:first-child { flex: 1 1 auto; }
-.app-shell.group-shell .page-heading h1 { font-size: clamp(24px, 2.55vw, 40px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.3; }
-.app-shell.group-shell .page-heading p { font-size: 15px; color: #4b6488; line-height: 1.5; }
-.group-shell .filters label { color: #6d83a4; font-size: 10px; }
-.group-shell .filters select { height: 43px; font-size: 14px; min-width: 112px; border: 1px solid #cfe0fb; background: white; border-radius: 9px; }
-#group-period-slot select { min-width: 168px; }
+
 .gd-workspace { grid-template-columns: minmax(0, 1fr) minmax(325px, 34%); grid-template-rows: 112px 70px auto; gap: 0 14px; }
 .gd-stats { grid-area: 1 / 1; gap: 9px; margin: 0; height: 112px; }
 .gd-stats article { display: flex; gap: 13px; align-items: center; padding: 15px; border-radius: 10px; }
@@ -73,6 +60,8 @@
 .gd-stats p { font-size: 11px; line-height: 1.5; }
 .gd-tabbar { grid-area: 2 / 1; height: 70px; padding: 25px 12px 0; position: relative; border: 0; border-radius: 10px 10px 0 0; background: #e5f1fc; }
 .gd-tabs-label { position: absolute; top: 5px; left: 10px; font-size: 11px; color: #0865ff; font-weight: 700; }
+.gd-tabbar .gd-tab { min-height: 0; }
+.gd-tabbar .gd-tab > button:first-child { padding-top: 4px; padding-bottom: 4px; min-height: 0; }
 .gd-tab { min-width: 196px; border-color: #cfe3fa; border-radius: 9px 9px 0 0; transform: skewX(8deg); background: #f4f9ff; }
 .gd-tab > button { transform: skewX(-8deg); }
 .gd-tab.active { border-bottom: 1px solid white; }
@@ -101,7 +90,7 @@
 .gd-brand > img { width: 62px; height: 66px; object-fit: contain; }
 .gd-brand b { display: block; font-size: 25px; font-weight: 800; letter-spacing: -1px; color: #111d3a; }
 .gd-brand small { display: block; margin-top: 3px; font-size: 13px; letter-spacing: 2px; color: #4e6ca1; }
-.group-shell .sidebar > .logo-toggle { padding: 0 4px; margin-bottom: 20px; min-height: 66px; }
+
 .gd-ask { margin: 10px 0; padding: 14px; background: linear-gradient(110deg, #edf8ff, #f7fbff); }
 .gd-ask > svg { background: #0865ff; color: white; border-radius: 50%; padding: 6px; width: 36px; height: 36px; flex-shrink: 0; }
 .gd-ask strong { font-size: 16px; line-height: 1.4; color: #0c1837; }
@@ -152,11 +141,10 @@
   .gd-stats article { padding: 10px; gap: 8px; }.gd-stats .gd-round { width: 34px; height: 34px; }.gd-stats .gd-round svg { width: 21px; }.gd-stats p { font-size: 10px; }
   .gd-chart-cards header { gap: 6px; flex-wrap: wrap; }.gd-chart-cards .gd-round { width: 32px; height: 32px; }.gd-change { font-size: 10px; }
   .gd-case { padding: 14px; }.gd-chat { padding: 12px; }.gd-guide { padding: 0 9px; }
-  .app-shell.group-shell .page-heading { flex-wrap: wrap; }.app-shell.group-shell .page-heading p { font-size: 13px; }
+
 }
 @media (max-width: 760px) {
-  .app-shell.group-shell .main-content { padding: 15px 12px; gap: 14px; }
-  .app-shell.group-shell .page-heading { flex-wrap: wrap; }.app-shell.group-shell .page-heading h1 { font-size: 25px; }.app-shell.group-shell .page-heading p { font-size: 12px; }
+
   .gd-workspace { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 70px auto 62px auto; gap: 0; }
   .gd-stats { grid-area: 1 / 1; height: auto; min-height: 88px; }.gd-stats article { padding: 10px; gap: 7px; }.gd-stats .gd-round { display: none !important; }.gd-stats span { font-size: 11px; }.gd-stats p { display: none; }
   .gd-tabbar { grid-area: 2 / 1; }.gd-case { grid-area: 3 / 1; padding: 14px; }
@@ -168,7 +156,7 @@
 }
 /* 처음 방문한 담당자도 변화 → 배경 → 지원 순서로 읽을 수 있는 브리핑 */
 .gd-workspace { grid-template-rows: 76px 66px auto; }
-.app-shell.group-shell .page-heading h1 { font-size: clamp(24px, 2.35vw, 36px); }
+
 .gd-process { grid-area: 1 / 1; display:flex; align-items:center; gap:14px; list-style:none; margin:0; padding:14px; background:#fff; border:1px solid #d8e8fc; border-radius:14px; }
 .gd-process li { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
 .gd-process li + li:before { content:'→'; color:#819bbd; margin-right:4px; }
@@ -208,7 +196,7 @@
 .gd-chat-slot { grid-area: 1 / 2 / 4 / 3; margin-top: 0; border-top: 1px solid #d4e6fb; border-radius: 12px; overflow: hidden; }
 .gd-chat { height: max(600px, calc(100dvh - 170px)); }
 .gd-files-tab { min-width: 150px; }
-.gd-files-tab > button svg { color: #2563eb; }
+.gd-files-tab > button svg { color: inherit; }
 .gd-files-panel { padding: 0; }
 .gd-files-panel .gd-directory { min-height: 0; padding: 20px 22px; }
 .gd-files-panel .gd-directory > p { font-size: 12px; }

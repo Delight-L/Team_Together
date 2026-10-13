@@ -72,7 +72,10 @@ def prepare_analysis2(data, source):
     }
     for metric in metrics:
         required.extend([metric + "_log_change", metric + "_residual_change", metric + "_residual_change_expanding_rz"])
-    missing = [column for column in required if column not in data.columns]
+    missing = []
+    for column in required:
+        if column not in data.columns:
+            missing.append(column)
     if missing or data.empty:
         raise ValueError("version11의 Analysis2 탐지 결과 CSV를 사용하세요. 누락 열: " + ", ".join(missing))
     # 문자열 'False'를 bool()로 바꾸면 True가 되므로 명시적으로 검사합니다.
@@ -94,14 +97,17 @@ def prepare_analysis2(data, source):
         frame["metric_label"] = label
         # 브리핑 그래프는 변화율과 같은 CSV의 실제 입력값을 표시합니다.
         # 구버전 업로드에 원자료 열이 없으면 null로 전달하여 값을 만들어내지 않습니다.
-        frame["metric_value"] = pd.to_numeric(data[metric], errors="coerce") if metric in data.columns else np.nan
+        if metric in data.columns:
+            frame["metric_value"] = pd.to_numeric(data[metric], errors="coerce")
+        else:
+            frame["metric_value"] = np.nan
         frame["metric_unit"] = "명" if metric in ("call_contacts", "text_contacts") else "회"
         frame["change_pct"] = np.expm1(pd.to_numeric(data[metric + "_log_change"])) * 100
         frame["relative_change_pp"] = pd.to_numeric(data[metric + "_residual_change"]) * 100
         frame["risk_robust_z"] = pd.to_numeric(data[metric + "_residual_change_expanding_rz"])
         frame["has_enough_history"] = frame["risk_robust_z"].notna()
         frame["is_risk_signal"] = data[signal_column]
-        frame["explanation"] = frame["행정동명"] + " " + label + " · Analysis2 탐지 결과"
+        frame["explanation"] = frame["행정동명"] + " " + label + " · 전월 및 과거 흐름과 비교한 분석 결과"
         frame["context_note"] = "지역 집계자료의 변화이며 개인의 고립 판정이 아닙니다."
         rows.append(frame)
     assessment = pd.concat(rows, ignore_index=True)
@@ -205,7 +211,7 @@ def _load_analysis2_from_db(run_id):
     prepared = prepare_analysis2(data, source_file)
     created = max(row["created_at"] for row in rows)
     return {
-        "connected": True, "isDemo": False, "source": "DB1 · Analysis2",
+        "connected": True, "isDemo": False, "source": "동별 통화·문자·이동 분석 자료 (공용 저장 자료)",
         "runId": str(run_id),
         "assessment": records(prepared["assessment"]),
         "signals": records(prepared["signals"]), "alerts": records(prepared["alerts"]),
@@ -221,7 +227,7 @@ def _load_analysis2_data(source_path, modified_ns):
     prepared = monthly_upload(source.read_bytes(), source.name)
     run_id = "analysis2-" + str(modified_ns)
     return {
-        "connected": True, "isDemo": False, "source": "Analysis2 CSV",
+        "connected": True, "isDemo": False, "source": "동별 통화·문자·이동 분석 자료 (저장된 파일)",
         "runId": run_id,
         "assessment": records(prepared["assessment"]),
         "signals": records(prepared["signals"]), "alerts": records(prepared["alerts"]),

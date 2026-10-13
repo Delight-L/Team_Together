@@ -52,7 +52,7 @@ class ExperienceTest(unittest.TestCase):
     def read(self, route='experience'):
         return self.request('GET', '/api/' + route + '?' + urlencode(self.context))
 
-    def test_records_conflicts_and_trial_reset(self):
+    def test_records_conflicts_and_shared_history(self):
         self.login()
         status, record = self.read()
         self.assertEqual(status, 200)
@@ -68,35 +68,14 @@ class ExperienceTest(unittest.TestCase):
         self.login('admin')
         self.assertEqual(self.read()[1]['note'], '행사 일정 확인')
         self.cookie = original_cookie
-        status, first = self.request('POST', '/api/trial/start', {})
-        self.assertEqual(status, 200)
-        self.assertTrue(first['user']['trial'])
-        self.assertEqual(self.read()[1]['version'], 0)
-        self.assertEqual(self.read('experience/history')[1]['items'], [])
-        self.assertEqual(self.read('workflow')[1], {})
-        self.request('POST', '/api/workflow/start', self.context)
-        status, missions = self.request('GET', '/api/missions')
-        self.assertEqual(len(missions['items']), 1)
-        status, second = self.request('POST', '/api/trial/start', {})
-        self.assertNotEqual(first['user']['id'], second['user']['id'])
-        self.assertEqual(self.read('workflow')[1], {})
-        self.request('POST', '/api/trial/end', {})
         self.assertIn(0, self.read('workflow')[1]['done'])
         self.assertEqual(self.read()[1]['note'], '행사 일정 확인')
         self.assertEqual(self.read('experience/history')[1]['items'][0]['month'], self.context['month'])
 
-    def test_feedback_and_permissions(self):
-        self.assertEqual(self.request('POST', '/api/feedback', {'message': 'test'})[0], 401)
+    def test_permissions(self):
         self.login('chuncheon01')
         self.assertEqual(self.read()[0], 401)
-        self.assertEqual(self.request('GET', '/api/feedback')[0], 401)
-        self.assertEqual(self.request('POST', '/api/feedback', {'kind': '기능 오류', 'message': ' ', 'page': 'chart'})[0], 400)
-        self.assertEqual(self.request('POST', '/api/feedback', {'kind': '기능 오류', 'message': '동 선택 안내 필요', 'page': 'chart'})[0], 200)
-        self.login('admin')
-        self.assertTrue(self.request('GET', '/api/feedback')[1]['items'])
-        self.request('POST', '/api/trial/start', {})
         self.assertEqual(self.request('POST', '/api/upload/validate', {})[0], 401)
-        self.assertEqual(self.request('GET', '/api/feedback')[0], 401)
 
 
 if __name__ == '__main__': unittest.main()

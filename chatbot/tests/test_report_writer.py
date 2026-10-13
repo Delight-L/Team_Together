@@ -2,7 +2,7 @@ import unittest
 from io import BytesIO
 from zipfile import ZipFile
 from lxml import etree
-from agents.report_writer import generate_draft, validate_content, report_reply
+from agents.report_writer import generate_draft, validate_content, report_reply, evidence_sentence
 from shared.report import build_report, TEMPLATE, NS
 
 
@@ -11,7 +11,8 @@ class ReportWriterTest(unittest.TestCase):
 
     def workflow(self):
         return {'done': [0, 1, 2], 'analysis_evidence': [
-            {'is_risk_signal': True, 'explanation': '저장된 전화 변화 근거'}],
+            {'is_risk_signal': True, 'metric_label': '전화 연락', 'change_pct': -12.3,
+             'explanation': '삼성1동 전화 연락 · Analysis2 탐지 결과'}],
             'reviews': [
                 {'service_key': 'a', 'name': '교류 지원', 'decision': '적합', 'note': '교류 지원 검토'},
                 {'service_key': 'b', 'name': '상담 지원', 'decision': '보류', 'note': '자격 확인 필요'},
@@ -19,10 +20,30 @@ class ReportWriterTest(unittest.TestCase):
 
     def test_grounding_and_decisions(self):
         content = generate_draft(self.context, self.workflow())
-        self.assertIn('저장된 전화 변화 근거', content['situation'])
+        self.assertIn('전화 연락: 전월보다 12.3% 감소', content['situation'])
+        self.assertNotIn('Analysis2', content['situation'])
         self.assertIn('상담 지원: 운영 조건 확인 후 재검토', content['proposal'])
         self.assertIn('방문 지원: 현재 연계 제안에서 제외', content['proposal'])
         self.assertEqual(validate_content(content)['title'], content['title'])
+
+    def test_missing_change_is_not_described_as_zero(self):
+        for change in (None, float('nan'), float('inf')):
+            sentence = evidence_sentence({'metric_label': '평일 이동', 'change_pct': change})
+            self.assertIn('계산할 수 없어', sentence)
+            self.assertNotIn('0.0%', sentence)
+        self.assertIn('3.0% 증가', evidence_sentence({'change_pct': 3}))
+        self.assertIn('전월과 같은 수준', evidence_sentence({'change_pct': 0}))
+
+    def test_legacy_source_is_readable_in_downloaded_report(self):
+        workflow = self.workflow()
+        document = build_report(self.context, workflow['analysis_evidence'], '담당자',
+                                '복지정책과', '기관 확인', 'DB1 · Analysis2', workflow)
+        with ZipFile(BytesIO(document)) as package:
+            root = etree.fromstring(package.read('word/document.xml'))
+            text = ''.join(root.xpath('//w:t/text()', namespaces=NS))
+        self.assertNotIn('Analysis2', text)
+        self.assertNotIn('DB1', text)
+        self.assertIn('동별 통화·문자·이동 분석 자료', text)
 
     def test_latest_review_overrides_previous_decision(self):
         workflow = self.workflow()

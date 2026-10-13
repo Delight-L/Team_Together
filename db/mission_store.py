@@ -1,4 +1,5 @@
 """담당자·지역·기준월별 미션 및 업무 기록 (로컬 SQLite 영구 저장)."""
+import hashlib
 import json
 from contextlib import contextmanager
 import sqlite3
@@ -10,10 +11,14 @@ STEPS = ["분석 확인", "근거 검토·질의", "사업 매칭 검토", "보�
 WORKFLOW_VERSION = 3
 
 def normalize(item):
+    """이전 업무 단계 번호를 현재 네 단계로 맞추고 기존 기록을 보존합니다."""
     if item.get("workflow_version") == 2:
         item = dict(item)
         old = set(item.get("done", []))
-        item["done"] = sorted((old & {0,1,2}) | ({3} if 4 in old else set()))
+        done = old & {0, 1, 2}
+        if 4 in old:
+            done.add(3)
+        item["done"] = sorted(done)
         item["workflow_version"] = WORKFLOW_VERSION
         item["legacy_connections"] = item.pop("connections", [])
         item["workflow_complete"] = 3 in item["done"]
@@ -23,8 +28,9 @@ def normalize(item):
     return item
 
 def review_revision(item):
-    import hashlib
-    return hashlib.sha256(json.dumps(item.get("reviews", []),sort_keys=True,ensure_ascii=False).encode()).hexdigest()
+    """검토 내용의 지문으로 보고서 초안 이후 검토가 바뀌었는지 확인합니다."""
+    reviews = json.dumps(item.get("reviews", []), sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(reviews.encode()).hexdigest()
 
 @contextmanager
 def connection():
@@ -38,17 +44,26 @@ def connection():
         db.close()
 
 def identity(request):
-    return json.dumps([("demo:" if request.get("workflow_mode") == "demo" else "") + request["user"]["id"], request["city"], request["district"], request["month"]], ensure_ascii=False, separators=(",", ":"))
+    """기존 SQLite 키 형식을 유지하여 저장된 업무를 계속 찾습니다."""
+    owner = request["user"]["id"]
+    if request.get("workflow_mode") == "demo":
+        owner = "demo:" + owner
+    fields = [owner, request["city"], request["district"], request["month"]]
+    return json.dumps(fields, ensure_ascii=False, separators=(",", ":"))
 
 def load_all():
     with connection() as db:
-        return {key: normalize(json.loads(value)) for key, value in db.execute("SELECT key,value FROM missions")}
+        items = {}
+        for key, value in db.execute("SELECT key,value FROM missions"):
+            items[key] = normalize(json.loads(value))
+        return items
 
 def timestamp():
     from zoneinfo import ZoneInfo
     return datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
 
 def save_event(request, step, record=None):
+    """단계 순서를 검사하고 기록·Word 파일·보고서 이력을 함께 저장합니다."""
     if step not in range(4):
         raise ValueError("유효하지 않은 업무 단계입니다.")
     if not request.get("district"):
@@ -92,7 +107,6 @@ def save_event(request, step, record=None):
                 raise ValueError("보고서 파일과 필수 항목, 최종 확인이 필요합니다.")
             if record.get("review_id") != review_revision(item):
                 raise ValueError("현재 사업 검토 내역과 일치하는 보고서가 필요합니다.")
-            import hashlib
             document = record.pop("_document", b"")
             if not document or hashlib.sha256(document).hexdigest() != record["sha256"]:
                 raise ValueError("실제 보고서 파일을 생성한 후 저장하세요.")

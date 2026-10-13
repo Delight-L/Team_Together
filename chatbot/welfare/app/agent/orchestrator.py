@@ -8,7 +8,6 @@ from chatbot.welfare.app.schemas import ChatMessage
 from chatbot.welfare.app.agent.resources import search, local_answer
 
 SYSTEM = """당신은 팀 투게더의 복지지원 사업 안내 도우미 '보미'입니다.
-
 지역과 지원 필요를 확인하고 제공된 팀 자료에서 관련 사업을 안내하세요.
 자료는 2025년 계획 및 검토용 후보이며 현재 운영·자격·접수는 미확인입니다.
 지원 확정, 신청 가능, 수급 자격, 금액, 연락처, URL을 추측하거나 생성하지 마세요.
@@ -21,7 +20,10 @@ SYSTEM = """당신은 팀 투게더의 복지지원 사업 안내 도우미 '보
 
 def search_question(history: list[ChatMessage]) -> str:
     """새 주제는 독립 검색하고 후속 질문에서는 원래 사업 맥락을 유지합니다."""
-    questions = [m.content for m in history if m.role == "user"]
+    questions = []
+    for message in history:
+        if message.role == "user":
+            questions.append(message.content)
     def followup(question):
         compact = re.sub(r"\s+", "", question).strip("?!？.!")
         return len(compact) <= 30 and bool(re.match(
@@ -29,7 +31,11 @@ def search_question(history: list[ChatMessage]) -> str:
             r"(?:대상|자격|조건|신청|서류|문의|연락처|담당기관|운영|기간|비용|지원금|어디로)", compact))
     query = questions[-1]
     if followup(query):
-        anchor = next((q for q in reversed(questions[:-1]) if not followup(q)), "")
+        anchor = ""
+        for previous_question in reversed(questions[:-1]):
+            if not followup(previous_question):
+                anchor = previous_question
+                break
         if anchor:
             query = anchor + " " + query
     return query[-3000:]

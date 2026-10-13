@@ -2,16 +2,14 @@ import { useDraft } from './useDraft';
 import { draftKey, clearDrafts, hasDrafts } from './draftStore.mjs';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { api, query, number } from './api';
-import { draftKey, clearDrafts, hasDrafts } from './draftStore.mjs';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { api, query, number } from './api';
-import { Icon, Bomi, RegionMap, EvidenceTable, Trend, ChatPanel } from './components';
+import { Icon, Bomi, EvidenceTable, Trend } from './components';
 import BomiChat from './BomiChat';
-import { Missions, Activity, Upload } from './Workspace';
-import { Briefing, BriefingStats, RegionalOverview, summarizeRegions } from './Briefing';
+import { Records, Activity, Upload } from './Workspace';
+import { RegionalOverview, summarizeRegions } from './Briefing';
 import { DataDialog, Comparison, ReportQuality } from './Experience';
 import GuideTour from './GuideTour';
 import GroupDashboard from './GroupDashboard';
+import { userName } from './personas.mjs';
 
 const menus = [
   ['dashboard', '종합 현황'],
@@ -43,8 +41,7 @@ const titles = {
   services: '필요한 지원으로 연결하는 첫걸음',
   report: '검토 결과를 보고서로 정리하세요',
   data: '자료를 검사하고 반영하세요',
-  chat: '복지이음 · 보미와 복지사업 안내',
-  missions: '지역별 업무를 이어서 진행하세요',
+  chat: '보미에게 질문 · 복지사업 안내',
   records: '지역별 업무와 후속 조치를 이어서 기록하세요',
   activity: '자료 반영 이력을 확인하세요',
 };
@@ -181,17 +178,13 @@ export default function App() {
     setView(next);
     if (window.innerWidth <= 760) setNavCollapsed(true);
   }
-  const previousChatView = useRef('dashboard');
-  const originalWorkspace = useRef(null);
-  const pendingWorkspace = useRef(null);
   const [workflow, setWorkflow] = useState({}),
     [reportSeed, setReportSeed] = useState(null),
     [reviewSeed, setReviewSeed] = useState(null),
     [notice, setNotice] = useState(''),
-    [chatOpen, setChatOpen] = useState(() => window.innerWidth >= 1500),
-    [busy, setBusy] = useState(false),
-    [trialError, setTrialError] = useState(''),
+    [busy, setBusy] = useState(false);
   const [chatDraft, setChatDraft] = useState(null);
+  const [chatGroup, setChatGroup] = useState(null);
   useEffect(() => {
     api('/session')
       .then((d) => setUser(d.user))
@@ -208,19 +201,11 @@ export default function App() {
     api('/dashboard')
       .then((d) => {
         if (active) {
-          const target = pendingWorkspace.current;
-          pendingWorkspace.current = null;
-          const nextCity = target?.city && d.geometry[target.city] ? target.city : user.admin ? '강남구' : user.org;
-          const nextMonth = d.months.includes(target?.month) ? target.month : d.months.at(-1) || '';
-          const nextDistrict = d.geometry[nextCity]?.units.some(u => u.n === target?.district) ? target.district : '';
+          // 관리자는 강남구, 담당자는 소속 지역의 가장 최근 기준월로 시작합니다.
           setData(d);
-          setCity(nextCity);
-          setMonth(nextMonth);
-          setDistrict(nextDistrict);
-          if (target) {
-            go(target.view || 'dashboard');
-            setChatOpen(!!target.chatOpen);
-          }
+          setCity(user.admin ? '강남구' : user.org);
+          setMonth(d.months.at(-1) || '');
+          setDistrict('');
         }
       })
       .catch((e) => active && setError(e.message));
@@ -269,40 +254,8 @@ export default function App() {
       setBusy(false);
     }
   }
-  async function switchTrial(mode) {
-    if (busy) return false;
-    setBusy(true); setTrialError('');
-    try {
-      const result = await api('/trial/' + mode, {});
-      if (mode === 'start') {
-        if (!user.trial) originalWorkspace.current = { ...context, view, chatOpen };
-        const trialCity = result.user.org;
-        const candidates = summarizeRegions(data.assessment, data.geometry[trialCity], trialCity, month, data.months);
-        const first = candidates.find(r => r.count > 0) || candidates.find(r => r.rows.length);
-        pendingWorkspace.current = { city: trialCity, month, district: first?.name || '', view: first ? 'chart' : 'dashboard', chatOpen: false };
-      } else {
-        pendingWorkspace.current = originalWorkspace.current || { city: result.user.org, month, view: 'dashboard' };
-        originalWorkspace.current = null;
-      }
-      setWorkflow({}); setNotice(''); setUser(result.user);
-      return true;
-    } catch (e) {
-      setTrialError(e.message);
-      return false;
-    } finally { setBusy(false); }
-  }
   function expandChat() {
-    if (view !== 'chat') previousChatView.current = view;
-    setChatOpen(true);
-    setView('chat');
-  }
-  function collapseChat() {
-    setChatOpen(true);
-    setView(previousChatView.current);
-  }
-  function closeChat() {
-    setChatOpen(false);
-    if (view === 'chat') setView(previousChatView.current);
+    document.querySelector('.bomi-chat textarea')?.focus();
   }
   async function logout() {
     if (hasDrafts() && !window.confirm('로그아웃하면 임시 보관 중인 작성 내용이 삭제됩니다. 로그아웃할까요?')) return;
@@ -312,8 +265,6 @@ export default function App() {
     setData(null);
     setView('dashboard');
     setSupportOpen(false);
-    originalWorkspace.current = null;
-    pendingWorkspace.current = null;
   }
   const regions = useMemo(() => summarizeRegions(
     data?.assessment || [], data?.geometry[city], city, month, data?.months || [],
@@ -346,12 +297,12 @@ export default function App() {
     selected: district,
     onSelect: select,
     onStart: start,
-    onChat: () => setChatOpen(true),
-    onInspect: (name) => { setDistrict(name); setView('chart'); },
+    onChat: expandChat,
+    onInspect: (name) => { setDistrict(name); go('chart'); },
     onAsk: (name, question) => {
       setDistrict(name);
       setChatDraft({ id: Date.now(), contextKey: JSON.stringify({ city, district: name, month }), question });
-      setChatOpen(true);
+      expandChat();
     },
     busy,
     months: data?.months || [],
@@ -359,8 +310,9 @@ export default function App() {
 
   return (
     <div
-      className={`app-shell ${(chatOpen && view !== 'dashboard') || view === 'chat' ? 'with-chat' : ''} ${view === 'chat' ? 'chat-view' : ''} ${navCollapsed ? 'nav-collapsed' : ''} ${view === 'dashboard' ? 'briefing-shell group-shell' : ''}`}
+      className={`app-shell with-chat ${navCollapsed ? 'nav-collapsed' : ''} ${view === 'dashboard' ? 'group-shell' : ''}`}
     >
+      <button className="panel-handle menu-handle" onClick={() => setNavCollapsed(v => !v)} aria-label={navCollapsed ? '왼쪽 메뉴 펼치기' : '왼쪽 메뉴 접기'} aria-expanded={!navCollapsed} title={navCollapsed ? '메뉴 펼치기' : '메뉴 접기'}>{navCollapsed ? '›' : '‹'}</button>
       <nav className="sidebar" aria-label="주 메뉴">
         <button
           className="logo-toggle"
@@ -397,21 +349,18 @@ export default function App() {
         <span className="nav-label assistant-nav">ASSISTANT</span>
         <button
           className={view === 'chat' ? 'active' : ''}
-          aria-label="복지이음 챗봇"
-          onClick={() => {
-            setView('chat');
-            setChatOpen(true);
-          }}
+          aria-label="보미에게 질문"
+          onClick={expandChat}
         >
           <Icon name="chat" />
-          <span>복지이음 챗봇</span>
+          <span>보미에게 질문</span>
           <span className="new-tag">AI</span>
         </button>
         <div className="sidebar-bottom">
           <div className="user-avatar">{user.admin ? 'A' : user.org.slice(0, 1)}</div>
           <div>
             <b>{user.admin ? '전체 관리자' : user.org + ' 담당자'}</b>
-            <small>{user.account_id || user.id}</small>
+            <small>{userName(user)} 님</small>
           </div>
           <button disabled={busy} onClick={logout} aria-label="로그아웃">
             <Icon name="logout" size={18} />
@@ -422,19 +371,18 @@ export default function App() {
         <header className="topbar">
           <span>
             복지정책과 <span className="separator">/</span>{' '}
-            {[...menus, ...adminMenus].find((m) => m[0] === view)?.[1] || '복지이음 챗봇'}
+            {[...menus, ...adminMenus].find((m) => m[0] === view)?.[1] || '보미에게 질문'}
           </span>
           <div>
             <button className="icon-button guide-trigger" disabled={!data} onClick={openTour} aria-label="사용 안내 다시 보기" title="사용 안내 다시 보기"><Icon name="help" size={18} /></button>
-            {user.trial && <button className="text-button" disabled={busy || !data} onClick={async () => { if (!await switchTrial('end')) setNotice('체험 종료에 실패했습니다. 다시 시도해 주세요.'); }}>체험 종료</button>}
             <span className="connected">
               <span className="online-dot" />
               {data ? `분석 자료 ${data.months?.at(-1) || ''}까지 반영` : '분석 자료 확인 중'}
             </span>
             {view !== 'dashboard' && <button
               className="icon-button"
-              onClick={() => view === 'chat' ? closeChat() : setChatOpen(v => !v)}
-              aria-label="보미에게 질문 패널 열고 닫기"
+              onClick={expandChat}
+              aria-label="보미 질문 입력하기"
               title="보미에게 질문"
             >
               <Icon name="chat" /><span className="topbar-chat-label">보미</span>
@@ -447,16 +395,12 @@ export default function App() {
               <span className="eyebrow">WELFIND · {city}</span>
               <h1>
                 {view === 'dashboard' ? (
-                  <>
-                    지역의 변화를 발견하고, <em>필요한 복지로 연결합니다</em>
-                  </>
-                ) : (
-                  titles[view]
-                )}
+                  <>지역의 변화를 발견하고, <em>필요한 복지로 연결합니다</em></>
+                ) : titles[view]}
               </h1>
               <p>{view === 'dashboard' ? '복지 담당자가 지역의 고립 위험 신호와 생활 여건을 살펴보고, 필요한 지원을 검토하도록 돕습니다.' : subtitles[view]}</p>
             </div>
-            <div className={`heading-tools ${view === 'dashboard' ? 'case-heading-tools' : ''}`}>
+            <div className="heading-tools">
             <div className="filters">
               <label>
                 지역
@@ -485,8 +429,6 @@ export default function App() {
                 </select>
               </label>}
             </div>
-            </div>
-            {view === 'dashboard' && data && <BriefingStats {...briefingProps} />}
             </div>
           </div>
           {error ? (
@@ -526,7 +468,7 @@ export default function App() {
                 onSelect={(item) => { setCity(item.city); setDistrict(item.district); setMonth(item.month); }}
                 onView={go}
               />}
-              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + !!user.trial + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onRegion={group => {
+              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onActiveGroup={setChatGroup} onRegion={group => {
                 const name = group.code === '1123074' ? '일원2동' : group.district;
                 const available = data.geometry[city]?.units.find(u => u.n === group.district || u.n === name);
                 setDistrict(available?.n || group.district); setMonth(group.month); go('chart');
@@ -689,18 +631,16 @@ export default function App() {
       {data && supportOpen && <DataDialog onClose={() => setSupportOpen(false)} data={data} context={context} rows={selectedRows} user={user} />}
       {data && tourOpen && <GuideTour onClose={closeTour} />}
       {data && (
-        <ChatPanel
+
+        <BomiChat
+          key={user.id}
+          layout="panel"
           draft={chatDraft}
-          visible={chatOpen || view === 'chat'}
-          context={context}
-          expanded={view === 'chat'}
-          onClose={() => {
-            setChatOpen(false);
-            if (view === 'chat') setView('dashboard');
-          }}
-          onExpand={() => setView(view === 'chat' ? 'dashboard' : 'chat')}
+          visible={true}
+          context={view === 'dashboard' && chatGroup ? {city: chatGroup.city, district: chatGroup.district, month: chatGroup.month} : context}
+          group={view === 'dashboard' ? chatGroup : undefined}
         />
-        />
+
       )}
     </div>
   );
@@ -903,7 +843,7 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
 
 // Word 문서 생성은 Python build_report(), 단계/해시 검증은 mission_store.py가 처리합니다.
 export function Report({ context, workflow, user, mutate, busy, seed, onSaved, onView }) {
-  const initial = { author: user.account_id || user.id, department: context.city + ' 복지정책과', contact: '', content: null, seedId: null };
+  const initial = { author: userName(user), department: context.city + ' 복지정책과', contact: '', content: null, seedId: null };
   const [localDraft, setLocalDraft, clearLocalDraft, storageFailed] = useDraft(draftKey(user, context, 'report'), initial);
   const { author, department, contact, content } = localDraft;
   const [step, setStep] = useState(() => localDraft.content ? 2 : 1);
@@ -911,6 +851,12 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   const setDepartment = department => setLocalDraft(prev => ({ ...prev, department }));
   const setContact = contact => setLocalDraft(prev => ({ ...prev, contact }));
   const setContent = content => setLocalDraft(prev => ({ ...prev, content: typeof content === 'function' ? content(prev.content) : content }));
+  useEffect(() => {
+    // 이미 임시 저장된 초안의 기본 계정명도 바꾸되, 직접 입력한 작성자는 유지합니다.
+    if (localDraft.author === user.id || localDraft.author === user.account_id) {
+      setLocalDraft(prev => ({ ...prev, author: userName(user) }));
+    }
+  }, [localDraft.author, user.id, user.account_id, user.name]);
   const [confirmed, setConfirmed] = useState(false),
     [draft, setDraft] = useState(null),
     [draftBusy, setDraftBusy] = useState(false),

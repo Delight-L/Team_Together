@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from './api';
 import { ReviewWorkspace } from './Experience';
+import { personName } from './personas.mjs';
 
 const nextStep = (workflow) => workflow?.workflow_complete || workflow?.done?.includes(2)
   ? ['report', '보고서 작성']
@@ -96,7 +97,7 @@ export function Activity() {
               {rows.map((r, i) => (
                 <tr key={i}>
                   <td>{r.created_at}</td>
-                  <td>{r.actor}</td>
+                  <td>{personName(r.actor)}</td>
                   <td>{r.kind}</td>
                   <td>{r.detail}</td>
                   <td>{r.result}</td>

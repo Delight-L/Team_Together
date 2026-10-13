@@ -12,8 +12,13 @@ ANALYZED_CITIES = {'강남구'}
 def _rows(data, city, month, district=None):
     if city not in ANALYZED_CITIES:
         return []
-    return [r for r in data['assessment'] if r['기준연월'] == month
-            and (district is None or r['행정동명'] == district)]
+    rows = []
+    for row in data['assessment']:
+        if row['기준연월'] != month:
+            continue
+        if district is None or row['행정동명'] == district:
+            rows.append(row)
+    return rows
 
 
 def region_status(data, city, month, district):
@@ -26,7 +31,12 @@ def region_status(data, city, month, district):
         status = '자료 없음'
     elif count:
         comparable = any(r.get('has_enough_history') for r in rows) and any(r.get('has_enough_history') for r in earlier)
-        status = ('연속 후보' if any(r.get('is_risk_signal') for r in earlier) else '신규 후보') if comparable else '변화 후보'
+        if not comparable:
+            status = '변화 후보'
+        elif any(r.get('is_risk_signal') for r in earlier):
+            status = '연속 후보'
+        else:
+            status = '신규 후보'
     else:
         status = '판단 보류' if any(not r.get('has_enough_history') for r in rows) else '기준 미해당'
     return dict(status=status, count=count, rows=rows)

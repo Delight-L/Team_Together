@@ -13,7 +13,7 @@ if (typeof window !== 'undefined') window.addEventListener('beforeunload', event
   if (failed.size) { event.preventDefault(); event.returnValue = ''; }
 });
 export const draftKey = (user, context, form) => prefix + JSON.stringify([
-  user.id, !!user.trial, context.city, context.district, context.month, form,
+  user.id, context.city, context.district, context.month, form,
 ]);
 export function readDraft(key) {
   if (memory.has(key)) return memory.get(key);

@@ -41,4 +41,3 @@ python main.py --preprocess-analysis1 --raw-dir "raw_data" --output-dir "outputs
 
 이 결과는 동별 **지역 유형·맥락** 자료이며, 개인 또는 동의 고립 위험 점수는 아닙니다. `일원2동` 표기는 행정동 코드 기준으로 `개포3동`으로 통일합니다.
 
-이전 중복 전처리 폴더에 있던 JSON 산출물은 `outputs/previous_preprocessing_agent`에 보존했습니다.

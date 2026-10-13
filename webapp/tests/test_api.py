@@ -63,7 +63,10 @@ class ApiTest(unittest.TestCase):
         return status,json.loads(content) if 'application/json' in kind else content
 
     def login(self,account='gangnam01',password='demo1234'):
-        self.assertEqual(self.request('POST','/api/login',{'id':account,'password':password})[0],200)
+        status, result = self.request('POST','/api/login',{'id':account,'password':password})
+        self.assertEqual(status, 200)
+        self.assertEqual(result['user']['name'], {'gangnam01': '김강남', 'chuncheon01': '이춘천', 'admin': '박관리'}[account])
+        self.assertEqual(result['user']['id'], account)
 
     def test_auth_and_cross_origin(self):
         self.assertEqual(self.request('GET','/api/dashboard')[0],401)

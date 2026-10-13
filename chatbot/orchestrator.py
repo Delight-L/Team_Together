@@ -15,20 +15,19 @@ def topic_reply(topic, evidence, context, workflow=None):
     if topic not in TOPICS:
         raise ValueError('유효한 대화 주제를 선택하세요.')
     # 새 화면의 예시 질문과 같은 검색·답변 경로를 사용합니다.
-    return free_reply(TOPICS[topic][1], evidence, context, workflow=workflow)
-    if topic not in TOPICS:
-        raise ValueError('유효한 대화 주제를 선택하세요.')
-    # 새 화면의 예시 질문과 같은 검색·답변 경로를 사용합니다.
     return free_reply(TOPICS[topic][1], evidence, context)
 
 def free_reply(question, evidence, context, history=None, workflow=None):
     from agents.report_writer import is_draft_request, report_reply
     if is_draft_request(question):
         return report_reply(context, workflow)
-    messages = [{'role': m.get('role'), 'content': m.get('content', m.get('text', ''))}
-                for m in (history or [])[-20:] if isinstance(m, dict)]
-    messages.append({'role': 'user', 'content': question})
-    messages = [{'role': m.get('role'), 'content': m.get('content', m.get('text', ''))}
-                for m in (history or [])[-20:] if isinstance(m, dict)]
+    messages = []
+    # 예전 화면의 text 항목도 현재 챗봇의 content 항목으로 바꿔 전달합니다.
+    for message in (history or [])[-20:]:
+        if isinstance(message, dict):
+            messages.append({
+                'role': message.get('role'),
+                'content': message.get('content', message.get('text', '')),
+            })
     messages.append({'role': 'user', 'content': question})
     return complete_reply(messages, context)

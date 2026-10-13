@@ -17,10 +17,13 @@ NEEDS = {
 
 
 def context_key(user, context):
-    return json.dumps([user['id'], context['city'], context['code'], context['month'], context['age'], context['sex']], ensure_ascii=False)
+    """담당자·동·월·연령·성별이 다르면 별도의 검토 기록으로 저장합니다."""
+    fields = [user['id'], context['city'], context['code'], context['month'], context['age'], context['sex']]
+    return json.dumps(fields, ensure_ascii=False)
 
 
 def review(user, context, body=None):
+    """body가 있으면 검토 메모를 저장하고, 없으면 기존 메모를 읽습니다."""
     STORE.parent.mkdir(parents=True, exist_ok=True)
     with closing(sqlite3.connect(STORE)) as conn, conn:
         conn.execute('CREATE TABLE IF NOT EXISTS group_reviews (identity TEXT PRIMARY KEY, payload TEXT NOT NULL)')

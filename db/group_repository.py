@@ -101,17 +101,29 @@ def build_snapshot(source_dir=ROOT / 'data/processed'):
             values = part[columns].sum().to_numpy(dtype=float)
             if kind == 'wkdy_pop':
                 denominator = float(values.mean())
-                entry['weekdays'] = [dict(label=d, value=float(v), index=float(v / denominator * 100) if denominator else None) for d, v in zip(DAYS, values)]
+                entry['weekdays'] = activity_values(DAYS, values, denominator)
                 entry['weekday_points'] = len(part)
             else:
                 denominator = float(values.max())
-                entry['hours'] = [dict(label=f'{h}시', value=float(v), index=float(v / denominator * 100) if denominator else None) for h, v in enumerate(values)]
+                labels = [f'{hour}시' for hour in range(len(values))]
+                entry['hours'] = activity_values(labels, values, denominator)
                 entry['hour_points'] = len(part)
     result = dict(version=VERSION, run_id=identity, source_files=hashes, months=sorted(age.month.unique()),
                   districts=[dict(code=k, name=v) for k, v in names.items()], ages=AGES, sexes=SEXES,
                   groups=groups, activity=list(activity.values()),
                   mapping='BLOCK_CD 앞 7자리 → shared/data/flow_region_codes.csv (강남구 22동)',
                   unit='원자료 유동량', note='추정 유동량의 공간 집계이며 고유 인원·거주 인구·고립 인구가 아닙니다.')
+    return result
+
+
+def activity_values(labels, values, denominator):
+    """요일은 평균=100, 시간대는 최대=100으로 표시합니다. 기준이 0이면 지수는 비웁니다."""
+    result = []
+    for label, value in zip(labels, values):
+        index = None
+        if denominator:
+            index = float(value / denominator * 100)
+        result.append(dict(label=label, value=float(value), index=index))
     return result
 
 
@@ -145,30 +157,51 @@ def load_snapshot():
 
 
 def catalogue(city, month, snapshot=None):
+    """선택 월의 그룹 목록을 복사하여 캐시 원본이 화면 처리로 바뀌지 않게 합니다."""
     data = snapshot if snapshot is not None else load_snapshot()
-    groups = [row for row in data['groups'] if row['month'] == month] if city == '강남구' else []
+    groups = []
+    if city == '강남구':
+        for row in data['groups']:
+            if row['month'] == month:
+                groups.append(row)
     return dict(source='DB1 · 집단별 유동인구', runId=data['run_id'], months=data['months'] if city == '강남구' else [], ages=AGES, sexes=SEXES,
                 groups=deepcopy(groups), districts=data['districts'] if city == '강남구' else [],
                 note=data['note'], mapping=data['mapping'], telecomAvailable=False)
 
 
 def group_detail(context, snapshot=None):
+    """같은 연령·성별의 월별 추이, 다른 동 비교, 선택 동의 구성비를 나눠 조회합니다."""
     data = snapshot if snapshot is not None else load_snapshot()
     if context.get('city') != '강남구' or context.get('age') not in AGES or context.get('sex') not in SEXES:
         raise ValueError('유효한 지역·연령대·성별을 선택하세요.')
     code = str(context.get('code', ''))
     if not re.fullmatch(r'11230\d{2}', code):
         raise ValueError('행정동 코드가 올바르지 않습니다.')
-    series = [r for r in data['groups'] if r['code'] == code and r['age'] == context['age'] and r['sex'] == context['sex'] and r['month'] <= context['month']]
-    current = next((r for r in series if r['month'] == context['month']), None)
+    series = []
+    peers = []
+    composition = []
+    current = None
+    for row in data['groups']:
+        same_group = row['age'] == context['age'] and row['sex'] == context['sex']
+        same_month = row['month'] == context['month']
+        if row['code'] == code and same_group and row['month'] <= context['month']:
+            series.append(row)
+            if same_month and current is None:
+                current = row
+        if same_month and same_group:
+            peers.append(row)
+        if same_month and row['code'] == code:
+            composition.append(row)
     if current is None:
         raise ValueError('선택한 집단·월의 자료가 없습니다.')
-    peers = [r for r in data['groups'] if r['month'] == context['month'] and r['age'] == context['age'] and r['sex'] == context['sex']]
-    composition = [r for r in data['groups'] if r['month'] == context['month'] and r['code'] == code]
     regional = next((r for r in data['activity'] if r['month'] == context['month'] and r['code'] == code), {})
     by_month = {r['month']: r for r in series}
-    timeline = [deepcopy(by_month.get(p.strftime('%Y-%m'), {'month': p.strftime('%Y-%m'), 'mean': None}))
-                for p in pd.period_range(min(by_month), context['month'], freq='M')]
+    # 자료가 없는 중간 월도 남겨 그래프가 누락 구간을 건너 이어지지 않게 합니다.
+    timeline = []
+    for period in pd.period_range(min(by_month), context['month'], freq='M'):
+        month = period.strftime('%Y-%m')
+        row = by_month.get(month, {'month': month, 'mean': None})
+        timeline.append(deepcopy(row))
     return dict(current=deepcopy(current), series=timeline,
                 peers=deepcopy(peers), composition=deepcopy(composition), activity=deepcopy(regional),
                 source='DB1 · age_pop / wkdy_pop / time_pop', runId=data['run_id'],

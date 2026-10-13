@@ -1,14 +1,13 @@
-"""지역 협업 기록과 체험 피드백. 기존 업무/보고서를 변경하지 않습니다."""
+"""지역 협업 기록(검토·후속 조치). 기존 업무/보고서를 변경하지 않습니다."""
 import json
-import sqlite3
 from datetime import date
 from db.mission_store import connection, timestamp
 
 
 def scope(context):
     user = context['user']
-    return json.dumps([user['id'] if user.get('trial') else 'team',
-                       context['city'], context['district'], context['month']], ensure_ascii=False)
+    # 기록은 같은 지역 담당자가 함께 봅니다. 'team'은 기존 저장 기록과 같은 키를 유지하기 위한 값입니다.
+    return json.dumps(['team', context['city'], context['district'], context['month']], ensure_ascii=False)
 
 
 def load(context):
@@ -57,27 +56,3 @@ def save(context, body):
         result = fields | {'version': old['version'] + 1, 'history': old['history'] + [event]}
         db.execute('INSERT OR REPLACE INTO experience VALUES (?,?)', (scope(context), json.dumps(result, ensure_ascii=False)))
         return result
-
-
-def feedback(user, body):
-    message = body.get('message', '')
-    kind = body.get('kind')
-    if not isinstance(message, str) or not 1 <= len(message.strip()) <= 2000:
-        raise ValueError('의견을 1~2,000자로 입력하세요.')
-    if kind not in {'이해하기 어려움', '기능 오류', '추가 요구'}:
-        raise ValueError('의견 종류를 선택하세요.')
-    page = body.get('page', '')
-    if not isinstance(page, str) or len(page) > 80:
-        raise ValueError('화면 정보가 유효하지 않습니다.')
-    with connection() as db:
-        db.execute('CREATE TABLE IF NOT EXISTS experience_feedback (id INTEGER PRIMARY KEY, actor TEXT, kind TEXT, page TEXT, message TEXT, created_at TEXT)')
-        db.execute('INSERT INTO experience_feedback(actor,kind,page,message,created_at) VALUES (?,?,?,?,?)',
-                   (user['id'], kind, page, message.strip(), timestamp()))
-    return {'saved': True}
-
-
-def feedback_list():
-    with connection() as db:
-        db.execute('CREATE TABLE IF NOT EXISTS experience_feedback (id INTEGER PRIMARY KEY, actor TEXT, kind TEXT, page TEXT, message TEXT, created_at TEXT)')
-        db.row_factory = sqlite3.Row
-        return [dict(row) for row in db.execute('SELECT * FROM experience_feedback ORDER BY id DESC LIMIT 200')]

@@ -136,17 +136,10 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
         const badge = document.createElement('span');
         badge.className = 'vector-priority-number';
         badge.textContent = String(priority + 1);
-        const badge = document.createElement('span');
-        badge.className = 'vector-priority-number';
-        badge.textContent = String(priority + 1);
-        const label = document.createElement('span');
         const name = document.createElement('b');
         name.textContent = region.name;
-        const note = document.createElement('small');
-        note.textContent = `${region.status} · ${region.count}개 지표`;
-        label.append(name, note);
-        button.append(badge, label);
         button.title = `${region.name} · ${region.status} · 지표 ${region.count}개`;
+        button.append(badge, name);
       } else button.textContent = region.name;
       button.addEventListener('click', (event) => {
         event.stopPropagation();
@@ -166,10 +159,7 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
       });
       ordered.forEach(({ button, name, priority }) => {
         const isSelected = name === latest.current.selected;
-        const threshold = (initialCamera.current?.zoom || 10) + 0.7;
-        const show = flat || priority >= 0 || isSelected || map.getZoom() > threshold ||
-          /압구정|청담|신사|논현1|역삼1|대치1|도곡1|수서|세곡|소양|신북|동면|동내|남산|서면/.test(name);
-        button.hidden = !show;
+        button.hidden = false;
         button.classList.toggle('selected', isSelected);
         button.setAttribute('aria-pressed', String(isSelected));
         const box = button.getBoundingClientRect();
@@ -178,17 +168,12 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
         placed.push(box);
       });
     };
-      });
-    };
     updateLabels();
     map.on('zoomend', updateLabels);
     map.on('moveend', updateLabels);
     return () => {
       map.off('zoomend', updateLabels);
       map.off('moveend', updateLabels);
-      markersRef.current.forEach(({ marker }) => marker.remove());
-      markersRef.current = [];
-    };
       markersRef.current.forEach(({ marker }) => marker.remove());
       markersRef.current = [];
     };

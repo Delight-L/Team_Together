@@ -1,6 +1,6 @@
 # 사회적 고립 위험신호 탐지 AI Agent
 
-> **React 브랜치 실행:** 이 브랜치의 기본 화면은 React입니다. `frontend`에서 의존성 설치 및 빌드 후 `python main.py`로 실행합니다. [설치 및 실행](#최초-설치)와 [팀원 수정·오류 확인 가이드](docs/React_팀원_수정_가이드.md)를 먼저 확인하세요.
+> **실행:** `frontend`에서 의존성 설치·빌드 후 `python main.py`로 실행합니다. [실행 방법](#13-실행-방법)을 먼저 확인하세요.
 
 > **2026 빅콘테스트 · AI데이터 활용 분야**
 >
@@ -443,66 +443,15 @@ DB1 / DB2 업데이트
 
 ---
 
-## 13. 현재 코드 구조
+## 13. 실행 방법
 
-```text
-main.py                       실행 명령 라우팅
-frontend/                     현재 React 화면·Vite 개발 서버
-webapp/                       React용 Python HTTP API
-shared/                       공용 시연 계정·보고서·지도 데이터
-chatbot/                      로컬 안내와 선택적 AI 호출
-agents/                       지역·위험 분석·사업 매칭
-preprocessing/                지역 유형·행동자료 전처리
-db/                           연결·분석 저장소·업무 기록
-ci/                           브랜드 원본과 보미 이미지
-docs/                         설계·운영 문서
-```
+### 준비물
 
-React API의 계정·보고서·지도는 `shared`에서 가져옵니다. DB 조회·저장은 `db`, AI 설명은 `chatbot.service`, 사업 매칭은 `agents.service_matching`이 담당합니다.
+- Python 3 가상환경(`.venv`), Node.js 22.12 이상, pnpm(`npm install -g pnpm`)
+- PostgreSQL 접속 정보: 루트에 `.env`를 만들고 `.env.example`을 참고해 `DB_HOST`, `DB_USER`, `DB_PASSWORD` 등을 넣습니다. `.env`는 Git에 올리지 않습니다.
+- (선택) `OPENAI_API_KEY`: 보미의 AI 해석·AI 대화에 사용합니다. 없으면 데이터 근거 안내와 자료 검색으로만 답합니다.
 
-## 14. 구현 현황과 현재 업무 흐름
-
-앞의 전체 아키텍처와 Agent 역할은 목표 설계이며, 모든 ML/DL 모델과 Supervisor가 구현된 상태를 뜻하지 않습니다. 현재 실행 경로는 다음과 같습니다.
-
-```mermaid
-flowchart LR
- A[원천 자료] --> B[전처리]
- B --> C[Analysis2 통계 탐지]
- C --> D[DB1 결과 검사·반영]
- D --> E[종합 브리핑·지역 지도]
- E --> F[지역 상세 팝업]
- F --> G[담당자 근거 확인]
- G --> H[DB2 사업 조건 검토]
- H --> I[Word 보고서 저장]
- G --> J[선택적 AI 질의]
- J --> G
-```
-
-지도 높이는 장식이며 위험도 수치가 아닙니다. 지역 클릭은 저장된 근거를 보여주고, 팝업의 업무 시작 버튼부터 업무 기록을 생성합니다. 과거 비교 이력이 부족하면 판단을 보류합니다. 기본 메뉴·지도·브리핑·로컬 안내는 LLM 토큰을 소비하지 않습니다. AI 호출을 켜고 질의를 전송한 경우에만 모델 호출을 시도합니다.
-
-## 15. Team
-
-**SeSAC 08 최종프로젝트**
-
-사회적 고립 예방 및 대응을 위한 AI Agent 개발
-
----
-
-
-이 브랜치는 React + Vite 화면과 Python HTTP API를 사용합니다. Python 전처리·Analysis2·챗봇·사업 매칭·SQLite 업무 기록은 기존 모듈을 재사용합니다. 서버는 로컬 시연용이며 `127.0.0.1`에만 바인딩합니다.
-
-## 폴더 구분
-
-- `frontend/`: 현재 React 화면과 Vite 개발 서버
-- `webapp/`: React용 Python HTTP API
-- `shared/`: React API에서 사용하는 시연 계정, 보고서 생성, 지도 경계 데이터
-- `db/`, `agents/`, `chatbot/`, `preprocessing/`: 기존 업무 저장·분석·AI·전처리 기능
-
-현재 화면을 수정할 때는 `frontend/`와 `webapp/`를 확인하세요. 공용 지도 파일은 `shared/data/map_boundaries.json`, 보고서 생성은 `shared/report.py`, 시연 계정은 `shared/accounts.py`입니다.
-
-## 최초 설치
-
-프로젝트 루트에서 Python 가상환경을 준비한 후:
+### 처음 한 번 설치
 
 ```powershell
 .venv/Scripts/python.exe -m pip install -r requirements.txt
@@ -510,77 +459,96 @@ cd frontend
 pnpm install --frozen-lockfile
 pnpm run build
 cd ..
+```
+
+### 실행
+
+```powershell
 .venv/Scripts/python.exe main.py
 ```
 
-Node.js 22.12 이상을 권장합니다. 의존성 설치는 pnpm으로 통일합니다. pnpm으로 설치된 `node_modules`에서 `npm install`을 실행하면 `workspace:*` 오류가 발생할 수 있습니다. pnpm lockfile을 포함하며 esbuild의 설치 스크립트만 허용합니다. pnpm이 없다면 `npm install -g pnpm`으로 먼저 설치하세요.
+브라우저에서 http://127.0.0.1:8503 을 열고 `gangnam01 / demo1234`(강남구 담당자) 또는 `admin / admin1234`(관리자)로 로그인합니다. 시연용 계정이며 실제 인증이 아닙니다. 처음 로그인하면 단계별 사용 안내가 열리고, 오른쪽 위 `?` 버튼으로 다시 볼 수 있습니다.
 
-브라우저에서 http://127.0.0.1:8503 을 엽니다. 강남구 시연 계정은 `gangnam01 / demo1234`, 관리자는 `admin / admin1234`입니다. 춘천시는 실제 Analysis2 자료 미연결 상태를 표시합니다. 시연 계정은 실제 서비스 인증이 아닙니다.
+화면 코드를 고칠 때는 터미널을 하나 더 열어 `frontend`에서 `pnpm run dev`를 실행하고 http://127.0.0.1:5173 에서 확인합니다. 8503 주소는 마지막 빌드 결과를 보여 주므로, 수정 후 `pnpm run build`를 다시 해야 반영됩니다.
 
-## 반드시 전달할 데이터
+### 화면이 읽는 자료
 
-기준 분석 CSV 일부는 Git에 포함되어 있습니다. 새 PC에서는 아래 파일이 실제로 있는지 확인하고, Git에서 제외된 원본 ZIP/XLSX·추가 결과·개인 업무 기록은 별도로 전달하세요.
+| 화면 | 자료 | 위치 |
+|---|---|---|
+| 지역 현황·지역 분석·보미 «이 화면 분석» | 동별 통화·문자·이동 분석 결과 | DB `db1.analysis2_detections` (없으면 `agents/regional_analysis/Analysis2/outputs/`의 CSV) |
+| 종합 현황 관찰 그룹 | 연령·성별 유동인구 집계 | DB `db1.group_flow_snapshots` (`python -m db.group_repository --build --publish`로 생성) |
+| 사업 매칭 검토 | 지자체 복지사업 목록 | DB `db2` (`python -m db.collect_welfare`로 수집) |
+| 보미 «복지사업 찾기» | 팀 정리 복지사업 자료 | `chatbot/welfare/data/*.json` |
+| 업무 기록·보고서 | 담당자 업무 기록 | 각 PC의 `db/runtime/mission_records.sqlite3` (Git 제외, PC마다 따로 저장) |
 
-- `agents/regional_analysis/Analysis2/outputs/gangnam_analysis2_detection_2022_2025.csv` — 화면·챗봇에 직접 필요한 분석 결과
-- `agents/regional_analysis/Analysis2/outputs/`의 나머지 분석 결과 CSV
-- `preprocessing/regional_features/outputs/`의 기준 feature table과 결과 CSV
-- `agents/regional_analysis/Analysis2/gangnam_analysis2_feature_table_2022_2025.csv`
+`.env`의 `WELFIND_DATA_SOURCE`로 분석 결과를 어디서 읽을지 정합니다: `auto`(DB 우선, 실패 시 CSV), `db`, `csv`. 팀 공용 DB 구축은 [오라클 클라우드 DB 구축](docs/오라클_클라우드_DB_구축.md)을 참고하세요.
 
-원본 재생성이 필요하면 기존과 같이 `python main.py --preprocess --full`, `python main.py --analysis --no-download`를 실행합니다. 원본 ZIP/XLSX와 reference 자료가 필요합니다. 화면 실행 시 자동 전처리하거나 다운로드하지 않습니다.
+## 14. 화면 구성
 
-## 개발 실행
+| 메뉴 | 하는 일 |
+|---|---|
+| 종합 현황 | 이번 달 후보 동의 연령·성별 그룹 브리핑. 왼쪽 «조사 파일» 탭에서 그룹을 고르고, 오른쪽 보미에게 질문합니다. |
+| 지역 현황 | 22개 동의 판정 표와 지도. 동을 고르면 왼쪽에 근거가 열립니다. |
+| 지역 분석 | «상세 근거»(지표별 표·추이)와 «기간·지역 비교»(최대 4개 동) 탭. ① 분석 확인 저장 → ② 근거 검토 완료로 업무를 시작합니다. |
+| 사업 매칭 검토 | 확인한 필요에 맞는 지자체 복지사업을 찾아 검토 기록을 남깁니다. |
+| 업무 기록 | 저장한 지역 업무 목록과 검토·후속 조치 기록 |
+| 보고서 작성 | 분석과 사업 검토 결과로 Word 보고서 초안을 만들고 저장합니다. |
+| 보미에게 질문 | 모든 메뉴에서 같은 챗봇. «이 화면 분석»은 지금 보는 동·그룹의 근거를, «복지사업 찾기»는 필요한 지원과 담당 기관을 안내합니다. |
+| 데이터 관리·활동 이력 | 관리자 전용. 분석 자료 검사·반영과 반영 이력 |
 
-터미널 1: 프로젝트 루트에서 `.venv/Scripts/python.exe main.py`
+판정(신규·연속·변화 후보 등)은 동 단위 지표가 평소 흐름과 다른지 본 결과이며, 개인의 고립 여부를 판정하지 않습니다.
 
-터미널 2: `frontend`에서 `pnpm run dev`
+## 15. 폴더 구조
 
-http://127.0.0.1:5173 에서 화면을 개발합니다. Vite가 API와 브랜드 이미지를 Python 서버(8503)로 전달합니다. 빌드 후에는 Python 서버 하나가 화면과 API를 함께 제공합니다. 프런트엔드 변경 후 빌드를 다시 실행하세요.
+```text
+main.py                     실행 시작점 (화면 서버 + 분석 도구 실행)
+webapp/server.py            화면이 호출하는 Python API
+frontend/src/               React 화면
+  App.jsx                   메뉴·화면 전환·지역/기준월 공유
+  GroupDashboard.jsx        종합 현황(조사 파일·그룹 브리핑)
+  Briefing.jsx, VectorMap.jsx  지역 현황 표·지도
+  Experience.jsx            지역·기간 비교, 검토·후속 조치, 데이터 기준
+  Workspace.jsx             업무 기록, 데이터 관리, 활동 이력
+  BomiChat.jsx              보미 챗봇
+  GuideTour.jsx             처음 방문 단계별 안내
+db/                         DB 연결, 분석 결과 조회, 업무 기록, 보미 분석 설명
+chatbot/welfare/            보미 «복지사업 찾기» 답변(자료 검색·AI 대화)
+agents/                     보고서 작성, 사업 매칭, 분석(Analysis2), 위험 분석
+preprocessing/              원본 자료 전처리 (cleaning.py: 공모전 제공 데이터 전처리)
+shared/                     시연 계정, Word 보고서, 지도 경계
+deploy/oracle/              팀 공용 DB 구축 스크립트
+docs/                       DB2 수집, 보고서 서식, 공용 DB 구축 문서
+```
 
-## 화면과 동작
+### 분석 자료 다시 만들기
 
-- 메인 화면: 뷰포트 높이 안에 요약·지도·상세·주요 변화를 배치합니다. 본문 전체는 스크롤하지 않습니다. 긴 상세와 채팅 내용은 패널 내부에서 스크롤합니다.
-- 종합 현황: 요약 카드·입체 지도·후보 핀·주요 변화를 표시합니다. 지역 현황은 전체 동 검색·상태 필터·정렬과 평면 지도 중심으로 구성합니다.
-- 지역 상세: 동 클릭 시 지도 내부 옆에 REGION INSIGHT가 열립니다. 선택 지역은 챗봇과 공유합니다. 로고를 클릭하면 메뉴를 접고 펼치며, 접힌 상태에는 보미 얼굴이 표시됩니다.
-- 챗봇: 지역별 업무 진행 영역을 제거했습니다. 지도/분석/챗봇에서 지역과 기준월을 공유하며, 응답의 ‘분석 근거 보기’로 분석 화면을 엽니다. 지역·월 변경 시 이전 질의 요청을 취소하고 대화를 초기화합니다.
-- 보미: 평소에는 정지 이미지, 답변 처리 중에만 전달받은 동작 GIF를 표시합니다. 사용자 OS의 동작 줄이기 설정을 따릅니다. 답변은 완성 후 표시하며 실제 토큰 스트리밍은 아직 사용하지 않습니다.
-- 업무: 분석 확인 저장 → 근거 검토 완료 → 실제 DB2 사업 조회·검토 기록 → Word 초안 생성·다운로드 확인 → 최종 저장. 기존 SQLite의 단계 검증을 재사용합니다.
-- 업무 현황: 담당자의 저장된 지역·월별 업무를 다시 열어 진행합니다. 챗봇 안의 진행 영역은 제거하고 독립 메뉴로 제공합니다.
-- 관리자 데이터: CSV/XLSX 검사·미리보기·DB1 반영, DB1 활동 이력 조회를 연결했습니다. DB1 반영은 화면에 사용하는 저장소 CSV를 자동 교체하지 않습니다.
-- 기본 주제 버튼은 AI 호출 없이 저장 자료와 안내문으로 응답합니다. 자유 입력은 총괄 AI가 지역 분석·사업 매칭·보고서·업무 안내 에이전트를 선택하고 담당 에이전트가 답변합니다. 자유 입력에만 Gemini를 호출하며 `.env`의 `GEMINI_API_KEY`, `GEMINI_MODEL`이 필요합니다. DB2 조회에는 기존 DB 연결 설정이 필요합니다. 키는 프런트엔드에 노출하지 않습니다.
+프로젝트 루트에서 실행합니다. 원본 ZIP/XLSX는 Git에 없으므로 따로 받아 두어야 합니다.
 
-## 현재 구현 범위
+```powershell
+python main.py --preprocess --no-download               # 월별 행동 자료 전처리
+python main.py --preprocess-analysis1 --raw-dir "preprocessing/regional_types/raw_data"  # 지역 유형(Analysis1) 전처리
+python main.py --analysis --no-download                 # Analysis2 변화 탐지
+python main.py --risk --input "월별행동.csv"             # 위험 분석
+python -m db.collect_welfare --help                      # 복지사업(DB2) 수집
+```
 
-기존 기본 메뉴의 React 메인 화면·지역 분석·업무 현황·사업 검토·보고서·챗봇·관리자 데이터 반영·DB1 활동 이력을 연결했습니다. 별도 도구의 전년 동월 현장 대응 화면은 기본 메뉴와 별개이며 이 React 화면에 포함하지 않습니다. 이 브랜치는 React 화면만 제공합니다.
+DB2 정기 수집은 [DB2 지자체복지 정기 수집](docs/DB2_지자체복지_정기수집.md)을 참고하세요.
 
-기존 업무 저장 DB는 `db/runtime/mission_records.sqlite3`이며 Git에서 제외합니다. 새 PC에서 개인 업무 기록이 필요하면 별도 전달하세요. React 챗봇 대화는 화면 세션 안에서만 유지되며 업무 질의 기록으로 자동 저장하지 않습니다.
-
-공유 상태 설계는 [React 공식 문서](https://react.dev/learn/sharing-state-between-components)를 따릅니다.
-
-팀원이 수정할 위치와 오류 확인 순서는 [React 팀원 수정 가이드](docs/React_팀원_수정_가이드.md)에 정리했습니다. 핵심 파일에 한국어 설명 주석을 넣었습니다.
-
-## 검증
+## 16. 검증
 
 ```powershell
 cd frontend
+node --test tests/*.test.mjs
 pnpm run build
 cd ..
-.venv/Scripts/python.exe -m unittest discover -s webapp/tests -v
+.venv/Scripts/python.exe -m unittest discover -s webapp/tests
+.venv/Scripts/python.exe -m unittest discover -s chatbot/tests -t .
 ```
 
-API 검사는 실제 분석 CSV를 읽고 임시 SQLite DB에서 로그인·지역 접근·챗봇 근거·업무 순서·Word 초안과 최종 저장을 검사합니다. DB2 경계는 테스트 사업으로 대체하며 실제 DB 쓰기와 Gemini 호출은 하지 않습니다.
+서버 테스트는 실제 분석 결과를 읽고 임시 SQLite에서 로그인·지역 접근·보미 답변·업무 순서·Word 보고서 저장을 검사합니다. 실제 DB 쓰기와 외부 AI 호출은 하지 않습니다. 화면을 브라우저로 직접 조작하는 검사는 `node tests/draft-browser.mjs`이며 Playwright와 Chrome이 필요합니다.
 
+## 17. Team
 
-## Python 도구
+**SeSAC 08 최종프로젝트**
 
-프로젝트 루트에서 실행합니다.
-
-```powershell
-python main.py --chatbot-cli
-python main.py --analysis --no-download
-python main.py --preprocess-analysis1 --raw-dir "원본폴더"
-python main.py --preprocess --no-download
-python main.py --risk --input "월별행동.csv"
-python -m db.collect_welfare --help
-```
-
-[Python 모듈 안내](docs/Python_모듈_안내.md) · [DB2 수집 안내](docs/DB2_지자체복지_정기수집.md)
+사회적 고립 예방 및 대응을 위한 AI Agent 개발

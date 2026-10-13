@@ -46,3 +46,12 @@
   .bomi-chat { padding: 14px; }
 }
 .bomi-chat.panel:not(.expanded) .bomi-chat-head small { white-space: normal; }
+/* 답변 작성 중 표시 */
+.bomi-typing { display: flex; align-items: center; gap: 10px; }
+.bomi-typing img { width: 40px; height: 40px; object-fit: contain; flex-shrink: 0; }
+.bomi-typing p { color: #4b6488; }
+.bomi-dots { display: inline-block; width: 1.4em; text-align: left; }
+.bomi-dots::after { content: '.'; animation: bomi-dots 1.2s steps(1, end) infinite; }
+.bomi-dots.still::after { content: '…'; animation: none; }
+@keyframes bomi-dots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
+@media (prefers-reduced-motion: reduce) { .bomi-dots::after { content: '…'; animation: none; } }

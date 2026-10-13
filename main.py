@@ -13,7 +13,6 @@ def main():
         "--preprocess": ROOT_DIR / "preprocessing" / "regional_features" / "main.py",
         "--analysis": ANALYSIS_DIR / "main.py",
         "--risk": ROOT_DIR / "agents" / "risk_analysis" / "main.py",
-        "--chatbot-cli": ROOT_DIR / "chatbot" / "data_assistant" / "main.py",
     }
     if arguments and arguments[0] in jobs:
         script = jobs[arguments[0]]

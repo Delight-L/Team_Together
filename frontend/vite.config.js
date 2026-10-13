@@ -7,5 +7,5 @@ export default defineConfig({
     if (id.includes('node_modules') && id.includes('leaflet')) return 'leaflet';
     if (id.includes('node_modules')) return 'vendor';
   } } } },
-  server: { proxy: { '/api': 'http://127.0.0.1:8503', '/brand': 'http://127.0.0.1:8503' } },
+  server: { port: 5173, strictPort: true, proxy: { '/api': 'http://127.0.0.1:8503', '/brand': 'http://127.0.0.1:8503' } },
 });

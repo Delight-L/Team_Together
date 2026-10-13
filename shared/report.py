@@ -6,7 +6,7 @@ from pathlib import Path
 from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 from lxml import etree
-from agents.report_writer import SECTIONS, generate_draft, validate_content
+from agents.report_writer import SECTIONS, generate_draft, validate_content, report_source_label
 
 TEMPLATE = Path(__file__).resolve().parents[1] / 'docs' / '약식보고서_서식_보고서.docx'
 NS = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
@@ -87,7 +87,7 @@ def build_report(context, rows, author, department, opinion, source_note, workfl
                               preferred_font='휴먼명조' if lower else None)
                 body.append(paragraph)
         paragraph = deepcopy(note)
-        _replace_text(paragraph, '     ※ 자료 출처: ' + source_note)
+        _replace_text(paragraph, '     ※ 자료 출처: ' + report_source_label(source_note))
         body.append(paragraph)
         if workflow.get('is_demo'):
             paragraph = deepcopy(note)

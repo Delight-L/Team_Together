@@ -6,4 +6,3 @@
 
 Analysis2는 과거 최소 12회 이력으로 Robust Z를 계산합니다. 전화·문자 또는 평일·휴일 이동의 Z가 모두 -2.0 이하이면 묶음 신호로 표시합니다. 탐지 결과와 Evidence Card는 `Analysis2/outputs`에 저장합니다. root `requirements.txt`로 의존성을 준비합니다.
 
-루트 기준 `python main.py --chatbot-cli`로 보관된 결과를 질문할 수 있습니다. 기본 메뉴는 AI를 호출하지 않습니다.

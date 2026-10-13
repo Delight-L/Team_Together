@@ -2041,9 +2041,6 @@ tr:last-child td {
 /* 복지이음: 기존 패널 크기와 지도 공유 상태를 유지합니다. */
 .welfare-status { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; color:#64748b; font-size:10px; }
 .welfare-status small { font-size:10px; }
-/* 복지이음: 기존 패널 크기와 지도 공유 상태를 유지합니다. */
-.welfare-status { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; color:#64748b; font-size:10px; }
-.welfare-status small { font-size:10px; }
 .welfare-chat .chat-messages { padding-top:12px; }
 .welfare-chat .welcome h3 { font-size:20px; color:#1e293b; }
 .welfare-chat .welfare-notice { border-left:3px solid #f59e0b; padding-left:10px; margin-top:18px; }
@@ -2053,6 +2050,7 @@ tr:last-child td {
 .welfare-sources p { margin:5px 0; color:#64748b; }
 .welfare-sources small { color:#956100; }
 .welfare-chat .chat-input button { white-space:nowrap; min-width:38px; }
+
 /* 노트북처럼 세로가 짧은 창: 스크롤 없이 하단 안내까지 보이도록 여백과 크기를 줄입니다. */
 @media (max-height: 820px) and (min-width: 601px) {
   .login-hero {
