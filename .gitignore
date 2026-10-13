@@ -74,3 +74,6 @@ preprocessing/**/outputs/validation_report.json
 DB1/outputs/runtime/
 DB1/config/db1_config.local.json
 !preprocessing/regional_types/raw_data/gangnam_db1_features_2025H2.csv
+
+# 검토용 스크린샷·생성 이미지 (로컬 보관)
+output/
