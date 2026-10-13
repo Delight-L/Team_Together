@@ -16,7 +16,7 @@ def main():
     }
     if arguments and arguments[0] in jobs:
         script = jobs[arguments[0]]
-        path_flags = {"--input", "--context", "--output-dir", "--raw-dir", "--config", "--output", "--weather", "--compare"}
+        path_flags = {"--input", "--context", "--output-dir", "--raw-dir", "--config", "--output", "--weather", "--compare", "--db", "--sqlite"}
         for index in range(1, len(arguments)-1):
             if arguments[index] in path_flags:
                 arguments[index+1] = str(Path(arguments[index+1]).resolve())

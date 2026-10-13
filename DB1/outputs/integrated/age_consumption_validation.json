@@ -1,0 +1,14 @@
+{
+  "link_version": "a23_age_link_v1",
+  "monthly_rows": 660,
+  "detail_rows": 3300,
+  "quarter_rows": 220,
+  "behavior_signal_rows": 10,
+  "signal_with_local_social_market_decline": 10,
+  "signal_with_local_social_market_below_prior_min": 10,
+  "signal_with_social_district_card_decline": 10,
+  "known_publication_market_rows": 0,
+  "known_publication_card_rows": 0,
+  "confirmed_isolation": false,
+  "signal_with_same_social_domain_market_card_decline": 9
+}

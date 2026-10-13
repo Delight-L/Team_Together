@@ -1,0 +1,13 @@
+# Runtime caches and temporary files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+*.tmp
+*.log
+# Local backup copies are outside operational DB1
+outputs/backups/
+# SQLite transient files; preserve the main database
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal

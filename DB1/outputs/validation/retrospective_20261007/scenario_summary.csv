@@ -1,0 +1,12 @@
+﻿scenario,rows,communication,mobility,combined,communication_assessable,mobility_assessable,common_calibration_unavailable,retained_reference_signals,new_signals,jaccard_with_reference
+sensitivity_q0.01_cap2,660,6,0,0,660,656,0,6,0.0,0.6
+sensitivity_q0.01_cap2.5,660,3,0,0,660,656,0,3,0.0,0.3
+sensitivity_q0.01_cap3,660,0,0,0,660,656,0,0,0.0,0.0
+sensitivity_q0.025_cap2,660,10,0,0,660,656,0,10,0.0,1.0
+sensitivity_q0.025_cap2.5,660,3,0,0,660,656,0,3,0.0,0.3
+sensitivity_q0.025_cap3,660,0,0,0,660,656,0,0,0.0,0.0
+sensitivity_q0.05_cap2,660,11,0,0,660,656,0,10,1.0,0.9090909090909091
+sensitivity_q0.05_cap2.5,660,3,0,0,660,656,0,3,0.0,0.3
+sensitivity_q0.05_cap3,660,0,0,0,660,656,0,0,0.0,0.0
+window_2023_2025-06,660,6,0,0,660,654,20,6,,
+window_2022_2024-12,660,11,0,0,660,656,20,10,,

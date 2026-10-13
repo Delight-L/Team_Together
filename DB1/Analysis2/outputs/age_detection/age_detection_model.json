@@ -1,0 +1,621 @@
+{
+  "model_version": "a2_age_detection_v1_bd2dbf881a54",
+  "baseline_fingerprint": "69c1232ac4278ba4e24511e0b47e06214e887e2f6f3932b6623053ebed35c225",
+  "settings": {
+    "method": "a2_age_detection_v1",
+    "age_scheme": "service",
+    "baseline_start": "2022-01-01",
+    "baseline_end": "2025-06-01",
+    "detection_start": "2025-07-01",
+    "min_history": 12,
+    "min_valid_population": 200,
+    "min_coverage": 0.8,
+    "min_peer_dongs": 11,
+    "scale": 0.6745,
+    "lower_quantile": 0.025,
+    "threshold_cap": -2.0,
+    "min_calibration_scores": 24
+  },
+  "calibration": [
+    {
+      "scope": "absolute",
+      "age_band": "20s",
+      "metric": "call_contacts",
+      "n_scores": 638,
+      "lower_quantile": -3.073732548613332,
+      "threshold": -3.073732548613332,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "20s",
+      "metric": "text_contacts",
+      "n_scores": 638,
+      "lower_quantile": -3.182278017399246,
+      "threshold": -3.182278017399246,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "20s",
+      "metric": "weekday_move_count",
+      "n_scores": 638,
+      "lower_quantile": -5.009862965905174,
+      "threshold": -5.009862965905174,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "20s",
+      "metric": "weekend_move_count",
+      "n_scores": 638,
+      "lower_quantile": -4.504351910213059,
+      "threshold": -4.504351910213059,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "30s",
+      "metric": "call_contacts",
+      "n_scores": 638,
+      "lower_quantile": -2.067561985202686,
+      "threshold": -2.067561985202686,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "30s",
+      "metric": "text_contacts",
+      "n_scores": 638,
+      "lower_quantile": -2.149062541579695,
+      "threshold": -2.149062541579695,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "30s",
+      "metric": "weekday_move_count",
+      "n_scores": 638,
+      "lower_quantile": -5.133170231307577,
+      "threshold": -5.133170231307577,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "30s",
+      "metric": "weekend_move_count",
+      "n_scores": 638,
+      "lower_quantile": -4.282066499516687,
+      "threshold": -4.282066499516687,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "40s",
+      "metric": "call_contacts",
+      "n_scores": 638,
+      "lower_quantile": -1.569535536393298,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "40s",
+      "metric": "text_contacts",
+      "n_scores": 638,
+      "lower_quantile": -1.931450578448347,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "40s",
+      "metric": "weekday_move_count",
+      "n_scores": 638,
+      "lower_quantile": -5.193220199425646,
+      "threshold": -5.193220199425646,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "40s",
+      "metric": "weekend_move_count",
+      "n_scores": 601,
+      "lower_quantile": -4.129207621775707,
+      "threshold": -4.129207621775707,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "50s",
+      "metric": "call_contacts",
+      "n_scores": 638,
+      "lower_quantile": -1.668236391302717,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "50s",
+      "metric": "text_contacts",
+      "n_scores": 638,
+      "lower_quantile": -1.456027197806674,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "50s",
+      "metric": "weekday_move_count",
+      "n_scores": 638,
+      "lower_quantile": -4.884288598010126,
+      "threshold": -4.884288598010126,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "50s",
+      "metric": "weekend_move_count",
+      "n_scores": 619,
+      "lower_quantile": -4.221913563798374,
+      "threshold": -4.221913563798374,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "60plus",
+      "metric": "call_contacts",
+      "n_scores": 638,
+      "lower_quantile": -1.653175416176119,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "60plus",
+      "metric": "text_contacts",
+      "n_scores": 638,
+      "lower_quantile": -1.142922688182554,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "60plus",
+      "metric": "weekday_move_count",
+      "n_scores": 638,
+      "lower_quantile": -4.992828130782299,
+      "threshold": -4.992828130782299,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "absolute",
+      "age_band": "60plus",
+      "metric": "weekend_move_count",
+      "n_scores": 422,
+      "lower_quantile": -4.439172869938793,
+      "threshold": -4.439172869938793,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "20s",
+      "metric": "call_contacts",
+      "n_scores": 638,
+      "lower_quantile": -2.461845618732929,
+      "threshold": -2.461845618732929,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "20s",
+      "metric": "text_contacts",
+      "n_scores": 638,
+      "lower_quantile": -2.724193392442674,
+      "threshold": -2.724193392442674,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "20s",
+      "metric": "weekday_move_count",
+      "n_scores": 638,
+      "lower_quantile": -2.941928256260177,
+      "threshold": -2.941928256260177,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "20s",
+      "metric": "weekend_move_count",
+      "n_scores": 638,
+      "lower_quantile": -3.332111845732468,
+      "threshold": -3.332111845732468,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "30s",
+      "metric": "call_contacts",
+      "n_scores": 638,
+      "lower_quantile": -3.181159085769172,
+      "threshold": -3.181159085769172,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "30s",
+      "metric": "text_contacts",
+      "n_scores": 638,
+      "lower_quantile": -2.290552044306962,
+      "threshold": -2.290552044306962,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "30s",
+      "metric": "weekday_move_count",
+      "n_scores": 638,
+      "lower_quantile": -2.667550539939692,
+      "threshold": -2.667550539939692,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "30s",
+      "metric": "weekend_move_count",
+      "n_scores": 638,
+      "lower_quantile": -2.478094515400134,
+      "threshold": -2.478094515400134,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "40s",
+      "metric": "call_contacts",
+      "n_scores": 638,
+      "lower_quantile": -2.34055723124169,
+      "threshold": -2.34055723124169,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "40s",
+      "metric": "text_contacts",
+      "n_scores": 638,
+      "lower_quantile": -2.77212571248799,
+      "threshold": -2.77212571248799,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "40s",
+      "metric": "weekday_move_count",
+      "n_scores": 638,
+      "lower_quantile": -3.088093496474347,
+      "threshold": -3.088093496474347,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "40s",
+      "metric": "weekend_move_count",
+      "n_scores": 601,
+      "lower_quantile": -2.81386930486928,
+      "threshold": -2.81386930486928,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "50s",
+      "metric": "call_contacts",
+      "n_scores": 638,
+      "lower_quantile": -2.587794014345761,
+      "threshold": -2.587794014345761,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "50s",
+      "metric": "text_contacts",
+      "n_scores": 638,
+      "lower_quantile": -2.271152415592048,
+      "threshold": -2.271152415592048,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "50s",
+      "metric": "weekday_move_count",
+      "n_scores": 638,
+      "lower_quantile": -2.50919306376428,
+      "threshold": -2.50919306376428,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "50s",
+      "metric": "weekend_move_count",
+      "n_scores": 619,
+      "lower_quantile": -2.944635027112728,
+      "threshold": -2.944635027112728,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "60plus",
+      "metric": "call_contacts",
+      "n_scores": 638,
+      "lower_quantile": -2.698585531671309,
+      "threshold": -2.698585531671309,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "60plus",
+      "metric": "text_contacts",
+      "n_scores": 638,
+      "lower_quantile": -2.497683088292933,
+      "threshold": -2.497683088292933,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "60plus",
+      "metric": "weekday_move_count",
+      "n_scores": 638,
+      "lower_quantile": -2.518873618849732,
+      "threshold": -2.518873618849732,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "local",
+      "age_band": "60plus",
+      "metric": "weekend_move_count",
+      "n_scores": 400,
+      "lower_quantile": -2.776652330833201,
+      "threshold": -2.776652330833201,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "20s",
+      "metric": "call_contacts",
+      "n_scores": 29,
+      "lower_quantile": -3.792222362810922,
+      "threshold": -3.792222362810922,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "20s",
+      "metric": "text_contacts",
+      "n_scores": 29,
+      "lower_quantile": -4.9231630758802,
+      "threshold": -4.9231630758802,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "20s",
+      "metric": "weekday_move_count",
+      "n_scores": 29,
+      "lower_quantile": -4.586492821390961,
+      "threshold": -4.586492821390961,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "20s",
+      "metric": "weekend_move_count",
+      "n_scores": 29,
+      "lower_quantile": -4.32424131014291,
+      "threshold": -4.32424131014291,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "30s",
+      "metric": "call_contacts",
+      "n_scores": 29,
+      "lower_quantile": -1.55853588447462,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "30s",
+      "metric": "text_contacts",
+      "n_scores": 29,
+      "lower_quantile": -2.369438101478908,
+      "threshold": -2.369438101478908,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "30s",
+      "metric": "weekday_move_count",
+      "n_scores": 29,
+      "lower_quantile": -4.890993741287628,
+      "threshold": -4.890993741287628,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "30s",
+      "metric": "weekend_move_count",
+      "n_scores": 29,
+      "lower_quantile": -3.975463724242705,
+      "threshold": -3.975463724242705,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "40s",
+      "metric": "call_contacts",
+      "n_scores": 29,
+      "lower_quantile": -1.230191163546047,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "40s",
+      "metric": "text_contacts",
+      "n_scores": 29,
+      "lower_quantile": -1.460452538022144,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "40s",
+      "metric": "weekday_move_count",
+      "n_scores": 29,
+      "lower_quantile": -4.326709892103754,
+      "threshold": -4.326709892103754,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "40s",
+      "metric": "weekend_move_count",
+      "n_scores": 29,
+      "lower_quantile": -3.899386562675325,
+      "threshold": -3.899386562675325,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "50s",
+      "metric": "call_contacts",
+      "n_scores": 29,
+      "lower_quantile": -0.992673957909937,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "50s",
+      "metric": "text_contacts",
+      "n_scores": 29,
+      "lower_quantile": -0.979800846336299,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "50s",
+      "metric": "weekday_move_count",
+      "n_scores": 29,
+      "lower_quantile": -4.435646946988634,
+      "threshold": -4.435646946988634,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "50s",
+      "metric": "weekend_move_count",
+      "n_scores": 29,
+      "lower_quantile": -3.806777044296681,
+      "threshold": -3.806777044296681,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "60plus",
+      "metric": "call_contacts",
+      "n_scores": 29,
+      "lower_quantile": -1.42166166552253,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "60plus",
+      "metric": "text_contacts",
+      "n_scores": 29,
+      "lower_quantile": -0.857970364076537,
+      "threshold": -2.0,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "60plus",
+      "metric": "weekday_move_count",
+      "n_scores": 29,
+      "lower_quantile": -4.603588318252172,
+      "threshold": -4.603588318252172,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    },
+    {
+      "scope": "common",
+      "age_band": "60plus",
+      "metric": "weekend_move_count",
+      "n_scores": 25,
+      "lower_quantile": -4.370530871325403,
+      "threshold": -4.370530871325403,
+      "calibration_status": "baseline_calibrated_exploratory",
+      "interpretation": "historical lower-tail calibration; not false-positive rate or isolation probability"
+    }
+  ]
+}

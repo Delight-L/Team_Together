@@ -1,8 +1,19 @@
 # 지역 분석 파이프라인
 
-저장소 루트에서 `python main.py --analysis --no-download`로 실행합니다. 신규 공공데이터 다운로드를 포함하려면 `--no-download`를 생략합니다.
+실행점은 `DB1/run_db1.py`와 서비스 반영 어댑터로 연결됩니다.
 
-지역 유형 전처리는 `preprocessing/regional_types`, 월별 행동 전처리는 `preprocessing/regional_features`, 탐지 로직은 이 폴더의 `Analysis2`에 있습니다. 전처리별 raw_data / reference / outputs는 해당 모듈 안에 보관합니다.
+```powershell
+python main.py --analysis --no-download
+python main.py --analysis --publish
+```
 
-Analysis2는 과거 최소 12회 이력으로 Robust Z를 계산합니다. 전화·문자 또는 평일·휴일 이동의 Z가 모두 -2.0 이하이면 묶음 신호로 표시합니다. 탐지 결과와 Evidence Card는 `Analysis2/outputs`에 저장합니다. root `requirements.txt`로 의존성을 준비합니다.
+기본 명령은 전달된 Analysis1 elder v2 / Analysis2 CSV를 검사합니다. `--publish`는
+서비스 DB에 새 실행 버전으로 반영합니다. 원본 SQLite와 과거 실행은 보존합니다.
+신규 반기나 월 분석은 `--command analysis1 --period ...`, `--command analysis2 --month ...`를 사용합니다.
+원천자료 설정과 운영 SQLite를 `--config`, `--db`로 지정할 수 있습니다.
 
+이 폴더의 기존 `Analysis2/reference`와 구 실행기는 과거 결과 재현용으로 보존합니다.
+신규 순차 분석은 `DB1/Analysis2`를 사용합니다. 기존 위험신호를 임의로 재계산하거나
+연간 독거노인 배경자료를 개인 고립 확정값으로 해석하지 않습니다.
+
+상세 실행과 검증 범위는 [DB1 서비스 통합](../../docs/db1-integration.md)을 참고하세요.

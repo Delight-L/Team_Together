@@ -1,0 +1,20 @@
+param(
+    [ValidateSet('initialize','analysis1','analysis1-elder','survey-context','analysis2','analysis2-age','analysis2-age-detect','analysis2-activity','source-semantics','evidence-context','analysis3','scan','watch','export','status')]
+    [string]$Command = 'scan',
+    [string]$Period,
+    [string]$Month,
+    [int]$Interval = 60,
+    [string]$Python = 'python'
+)
+$ErrorActionPreference = 'Stop'
+if (-not (Get-Command $Python -ErrorAction SilentlyContinue)) { throw "Python not found: $Python" }
+if (-not $env:OMP_NUM_THREADS) { $env:OMP_NUM_THREADS = '1' }
+$runnerArgs = @((Join-Path $PSScriptRoot 'run_db1.py'), $Command)
+if ($Period) { $runnerArgs += @('--period', $Period) }
+if ($Month) { $runnerArgs += @('--month', $Month) }
+if ($Command -eq 'watch') { $runnerArgs += @('--interval', "$Interval") }
+Push-Location $PSScriptRoot
+try {
+    & $Python @runnerArgs
+    if ($LASTEXITCODE -ne 0) { throw "DB1 command failed ($LASTEXITCODE)" }
+} finally { Pop-Location }

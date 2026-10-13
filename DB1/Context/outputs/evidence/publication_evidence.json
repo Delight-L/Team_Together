@@ -1,0 +1,303 @@
+{
+  "checked_on": "2026-10-07",
+  "policy": "Dataset opening and current modification dates are not period-specific initial publication dates. Only verified dates enter ctx_publication_registry.",
+  "datasets": [
+    {
+      "dataset": "서울서베이 도시정책지표조사 정보",
+      "url": "https://data.seoul.go.kr/dataList/OA-15564/F/1/datasetView.do",
+      "dataset_opened": "2020-11-25",
+      "current_updated": "2026-04-09",
+      "period_release_verified": false,
+      "note": "연도별 ZIP 수정일: 2022=2024-02-19, 2023=2024-09-26, 2024=2025-09-12, 2025=2026-04-09. 최초 공개일과 구분. 로컬 파일과 공개 ZIP의 버전 일치 미검증."
+    },
+    {
+      "dataset": "행정동단위 29개 통신정보",
+      "url": "https://data.seoul.go.kr/dataList/OA-22267/F/1/datasetView.do",
+      "dataset_opened": "2024-03-06",
+      "current_updated": "2025-12-29",
+      "period_release_verified": false,
+      "note": "월별 파일 수정일을 별도 보존. 페이지 갱신일보다 2025.12 파일 수정일 2026-02-05가 늦음. 따라서 페이지 갱신일 일괄 적용 금지. 현재 보이는 목록은 2025.12까지.",
+      "file_modified_2025": {
+        "01": "2025-03-05",
+        "02": "2025-04-03",
+        "03": "2025-06-02",
+        "04": "2025-06-02",
+        "05": "2025-07-30",
+        "06": "2025-07-31",
+        "07": "2025-08-26",
+        "08": "2025-10-01",
+        "09": "2025-10-30",
+        "10": "2025-11-25",
+        "11": "2025-12-29",
+        "12": "2026-02-05"
+      },
+      "file_modified_2024": {
+        "01": "2024-03-06",
+        "02": "2024-03-25",
+        "03": "2024-05-02",
+        "04": "2024-05-27",
+        "05": "2024-06-27",
+        "06": "2024-08-28",
+        "07": "2024-08-28",
+        "08": "2024-09-30",
+        "09": "2024-11-04",
+        "10": "2024-12-06",
+        "11": "2024-12-30",
+        "12": "2025-01-31"
+      },
+      "archive_modified": {
+        "2022": "2024-03-06",
+        "2023": "2024-03-06"
+      }
+    },
+    {
+      "dataset": "행정동단위 10개 관심집단수",
+      "url": "https://data.seoul.go.kr/dataList/OA-22266/F/1/datasetView.do",
+      "dataset_opened": "2024-03-06",
+      "current_updated": "2025-12-29",
+      "period_release_verified": false,
+      "note": "월별 파일 수정일을 별도 보존. 페이지 갱신일보다 2025.12 파일 수정일 2026-02-05가 늦음. 따라서 페이지 갱신일 일괄 적용 금지. 현재 보이는 목록은 2025.12까지.",
+      "file_modified_2025": {
+        "01": "2025-03-05",
+        "02": "2025-04-03",
+        "03": "2025-06-02",
+        "04": "2025-06-02",
+        "05": "2025-07-30",
+        "06": "2025-07-31",
+        "07": "2025-08-26",
+        "08": "2025-10-01",
+        "09": "2025-10-30",
+        "10": "2025-11-25",
+        "11": "2025-12-29",
+        "12": "2026-02-05"
+      },
+      "file_modified_2024": {
+        "01": "2024-03-06",
+        "02": "2024-03-25",
+        "03": "2024-05-02",
+        "04": "2024-05-27",
+        "05": "2024-06-27",
+        "06": "2024-08-28",
+        "07": "2024-08-28",
+        "08": "2024-09-30",
+        "09": "2024-11-04",
+        "10": "2024-12-06",
+        "11": "2024-12-30",
+        "12": "2025-01-31"
+      },
+      "archive_modified": {
+        "2022": "2024-03-06",
+        "2023": "2024-03-06"
+      }
+    },
+    {
+      "dataset": "고립은둔 청년 실태조사",
+      "url": "https://data.seoul.go.kr/dataList/OA-22347/F/1/datasetView.do",
+      "dataset_opened": "2024-05-22",
+      "current_updated": "2024-05-22",
+      "period_release_verified": true,
+      "note": "2022년 조사. 5개 첨부파일 수정일과 페이지 공개일이 일치. 단발성 제공. 기존 DB 공개일 확인됨."
+    },
+    {
+      "dataset": "독거노인 현황(연령별/동별)",
+      "url": "https://data.seoul.go.kr/dataList/OA-465/S/1/datasetView.do",
+      "dataset_opened": "2017-12-26",
+      "current_updated": "2025-07-09",
+      "period_release_verified": false,
+      "note": "기간별 최초 공개일 미확인"
+    },
+    {
+      "dataset": "상권분석서비스 추정매출-행정동",
+      "url": "https://data.seoul.go.kr/dataList/OA-22175/S/1/datasetView.do",
+      "dataset_opened": "2023-11-01",
+      "current_updated": "2026-09-11",
+      "period_release_verified": false,
+      "note": "기간별 최초 공개일 미확인"
+    },
+    {
+      "dataset": "강수량 및 강수일수",
+      "url": "https://data.seoul.go.kr/dataList/OA-13412/S/1/datasetView.do",
+      "dataset_opened": "2017-04-20",
+      "current_updated": "2025-06-30",
+      "period_release_verified": false,
+      "note": "기간별 최초 공개일 미확인"
+    },
+    {
+      "dataset": "일기일수",
+      "url": "https://data.seoul.go.kr/dataList/OA-869/S/1/datasetView.do",
+      "dataset_opened": "2017-12-26",
+      "current_updated": "2026-07-01",
+      "period_release_verified": false,
+      "note": "기간별 최초 공개일 미확인"
+    },
+    {
+      "dataset": "등록인구(연령별/동별)",
+      "url": "https://data.seoul.go.kr/dataList/OA-12235/S/1/datasetView.do",
+      "dataset_opened": "2021-05-21",
+      "current_updated": "2026-07-27",
+      "period_release_verified": false,
+      "note": "구 OA-12261은 종료됨. 현행 DT201003A010006 통계표도 확인. 기간별 최초 공개일은 미확인."
+    },
+    {
+      "dataset": "세대원수별 세대수",
+      "url": "https://data.seoul.go.kr/dataList/OA-12347/S/1/datasetView.do",
+      "dataset_opened": "2017-12-26",
+      "current_updated": "2026-08-27",
+      "period_release_verified": false,
+      "note": "분기 갱신. 통계표 DT201004A010010와 구 종료 서비스는 구분 필요."
+    },
+    {
+      "dataset": "장애인 현황(장애유형별)",
+      "url": "https://data.seoul.go.kr/dataList/OA-12357/S/1/datasetView.do",
+      "dataset_opened": "2017-12-27",
+      "current_updated": null,
+      "period_release_verified": false,
+      "note": "동별 자료의 통계표 대응은 추가 확인 필요. 관련 데이터 페이지의 개방일은 해당 연도 자료 공개일이 아님."
+    },
+    {
+      "dataset": "국민기초생활보장 수급자(동별)",
+      "url": "https://data.seoul.go.kr/dataList/DT201004O1100342020/S/2/datasetView.do",
+      "dataset_opened": null,
+      "current_updated": null,
+      "period_release_verified": false,
+      "note": "로컬 2024-05 파일의 최초 공개일과 현재 통계표 버전 대응은 미확인."
+    }
+  ],
+  "competition_layouts": [
+    {
+      "path": "C:\\Users\\user\\Desktop\\Team_Together\\공모전 원본 데이터\\2026빅콘테스트_sk통신인구_데이터_레이아웃\\유동인구_테이블 정의서_샘플.xlsx",
+      "created": "2026-09-01 05:17:54",
+      "modified": "2026-09-04 02:11:15",
+      "sheets": [
+        {
+          "sheet": "Sheet1",
+          "rows": [
+            "A1=테이블정의서",
+            "A2=주제영역명 | D2=작성일 | G2=작성자",
+            "A3=테이블ID | C3=DMP_FLOW_POP_AGE_PCELL_GB | D3=테이블명 | F3=성연령 유동인구(10세단위)",
+            "A4=테이블설명 | C4=10세단위 성연령 일평균 유동인구",
+            "A5=No. | B5=컬럼ID | C5=컬럼명 | D5=타입 | E5=길이 | F5=NULL | G5=KEY | H5=DEFAULT | I5=비고",
+            "A6=1 | B6=STD_YM | C6=기준년월 | D6=VARCHAR2 | E6=6 | F6=N | G6=PK",
+            "A7=2 | B7=BLOCK_CD | C7=소지역코드 | D7=VARCHAR2 | E7=20 | F7=N | G7=PK",
+            "A8=3 | B8=X_COORD | C8=X좌표 | D8=NUMBER | E8=(38, 8) | F8=N | G8=PK | I8=UTM-K",
+            "A9=4 | B9=Y_COORD | C9=Y좌표 | D9=NUMBER | E9=(38, 8) | F9=N | G9=PK | I9=UTM-K",
+            "A10=5 | B10=MAN_FLOW_POP_CNT_10G | C10=남자유동인구수_10대 | D10=NUMBER | E10=(18, 2)",
+            "A11=6 | B11=MAN_FLOW_POP_CNT_20G | C11=남자유동인구수_20대 | D11=NUMBER | E11=(18, 2)",
+            "A12=7 | B12=MAN_FLOW_POP_CNT_30G | C12=남자유동인구수_30대 | D12=NUMBER | E12=(18, 2)",
+            "A13=8 | B13=MAN_FLOW_POP_CNT_40G | C13=남자유동인구수_40대 | D13=NUMBER | E13=(18, 2)",
+            "A14=9 | B14=MAN_FLOW_POP_CNT_50G | C14=남자유동인구수_50대 | D14=NUMBER | E14=(18, 2)",
+            "A15=10 | B15=MAN_FLOW_POP_CNT_60GU | C15=남자유동인구수_60대이상 | D15=NUMBER | E15=(18, 2)",
+            "A16=11 | B16=WMAN_FLOW_POP_CNT_10G | C16=여자유동인구수_10대 | D16=NUMBER | E16=(18, 2)",
+            "A17=12 | B17=WMAN_FLOW_POP_CNT_20G | C17=여자유동인구수_20대 | D17=NUMBER | E17=(18, 2)",
+            "A18=13 | B18=WMAN_FLOW_POP_CNT_30G | C18=여자유동인구수_30대 | D18=NUMBER | E18=(18, 2)",
+            "A19=14 | B19=WMAN_FLOW_POP_CNT_40G | C19=여자유동인구수_40대 | D19=NUMBER | E19=(18, 2)",
+            "A20=15 | B20=WMAN_FLOW_POP_CNT_50G | C20=여자유동인구수_50대 | D20=NUMBER | E20=(18, 2)",
+            "A21=16 | B21=WMAN_FLOW_POP_CNT_60GU | C21=여자유동인구수_60대이상 | D21=NUMBER | E21=(18, 2)",
+            "A23=인 덱 스 | C23=인 덱 스 키",
+            "A25=업무규칙",
+            "A29=테이블정의서",
+            "A30=주제영역명 | D30=작성일 | G30=작성자",
+            "A31=테이블ID | C31=DMP_FLOW_POP_TIME_PCELL_GB | D31=테이블명 | F31=시간대 유동",
+            "A32=테이블설명 | C32=1시간단위 시간대 일평균 유동인구",
+            "A33=No. | B33=컬럼ID | C33=컬럼명 | D33=타입 | E33=길이 | F33=NULL | G33=KEY | H33=DEFAULT | I33=비고",
+            "A34=1 | B34=STD_YM | C34=기준년월 | D34=VARCHAR2 | E34=6 | F34=N | G34=PK",
+            "A35=2 | B35=BLOCK_CD | C35=소지역코드 | D35=VARCHAR2 | E35=20 | F35=N | G35=PK",
+            "A36=3 | B36=X_COORD | C36=X좌표 | D36=NUMBER | E36=(38, 8) | F36=N | G36=PK | I36=UTM-K",
+            "A37=4 | B37=Y_COORD | C37=Y좌표 | D37=NUMBER | E37=(38, 8) | F37=N | G37=PK | I37=UTM-K",
+            "A38=5 | B38=TMST_00 | C38=유동인구수_00시간대 | D38=NUMBER | E38=(18, 2)",
+            "A39=6 | B39=TMST_01 | C39=유동인구수_01시간대 | D39=NUMBER | E39=(18, 2)",
+            "A40=7 | B40=TMST_02 | C40=유동인구수_02시간대 | D40=NUMBER | E40=(18, 2)",
+            "A41=8 | B41=TMST_03 | C41=유동인구수_03시간대 | D41=NUMBER | E41=(18, 2)",
+            "A42=9 | B42=TMST_04 | C42=유동인구수_04시간대 | D42=NUMBER | E42=(18, 2)",
+            "A43=10 | B43=TMST_05 | C43=유동인구수_05시간대 | D43=NUMBER | E43=(18, 2)",
+            "A44=11 | B44=TMST_06 | C44=유동인구수_06시간대 | D44=NUMBER | E44=(18, 2)",
+            "A45=12 | B45=TMST_07 | C45=유동인구수_07시간대 | D45=NUMBER | E45=(18, 2)",
+            "A46=13 | B46=TMST_08 | C46=유동인구수_08시간대 | D46=NUMBER | E46=(18, 2)",
+            "A47=14 | B47=TMST_09 | C47=유동인구수_09시간대 | D47=NUMBER | E47=(18, 2)",
+            "A48=15 | B48=TMST_10 | C48=유동인구수_10시간대 | D48=NUMBER | E48=(18, 2)",
+            "A49=16 | B49=TMST_11 | C49=유동인구수_11시간대 | D49=NUMBER | E49=(18, 2)",
+            "A50=17 | B50=TMST_12 | C50=유동인구수_12시간대 | D50=NUMBER | E50=(18, 2)",
+            "A51=18 | B51=TMST_13 | C51=유동인구수_13시간대 | D51=NUMBER | E51=(18, 2)",
+            "A52=19 | B52=TMST_14 | C52=유동인구수_14시간대 | D52=NUMBER | E52=(18, 2)",
+            "A53=20 | B53=TMST_15 | C53=유동인구수_15시간대 | D53=NUMBER | E53=(18, 2)",
+            "A54=21 | B54=TMST_16 | C54=유동인구수_16시간대 | D54=NUMBER | E54=(18, 2)",
+            "A55=22 | B55=TMST_17 | C55=유동인구수_17시간대 | D55=NUMBER | E55=(18, 2)",
+            "A56=23 | B56=TMST_18 | C56=유동인구수_18시간대 | D56=NUMBER | E56=(18, 2)",
+            "A57=24 | B57=TMST_19 | C57=유동인구수_19시간대 | D57=NUMBER | E57=(18, 2)",
+            "A58=25 | B58=TMST_20 | C58=유동인구수_20시간대 | D58=NUMBER | E58=(18, 2)",
+            "A59=26 | B59=TMST_21 | C59=유동인구수_21시간대 | D59=NUMBER | E59=(18, 2)",
+            "A60=27 | B60=TMST_22 | C60=유동인구수_22시간대 | D60=NUMBER | E60=(18, 2)",
+            "A61=28 | B61=TMST_23 | C61=유동인구수_23시간대 | D61=NUMBER | E61=(18, 2)",
+            "A63=인 덱 스 | C63=인 덱 스 키",
+            "A65=업무규칙",
+            "A69=테이블정의서",
+            "A70=주제영역명 | D70=작성일 | G70=작성자",
+            "A71=테이블ID | C71=DMP_FLOW_POP_WKDY_PCELL_GB | D71=테이블명 | F71=요일별 유동",
+            "A72=테이블설명 | C72=요일단위 요일별 일평균 유동인구",
+            "A73=No. | B73=컬럼ID | C73=컬럼명 | D73=타입 | E73=길이 | F73=NULL | G73=KEY | H73=DEFAULT | I73=비고",
+            "A74=1 | B74=STD_YM | C74=기준년월 | D74=VARCHAR2 | E74=6 | F74=N | G74=PK",
+            "A75=2 | B75=BLOCK_CD | C75=소지역코드 | D75=VARCHAR2 | E75=20 | F75=N | G75=PK",
+            "A76=3 | B76=X_COORD | C76=X좌표 | D76=NUMBER | E76=(38, 8) | F76=N | G76=PK | I76=UTM-K",
+            "A77=4 | B77=Y_COORD | C77=Y좌표 | D77=NUMBER | E77=(38, 8) | F77=N | G77=PK | I77=UTM-K",
+            "A78=5 | B78=FLOW_POP_CNT_MON | C78=월요일 유동인구 | D78=NUMBER | E78=(18, 2)",
+            "A79=6 | B79=FLOW_POP_CNT_TUS | C79=화요일 유동인구 | D79=NUMBER | E79=(18, 2)",
+            "A80=7 | B80=FLOW_POP_CNT_WED | C80=수요일 유동인구 | D80=NUMBER | E80=(18, 2)",
+            "A81=8 | B81=FLOW_POP_CNT_THU | C81=목요일 유동인구 | D81=NUMBER | E81=(18, 2)",
+            "A82=9 | B82=FLOW_POP_CNT_FRI | C82=금요일 유동인구 | D82=NUMBER | E82=(18, 2)",
+            "A83=10 | B83=FLOW_POP_CNT_SAT | C83=토요일 유동인구 | D83=NUMBER | E83=(18, 2)",
+            "A84=11 | B84=FLOW_POP_CNT_SUN | C84=일요일 유동인구 | D84=NUMBER | E84=(18, 2)",
+            "A86=인 덱 스 | C86=인 덱 스 키",
+            "A88=업무규칙"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "C:\\Users\\user\\Desktop\\Team_Together\\공모전 원본 데이터\\2026빅콘테스트_신한카드_데이터_레이아웃\\2026빅콘테스트_신한카드_데이터_레이아웃_안_20260903.xlsx",
+      "created": "2015-06-05 18:19:34",
+      "modified": "2026-09-15 08:14:09",
+      "sheets": [
+        {
+          "sheet": "주제1_데이터셋2",
+          "rows": [
+            "A1=[데이터셋2] 카드 결제 정보 및 이용고객 정보",
+            "A3= [상세요건]",
+            "A4= - 일별 가맹점 업종별 카드 이용 집계정보",
+            "A5= - 시간적 범위 : 2025년 7월 ~2025년 12월",
+            "A6= - 지역적 범위 : 서울시 강남구, 강원도 춘천시 가맹점 카드 결제 건 (오프라인 결제건 한정)",
+            "A7= - 데이터 총 건수 0,000건",
+            "B9=구분 | C9=컬럼명 | D9=컬럼한글명 | E9=타입 | F9=NULL | G9=항목 설명",
+            "B10=1 | C10=TA_YMD | D10=기준일자 | E10=VARCHAR | F10=N | G10=20250701~20251231",
+            "B11=2 | C11=TIME_GB | D11=시간대 | E11=VARCHAR | F11=N | G11=6시간 단위 (00시~05시 / 06시~11시 / 12시 ~ 17시 / 18시 ~ 23시)",
+            "B12=3 | C12=MCT_SGG_CD | D12=가맹점 위치정보(시·군·구) | E12=VARCHAR | F12=N | G12=서울시 강남구, 강원도 춘천시",
+            "B13=4 | C13=MCT_RY_CD | D13=가맹점 업종 | E13=VARCHAR | F13=N",
+            "B14=5 | C14=SEX_CCD | D14=이용고객 성별 | E14=VARCHAR | F14=N | G14=남/여",
+            "B15=6 | C15=AGE_CCD | D15=이용고객 연령대 | E15=VARCHAR | F15=N | G15=10세단위",
+            "B16=7 | C16=TS_AT | D16=결제금액 합계 | E16=VARCHAR | F16=N",
+            "B17=8 | C17=USE_CNT | D17=결제건수 합계 | E17=VARCHAR | F17=N"
+          ]
+        },
+        {
+          "sheet": "주제2_데이터셋2",
+          "rows": [
+            "A1=[데이터셋2] 카드 결제 정보 및 이용고객 정보",
+            "A3= [상세요건]",
+            "A4= - 일별 가맹점 업종별 카드이용 집계정보 (법인카드 이용 제외)",
+            "A5= - 시간적 범위 : 2025년 7월 ~2025년 12월",
+            "A6= - 지역적 범위 : 서울시 강남구, 강원도 춘천시 가맹점 카드 결제 건 (오프라인 결제건 한정)",
+            "A7= - 데이터 총 건수 0,000건",
+            "B9=구분 | C9=컬럼명 | D9=컬럼한글명 | E9=타입 | F9=NULL | G9=항목 설명 | H9=비고",
+            "B10=1 | C10=TA_YMD | D10=기준일자 | E10=VARCHAR | F10=N | G10=20250701~20251231",
+            "B11=2 | C11=MCT_SGG_CD | D11=가맹점 위치정보(시·군·구) | E11=VARCHAR | F11=N | G11=서울시 강남구, 강원도 춘천시",
+            "B12=3 | C12=MCT_RY_CD | D12=가맹점 업종 | E12=VARCHAR | F12=N",
+            "B13=4 | C13=CLN_SGG_CD | D13=이용고객 위치정보(거주지, 시도) | E13=VARCHAR | F13=Y | G13=서울, 경기, 강원 ….",
+            "B14=5 | C14=SEX_CCD | D14=이용고객 성별 | E14=VARCHAR | F14=N | G14=남/여",
+            "B15=6 | C15=AGE_CCD | D15=이용고객 연령대 | E15=VARCHAR | F15=N | G15=10세단위",
+            "B16=7 | C16=TS_AT | D16=결제금액 합계 | E16=VARCHAR | F16=N",
+            "B17=8 | C17=USE_CNT | D17=결제건수 합계 | E17=VARCHAR | F17=N"
+          ]
+        }
+      ]
+    }
+  ]
+}

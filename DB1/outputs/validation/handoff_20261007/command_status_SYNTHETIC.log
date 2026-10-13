@@ -1,0 +1,38 @@
+{
+  "a3_run": 23,
+  "a3a_industry": 15164,
+  "a3b_industry": 5252,
+  "a3a_feature": 10560,
+  "a3a_comparison": 1320,
+  "a3b_feature": 210,
+  "a3b_total": 42,
+  "a3a_quarter_summary": 352,
+  "a3b_month_summary": 7,
+  "v_a123_monthly": 176,
+  "v_a123_detail": 5280,
+  "a23_age_monthly": 880,
+  "a23_age_detail": 4400,
+  "a23_age_quarter": 330,
+  "a23_age_available_context": 4400,
+  "a1_elder_annual": 88,
+  "a1_elder_observation": 1056,
+  "last_elder_reference_year": 2025,
+  "next_expected_elder_reference_year": 2026,
+  "behavior_signal_months": 2,
+  "integrity": "ok",
+  "last_market_quarter": "2025Q4",
+  "last_card_month": "2026-01",
+  "next_expected_market": "2026Q1",
+  "next_expected_card": "2026-02"
+}
+a1_input 22
+a1_context 22
+a1_region_feature 286
+a1_change_detection 0
+a2_feature 1100
+a2_detection 176
+a2_evidence 2
+a2_activity_followup 51
+runs [('analysis1', '2025H2'), ('analysis2', '2025-07-01'), ('analysis2', '2025-08-01'), ('analysis2', '2025-09-01'), ('analysis2', '2025-10-01'), ('analysis2', '2025-11-01'), ('analysis2', '2025-12-01'), ('analysis2', '2026-01-01'), ('analysis2', '2026-02-01')]
+a2_age_feature [('five_year', 13200), ('service', 5500)]
+a2_age_detection (880, 11, 1, 1)

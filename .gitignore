@@ -57,3 +57,18 @@ preprocessing/**/outputs/validation_report.json
 !preprocessing/regional_types/raw_data/장애인 현황(장애유형별, 동별).csv
 !preprocessing/regional_types/raw_data/장애인+현황(등급별_연령별)_20260923095357.csv
 !preprocessing/regional_features/reference/weather_monthly.csv
+
+# Regenerable execution reports; CSV/reference baselines remain versioned.
+data/processed/group_dashboard.json
+agents/regional_analysis/analysis2_execution_report.json
+preprocessing/**/outputs/*manifest.json
+preprocessing/**/outputs/**/preprocessing_manifest.json
+preprocessing/**/outputs/validation_report.json
+!preprocessing/regional_types/outputs/previous_preprocessing_agent/analysis1_preprocessed/preprocessing_manifest.json
+
+!requirements.txt
+!DB1/**/requirements.txt
+!preprocessing/regional_types/raw_data/독거노인현황_2022_2025.csv
+DB1/outputs/runtime/
+DB1/config/db1_config.local.json
+!preprocessing/regional_types/raw_data/gangnam_db1_features_2025H2.csv

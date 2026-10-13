@@ -1,0 +1,740 @@
+{
+  "timestamp": "20261006_153430",
+  "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1_backups\\DB1_before_cleanup_20261006_153430.zip",
+  "backup_sha256": "2b8456a179e94a87b094ea0b965cc1682a07a4d9a170cc5c43956b17156f4804",
+  "original_files": 239,
+  "final_files": 149,
+  "removed_files": [
+    "AI_Agent_Analysis_System_Design.md",
+    "Analysis1\\DB1_SCHEMA.md",
+    "Analysis1\\README_LOCAL_PREPROCESSING.md",
+    "Analysis1\\analysis\\__pycache__\\__init__.cpython-312.pyc",
+    "Analysis1\\analysis\\__pycache__\\analysis1.cpython-312.pyc",
+    "Analysis1\\analysis\\__pycache__\\baseline.cpython-312.pyc",
+    "Analysis1\\analysis\\__pycache__\\change_detector.cpython-312.pyc",
+    "Analysis1\\common\\__pycache__\\__init__.cpython-312.pyc",
+    "Analysis1\\common\\__pycache__\\config.cpython-312.pyc",
+    "Analysis1\\common\\__pycache__\\result_schema.cpython-312.pyc",
+    "Analysis1\\data\\__pycache__\\__init__.cpython-312.pyc",
+    "Analysis1\\data\\__pycache__\\ingestion.cpython-312.pyc",
+    "Analysis1\\data\\__pycache__\\validation.cpython-312.pyc",
+    "Analysis1\\data\\outputs\\db1.sqlite",
+    "Analysis1\\data\\processed\\2025H2\\context.csv",
+    "Analysis1\\data\\processed\\2025H2\\features.csv",
+    "Analysis1\\data\\processed\\gangnam_analysis1_pca_input_2025H2.csv",
+    "Analysis1\\data\\processed\\gangnam_skt_6m_features_2025H2.csv",
+    "Analysis1\\data\\processed\\gangnam_skt_monthly_2025H2.csv",
+    "Analysis1\\data\\processed\\reference_pca_input_2025H2.csv",
+    "Analysis1\\data\\results\\analysis1_baseline\\analysis1_baseline_2025H2.joblib",
+    "Analysis1\\data\\results\\analysis1_baseline\\gangnam_analysis1_balanced_features_2025H2.csv",
+    "Analysis1\\data\\results\\analysis1_baseline\\gangnam_analysis1_baseline_clusters_2025H2.csv",
+    "Analysis1\\data\\results\\analysis1_baseline\\gangnam_analysis1_features_2025H2.csv",
+    "Analysis1\\db\\__pycache__\\__init__.cpython-312.pyc",
+    "Analysis1\\db\\__pycache__\\analysis1_repository.cpython-312.pyc",
+    "Analysis1\\integration\\__pycache__\\__init__.cpython-312.pyc",
+    "Analysis1\\integration\\__pycache__\\export_analysis1_db.cpython-312.pyc",
+    "Analysis1\\preprocessing\\__pycache__\\__init__.cpython-312.pyc",
+    "Analysis1\\preprocessing\\__pycache__\\archive.cpython-312.pyc",
+    "Analysis1\\preprocessing\\__pycache__\\disability.cpython-312.pyc",
+    "Analysis1\\preprocessing\\__pycache__\\household.cpython-312.pyc",
+    "Analysis1\\preprocessing\\__pycache__\\loader.cpython-312.pyc",
+    "Analysis1\\preprocessing\\__pycache__\\pipeline.cpython-312.pyc",
+    "Analysis1\\preprocessing\\__pycache__\\resident.cpython-312.pyc",
+    "Analysis1\\preprocessing\\__pycache__\\skt_flow.cpython-312.pyc",
+    "Analysis1\\preprocessing\\__pycache__\\validate_reference.cpython-312.pyc",
+    "Analysis1\\preprocessing\\__pycache__\\welfare.cpython-312.pyc",
+    "Analysis1\\run_export_db1.py",
+    "Analysis2\\DB1_Analysis2_Function_Structure.md",
+    "Analysis2\\DB1_Analysis2_Report.md",
+    "Analysis2\\FINAL_RELEASE.md",
+    "Analysis2\\SEQUENTIAL_DETECTION.md",
+    "Analysis2\\docs\\DB1_Analysis2_Function_Structure.docx",
+    "Analysis2\\docs\\DB1_Analysis2_Report.docx",
+    "Analysis2\\export_verified_results.py",
+    "Analysis2\\gangnam_analysis2_feature_table_2022_2025.csv",
+    "Analysis2\\outputs\\final_2025H2\\analysis2_detection_2025H2.csv",
+    "Analysis2\\outputs\\final_2025H2\\analysis2_evidence_card_2025H2.csv",
+    "Analysis2\\outputs\\final_2025H2\\analysis2_monthly_summary_2025H2.csv",
+    "Analysis2\\outputs\\final_2025H2\\analysis2_result_2025H2.csv",
+    "Analysis2\\outputs\\gangnam_analysis2_detection_2022_2025.csv",
+    "Analysis2\\outputs\\gangnam_analysis2_evidence_card_2022_2025.csv",
+    "Analysis2\\outputs\\history_validation\\analysis2_history_202201_202506.csv",
+    "Analysis2\\outputs\\monthly_feature\\analysis2_feature_202507.csv",
+    "Analysis2\\outputs\\monthly_feature\\analysis2_feature_202508.csv",
+    "Analysis2\\outputs\\monthly_feature\\analysis2_feature_202509.csv",
+    "Analysis2\\outputs\\monthly_feature\\analysis2_feature_202510.csv",
+    "Analysis2\\outputs\\monthly_feature\\analysis2_feature_202511.csv",
+    "Analysis2\\outputs\\monthly_feature\\analysis2_feature_202512.csv",
+    "Analysis2\\outputs\\monthly_validation\\analysis2_detection_202507.csv",
+    "Analysis2\\outputs\\monthly_validation\\analysis2_feature_202507.csv",
+    "Analysis2\\outputs\\monthly_validation\\analysis2_history_through_202507.csv",
+    "Analysis2\\outputs\\sequential\\analysis2_detection_202507.csv",
+    "Analysis2\\outputs\\sequential\\analysis2_detection_202508.csv",
+    "Analysis2\\outputs\\sequential\\analysis2_detection_202509.csv",
+    "Analysis2\\outputs\\sequential\\analysis2_detection_202510.csv",
+    "Analysis2\\outputs\\sequential\\analysis2_detection_202511.csv",
+    "Analysis2\\outputs\\sequential\\analysis2_detection_202512.csv",
+    "Analysis2\\outputs\\state\\analysis2_history.csv",
+    "Analysis2\\reference\\gangnam_analysis1_final_region_typology_2025H2.csv",
+    "Analysis2\\reference\\gangnam_analysis2_detection_2022_2025.csv",
+    "Analysis2\\reference\\gangnam_analysis2_evidence_card_2022_2025.csv",
+    "Analysis2\\run_analysis2.py",
+    "Analysis2\\run_analysis2_sequential_legacy.py",
+    "Analysis2\\sample_data\\2022.01_interest.xlsx",
+    "Analysis2\\sample_data\\2022.01_telecom.xlsx",
+    "Analysis2\\sample_data\\2022.02_interest.xlsx",
+    "Analysis2\\sample_data\\2022.02_telecom.xlsx",
+    "Analysis2\\sample_data\\rain.csv",
+    "Analysis2\\sample_data\\weather_days.csv",
+    "Analysis2\\validate_202507.py",
+    "Analysis2\\validate_full_history.py",
+    "Analysis3\\DATA_DICTIONARY.md",
+    "Analysis3\\DEPLOYMENT_MANIFEST.json",
+    "Analysis3\\VALIDATION_RESULTS.md",
+    "Analysis3\\__pycache__\\mappings.cpython-312.pyc",
+    "Analysis3\\__pycache__\\pipeline.cpython-312.pyc",
+    "Analysis3\\analysis3_config.json",
+    "Analysis3\\backups\\20261006_151237\\db1_before_analysis3.sqlite",
+    "Analysis3\\backups\\20261006_151237\\run_db1.ps1",
+    "Analysis3\\backups\\20261006_151237\\run_db1.py",
+    "Analysis3\\backups\\20261006_151237\\run_tests.ps1",
+    "Analysis3\\backups\\20261006_151747\\README_UPDATE_before_analysis3.md",
+    "Analysis3\\backups\\20261006_151747\\db1_before_analysis3.sqlite",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\README.md",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\VALIDATION_RESULTS.md",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\analysis3_config.json",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\mappings.py",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\a3_run.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\a3a_comparison.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\a3a_feature.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\a3a_quarter_summary.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\a3b_feature.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\a3b_month_summary.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\a3b_total.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\industry_mapping.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\region_crosswalk.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\scan_report.json",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\signal_context_detail.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\v_a123_available_context.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\v_a123_detail.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\v_a123_monthly.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\v_a2_quarter.csv",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\outputs\\validation_checks.json",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\pipeline.py",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\requirements.txt",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\run_analysis3.ps1",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\run_analysis3.py",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\run_tests.ps1",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\schema.sql",
+    "Analysis3\\backups\\20261006_151747\\previous_analysis3\\tests\\test_pipeline.py",
+    "Analysis3\\backups\\20261006_151747\\run_db1.ps1",
+    "Analysis3\\backups\\20261006_151747\\run_db1.py",
+    "Analysis3\\backups\\20261006_151747\\run_tests.ps1",
+    "Analysis3\\outputs\\final_validation.json",
+    "Analysis3\\outputs\\industry_mapping.csv",
+    "Analysis3\\outputs\\region_crosswalk.csv",
+    "Analysis3\\outputs\\scan_report.json",
+    "Analysis3\\outputs\\signal_context_detail.csv",
+    "Analysis3\\outputs\\v_a123_available_context.csv",
+    "Analysis3\\outputs\\v_a123_detail.csv",
+    "Analysis3\\outputs\\v_a123_monthly.csv",
+    "Analysis3\\outputs\\v_a2_quarter.csv",
+    "Analysis3\\outputs\\validation_checks.json",
+    "Analysis3\\schema.sql",
+    "README_UPDATE.md",
+    "UPDATE_MANIFEST.json",
+    "VALIDATION_RESULTS.md",
+    "configure_db1.py",
+    "db1_config.json",
+    "outputs\\integrated\\analysis2_history.csv",
+    "outputs\\visualizations\\DB1_visual_report.html",
+    "outputs\\visualizations\\DB1_visualizations.zip",
+    "outputs\\visualizations\\README.md",
+    "outputs\\visualizations\\analysis1.png",
+    "outputs\\visualizations\\analysis1.svg",
+    "outputs\\visualizations\\analysis2.png",
+    "outputs\\visualizations\\analysis2.svg",
+    "outputs\\visualizations\\build_visuals.py",
+    "outputs\\visualizations\\check_visuals.cjs",
+    "outputs\\visualizations\\dashboard_template.html",
+    "outputs\\visualizations\\integrated.png",
+    "outputs\\visualizations\\integrated.svg",
+    "outputs\\visualizations\\manifest.json",
+    "outputs\\visualizations\\visualization_data.json",
+    "validate_analysis1_raw.py"
+  ],
+  "actions": [
+    {
+      "action": "move",
+      "from": "db1_config.json",
+      "to": "config/db1_config.json"
+    },
+    {
+      "action": "move",
+      "from": "configure_db1.py",
+      "to": "tools/configure_db1.py"
+    },
+    {
+      "action": "move",
+      "from": "validate_analysis1_raw.py",
+      "to": "tools/validate_analysis1_raw.py"
+    },
+    {
+      "action": "move",
+      "from": "README_UPDATE.md",
+      "to": "docs/UPDATE_GUIDE.md"
+    },
+    {
+      "action": "move",
+      "from": "VALIDATION_RESULTS.md",
+      "to": "docs/validation/analysis12_20261006.md"
+    },
+    {
+      "action": "archive",
+      "from": "AI_Agent_Analysis_System_Design.md",
+      "reason": "Historical proposed interfaces; replaced by current architecture document"
+    },
+    {
+      "action": "archive",
+      "from": "UPDATE_MANIFEST.json",
+      "reason": "Old deployment paths retained in complete cleanup backup"
+    },
+    {
+      "action": "move",
+      "from": "Analysis1/data/processed/reference_pca_input_2025H2.csv",
+      "to": "Analysis1/data/reference/reference_pca_input_2025H2.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis1/data/results/analysis1_baseline/analysis1_baseline_2025H2.joblib",
+      "to": "Analysis1/models/2025H2/analysis1_baseline_2025H2.joblib"
+    },
+    {
+      "action": "move",
+      "from": "Analysis1/data/results/analysis1_baseline/gangnam_analysis1_balanced_features_2025H2.csv",
+      "to": "Analysis1/outputs/baseline/gangnam_analysis1_balanced_features_2025H2.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis1/data/results/analysis1_baseline/gangnam_analysis1_baseline_clusters_2025H2.csv",
+      "to": "Analysis1/outputs/baseline/gangnam_analysis1_baseline_clusters_2025H2.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis1/data/results/analysis1_baseline/gangnam_analysis1_features_2025H2.csv",
+      "to": "Analysis1/outputs/baseline/gangnam_analysis1_features_2025H2.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis1/data/processed/2025H2/context.csv",
+      "to": "Analysis1/outputs/periods/2025H2/context.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis1/data/processed/2025H2/features.csv",
+      "to": "Analysis1/outputs/periods/2025H2/features.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis1/data/processed/gangnam_skt_monthly_2025H2.csv",
+      "to": "Analysis1/data/processed/2025H2/skt_monthly.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis1/data/processed/gangnam_skt_6m_features_2025H2.csv",
+      "to": "Analysis1/data/processed/2025H2/skt_period.csv"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis1/data/processed/gangnam_analysis1_pca_input_2025H2.csv",
+      "reason": "Reproducibility export; canonical period pca_input.csv and frozen reference retained"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis1/data/outputs/db1.sqlite",
+      "reason": "Legacy duplicate baseline DB; common outputs/db1.sqlite is authoritative"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis1/run_export_db1.py",
+      "reason": "Legacy baseline-only DB overwrite entrypoint; use common initialize/export instead"
+    },
+    {
+      "action": "move",
+      "from": "Analysis1/DB1_SCHEMA.md",
+      "to": "Analysis1/docs/DB1_SCHEMA.md"
+    },
+    {
+      "action": "move",
+      "from": "Analysis1/README_LOCAL_PREPROCESSING.md",
+      "to": "Analysis1/docs/PREPROCESSING.md"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/reference",
+      "to": "Analysis2/data/reference"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/gangnam_analysis2_feature_table_2022_2025.csv",
+      "to": "Analysis2/data/reference/gangnam_analysis2_feature_table_2022_2025.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/history_validation/analysis2_history_202201_202506.csv",
+      "to": "Analysis2/data/reference/analysis2_initial_history_202201_202506.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/sample_data",
+      "to": "Analysis2/tests/fixtures"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/DB1_Analysis2_Function_Structure.md",
+      "reason": "Historical release report; current module README replaces obsolete paths/results"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/DB1_Analysis2_Report.md",
+      "reason": "Historical release report; current module README replaces obsolete paths/results"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/FINAL_RELEASE.md",
+      "reason": "Historical release report; current module README replaces obsolete paths/results"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/SEQUENTIAL_DETECTION.md",
+      "reason": "Historical release report; current module README replaces obsolete paths/results"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/docs",
+      "reason": "Older Word reports retained in full backup; current docs are editable Markdown"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/run_analysis2_sequential_legacy.py",
+      "reason": "Legacy fixed-history/local-raw path workflow; operational worker and tests retained"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/validate_full_history.py",
+      "reason": "Legacy fixed-history/local-raw path workflow; operational worker and tests retained"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/validate_202507.py",
+      "reason": "Legacy fixed-history/local-raw path workflow; operational worker and tests retained"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/run_analysis2.py",
+      "reason": "Legacy fixed-history/local-raw path workflow; operational worker and tests retained"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/export_verified_results.py",
+      "reason": "Legacy fixed-history/local-raw path workflow; operational worker and tests retained"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/monthly_feature/analysis2_feature_202507.csv",
+      "to": "Analysis2/outputs/monthly/2025-07/features.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/monthly_feature/analysis2_feature_202508.csv",
+      "to": "Analysis2/outputs/monthly/2025-08/features.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/monthly_feature/analysis2_feature_202509.csv",
+      "to": "Analysis2/outputs/monthly/2025-09/features.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/monthly_feature/analysis2_feature_202510.csv",
+      "to": "Analysis2/outputs/monthly/2025-10/features.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/monthly_feature/analysis2_feature_202511.csv",
+      "to": "Analysis2/outputs/monthly/2025-11/features.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/monthly_feature/analysis2_feature_202512.csv",
+      "to": "Analysis2/outputs/monthly/2025-12/features.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/sequential/analysis2_detection_202507.csv",
+      "to": "Analysis2/outputs/monthly/2025-07/detection.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/sequential/analysis2_detection_202508.csv",
+      "to": "Analysis2/outputs/monthly/2025-08/detection.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/sequential/analysis2_detection_202509.csv",
+      "to": "Analysis2/outputs/monthly/2025-09/detection.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/sequential/analysis2_detection_202510.csv",
+      "to": "Analysis2/outputs/monthly/2025-10/detection.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/sequential/analysis2_detection_202511.csv",
+      "to": "Analysis2/outputs/monthly/2025-11/detection.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis2/outputs/sequential/analysis2_detection_202512.csv",
+      "to": "Analysis2/outputs/monthly/2025-12/detection.csv"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/outputs/gangnam_analysis2_detection_2022_2025.csv",
+      "reason": "Replaced by authoritative DB exports; historical snapshots retained in backup"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/outputs/gangnam_analysis2_evidence_card_2022_2025.csv",
+      "reason": "Replaced by authoritative DB exports; historical snapshots retained in backup"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/outputs/final_2025H2",
+      "reason": "Replaced by authoritative DB exports; historical snapshots retained in backup"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/outputs/state",
+      "reason": "Replaced by authoritative DB exports; historical snapshots retained in backup"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis2/outputs/monthly_validation",
+      "reason": "Replaced by authoritative DB exports; historical snapshots retained in backup"
+    },
+    {
+      "action": "archive",
+      "from": "outputs/integrated/analysis2_history.csv",
+      "reason": "Duplicate History export; canonical export is Analysis2/outputs/history.csv"
+    },
+    {
+      "action": "move",
+      "from": "outputs/visualizations/analysis1.png",
+      "to": "outputs/figures/analysis1.png"
+    },
+    {
+      "action": "move",
+      "from": "outputs/visualizations/analysis1.svg",
+      "to": "outputs/figures/analysis1.svg"
+    },
+    {
+      "action": "move",
+      "from": "outputs/visualizations/analysis2.png",
+      "to": "outputs/figures/analysis2.png"
+    },
+    {
+      "action": "move",
+      "from": "outputs/visualizations/analysis2.svg",
+      "to": "outputs/figures/analysis2.svg"
+    },
+    {
+      "action": "archive",
+      "from": "outputs/visualizations/build_visuals.py",
+      "reason": "User requested graph images only; dashboard, builder, ZIP and embedded dataset archived"
+    },
+    {
+      "action": "archive",
+      "from": "outputs/visualizations/check_visuals.cjs",
+      "reason": "User requested graph images only; dashboard, builder, ZIP and embedded dataset archived"
+    },
+    {
+      "action": "archive",
+      "from": "outputs/visualizations/dashboard_template.html",
+      "reason": "User requested graph images only; dashboard, builder, ZIP and embedded dataset archived"
+    },
+    {
+      "action": "archive",
+      "from": "outputs/visualizations/DB1_visualizations.zip",
+      "reason": "User requested graph images only; dashboard, builder, ZIP and embedded dataset archived"
+    },
+    {
+      "action": "archive",
+      "from": "outputs/visualizations/DB1_visual_report.html",
+      "reason": "User requested graph images only; dashboard, builder, ZIP and embedded dataset archived"
+    },
+    {
+      "action": "move",
+      "from": "outputs/visualizations/integrated.png",
+      "to": "outputs/figures/integrated.png"
+    },
+    {
+      "action": "move",
+      "from": "outputs/visualizations/integrated.svg",
+      "to": "outputs/figures/integrated.svg"
+    },
+    {
+      "action": "archive",
+      "from": "outputs/visualizations/manifest.json",
+      "reason": "User requested graph images only; dashboard, builder, ZIP and embedded dataset archived"
+    },
+    {
+      "action": "archive",
+      "from": "outputs/visualizations/README.md",
+      "reason": "User requested graph images only; dashboard, builder, ZIP and embedded dataset archived"
+    },
+    {
+      "action": "archive",
+      "from": "outputs/visualizations/visualization_data.json",
+      "reason": "User requested graph images only; dashboard, builder, ZIP and embedded dataset archived"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/analysis3_config.json",
+      "to": "Analysis3/config/analysis3_config.json"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/schema.sql",
+      "to": "Analysis3/db/schema.sql"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/DATA_DICTIONARY.md",
+      "to": "Analysis3/docs/DATA_DICTIONARY.md"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/VALIDATION_RESULTS.md",
+      "to": "Analysis3/docs/validation_20261006.md"
+    },
+    {
+      "action": "archive",
+      "from": "Analysis3/DEPLOYMENT_MANIFEST.json",
+      "reason": "Previous release manifest retained in complete backup; new cleanup manifest records final files"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/outputs/final_validation.json",
+      "to": "Analysis3/docs/validation/final_validation.json"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/outputs/validation_checks.json",
+      "to": "Analysis3/docs/validation/validation_checks.json"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/outputs/scan_report.json",
+      "to": "Analysis3/logs/last_scan.json"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/outputs/v_a123_monthly.csv",
+      "to": "outputs/integrated/analysis123_monthly.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/outputs/v_a123_detail.csv",
+      "to": "outputs/integrated/analysis123_detail.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/outputs/v_a123_available_context.csv",
+      "to": "outputs/integrated/analysis123_available_context.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/outputs/v_a2_quarter.csv",
+      "to": "outputs/integrated/analysis2_quarter.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/outputs/signal_context_detail.csv",
+      "to": "outputs/integrated/signal_context_detail.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/outputs/industry_mapping.csv",
+      "to": "Analysis3/outputs/mappings/industry_mapping.csv"
+    },
+    {
+      "action": "move",
+      "from": "Analysis3/outputs/region_crosswalk.csv",
+      "to": "Analysis3/outputs/mappings/region_crosswalk.csv"
+    }
+  ],
+  "db_sha256_preserved": "4cbcbda1c9d5876b60fa953fc1ab3aab9ceb597c16a325330741a501e8e4801e",
+  "final_file_sha256": {
+    "db1_store.py": "40d3655b4a8959a274369ec421d9e868b1c950c959b8639bac0d0ce7e08feff6",
+    "README.md": "2ffd07c063d5022958d0c5d5600e8cf8359c2775681b1968291d9bfb09f9b873",
+    "requirements.txt": "6e75da9b403a24556565178c3dce0573ae622692546dbb75a338f0c68116b028",
+    "run_db1.ps1": "578fbf22fb71cb77b61381cece0e83d93809e613a2387bb3165b7c8016a2519f",
+    "run_db1.py": "c7bb29b2df64250a274be1660112e1c09669d9bfa7bb421aa553d0093446ecfa",
+    "run_tests.ps1": "0cdb4021d219218a6e9f6cd5c519277595b7c1eb0f9fc2468f5c8204384b53b8",
+    "Analysis1\\README.md": "c4eb077fc8099f12c98e366e1ed11437afaaa4138b78c78f006bb0a1b1df4597",
+    "Analysis1\\run_baseline.py": "e34b30f6b58ad5971753dabe6a3f46e21b83167a6e54d305bd20f68c75b3222b",
+    "Analysis1\\run_change_detection.py": "8880e746b37c3fc11b2ef51331d615341e248bd65ff09f759b76ada95cbc6f07",
+    "Analysis1\\run_full_preprocessing.py": "fd413e561149f8ade0ec815caa3ed9dbca5a0b737c1a513b1cf701b4f319a3ed",
+    "Analysis1\\run_preprocessing.py": "b376d258a0d61b3e006ad866d1769f01abc2cc3fd645f35cb8465be5d3bf52e6",
+    "Analysis1\\run_skt_period.py": "4371ac057392da1a287bf6d62405bb058b3241b6744e2c5affd61cefcd1a0a16",
+    "Analysis1\\run_skt_preprocessing.py": "1c5925ae1a8e55a03f1332da3c961da727dd0f15d24d06aded495ee49443d81f",
+    "Analysis1\\update_worker.py": "a836a66c7b529e49c96a5c1192b50450c9d7c714dde9d0020f02abd317883e36",
+    "Analysis2\\README.md": "5207f26d7a30ab5e91332ae9ad6583d6530f8495c33f639f8b8cfd8d161a393e",
+    "Analysis2\\requirements.txt": "6ddd675b7a796e832e94525764a3819ef95591c64130a7a4f1256d5dc79050ae",
+    "Analysis2\\run_analysis2_sequential.py": "b5842be0afc465a01efd4f351dea3c6ff5d1ae4bbf19ef5d453379dcf9372b29",
+    "Analysis2\\update_worker.py": "f2f42be4be63cd35f593eb0c910cd109ccbefc14cccdd1fe655f01b5ac40146e",
+    "Analysis3\\mappings.py": "81e45167f642baf131a67dbbcc701574f32eb340107f61dc0313baf11f4246f8",
+    "Analysis3\\pipeline.py": "251436d175bd614822ded4fa7c7095258e6162b8610cf713a758e00c027e7597",
+    "Analysis3\\README.md": "8b24651e2fc2b284ba108cbcffeb65b0f24a89e94d7b044d398178db3766c31f",
+    "Analysis3\\requirements.txt": "a47473702bc6a861cc535756d6e88a83c78f77298e18c509498c33ab232f7806",
+    "Analysis3\\run_analysis3.ps1": "5f989fb22aaa6c6db19835162cdb9d816feed77f6da82993beb6eb0eb22ba089",
+    "Analysis3\\run_analysis3.py": "215f6780f43340469f00ea818ccbf4ff51018c9de34aa606137903a74ca35c1b",
+    "Analysis3\\run_tests.ps1": "9108971a167bd2595d34ed4537d90b2b8875c026b79f314af1df3f8895d6e77b",
+    "config\\db1_config.json": "465fd3011f2dadff3d317118b69e42c2e7a2b9e1d50c3dabc158697a82228783",
+    "docs\\UPDATE_GUIDE.md": "2ffd07c063d5022958d0c5d5600e8cf8359c2775681b1968291d9bfb09f9b873",
+    "outputs\\db1.sqlite": "4cbcbda1c9d5876b60fa953fc1ab3aab9ceb597c16a325330741a501e8e4801e",
+    "tests\\test_layout.py": "8cff4b29e405fb47e023b38a84016a67d8702e28ddbcab700a1e2df73d2eac4f",
+    "tests\\test_storage.py": "ce92d32af7db5948de3e0f6bf584f752609721a310b027a96e5b332db6cf04ca",
+    "tools\\configure_db1.py": "e26d141c637e32ac9a3a117c01dde562f676ac262c618f993bedc0128198c777",
+    "tools\\validate_analysis1_raw.py": "c48eabd1e6ce742baf5c8ab255682a39e59c40d7db15b53f53ebf507ba5cc573",
+    "Analysis1\\analysis\\analysis1.py": "eea286d9f5d827a035c71ecf81063727b541a00d54adc4ec614a971b925face0",
+    "Analysis1\\analysis\\baseline.py": "171304c1d04d01fe2c9aa3696e1b16da26e7eb9c343bb205d6e46e5a4732e298",
+    "Analysis1\\analysis\\change_detector.py": "17f545ed072e318ede6a720327974817eb3ff970696992acc4f86488baf795c3",
+    "Analysis1\\analysis\\__init__.py": "245ee74d1a57f9025a71eb026545de02e1fe7e5c94da57d3660f0f915307bc35",
+    "Analysis1\\common\\config.py": "e6657cf955c3e98982c7beca512d021e784437cb4af3bf24fc7dffeb88e8ca56",
+    "Analysis1\\common\\result_schema.py": "030c7f86e846754b9e588d7bdd030c62b4880a8c8c1a45cc25a4fa79a160b6df",
+    "Analysis1\\common\\__init__.py": "12590ee42061d41600340c99dd46385a8ce8747878b25e53c7ef727a1356c971",
+    "Analysis1\\data\\ingestion.py": "fa63fd779214401b8a1496d10e9874dabfc955a79f9577a191551a9bab16c1c5",
+    "Analysis1\\data\\validation.py": "231cd8af1ac9ecff9e97d46bd0422161f4aa77dbe897ca2ab969ada4f4bb611c",
+    "Analysis1\\data\\__init__.py": "e3b299a4b4b7e278e9d94e238a792b0866a3c6764f693c20d093f56a0fadfba3",
+    "Analysis1\\db\\analysis1_repository.py": "74c421e35b1a4c42c26b4ace60705e61498a6f143c1247f63e46fa05057e6aad",
+    "Analysis1\\db\\schema.sql": "63354d39c6608fcc27a915d63fa83e2041b5f5ee3037d7fd4c24d07b2b24c5ae",
+    "Analysis1\\db\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Analysis1\\docs\\DB1_SCHEMA.md": "85a1eb31d45582e56fada31e28e65412f32aa8f54f99e5e01b3c3f68cc67ab51",
+    "Analysis1\\docs\\PREPROCESSING.md": "085b1718c04e2ff00e392aa1f3f1f181a650550987c2159fa76d219c62f5bf2e",
+    "Analysis1\\integration\\export_analysis1_db.py": "651d25b04010608f18dc1435ed8acd3342d75ce3e3294833944350d0503d36c7",
+    "Analysis1\\integration\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Analysis1\\preprocessing\\archive.py": "0fb8ce8df35f5f896ed83442ccdd18712c7fb1e039422e656b1af233fad41620",
+    "Analysis1\\preprocessing\\disability.py": "a93e4a64bec75dc63991eee9fbe3590da804fa396c969b607cce636e4d7424c1",
+    "Analysis1\\preprocessing\\household.py": "ac70bed4c03c98b7ef083bc1c5a38bd359d8c181c4e5afd214699836d26e8870",
+    "Analysis1\\preprocessing\\loader.py": "516c469be660d6875214d1015ece0c065cd5ed6718d0a1ffdca7aa74c2e02579",
+    "Analysis1\\preprocessing\\periods.py": "4664d8941cdecccd1faea2fc58c895c02e6f98a34da11d52ba275da55eff9fcf",
+    "Analysis1\\preprocessing\\pipeline.py": "c85966f80b144f9f107ddc41d66a80deb3e25ceeb0e7754014b1d956a8802779",
+    "Analysis1\\preprocessing\\resident.py": "5d452d8c06b400bcded6d49665bc75d4c03328e67f18ae438f8c133063d6cafb",
+    "Analysis1\\preprocessing\\skt_flow.py": "016d4757806a59517a2a1bc5057cf9280df007aa63adf56744a0b877b95f2599",
+    "Analysis1\\preprocessing\\validate_reference.py": "b78d4971d0ce5c4976ae0c23c2f60482851fe5847da21a82dcc4fa9b9d9dd025",
+    "Analysis1\\preprocessing\\welfare.py": "64345cae912cfecddeec0f1105f201be7e743267b3bbfe71fa7c08dd5a58d825",
+    "Analysis1\\preprocessing\\__init__.py": "7f322dcd48649c855b1de7af1a68f631a380cc3b9767103a7d6c106e6a277542",
+    "Analysis1\\tests\\test_db1_export.py": "0a28ecd5b07aa461a1b81b620c627e9448d9e5256208387de8d88b30a4c0a053",
+    "Analysis1\\tests\\test_full_preprocessing.py": "cef27489248f27432484752ac16def86e144723478a4a252f93d25a128010963",
+    "Analysis1\\tests\\test_public_preprocessing.py": "5539d56fca437fb39f3c9cde7c6198747c8cb7c629f9fbe055e7d9393cf3f3b9",
+    "Analysis1\\tests\\test_updates.py": "b2efde90bef0c6cfe8dcccf0dc5cacb75a875a6ccd2768d4f87239f11af72d7b",
+    "Analysis1\\data\\reference\\reference_pca_input_2025H2.csv": "07609ec7f16625862b484211a39f69a4de581c16c1638dfd264cbdbcfb9368b8",
+    "Analysis1\\data\\processed\\2025H2\\pca_input.csv": "abbba6175b214954bb9fa4d5d9be6b3f1353beaee11e2a027345e2c592d011a0",
+    "Analysis1\\data\\processed\\2025H2\\skt_monthly.csv": "543da49befd292f35c96016743ca38ead9e2ae9c3c2c2c562b86461f11efef72",
+    "Analysis1\\data\\processed\\2025H2\\skt_period.csv": "88937429266d6e42dc66e6cd0cf49add4fd621aa4122885a258a3e0762483ce2",
+    "Analysis1\\models\\2025H2\\analysis1_baseline_2025H2.joblib": "ff84337f6df3a34bbe19dc33eb4e016560481f324e55097f9e87e8f01ae405e2",
+    "Analysis1\\outputs\\baseline\\gangnam_analysis1_balanced_features_2025H2.csv": "4e9ed7aff55f158acca7e596d7a96d5f6511f10f3adf06804cbdc3bf0f69a185",
+    "Analysis1\\outputs\\baseline\\gangnam_analysis1_baseline_clusters_2025H2.csv": "5aed00504b586ca9280fc3d260ace956033deee4599cea53187d3f496687de2c",
+    "Analysis1\\outputs\\baseline\\gangnam_analysis1_features_2025H2.csv": "b2b7b24d9d77416b0e6bb440614ca5713cddbdcc4e5d4bb2f03b3dc8313c36ee",
+    "Analysis1\\outputs\\periods\\2025H2\\context.csv": "275d3c21d1f736b39a8bb582912002d54c9bac06cfe84b4c529598893c2b7702",
+    "Analysis1\\outputs\\periods\\2025H2\\features.csv": "adcfa4881c1a8038259ee30731d1baaa6b0d20a5e5240d180645321ab931d2ce",
+    "Analysis2\\analysis\\analysis2.py": "01d2d099033c8f95e9aa162b9ea1509e499e545746dff87df41b0e7799c440ba",
+    "Analysis2\\analysis\\outputs.py": "6f041d3612a0a8ce0fa2d041bf5daaa8c69acefc16755275cf57c458c02dcf6a",
+    "Analysis2\\analysis\\sequential.py": "4e1e66a998b6a151337b818f6d0eaab410cc667757add4c4d88fe6e56b4ff907",
+    "Analysis2\\analysis\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Analysis2\\common\\config.py": "04653ef1bdf1e858c671e4efcec1169ecb6850d68624971bf4a3ac70a17ab3b7",
+    "Analysis2\\common\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Analysis2\\data\\ingestion.py": "81da3a10afee8d65d5374df195ab7b55863bcb62dc203f45e56b2758a2abf51e",
+    "Analysis2\\data\\monthly_validation.py": "1f046f599be34f0669db14db32461cefae634c4aab71329c56c2eb42206b4989",
+    "Analysis2\\data\\validation.py": "e5af674e93b31a929b72804d60f32d200699b7b001082b3a205e0c658b3231f4",
+    "Analysis2\\data\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Analysis2\\outputs\\detection.csv": "0da4775d9c4adfa79704bcd574aaeca01f4462814306673a646ce0d0b74e18af",
+    "Analysis2\\outputs\\evidence.csv": "3d486e547e5a0bd258390dfc3bb90b28d3a70eca1c6360f6f1c77d92585aa19e",
+    "Analysis2\\outputs\\history.csv": "519efa6e579cdc0f7bc92f9fbc9525f0ef43c7ede217200cc42c47471421d3fb",
+    "Analysis2\\preprocessing\\monthly_features.py": "d02f43c505a4c144b7f70472072ae8fb656b57678d6a09e4aa4a0af817656e4c",
+    "Analysis2\\preprocessing\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Analysis2\\tests\\test_analysis2.py": "38edad61adaf7d0163b5b149f1f6813cdef9f4f92f37c703e3b63e2a9ecb41b3",
+    "Analysis2\\tests\\test_database_results.py": "be2c4a9c8256e69075ee2e17a07167a6b20cd43d6f564a48dd52168bab64ca84",
+    "Analysis2\\tests\\test_monthly_preprocessing.py": "c2fd894b22772650bf732513c750228d015b3176fe93bee5bfe9ff9a908c07c7",
+    "Analysis2\\tests\\test_monthly_regression.py": "649bbe5b66cd0cc057eb0a02ea0ac9c585eecc1ab6568a715e894b9317d3ce7f",
+    "Analysis2\\tests\\test_sequential.py": "d1c283d6d853063b839a00d5790b70245981110b3e1679340573b62abbbd8577",
+    "Analysis2\\tests\\test_update_validation.py": "bf3c2f108638f15f3d8267b7b638790ce7b2f1022e40bb3ac02a2b58b6ba5a3e",
+    "Analysis2\\data\\reference\\analysis2_initial_history_202201_202506.csv": "ff538112d66b252f9e4430edccb306ef2390069c61e0c74144f2b5d38cc86654",
+    "Analysis2\\data\\reference\\gangnam_analysis1_final_region_typology_2025H2.csv": "7d11e9b0da3b8a6fdf412deeae4f2167a346de10dc5bdc6b32ecc0ae1ec856e3",
+    "Analysis2\\data\\reference\\gangnam_analysis2_detection_2022_2025.csv": "a0014e651a6585d7d312fc780e00772bca92698d785ed414a72b2e87951ffe14",
+    "Analysis2\\data\\reference\\gangnam_analysis2_evidence_card_2022_2025.csv": "008335c24cccf6215fdf9fea3242217908796223ee03ead9d3bb35662adc6331",
+    "Analysis2\\data\\reference\\gangnam_analysis2_feature_table_2022_2025.csv": "8ec862ebcf93e7770a93aca94e200434e9d23e9993dc25ac2eec1bb057673713",
+    "Analysis2\\outputs\\monthly\\2025-07\\detection.csv": "2ebace5b19d7d0b6ccf355f9e01a9b89bcfbec064c41cd5f6823fc46c57e1435",
+    "Analysis2\\outputs\\monthly\\2025-07\\features.csv": "2a04998273ca386e5340af1a4e39969b5ec6e4e662c53b0a557290eeb0a223c4",
+    "Analysis2\\outputs\\monthly\\2025-08\\detection.csv": "de1d577e563e72d707254e2fa469faa56f03729edc20c3dc3c6ba68ea1a99dc1",
+    "Analysis2\\outputs\\monthly\\2025-08\\features.csv": "c779fe6c68539c4df95feb60995d604a37a130552f6ef715a135dd6fd2414c88",
+    "Analysis2\\outputs\\monthly\\2025-09\\detection.csv": "3136fe00e8de56e11c1567f217c33e6386d5f0da921533d94ae855c975fa9a28",
+    "Analysis2\\outputs\\monthly\\2025-09\\features.csv": "5bb6e34fa0e55bd802ec666b199aece35e32bcede9b574487afe4d93996c960f",
+    "Analysis2\\outputs\\monthly\\2025-10\\detection.csv": "6b397e38dd9bb1a2ed3c9150fa1c6dd30214d5c12df2491251001de93efa045b",
+    "Analysis2\\outputs\\monthly\\2025-10\\features.csv": "62ae3483106218623b88be0c38440af5ac820807291eb81f95a79c555b546971",
+    "Analysis2\\outputs\\monthly\\2025-11\\detection.csv": "d43c3229ccb2bb011b628fa834c5f6ead9a8e2b5a47d2c790836311d692368f4",
+    "Analysis2\\outputs\\monthly\\2025-11\\features.csv": "a139136d04dfe329363b28b92f4c314ea1c0e84193060385df789e114c69162e",
+    "Analysis2\\outputs\\monthly\\2025-12\\detection.csv": "526a03100fb19f64567aef0c45d28290f2db1fddb7f2c3e5842bbc5172bd4934",
+    "Analysis2\\outputs\\monthly\\2025-12\\features.csv": "7436fe3bf833505e3a9b03a11830dd1b368ae318daa66cb246cfea71be1a6c98",
+    "Analysis2\\tests\\fixtures\\2022.01_interest.xlsx": "b36429d2915bf9960f587934ece390d65c1993bb21800225b5c893ce4ae845a9",
+    "Analysis2\\tests\\fixtures\\2022.01_telecom.xlsx": "38685301c39536a5d20003a96d0cc17d5a85baa1ac9e8effc8a918d39c962378",
+    "Analysis2\\tests\\fixtures\\2022.02_interest.xlsx": "601c9efafa353f3a64b40d00e2b14826f178032de21492adb9a5e418c5e15f43",
+    "Analysis2\\tests\\fixtures\\2022.02_telecom.xlsx": "234f893052b58460866f4dbe22885739032cc2d67dd27256c516fb813aa4c7f3",
+    "Analysis2\\tests\\fixtures\\rain.csv": "821d559b49fe873f6279a41f31e8daff32c9b6051082e5ab91100616a73624ef",
+    "Analysis2\\tests\\fixtures\\weather_days.csv": "6d74e668434e9fed74a58cb98ccea8c7c9bcab1f242f569c251819b9e6caffea",
+    "Analysis3\\config\\analysis3_config.json": "573586112897eaf233b72ba2be613378df838d6ae965f02fbc4470150996933f",
+    "Analysis3\\db\\schema.sql": "bf3274bd380de618fbf621f7e3f20c2b5b7edf6a5bd719730a295ed769ad5ef4",
+    "Analysis3\\docs\\DATA_DICTIONARY.md": "281a32af43c006291905d094bf594e80216a54b2ccfc5b37011a50b7cf040849",
+    "Analysis3\\docs\\validation_20261006.md": "8517f030a8c7068afeca1cebc6ae80c86a2369759153a9f400a563520edb5c14",
+    "Analysis3\\logs\\last_scan.json": "c0cf77aed5a288307199ad125db3f6dc4e85e5ef6455eddcd3e84bd591ff8996",
+    "Analysis3\\outputs\\a3a_comparison.csv": "dfff2ad216afd032f570bc0f0b5dd52b2966e570491e44a7e5add0f42ca1d8e3",
+    "Analysis3\\outputs\\a3a_feature.csv": "409636ccd09658eee7229f26392c26070ea213644f19fbafbae2ef50b739b0e7",
+    "Analysis3\\outputs\\a3a_quarter_summary.csv": "bc747359e8d92d3ea402fb56c064f1ea2b8011c6085d3d481763e0e27b0129ca",
+    "Analysis3\\outputs\\a3b_feature.csv": "abdfd7adea58840d5a7abd531e64d3e83c1bf8dc8b23ba146ec9927a347717e7",
+    "Analysis3\\outputs\\a3b_month_summary.csv": "7dac2144b9185d4cc686e5ce500ccdd2e9928a50535e1d80a31889ca0097587d",
+    "Analysis3\\outputs\\a3b_total.csv": "c5ed606abaae653e20aca5ea546604d832f5af2946120680b116e9c52ad1f3e1",
+    "Analysis3\\outputs\\a3_run.csv": "a2d9c7d71ddf25c35dfbcaa2e5b403da594408c2a6ccdcbe39331c188581204c",
+    "Analysis3\\tests\\test_pipeline.py": "338396a72d210f84174e0f0e9a3b51a754076ee5944acdfafd4337638d509c71",
+    "Analysis3\\docs\\validation\\final_validation.json": "8ea54176ee77414142c3efce5edd40b47b4a6009abe574cd8a4099bdbd4743fb",
+    "Analysis3\\docs\\validation\\validation_checks.json": "2b73ccca4a1abeaa69e7d65cd9e419b74ff3e68caef9007f81a9a683ecd4810a",
+    "Analysis3\\outputs\\mappings\\industry_mapping.csv": "f6ae327b4d0810e961dc6d30fc69f2c31cbc715ae774deb76da2cb2f4bba84e5",
+    "Analysis3\\outputs\\mappings\\region_crosswalk.csv": "2e2bfd0e72eec6b5e35d06c3a6a869b799162e29326e6e6de9b6d500125878dc",
+    "docs\\validation\\analysis12_20261006.md": "5f7e7903cd377058bf13cf1c5d1ee23f7025d3e654f4c5e7a2e73f00f0fccdc1",
+    "outputs\\figures\\analysis1.png": "db2f327ce6fb3a0677440a835ff6ea589127b74b1f28244bf25808e35161bf52",
+    "outputs\\figures\\analysis1.svg": "4a3ed9663bc01eee9764192e21c1049b2b412fa8dcaba55c158690e8f5652a84",
+    "outputs\\figures\\analysis2.png": "694efe0a4ccaed76fdd899df4188966adf48bbf4a93fd514b74ed6935c2c6ee4",
+    "outputs\\figures\\analysis2.svg": "3039345a9aa5234a1e0d51956659fc6f4150eaeca0c206f471311c3610ca882d",
+    "outputs\\figures\\integrated.png": "66e2fa388ac3b7a36b89840be5c46ebd067c4364319d41de568e6a07a8cde153",
+    "outputs\\figures\\integrated.svg": "c0f8da09d2f71b1ce55b2ea1fac1f963781be17457c14fe2360354553e98e2e2",
+    "outputs\\figures\\README.md": "ff62a0db11bf0abc7aece23735da933ab95a312372a42700dfffe4eee4122822",
+    "outputs\\integrated\\analysis123_available_context.csv": "08e750ee248c75f4cda98812c7ab702acee8e5ede4686b48d9a69c6e09c0fd97",
+    "outputs\\integrated\\analysis123_detail.csv": "65f87ad2a157c06bcbb01f9a35df69286717f263dd36be0c1c7a9c6ab7c72144",
+    "outputs\\integrated\\analysis123_monthly.csv": "e5b00a5e11f3a1315d17a59f184439efae53c51a5df57b7c30dc9747a0da048f",
+    "outputs\\integrated\\analysis2_quarter.csv": "f54d40a9ea4a953e947f595edfe2cb09fd2e6c63a34023c331035566b3a72c50",
+    "outputs\\integrated\\db1_integrated.csv": "978cc49cce37c880e09ab85f3ba5195531e3980803d87ae7c08c9b4027e56393",
+    "outputs\\integrated\\signal_context_detail.csv": "5d3206c95ab9811119cb6b3e812b61b8a08d8a9d6061f0f69642fd9c24548a5c"
+  },
+  "validation": {
+    "analysis1": 9,
+    "analysis2": 16,
+    "analysis3": 25,
+    "common": 8,
+    "total": 58,
+    "database_integrity": "ok",
+    "csv_export": "passed",
+    "desktop_test_suite": "passed"
+  }
+}

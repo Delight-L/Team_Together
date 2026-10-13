@@ -1,0 +1,5 @@
+﻿threshold,baseline_fully_assessed_rows,baseline_partially_assessed_rows,baseline_any_signal_rows,baseline_joint_signal_rows,note
+-2.0,2918,272,378,2,"baseline screening frequency, not false positives or accuracy"
+-2.5,2918,272,333,0,"baseline screening frequency, not false positives or accuracy"
+-3.0,2918,272,309,0,"baseline screening frequency, not false positives or accuracy"
+-4.0,2918,272,123,0,"baseline screening frequency, not false positives or accuracy"

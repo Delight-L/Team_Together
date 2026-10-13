@@ -1,7 +1,7 @@
 """Analysis 1에서 확정한 강남구 행정동 지역 Context.
 
 실시간 API 호출이나 재군집화 없이, 위험신호(Analysis 2)를 해석할 때만 사용한다.
-근거 파일: data/gangnam_analysis1_cluster_profile_2025H2(1).csv
+근거 파일: DB1/Analysis1/outputs/baseline/gangnam_analysis1_baseline_clusters_2025H2.csv
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ CLUSTER_PROFILES = {
     },
     1: {
         "name": "고령·2인가구·구조적 복지배경 특화형",
-        "feature": "60대 이상 유동·65세 이상 주민·2인가구 비중과 장애·복지 관련 지표가 상대적으로 높은 지역 유형입니다.",
+        "feature": "60대 이상 유동·65세 이상 주민·2인가구 비중과 독거노인·복지 관련 지표가 상대적으로 높은 지역 유형입니다. 독거노인 지표는 2025년 연간 자료와 2025Q4의 65세 이상 인구 기준이며, 개인 고립 판정을 뜻하지 않습니다.",
         "check_point": "저외출·집 체류·연락 감소가 함께 지속되는지 확인하고, 복지·건강 자원 접근성을 우선 점검합니다.",
     },
     2: {

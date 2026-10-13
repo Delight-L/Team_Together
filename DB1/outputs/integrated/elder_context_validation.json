@@ -1,0 +1,16 @@
+{
+  "annual_rows": 88,
+  "observation_rows": 1056,
+  "missing_observation_cells": 12,
+  "district_totals_by_year": {
+    "2022": 19102,
+    "2023": 20973,
+    "2024": 23747,
+    "2025": 25215
+  },
+  "source_age_minimum": 65,
+  "isolation_detection_flags_changed": false,
+  "monthly_rows": 660,
+  "monthly_60plus_context_rows": 132,
+  "current_behavior_signal_rows_with_age_applicable_elder_context": 0
+}

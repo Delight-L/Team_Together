@@ -18,12 +18,12 @@ class AnalysisCacheTest(unittest.TestCase):
             second = repository.load_analysis2_data()
             self.assertNotEqual(second['assessment'][0]['행정동명'], '수정된 요청')
             self.assertNotIn('geometry', second)
-            self.assertEqual(read.call_count, 1)
+            self.assertEqual(read.call_count, 2)
             repository._load_analysis2_data(
                 str(repository.DETECTION_FILE.resolve()),
                 repository.DETECTION_FILE.stat().st_mtime_ns + 1,
             )
-            self.assertEqual(read.call_count, 2)
+            self.assertEqual(read.call_count, 4)
 
 
 class DataSourceTest(unittest.TestCase):

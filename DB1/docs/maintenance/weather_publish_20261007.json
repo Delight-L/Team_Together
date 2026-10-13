@@ -1,0 +1,12 @@
+{
+  "branch": "delightL",
+  "removed_runtime_files": [],
+  "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1_backups\\weather_publish_20261007_171252",
+  "db_sha256": "c1fd606138cfb75f9b8fa71cf62079ee9bef1ee55f66be7b2ec727aa852cfc9e",
+  "model_sha256": "ff84337f6df3a34bbe19dc33eb4e016560481f324e55097f9e87e8f01ae405e2",
+  "database_unchanged_during_cleanup": true,
+  "reference_and_historical_files_preserved": true,
+  "weather_months": 6,
+  "behavior_windows": 6,
+  "signals": 10
+}
