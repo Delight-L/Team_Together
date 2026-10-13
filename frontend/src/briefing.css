@@ -25,7 +25,7 @@
   max-width: 100%;
 }
 .logo-toggle:hover {
-  background: #f5f8ff;
+  background: var(--surface-soft);
 }
 .logo-toggle .bomi-face {
   width: 48px;
@@ -65,7 +65,7 @@
   animation: none;
 }
 .bomi.thinking .bomi-halo {
-  background: #d7eaff;
+  background: var(--line);
 }
 .briefing-shell .main-content {
   background: radial-gradient(ellipse at 0 0, #fffaf5, transparent 70%), #f7f8fc;
@@ -105,13 +105,13 @@
   position: relative;
   gap: 12px;
   padding: 16px;
-  border: 1px solid #edeef5;
+  border: 1px solid var(--line);
   background: white;
   box-shadow: 0 5px 18px #4c506a04;
   overflow: hidden;
 }
 .mission-kpi.rose {
-  background: linear-gradient(125deg, #fff, #fff7fa);
+  background: linear-gradient(125deg, #fff, var(--surface-soft));
   color: #f8406b;
 }
 .mission-kpi.orange {
@@ -119,7 +119,7 @@
   color: #ed8c25;
 }
 .mission-kpi.sky {
-  background: linear-gradient(125deg, #fff, #f6faff);
+  background: linear-gradient(125deg, #fff, var(--surface-soft));
   color: #2475ed;
 }
 .mission-kpi-icon {
@@ -135,7 +135,7 @@
   background: #fff0d9;
 }
 .sky .mission-kpi-icon {
-  background: #e4efff;
+  background: var(--line);
 }
 .mission-kpi > div > span {
   font-size: 11px;
@@ -154,15 +154,15 @@
   letter-spacing: 0;
 }
 .mission-kpi p {
-  color: #9da7b8;
-  font-size: 8px;
+  color: var(--text-faint);
+  font-size: 11px;
   margin-top: 5px;
 }
 .mission-kpi-note {
   position: absolute;
   right: 12px;
   bottom: 19px;
-  font-size: 8px;
+  font-size: 11px;
   border-radius: 12px;
   padding: 4px 7px;
   background: #ffe9ef;
@@ -171,7 +171,7 @@
   background: #fff0dc;
 }
 .sky .mission-kpi-note {
-  background: #eaf2ff;
+  background: var(--surface-tint);
 }
 .mission-map-card {
   display: flex;
@@ -212,7 +212,7 @@
   border-radius: 11px;
   overflow: hidden;
   position: relative;
-  background: #f0f2e8;
+  background: var(--line);
 }
 .mission-map {
   position: relative;
@@ -220,7 +220,7 @@
   width: 100%;
   min-height: 0;
   overflow: hidden;
-  background: radial-gradient(ellipse, #eff2e9, #e8ecdf);
+  background: radial-gradient(ellipse, var(--line), #e8ecdf);
 }
 .mission-scene {
   width: 100%;
@@ -243,16 +243,16 @@
   width: 29px;
   height: 29px;
   font-size: 19px;
-  color: #52687c;
+  color: var(--text-sub);
   display: grid;
   place-items: center;
-  border-bottom: 1px solid #edf0f3;
+  border-bottom: 1px solid var(--line);
 }
 .map-tools button:last-child {
   border-bottom: 0;
 }
 .map-tools button:hover {
-  background: #edf4ff;
+  background: var(--surface-tint);
 }
 .mission-district {
   cursor: pointer;
@@ -298,7 +298,7 @@
   position: absolute;
   bottom: 35px;
   left: 12px;
-  font-size: 8px;
+  font-size: 11px;
   background: #ffffffb3;
   color: #819077;
   border-radius: 5px;
@@ -317,14 +317,14 @@
   gap: 18px;
   background: #ffffffed;
   padding: 9px 10px;
-  border-top: 1px solid #e6eae0;
+  border-top: 1px solid var(--line);
 }
 .mission-legend span {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 8px;
-  color: #7e8b9b;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 .mission-legend i {
   width: 7px;
@@ -355,7 +355,7 @@
   flex-direction: column;
   min-height: 0;
   background: #fffffff5;
-  border: 1px solid #e3eaf6;
+  border: 1px solid var(--line);
   border-radius: 15px;
   box-shadow: 0 8px 30px #24446126;
   backdrop-filter: blur(12px);
@@ -374,7 +374,7 @@
   margin-top: 4px;
 }
 .region-insight .eyebrow {
-  font-size: 8px;
+  font-size: 11px;
   color: #5890c7;
 }
 .insight-summary {
@@ -386,37 +386,37 @@
   margin-bottom: 9px;
 }
 .insight-summary small {
-  font-size: 8px;
-  color: #9ba9bc;
+  font-size: 11px;
+  color: var(--text-faint);
 }
 .status-tag {
   display: inline-flex;
   border-radius: 6px;
   padding: 4px 6px;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
-  background: #f1f5f6;
-  color: #819392;
+  background: var(--status-quiet-bg);
+  color: var(--status-quiet);
   white-space: nowrap;
 }
 .status-tag.rose {
-  background: #fff0f4;
-  color: #f34771;
+  background: var(--status-candidate-bg);
+  color: var(--status-candidate);
 }
 .status-tag.orange {
-  background: #fff2e0;
-  color: #dc8424;
+  background: var(--status-continuing-bg);
+  color: var(--status-continuing);
 }
 .status-tag.sky {
-  background: #eaf3ff;
-  color: #3577d8;
+  background: var(--status-pending-bg);
+  color: var(--status-pending);
 }
 .insight-count {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 9px 11px;
-  background: #f6f9ff;
+  background: var(--surface-soft);
   border-radius: 9px;
   margin-bottom: 10px;
 }
@@ -429,8 +429,8 @@
   margin-left: 4px;
 }
 .insight-count span {
-  color: #89a0bf;
-  font-size: 9px;
+  color: var(--text-faint);
+  font-size: 11px;
 }
 .region-insight .table-scroll {
   flex: 1;
@@ -438,19 +438,19 @@
   scrollbar-width: thin;
 }
 .region-insight table {
-  font-size: 9px;
+  font-size: 11px;
 }
 .region-insight th,
 .region-insight td {
   padding: 9px 4px;
 }
 .region-insight .badge {
-  font-size: 7px;
+  font-size: 11px;
   padding: 3px 4px;
 }
 .region-insight > .hint {
   padding: 9px 0;
-  font-size: 8px;
+  font-size: 11px;
   line-height: 1.7;
 }
 .insight-actions {
@@ -459,7 +459,7 @@
   flex-shrink: 0;
 }
 .insight-actions button {
-  font-size: 9px;
+  font-size: 11px;
   padding: 9px 7px;
   gap: 6px;
 }
@@ -485,8 +485,8 @@
   color: #ec9539;
 }
 .mission-highlights > header > span {
-  font-size: 8px;
-  color: #a1acbc;
+  font-size: 11px;
+  color: var(--text-faint);
 }
 .highlight-grid {
   display: flex;
@@ -504,19 +504,19 @@
   min-width: 0;
   padding: 9px 12px;
   border: 1px solid #f4e9ed;
-  background: #fff9fb;
+  background: var(--surface-soft);
   border-radius: 10px;
   text-align: left;
   color: #f54a77;
 }
 .highlight-grid > button.sky {
   color: #287af2;
-  background: #f7faff;
-  border-color: #e6effd;
+  background: var(--surface-soft);
+  border-color: var(--line);
 }
 .highlight-grid > button.orange {
   color: #f29129;
-  background: #fffbf5;
+  background: var(--surface-soft);
   border-color: #f6edde;
 }
 .change-symbol {
@@ -529,15 +529,15 @@
   flex-shrink: 0;
 }
 .sky .change-symbol {
-  background: #e9f2ff;
+  background: var(--surface-tint);
 }
 .orange .change-symbol {
   background: #fff0dd;
 }
 .highlight-grid span {
   display: block;
-  font-size: 8px;
-  color: #798ca7;
+  font-size: 11px;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 .highlight-grid strong {
@@ -553,7 +553,7 @@
 }
 .highlight-grid .hint {
   padding: 8px;
-  font-size: 10px;
+  font-size: 11px;
 }
 /* 지역 현황은 지도 복제 대신 검색 가능한 비교 표와 평면 경계 지도를 제공합니다. */
 .regional-overview {
@@ -571,8 +571,8 @@
   overflow: hidden;
 }
 .region-directory h2 > span {
-  font-size: 10px;
-  color: #8ca2bf;
+  font-size: 11px;
+  color: var(--text-faint);
   font-weight: 400;
   margin-left: 4px;
 }
@@ -587,7 +587,7 @@
 }
 .directory-filters input,
 .directory-filters select {
-  font-size: 9px;
+  font-size: 11px;
   padding: 8px;
   border-radius: 8px;
 }
@@ -601,7 +601,7 @@
   scrollbar-width: thin;
 }
 .directory-table table {
-  font-size: 10px;
+  font-size: 11px;
 }
 .directory-table th,
 .directory-table td {
@@ -613,23 +613,23 @@
   z-index: 1;
 }
 .directory-table tr.selected td {
-  background: #eff5ff;
+  background: var(--surface-tint);
 }
 .directory-table .text-button {
-  font-size: 9px;
+  font-size: 11px;
   padding: 0;
 }
 .district-link {
   font-weight: 600;
-  font-size: 10px;
+  font-size: 11px;
   padding: 0;
-  color: #4b658e;
+  color: var(--text-sub);
 }
 .region-directory > footer {
   padding: 12px 14px;
-  font-size: 8px;
-  color: #99a7bb;
-  border-top: 1px solid #edf2f8;
+  font-size: 11px;
+  color: var(--text-faint);
+  border-top: 1px solid var(--line);
 }
 .directory-map-body {
   flex: 1;
@@ -637,14 +637,14 @@
   position: relative;
 }
 .directory-map .mission-map {
-  background: radial-gradient(ellipse, #f2f7ff, white);
+  background: radial-gradient(ellipse, var(--surface-tint), white);
 }
 .directory-map .scene-note {
   bottom: 10px;
 }
 .directory-map > footer {
   padding: 12px 16px;
-  font-size: 9px;
+  font-size: 11px;
 }
 .directory-map .region-insight {
   width: calc(100% - 24px);
@@ -684,7 +684,7 @@
     font-size: 13px;
   }
   .mission-kpi p {
-    font-size: 10px;
+    font-size: 11px;
   }
   .region-insight {
     width: 320px;
@@ -694,14 +694,14 @@
     width: calc(100% - 305px);
   }
   .region-insight table {
-    font-size: 10px;
+    font-size: 11px;
   }
   .region-insight td,
   .region-insight th {
     padding: 12px 5px;
   }
   .highlight-grid span {
-    font-size: 10px;
+    font-size: 11px;
   }
   .highlight-grid strong {
     font-size: 24px;
@@ -727,7 +727,7 @@
     width: 22px;
   }
   .mission-kpi-note {
-    font-size: 7px;
+    font-size: 11px;
     right: 8px;
     bottom: 18px;
   }
@@ -735,10 +735,10 @@
     font-size: 28px;
   }
   .mission-kpi > div > span {
-    font-size: 10px;
+    font-size: 11px;
   }
   .mission-kpi p {
-    font-size: 7px;
+    font-size: 11px;
   }
   .region-insight {
     width: 262px;
@@ -773,7 +773,7 @@
     font-size: 28px;
   }
   .mission-kpi p {
-    font-size: 7px;
+    font-size: 11px;
   }
   .region-insight {
     top: 9px;
@@ -800,7 +800,7 @@
   }
   .insight-actions button {
     padding: 7px;
-    font-size: 8px;
+    font-size: 11px;
   }
   .mission-highlights > header {
     padding: 10px 14px 7px;
@@ -867,7 +867,7 @@
     height: 32px;
   }
   .mission-kpi > div > span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .highlight-grid > button > svg {
     display: none;
@@ -963,26 +963,26 @@
     display: none;
   }
   .mission-kpi > div > span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .mission-kpi strong {
     font-size: 26px;
   }
   .mission-kpi strong small {
-    font-size: 9px;
+    font-size: 11px;
   }
   .mission-map-card > header {
     padding: 10px;
   }
   .mission-map-card h2 {
-    font-size: 10px;
+    font-size: 11px;
   }
   .map-folder {
     width: 24px;
     height: 24px;
   }
   .mission-map-card > header .pill {
-    font-size: 7px;
+    font-size: 11px;
     padding: 3px;
   }
   .mission-map-card > header > div {
@@ -996,10 +996,10 @@
     padding: 8px 3px;
   }
   .mission-legend span {
-    font-size: 7px;
+    font-size: 11px;
   }
   .scene-note {
-    font-size: 6px;
+    font-size: 11px;
     left: 5px;
     bottom: 31px;
   }
@@ -1026,7 +1026,7 @@
     font-size: 14px;
   }
   .region-insight table {
-    font-size: 8px;
+    font-size: 11px;
   }
   .region-insight th,
   .region-insight td {
@@ -1039,14 +1039,14 @@
   .insight-actions button {
     flex: 1;
     min-width: 0;
-    font-size: 7px;
+    font-size: 11px;
     padding: 7px 3px;
   }
   .insight-actions svg {
     display: none;
   }
   .region-insight > .hint {
-    font-size: 7px;
+    font-size: 11px;
   }
   .mission-highlights > header {
     padding: 9px 10px 7px;
@@ -1068,7 +1068,7 @@
     display: none;
   }
   .highlight-grid span {
-    font-size: 7px;
+    font-size: 11px;
     white-space: normal;
   }
   .highlight-grid strong {
@@ -1084,14 +1084,14 @@
   }
   .directory-table th,
   .directory-table td {
-    font-size: 8px;
+    font-size: 11px;
     padding: 8px 5px;
   }
   .directory-table .status-tag {
-    font-size: 7px;
+    font-size: 11px;
   }
   .directory-map > footer {
-    font-size: 8px;
+    font-size: 11px;
   }
   .directory-map .region-insight {
     width: calc(100% - 12px);
@@ -1099,7 +1099,7 @@
     bottom: 6px;
   }
   .region-directory > footer {
-    font-size: 7px;
+    font-size: 11px;
     padding: 8px 10px;
   }
   .nav-collapsed .sidebar > .logo-toggle .bomi-face {
@@ -1115,9 +1115,9 @@
 .chat-topics {
   margin: 0 16px 10px;
   padding: 10px;
-  border: 1px solid #e0ebff;
+  border: 1px solid var(--line);
   border-radius: 12px;
-  background: linear-gradient(135deg, #eff7ff, #fbfdff);
+  background: linear-gradient(135deg, var(--surface-tint), var(--surface-soft));
   flex-shrink: 0;
 }
 .topic-tabs,
@@ -1130,15 +1130,15 @@
   margin-bottom: 10px;
 }
 .chat-topics button {
-  border: 1px solid #dce8ff;
+  border: 1px solid var(--line);
   border-radius: 6px;
   background: white;
   padding: 7px 3px;
-  font-size: 9px;
+  font-size: 11px;
   color: #234369;
 }
 .topic-tabs button.active {
-  background: #dfedff;
+  background: var(--line);
   color: #1d67df;
 }
 .chat-topics b {
@@ -1148,15 +1148,15 @@
 .chat-topics small {
   display: block;
   margin: 4px 0 8px;
-  font-size: 9px;
-  color: #6c8bad;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 .topic-buttons {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .free-chat-note {
-  font-size: 9px;
-  color: #6b819e;
+  font-size: 11px;
+  color: var(--text-muted);
   margin-bottom: 7px;
 }
 .chat-topics ~ .chat-messages .suggestions {
@@ -1217,12 +1217,12 @@
 .briefing-v2 .mission-kpi-icon { width: clamp(36px, 5vh, 54px); height: clamp(36px, 5vh, 54px); display: grid; }
 .briefing-v2 .mission-kpi > div > span { font-size: 12px; }
 .briefing-v2 .mission-kpi strong { font-size: clamp(28px, 3.8vh, 38px); line-height: 1.2; margin-top: 5px; }
-.briefing-v2 .mission-kpi p { display: block; font-size: 9px; line-height: 1.5; margin-top: 5px; }
-.briefing-v2 .mission-kpi-note { display: inline-block; position: static; font-size: 9px; padding: 4px 8px; }
+.briefing-v2 .mission-kpi p { display: block; font-size: 11px; line-height: 1.5; margin-top: 5px; }
+.briefing-v2 .mission-kpi-note { display: inline-block; position: static; font-size: 11px; padding: 4px 8px; }
 .briefing-v2 .mission-map-card > header { flex-wrap: wrap; gap: 6px; }
 .briefing-v2 .mission-map-card h2 { font-size: clamp(12px, 1.1vw, 17px); }
 .briefing-v2 .region-insight { width: min(290px, calc(100% - 24px)); box-shadow: 0 8px 30px #233c5626; z-index: 5; }
-.road-map { background: #f4f6f1; isolation: isolate; user-select: none; -webkit-user-select: none; }
+.road-map { background: var(--line); isolation: isolate; user-select: none; -webkit-user-select: none; }
 .road-map-canvas { position: absolute; inset: 0 0 34px; z-index: 0; font-family: inherit; }
 .directory-map .road-map-canvas { bottom: 0; }
 .road-map .leaflet-container { cursor: grab; }
@@ -1230,11 +1230,11 @@
 .road-map .leaflet-tile { -webkit-user-drag: none; }
 .road-map .leaflet-interactive { outline: none; }
 .road-map .leaflet-interactive:focus-visible { stroke: #215eb8; stroke-width: 4; }
-.road-map .leaflet-control-attribution { font-size: 8px; max-width: 100%; background: #ffffffed; line-height: 1.5; }
+.road-map .leaflet-control-attribution { font-size: 11px; max-width: 100%; background: #ffffffed; line-height: 1.5; }
 .road-map .map-tools { z-index: 2; }
 .road-map .map-tools button { width: 34px; height: 34px; }
 .roadmap-district-label.leaflet-tooltip {
-  background: transparent; border: 0; box-shadow: none; color: #65778b;
+  background: transparent; border: 0; box-shadow: none; color: var(--text-muted);
   font-size: 11px; font-weight: 600; text-shadow: 0 1px 2px white, 1px 0 2px white, -1px 0 2px white;
 }
 .roadmap-marker { background: none; border: 0; }
@@ -1244,18 +1244,18 @@
   transform: rotate(-45deg); box-shadow: 0 3px 8px #21375825; font-size: 0;
 }
 .roadmap-pin-number::after { content: attr(data-number); transform: rotate(45deg); font-size: 18px; font-weight: 800; }
-.roadmap-pin-label { display: grid; gap: 4px; padding: 10px 12px; background: white; border: 1px solid #e5eaf0;
+.roadmap-pin-label { display: grid; gap: 4px; padding: 10px 12px; background: white; border: 1px solid var(--line);
   border-radius: 10px; box-shadow: 0 3px 12px #21375818; white-space: nowrap; }
-.roadmap-pin-label b { color: #213758; font-size: 13px; }
-.roadmap-pin-label small { color: var(--pin-color); font-size: 10px; }
+.roadmap-pin-label b { color: var(--text); font-size: 13px; }
+.roadmap-pin-label small { color: var(--pin-color); font-size: 11px; }
 .roadmap-pin:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; border-radius: 8px; }
 .map-zoom-hint { position: absolute; z-index: 2; right: 12px; bottom: 64px; display: flex;
   align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; background: #fffffff0;
-  color: #7486a1; font-size: 9px; pointer-events: none; }
-.map-zoom-hint output { border-left: 1px solid #dfe5ee; padding-left: 10px; min-width: 40px; }
+  color: var(--text-muted); font-size: 11px; pointer-events: none; }
+.map-zoom-hint output { border-left: 1px solid var(--line); padding-left: 10px; min-width: 40px; }
 .directory-map .map-zoom-hint { bottom: 30px; }
 .map-tile-error { position: absolute; z-index: 3; top: 12px; left: 56px; right: 12px;
-  padding: 8px 10px; background: #fff7e6; border-radius: 8px; font-size: 10px; color: #805c19; }
+  padding: 8px 10px; background: #fff7e6; border-radius: 8px; font-size: 11px; color: #805c19; }
 .map-tile-error button { margin-left: 8px; text-decoration: underline; }
 @media (max-height: 750px) and (min-width: 851px) {
   .briefing-v2 { grid-template-rows: minmax(300px, 1fr) 88px; gap: 10px; }
@@ -1267,7 +1267,7 @@
 @media (max-width: 1100px) and (min-width: 851px) {
   .briefing-v2 { grid-template-columns: minmax(0, 1fr) 138px; gap: 10px; }
   .briefing-v2 .mission-kpi > div > span { font-size: 11px; }
-  .briefing-v2 .mission-kpi p { font-size: 8px; }
+  .briefing-v2 .mission-kpi p { font-size: 11px; }
   .map-zoom-hint span { display: none; }
 }
 @media (max-width: 850px) {
@@ -1277,10 +1277,10 @@
   .briefing-v2 > .mission-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto; gap: 6px; }
   .briefing-v2 .mission-kpi { gap: 5px; padding: 10px 5px; }
   .briefing-v2 .mission-kpi-icon { width: 32px; height: 32px; }
-  .briefing-v2 .mission-kpi > div > span { font-size: 9px; }
+  .briefing-v2 .mission-kpi > div > span { font-size: 11px; }
   .briefing-v2 .mission-kpi strong { font-size: 27px; }
   .briefing-v2 .mission-kpi p, .briefing-v2 .mission-kpi-note { display: none; }
-  .map-zoom-hint { right: 8px; font-size: 8px; }
+  .map-zoom-hint { right: 8px; font-size: 11px; }
   .map-zoom-hint span { display: none; }
   .briefing-v2 .mission-highlights { min-height: 96px; }
 }
@@ -1295,11 +1295,11 @@
 .road-map .leaflet-tile-pane { filter: saturate(0.55) brightness(1.05); }
 .map-jurisdiction {
   position: absolute; z-index: 2; left: 12px; bottom: 64px;
-  display: grid; gap: 3px; padding: 8px 10px; border: 1px solid #e4eaf1;
-  border-radius: 8px; background: #ffffffed; color: #244361;
+  display: grid; gap: 3px; padding: 8px 10px; border: 1px solid var(--line);
+  border-radius: 8px; background: #ffffffed; color: var(--text);
   font-size: 11px; font-weight: 700; pointer-events: none;
 }
-.map-jurisdiction span { color: #8796a8; font-size: 9px; font-weight: 400; }
+.map-jurisdiction span { color: var(--text-muted); font-size: 11px; font-weight: 400; }
 .directory-map .map-jurisdiction { bottom: 30px; }
 @media (max-height: 800px) and (min-width: 851px) {
   .briefing-v2 .mission-kpi-icon { width: 30px; height: 30px; }
@@ -1316,15 +1316,15 @@
 }
 /* 도로는 위치 파악을 돕는 배경으로, 행정동 경계와 후보 표시를 우선합니다. */
 .road-map .leaflet-tile-pane { opacity: 0.48; filter: saturate(0.3) brightness(1.08); }
-.roadmap-district-label.leaflet-tooltip { color: #344f66; font-weight: 700; }
+.roadmap-district-label.leaflet-tooltip { color: var(--text); font-weight: 700; }
 /* 행정동을 판 형태로 표현하는 입체 지도. 실제 도로 지도는 별도 모드로 유지합니다. */
 .mission-map-switchable { position: relative; height: 100%; min-height: 0; isolation: isolate; }
 .map-view-toggle { position: absolute; right: 12px; top: 12px; z-index: 4;
-  display: flex; gap: 3px; padding: 3px; border: 1px solid #e0e7ee; border-radius: 9px;
+  display: flex; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 9px;
   background: #ffffffef; box-shadow: 0 2px 8px #1c355412; }
-.map-view-toggle button { padding: 5px 10px; border-radius: 6px; color: #8491a3; font-size: 10px; }
-.map-view-toggle button[aria-pressed="true"] { background: #e8f0ff; color: #2563eb; font-weight: 700; }
-.relief-map { background: radial-gradient(ellipse at 48% 44%, #e3eaff 0%, #f0f2ff 48%, #f8faff 90%);
+.map-view-toggle button { padding: 5px 10px; border-radius: 6px; color: var(--text-muted); font-size: 11px; }
+.map-view-toggle button[aria-pressed="true"] { background: var(--line); color: #2563eb; font-weight: 700; }
+.relief-map { background: radial-gradient(ellipse at 48% 44%, var(--line) 0%, var(--surface-tint) 48%, var(--surface-soft) 90%);
   user-select: none; -webkit-user-select: none; touch-action: none; }
 .relief-scene { position: absolute; width: 100%; height: calc(100% - 34px); display: block;
   cursor: grab; touch-action: none; -webkit-user-drag: none; }
@@ -1335,19 +1335,19 @@
 .relief-district:hover .relief-top { stroke: #ffffff; stroke-width: 3.5; }
 .relief-district.selected .relief-top { stroke: #ffffff; stroke-width: 4; }
 .relief-district:focus-visible .relief-top { stroke: #2563eb; stroke-width: 4; }
-.relief-district text { fill: #36516f; font-size: 12px; font-weight: 600; pointer-events: none;
+.relief-district text { fill: var(--text); font-size: 12px; font-weight: 600; pointer-events: none;
   paint-order: stroke; stroke: #ffffff60; stroke-width: 2px; }
 .relief-district.candidate text { fill: #53263f; font-weight: 800; font-size: 14px; }
 .relief-priority { cursor: pointer; outline: none; }
 .relief-priority:focus-visible rect, .relief-priority:hover rect { stroke: #2563eb; stroke-width: 2; }
 .relief-map .map-zoom-hint, .relief-map .map-jurisdiction { bottom: 68px; }
-.relief-map-note { position: absolute; left: 12px; bottom: 42px; font-size: 8px; color: #8c9aac; pointer-events: none; }
+.relief-map-note { position: absolute; left: 12px; bottom: 42px; font-size: 11px; color: var(--text-muted); pointer-events: none; }
 .directory-map .relief-map .map-zoom-hint, .directory-map .relief-map .map-jurisdiction { bottom: 36px; }
 .directory-map .relief-map-note { bottom: 10px; }
 @media (max-width: 600px) {
   .map-view-toggle { top: 7px; right: 7px; }
-  .map-view-toggle button { padding: 4px 8px; font-size: 9px; }
-  .relief-map-note { font-size: 7px; }
+  .map-view-toggle button { padding: 4px 8px; font-size: 11px; }
+  .relief-map-note { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) { .relief-district .relief-top { transition: none; } }
 /* 넓어진 요약 카드는 아이콘을 왼쪽에 두어 낮은 화면에서도 잘리지 않습니다. */
@@ -1356,7 +1356,7 @@
   .briefing-v2 .mission-kpi { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-content: center; justify-content: initial; text-align: left; gap: 8px 12px; padding: 14px; }
   .briefing-v2 .mission-kpi-icon { width: 40px; height: 40px; grid-row: 1 / 3; align-self: center; }
   .briefing-v2 .mission-kpi > div:not(.mission-kpi-icon) { gap: 3px; }
-  .briefing-v2 .mission-kpi p { display: block; font-size: 9px; line-height: 14px; }
+  .briefing-v2 .mission-kpi p { display: block; font-size: 11px; line-height: 14px; }
   .briefing-v2 .mission-kpi-note { display: inline-block; grid-column: 2; justify-self: start; }
   .briefing-v2 > .mission-kpis { grid-template-rows: repeat(3, minmax(120px, 1fr)); }
   .briefing-v2 { grid-template-rows: minmax(384px, 1fr) 100px; }
@@ -1364,27 +1364,27 @@
 .road-map .leaflet-tile-pane { opacity: 0.72; filter: saturate(0.35) brightness(1.05); }
 .roadmap-district-label.leaflet-tooltip { font-size: 12px; background: #ffffffe0; padding: 2px 5px; border-radius: 4px; }
 /* E 시안: 관할 전체와 선택 동의 도로 확대창을 동시에 표시합니다. */
-.overview-lens { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(190px, 1fr); height: 100%; background: #f7f9fc; }
+.overview-lens { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(190px, 1fr); height: 100%; background: var(--surface-soft); }
 .lens-overview { min-width: 0; min-height: 0; }
-.lens-overview .road-map, .lens-overview .leaflet-container { background: #f7f9fc; }
+.lens-overview .road-map, .lens-overview .leaflet-container { background: var(--surface-soft); }
 .lens-overview .map-zoom-hint { bottom: 48px; left: 12px; right: auto; }
 .lens-overview .map-zoom-hint span { display: none; }
 .lens-overview .map-jurisdiction { bottom: 85px; }
-.lens-overview .roadmap-district-label { font-size: 10px; }
+.lens-overview .roadmap-district-label { font-size: 11px; }
 .lens-detail { padding: 20px 10px 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-width: 0; }
 .lens-detail header { text-align: center; display: grid; gap: 5px; }
-.lens-detail header span { color: #7c8ca0; font-size: 10px; }
-.lens-detail header strong { color: #193553; font-size: 21px; }
+.lens-detail header span { color: var(--text-muted); font-size: 11px; }
+.lens-detail header strong { color: var(--text); font-size: 21px; }
 .lens-circle { width: 100%; aspect-ratio: 1; max-width: 300px; border: 3px solid #ff7394; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 6px white, 0 5px 22px #233c5612; isolation: isolate; flex-shrink: 0; }
 .lens-circle .road-map-canvas { bottom: 0; }
 .lens-circle .map-tools { top: 28px; left: 25px; }
 .lens-circle .map-tools button { width: 23px; height: 23px; font-size: 13px; }
 .lens-circle .leaflet-control-attribution { display: none; }
 .lens-circle .roadmap-district-label { color: #cf3b65; font-size: 13px; }
-.lens-caption { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; font-size: 10px; color: #7c8ca0; }
+.lens-caption { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
 .lens-caption b { color: #d74e74; }
-.lens-open { border: 1px solid #dfe5ee; border-radius: 8px; background: white; padding: 8px 14px; color: #244361; font-size: 11px; cursor: pointer; }
-.lens-detail p { margin: 0; text-align: center; font-size: 9px; line-height: 1.6; color: #8896a8; }
+.lens-open { border: 1px solid var(--line); border-radius: 8px; background: white; padding: 8px 14px; color: var(--text); font-size: 11px; cursor: pointer; }
+.lens-detail p { margin: 0; text-align: center; font-size: 11px; line-height: 1.6; color: var(--text-muted); }
 @media (max-height: 800px) { .lens-detail { padding-top: 8px; gap: 7px; } .lens-circle { max-width: 185px; } .lens-detail p { display: none; } }
 @media (max-width: 850px) { .overview-lens { grid-template-columns: minmax(0, 1fr) minmax(150px, .85fr); } .lens-detail header strong { font-size: 16px; } }
 .overview-lens { position: relative; }
@@ -1393,53 +1393,53 @@
 .lens-detail { position: relative; z-index: 2; }
 /* 전체 지도와 선택 동을 하나의 지도 영역에서 전환합니다. */
 .single-overview { position: relative; height: 100%; min-height: 0; isolation: isolate; }
-.single-overview .road-map, .single-overview .leaflet-container { background: #f7f9fc; }
+.single-overview .road-map, .single-overview .leaflet-container { background: var(--surface-soft); }
 .single-overview .map-view-toggle { z-index: 4; }
-.single-overview .roadmap-district-label { font-size: 10px; padding: 1px 3px; }
+.single-overview .roadmap-district-label { font-size: 11px; padding: 1px 3px; }
 .single-overview .map-jurisdiction { bottom: 72px; }
 .single-overview .map-zoom-hint { left: 12px; right: auto; bottom: 48px; }
 .single-overview .map-zoom-hint span { display: none; }
-.map-region-chip { position: absolute; z-index: 3; bottom: 52px; right: 12px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; padding: 9px 10px; border: 1px solid #e0e7ef; border-radius: 9px; background: #fffffff5; font-size: 10px; color: #738499; max-width: calc(100% - 125px); }
-.map-region-chip b { color: #263f60; }
-.map-region-chip button { border: 0; border-radius: 5px; padding: 4px 6px; background: #f1f6ff; color: #3168ae; cursor: pointer; font-size: 10px; }
+.map-region-chip { position: absolute; z-index: 3; bottom: 52px; right: 12px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fffffff5; font-size: 11px; color: var(--text-muted); max-width: calc(100% - 125px); }
+.map-region-chip b { color: var(--text); }
+.map-region-chip button { border: 0; border-radius: 5px; padding: 4px 6px; background: var(--surface-tint); color: #3168ae; cursor: pointer; font-size: 11px; }
 /* J 시안: 관할 전체를 유지하고 도로는 옅게, 후보 설명은 작게 표시합니다. */
 .quiet-road-overview .leaflet-tile-pane { opacity: .42; filter: saturate(.2) brightness(1.07); }
 .quiet-road-overview .roadmap-pin-label { padding: 7px 9px; border-color: #f4b7c7; border-left: 3px solid var(--pin-color); border-radius: 8px; gap: 3px; box-shadow: 0 3px 10px #233c5610; }
 .quiet-road-overview .roadmap-pin-label b { font-size: 11px; }
-.quiet-road-overview .roadmap-pin-label small { font-size: 9px; }
+.quiet-road-overview .roadmap-pin-label small { font-size: 11px; }
 .quiet-road-overview .roadmap-pin { gap: 0; }
 
 /* MapLibre: 사이트의 파스텔 팔레트와 카드 형태를 지도에도 공유합니다. */
-.mission-map.vector-map { background: #f7f9fc; }
+.mission-map.vector-map { background: var(--surface-soft); }
 .vector-map .road-map-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .vector-map .maplibregl-map { font-family: inherit; }
 .vector-map .maplibregl-canvas { outline: none; }
 .vector-map .maplibregl-canvas:focus-visible { outline: 3px solid #7da8ea; outline-offset: -3px; }
-.vector-map .map-tools { top: 16px; left: 16px; border: 1px solid #e1e8f1; border-radius: 12px; box-shadow: 0 4px 16px #334b6b0c; }
-.vector-map .map-tools button { width: 34px; height: 34px; color: #59738d; }
+.vector-map .map-tools { top: 16px; left: 16px; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 16px #334b6b0c; }
+.vector-map .map-tools button { width: 34px; height: 34px; color: var(--text-sub); }
 .vector-map .map-tools button:focus-visible { outline: 2px solid #3978d6; outline-offset: -3px; }
 .vector-region-picker { position: absolute; z-index: 2; top: 16px; right: 16px; display: flex; flex-direction: row; align-items: center; gap: 6px;
-  padding: 8px 10px; background: #fffffff2; border: 1px solid #e1e8f1; border-radius: 10px; color: #6e8aab; box-shadow: 0 4px 16px #334b6b08; }
-.vector-region-picker select { width: auto; max-width: 180px; height: 22px; margin: 0; padding: 0 3px; font: inherit; font-size: 11px; color: #425e7c; background: transparent; border: 0; cursor: pointer; }
+  padding: 8px 10px; background: #fffffff2; border: 1px solid var(--line); border-radius: 10px; color: var(--text-muted); box-shadow: 0 4px 16px #334b6b08; }
+.vector-region-picker select { width: auto; max-width: 180px; height: 22px; margin: 0; padding: 0 3px; font: inherit; font-size: 11px; color: var(--text-sub); background: transparent; border: 0; cursor: pointer; }
 .vector-district-marker { padding: 3px 6px; border: 1px solid transparent; border-radius: 7px; background: #ffffffb8;
-  font: inherit; font-size: 11px; font-weight: 600; color: #667e94; white-space: nowrap; cursor: pointer; }
-.vector-district-marker:hover, .vector-district-marker.selected { color: #2866bf; background: #eff5ff; border-color: #9dbbe8; }
+  font: inherit; font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; cursor: pointer; }
+.vector-district-marker:hover, .vector-district-marker.selected { color: #2866bf; background: var(--surface-tint); border-color: #9dbbe8; }
 .vector-priority-marker { display: flex; align-items: center; gap: 9px; padding: 9px 12px 9px 9px;
   border: 1px solid color-mix(in srgb, var(--marker-color) 45%, white); border-radius: 13px;
   background: #fffffffa; box-shadow: 0 5px 20px #35557514; cursor: pointer; text-align: left; font: inherit; }
 .vector-priority-number { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center;
   color: white; background: var(--marker-color); font-size: 13px; font-weight: 800; flex-shrink: 0; }
 .vector-priority-marker > span:last-child { display: grid; gap: 3px; white-space: nowrap; }
-.vector-priority-marker b { color: #304b67; font-size: 12px; }
-.vector-priority-marker small { color: var(--marker-color); font-size: 10px; }
+.vector-priority-marker b { color: var(--text); font-size: 12px; }
+.vector-priority-marker small { color: var(--marker-color); font-size: 11px; }
 .vector-priority-marker:hover { box-shadow: 0 6px 24px #35557526; }
-.vector-priority-marker.selected { border: 2px solid #3978d6; background: #f8fbff; }
+.vector-priority-marker.selected { border: 2px solid #3978d6; background: var(--surface-soft); }
 .vector-district-marker:focus-visible, .vector-priority-marker:focus-visible { outline: 3px solid #3978d6; outline-offset: 3px; }
 .vector-district-marker[hidden], .vector-priority-marker[hidden] { display: none; }
 .vector-map .map-jurisdiction { bottom: 52px; left: 16px; padding: 9px 12px; border-radius: 10px; background: #fffffff2; }
 .vector-map .map-zoom-hint { left: auto; right: 16px; bottom: 52px; border-radius: 10px; background: #fffffff2; }
 .vector-map .map-zoom-hint span { display: inline; }
-.vector-map .maplibregl-ctrl-attrib { font-family: inherit; font-size: 9px; color: #73849a; background: #fffffff0; }
+.vector-map .maplibregl-ctrl-attrib { font-family: inherit; font-size: 11px; color: var(--text-muted); background: #fffffff0; }
 .vector-map .maplibregl-ctrl-attrib a { color: inherit; }
 .vector-map .maplibregl-ctrl-bottom-right { bottom: 36px; right: 6px; }
 .directory-map .vector-map .maplibregl-ctrl-bottom-right { bottom: 5px; }
@@ -1448,7 +1448,7 @@
 .mission-legend .sky { background: #78a9ed; }
 .vector-map .map-tile-error { top: 62px; left: 62px; right: 16px; line-height: 1.6; }
 .vector-map-fallback { height: 100%; position: relative; }
-.vector-map-fallback > p { position: absolute; top: 12px; left: 58px; right: 12px; background: #fffffff0; padding: 8px; font-size: 10px; border-radius: 8px; }
+.vector-map-fallback > p { position: absolute; top: 12px; left: 58px; right: 12px; background: #fffffff0; padding: 8px; font-size: 11px; border-radius: 8px; }
 @media (max-width: 850px) {
   .vector-map .map-tools { top: 10px; left: 10px; }
   .vector-region-picker { top: 10px; right: 10px; }
@@ -1466,12 +1466,12 @@
 .vector-priority-marker .vector-priority-number { width: 22px; height: 22px; border-radius: 7px; font-size: 12px; }
 .vector-priority-marker b { font-size: 12px; white-space: nowrap; }
 .regional-overview { grid-template-columns: minmax(0, .95fr) minmax(320px, 1.25fr); }
-.directory-map .vector-district-marker { padding: 1px 4px; font-size: 10.5px; background: #ffffffd9; }
+.directory-map .vector-district-marker { padding: 1px 4px; font-size: 11px; background: #ffffffd9; }
 .map-hover-label { position: absolute; z-index: 5; pointer-events: none; display: flex; gap: 6px; align-items: center; padding: 5px 8px; border-radius: 8px; background: #0f172ae6; color: #fff; font-size: 12px; white-space: nowrap; }
-.map-hover-label span { font-size: 11px; color: #cbd5e1; }
+.map-hover-label span { font-size: 11px; color: var(--line-strong); }
 .region-detail .region-insight > header .icon-button { display: none; }
 /* 지도 출처 표기는 이용 조건상 남기되 작고 흐리게 */
-.vector-map .maplibregl-ctrl-attrib { font-size: 9px; opacity: .7; }
+.vector-map .maplibregl-ctrl-attrib { font-size: 11px; opacity: .7; }
 
 /* 지역 목록의 제목·안내·도움말·필터를 같은 여백으로 정렬합니다. */
 .region-directory > header { padding: 20px 20px 0; margin-bottom: 12px; }
