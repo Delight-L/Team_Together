@@ -31,19 +31,36 @@ function Typing() {
   </article>;
 }
 
-function useChat(context, group) {
+// 이전 대화는 최근 3쌍(질문·답 6개)만 함께 보냅니다.
+const HISTORY_SIZE = 6;
+// AI 스위치 상태는 사용자별로 이 브라우저에 기억합니다. 저장소를 쓸 수 없으면 기본(꺼짐)으로 둡니다.
+const aiSwitchKey = userId => 'welfind-bomi-ai:' + (userId || 'guest');
+function loadAiSwitch(userId) {
+  try { return localStorage.getItem(aiSwitchKey(userId)) === 'on'; } catch { return false; }
+}
+function saveAiSwitch(userId, on) {
+  try { localStorage.setItem(aiSwitchKey(userId), on ? 'on' : 'off'); } catch { /* 기억하지 못해도 동작에는 문제없음 */ }
+}
+// 서버가 알려 준 답변 방식(mode)에 AI 단계가 있으면 AI가 만든 답입니다.
+export const usedAi = mode => /AI (대화|해석|문장 다듬기)/.test(mode || '');
+
+function useChat(context, group, userId) {
   const contextKey = JSON.stringify([context, group || null]);
   const [messages, setMessages] = useState([]), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [config, setConfig] = useState(null);
-  // 답변 방식은 담당 선택과 모든 담당 에이전트에 함께 적용됩니다. AI를 쓸 수 있으면 AI 사용이 기본입니다.
-  const [answerMode, setAnswerMode] = useState(null);
+  // AI 사용 스위치: 기본 꺼짐. 관리자가 AI를 허용했고 사용자가 켰을 때만 외부 AI를 씁니다.
+  const [aiOn, setAiOn] = useState(() => loadAiSwitch(userId));
   const request = useRef(null);
   useEffect(() => {
     let active = true;
-    api('/chat/config').then(d => active && setConfig(d)).catch(() => active && setConfig({ aiAvailable: false, resourceCount: 0 }));
-    return () => { active = false; };
+    const load = () => api('/chat/config').then(d => active && setConfig(d)).catch(() => active && setConfig({ aiAvailable: false, resourceCount: 0 }));
+    load();
+    // 관리자가 AI 설정을 저장하면 다시 불러옵니다.
+    window.addEventListener('welfind-ai-settings', load);
+    return () => { active = false; window.removeEventListener('welfind-ai-settings', load); };
   }, []);
-  const mode = answerMode || (config?.aiAvailable ? 'ai' : 'data');
+  const mode = aiOn && config?.aiAvailable ? 'ai' : 'data';
+  function setAi(on) { setAiOn(on); saveAiSwitch(userId, on); }
   useEffect(() => {
     request.current?.abort(); request.current = null; setMessages([]); setError(''); setBusy(false);
     return () => { request.current?.abort(); request.current = null; };
@@ -56,13 +73,22 @@ function useChat(context, group) {
   async function send(question) {
     if (request.current) return;
     const controller = new AbortController(); request.current = controller;
-    const next = [...messages.filter(m => m.text && !m.interrupted).slice(-38), { role: 'user', text: question }];
+    // 화면에는 대화 전체를 남기고, 서버에는 최근 3쌍과 이번 질문만 보냅니다.
+    const kept = messages.filter(m => m.text && !m.interrupted);
+    const recent = kept.slice(-HISTORY_SIZE);
+    const next = [...messages, { role: 'user', text: question }];
     const index = next.length;
     setMessages([...next, { role: 'assistant', text: '', sources: [] }]);
     setError(''); setBusy(true);
     const update = fn => { if (request.current === controller) setMessages(previous => previous.map((m, i) => i === index ? fn(m) : m)); };
+    // 최근 답에서 찾은 복지사업 id: «보고서 작성해줘»를 하면 이 사업들로 초안을 만듭니다.
+    const sources = [...new Set(recent.flatMap(m => (m.sources || []).map(r => r.id)))].slice(0, 10);
     try {
-      const body = { ...context, mode, messages: next.map(m => ({ role: m.role, content: m.text.slice(0, 6000) })), ...(group ? { group } : {}) };
+      const body = {
+        ...context, mode, sources,
+        messages: [...recent, { role: 'user', text: question }].map(m => ({ role: m.role, content: m.text.slice(0, 6000) })),
+        ...(group ? { group } : {}),
+      };
       await streamChat(body, (event, payload) => {
         if (request.current !== controller) return;
         if (event === 'route') update(m => ({ ...m, agent: payload.label }));
@@ -85,14 +111,14 @@ function useChat(context, group) {
     }
   }
   const reset = () => { request.current?.abort(); request.current = null; setMessages([]); setError(''); setBusy(false); };
-  return { messages, busy, error, send, reset, stop, config, mode, setAnswerMode };
+  return { messages, busy, error, send, reset, stop, config, mode, aiOn, setAi };
 }
 
-export default function BomiChat({ context, group, layout = 'embedded', expanded = false, onExpand, draft, actions = [], onAction, visible = true }) {
+export default function BomiChat({ context, group, userId, layout = 'embedded', expanded = false, onExpand, draft, actions = [], onAction, visible = true }) {
   const [input, setInput] = useState('');
   // guided: 다른 화면에서 예시 질문을 넣어 준 상태. 입력란을 강조하고 보내는 방법을 안내합니다.
   const [guided, setGuided] = useState(false);
-  const chat = useChat(context, group);
+  const chat = useChat(context, group, userId);
   const end = useRef(null), field = useRef(null), appliedDraft = useRef(null);
   const contextKey = JSON.stringify(context);
   useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }); }, [chat.messages, chat.busy]);
@@ -121,17 +147,24 @@ export default function BomiChat({ context, group, layout = 'embedded', expanded
     <header className="bomi-chat-head">
       <img src="/brand/bomi-face.png" alt="" />
       <div><strong>보미에게 질문</strong><small><span className="online-dot" />{place} · {month}</small></div>
+      <button type="button" role="switch" aria-label="AI 사용" aria-checked={chat.mode === 'ai'} className={`bomi-ai-switch ${chat.mode === 'ai' ? 'on' : ''}`}
+        disabled={chat.busy || !aiAvailable} onClick={() => chat.setAi(!chat.aiOn)}
+        title={aiAvailable ? '켜면 질문을 외부 AI로 보내 답변을 만듭니다' : '관리자가 AI 설정에서 AI를 켜야 사용할 수 있어요'}>
+        <span className="track" aria-hidden="true"><span className="thumb" /></span>AI {chat.mode === 'ai' ? '켜짐' : '꺼짐'}
+      </button>
       <button className="bomi-new" disabled={chat.busy} onClick={() => { chat.reset(); setInput(''); }}>새 대화</button>
       {onExpand && <>
         <button className="icon-button" onClick={onExpand} aria-label={expanded ? '챗봇 패널로 돌아가기' : '챗봇 크게 보기'}><Icon name={expanded ? 'minimize' : 'expand'} size={17} /></button>
       </>}
     </header>
     <p className="bomi-scope">{group ? '열어 둔 그룹' : context.district ? context.district : `${context.city} 전체`} 기준으로 분석 설명 · 복지사업 찾기 · 보고서 초안을 도와드려요.</p>
-    <details className="bomi-mode"><summary>답변 방식 · {chat.mode === 'ai' ? 'AI 사용' : '외부 AI 사용 안 함'}{chat.config?.resourceCount ? ` · 복지사업 자료 ${chat.config.resourceCount}건` : ''}</summary>
-      <select aria-label="답변 방식" value={chat.mode} disabled={chat.busy} onChange={e => chat.setAnswerMode(e.target.value)}>
-        <option value="ai" disabled={!aiAvailable}>AI 사용{aiAvailable ? ' · 전송 시 외부 AI 사용' : ' · 연결 설정 필요'}</option>
-        <option value="data">외부 AI 사용 안 함 · 데이터 근거와 자료 검색으로 답변</option>
-      </select></details>
+    <p className={`bomi-mode-line ${chat.mode === 'ai' ? 'ai' : ''}`} role="status">
+      {chat.mode === 'ai'
+        ? `AI 사용 중 · 질문과 최근 대화가 외부 AI(${chat.config?.aiProvider || '관리자 설정'})로 전송돼요`
+        : aiAvailable ? '자료 기반 답변 · 외부로 전송하지 않아요. 위 스위치로 AI를 켤 수 있어요'
+          : '자료 기반 답변 · 외부 AI는 관리자에게 연결을 요청하세요'}
+      {` · 최근 대화 3개를 기억해요`}
+    </p>
     <div className="bomi-messages" aria-live="polite">
       {!chat.messages.length && <div className="bomi-welcome">
         <h3>무엇을 도와드릴까요?</h3>
@@ -140,7 +173,10 @@ export default function BomiChat({ context, group, layout = 'embedded', expanded
       {chat.messages.map((m, i) => m.role === 'assistant' && !m.text && chat.busy && i === chat.messages.length - 1 ? <Typing key={i} /> : <article key={i} className={`bomi-message ${m.role}`}>
         <small>{m.role === 'user' ? '나' : m.agent ? `보미 · ${m.agent}` : '보미'}</small>
         <p>{m.text || '답변을 완료하지 못했습니다.'}</p>
-        {(m.mode || m.source) && <span className="bomi-meta">{[m.mode?.split(' · ')[0], m.source].filter(Boolean).join(' · ')}</span>}
+        {m.role === 'assistant' && m.mode && <span className="bomi-meta">
+          <span className={`bomi-badge ${usedAi(m.mode) ? 'ai' : 'data'}`}>{usedAi(m.mode) ? 'AI 답변' : '자료 기반'}</span>
+          {[m.mode.split(' · ')[0], m.source].filter(Boolean).join(' · ')}
+        </span>}
         {m.notices?.map(n => <p key={n} className="bomi-notice" role="status">ⓘ {n}</p>)}
         {m.sources?.length > 0 && <details className="bomi-sources"><summary>참고한 팀 자료 · {m.sources.length}건</summary>
           {m.sources.map(r => <div key={r.id}><strong>{r.name}</strong><p>{r.source} · p. {r.pages}</p><small>{r.status}</small></div>)}

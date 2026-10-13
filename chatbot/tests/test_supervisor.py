@@ -7,7 +7,8 @@ from openai import OpenAIError
 
 from agents import report_writer, supervisor
 from chatbot.welfare.app.config import settings
-from chatbot.welfare.app.llm.openai_client import llm
+from chatbot.welfare.app.llm.client import llm
+from chatbot.tests.ai_config import ai_key
 
 CONTEXT = {'city': '강남구', 'district': '삼성1동', 'month': '2025-12',
            'user': {'id': 'tester', 'admin': False, 'org': '강남구'}, 'workflow_mode': 'live'}
@@ -37,7 +38,7 @@ def fake_complete(answer):
 
 class RouteTest(unittest.TestCase):
     def setUp(self):
-        key = patch.object(settings, 'openai_api_key', '')
+        key = ai_key('')
         key.start()
         self.addCleanup(key.stop)
         # 유해 콘텐츠 검사도 외부로 나가지 않게 통과 결과로 대체합니다(검사 자체는 test_guardrails에서 확인).
@@ -68,7 +69,7 @@ class RouteTest(unittest.TestCase):
         with patch('db.mission_store.load_all', return_value={}):
             result = dict(events('보고서 초안 만들어 줘'))
         self.assertEqual(result['route']['agent'], 'report')
-        self.assertIn('먼저 완료', result['replace']['text'])
+        self.assertIn('근거가 아직 없어요', result['replace']['text'])
         self.assertEqual(result['actions']['actions'][0]['view'], 'report')
 
     def test_report_route_returns_draft_action(self):
@@ -83,15 +84,15 @@ class RouteTest(unittest.TestCase):
             supervisor.stream([{'role': 'user', 'content': 'x' * 2001}], CONTEXT, DATA)
 
     def test_ai_route_and_fallback(self):
-        with patch.object(settings, 'openai_api_key', 'test'), \
+        with ai_key('test'), \
                 patch.object(llm, 'complete', fake_complete('{"agent": "guide"}')):
             result = dict(events('오늘 날씨 어때?', ai=True))
         self.assertEqual(result['route'], {'agent': 'guide', 'label': '보미 안내', 'by': 'AI'})
         self.assertIn('보고서 초안', result['replace']['text'])
-        with patch.object(settings, 'openai_api_key', 'test'), \
+        with ai_key('test'), \
                 patch.object(llm, 'complete', fake_complete(OpenAIError('secret'))):
             self.assertEqual(supervisor.route('후보 판정은 무슨 뜻', [], CONTEXT, True), ('analysis', '규칙'))
-        with patch.object(settings, 'openai_api_key', 'test'), \
+        with ai_key('test'), \
                 patch.object(llm, 'complete', fake_complete('{"agent": "unknown"}')):
             self.assertEqual(supervisor.route('세곡동행', [], CONTEXT, True), ('welfare', '규칙'))
 
@@ -99,7 +100,7 @@ class RouteTest(unittest.TestCase):
         async def broken(messages):
             raise OpenAIError('secret')
             yield ''
-        with patch.object(settings, 'openai_api_key', 'test'), \
+        with ai_key('test'), \
                 patch.object(llm, 'complete', fake_complete('{"agent": "analysis"}')), \
                 patch.object(llm, 'stream', broken):
             result = events('이 동의 변화를 요약해 줘', ai=True)
@@ -111,7 +112,7 @@ class RouteTest(unittest.TestCase):
 
 class ReportPolishTest(unittest.TestCase):
     def setUp(self):
-        key = patch.object(settings, 'openai_api_key', 'test')
+        key = ai_key('test')
         key.start()
         self.addCleanup(key.stop)
         self.base = report_writer.generate_draft(CONTEXT, WORKFLOW)
@@ -153,8 +154,62 @@ class ReportPolishTest(unittest.TestCase):
 
     def test_without_ai_returns_template(self):
         self.assertEqual(report_writer.write_draft(CONTEXT, WORKFLOW), self.base)
-        with patch.object(settings, 'openai_api_key', ''):
+        with ai_key(''):
             self.assertIn('연결 설정이 없어', report_writer.write_draft(CONTEXT, WORKFLOW, use_ai=True)['notice'])
+
+
+
+class ConversationDraftTest(unittest.TestCase):
+    """«보고서 작성해줘»: 대화에서 찾은 사업·신규 구상안으로 담당자 검토 전 초안을 만듭니다."""
+    def setUp(self):
+        for target in (ai_key(''), patch.object(llm, 'moderate', AsyncMock(return_value=[])),
+                       patch('db.mission_store.load_all', return_value={})):
+            target.start()
+            self.addCleanup(target.stop)
+
+    def test_found_services_become_pending_proposals(self):
+        from chatbot.welfare.app.agent.resources import RESOURCES
+        record = RESOURCES[0]
+        messages = [{'role': 'user', 'content': '어르신 돌봄 사업 찾아 줘'},
+                    {'role': 'assistant', 'content': '자료에서 찾았어요.'},
+                    {'role': 'user', 'content': '보고서 작성해줘'}]
+        result = dict(supervisor.stream(messages, CONTEXT, DATA, None, False, [record['id'], 'unknown-id']))
+        draft = result['actions']['actions'][0]['reportDraft']
+        self.assertIn('대화 기반 초안', draft['title'])
+        self.assertIn(record['name'], draft['proposal'])
+        self.assertIn(report_writer.PENDING_TEXT, draft['proposal'])
+        self.assertIn('전월보다 12.3% 감소', draft['situation'])  # 이 동의 분석 수치
+        self.assertEqual(draft['conversation_sources'], [{'id': record['id'], 'name': record['name']}])
+        self.assertIn('검토 전 초안', result['replace']['text'])
+
+    def test_new_program_plan_is_marked_not_running(self):
+        history = [{'role': 'user', 'content': '신규 사업 구상해 줘'},
+                   {'role': 'assistant', 'content': report_writer.PLANNING_LABEL + '\n\n1. 이웃 안부 모임'}]
+        reply = report_writer.report_reply(CONTEXT, {}, False, '보고서 작성해줘', [], history, [])
+        draft = reply['actions'][0]['reportDraft']
+        self.assertIn('이웃 안부 모임', draft['proposal'])
+        self.assertIn(report_writer.NOT_RUNNING_TEXT, draft['proposal'])
+
+    def test_polish_must_keep_pending_phrase(self):
+        history = [{'role': 'assistant', 'content': report_writer.PLANNING_LABEL + '\n이웃 안부 모임'}]
+        base = report_writer.conversation_draft(CONTEXT, {}, [], history, [])
+        bad = {key: base[key].replace(report_writer.PENDING_TEXT, '추진 확정') for key in report_writer.SECTION_KEYS}
+        self.assertIn(f'판단 문구 변경 «{report_writer.PENDING_TEXT}»', report_writer.check_grounding(bad, base))
+
+    def test_nothing_to_report_explains_next_step(self):
+        reply = report_writer.report_reply(CONTEXT, {}, False, '보고서 작성해줘')
+        self.assertIn('근거가 아직 없어요', reply['answer'])
+
+    def test_only_recent_three_pairs_are_used(self):
+        long_history = [{'role': 'user' if i % 2 == 0 else 'assistant', 'content': f'메시지 {i}'} for i in range(10)]
+        seen = {}
+        def fake_answer(agent, question, history, *args):
+            seen['history'] = history
+            return {'answer': '확인', 'mode': '테스트'}, None
+        with patch.object(supervisor, '_answer', fake_answer):
+            list(supervisor.stream([*long_history, {'role': 'user', 'content': '이 동의 변화를 요약해 줘'}],
+                                   CONTEXT, DATA, None, False))
+        self.assertEqual([m['content'] for m in seen['history']], [f'메시지 {i}' for i in range(4, 10)])
 
 
 if __name__ == '__main__':

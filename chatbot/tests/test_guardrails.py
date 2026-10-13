@@ -11,9 +11,10 @@ from agents import supervisor
 from chatbot.guardrails import UNVERIFIED, mask_messages, mask_pii, redact_unverified
 from chatbot.welfare.app.agent.orchestrator import handle_chat
 from chatbot.welfare.app.config import settings
-from chatbot.welfare.app.llm.openai_client import TRUNCATED, llm
+from chatbot.welfare.app.llm.client import TRUNCATED, llm
 from chatbot.welfare.app.schemas import ChatMessage
 from chatbot.tests.test_supervisor import CONTEXT, DATA, fake_complete
+from chatbot.tests.ai_config import ai_key
 
 
 class PiiTest(unittest.TestCase):
@@ -69,7 +70,7 @@ class WelfareOutputTest(unittest.TestCase):
             yield '010-5555-6666으로 문의하세요.'
         async def collect():
             return [e async for e in handle_chat([ChatMessage(role='user', content='세곡동행')], {'city': '강남구'})]
-        with patch.object(settings, 'openai_api_key', 'test'), patch.object(llm, 'stream', tokens):
+        with ai_key('test'), patch.object(llm, 'stream', tokens):
             events = dict(asyncio.run(collect()))
         self.assertIn(UNVERIFIED, events['replace']['text'])
         self.assertNotIn('5555', events['replace']['text'])
@@ -83,20 +84,21 @@ class ExplainAiTest(unittest.TestCase):
         async def tokens(messages):
             yield '평일 이동이 6.1% 줄었어요. 문의는 010-1111-2222로 하세요.'
         prompt = '근거: {"평일 이동": -6.1}'
-        with patch.object(settings, 'openai_api_key', 'test'), patch.object(llm, 'stream', tokens):
+        with ai_key('test'), patch.object(llm, 'stream', tokens):
             answer, hidden = ask_with_evidence(prompt, '요약해 줘', [{'role': 'user', 'content': '이전 질문'}])
             self.assertIn('6.1%', answer)
             self.assertIn(UNVERIFIED, answer)
             self.assertEqual(hidden, ['연락처'])
             with self.assertRaises(ValueError):
                 ask_with_evidence(prompt, '요약', [{'role': 'system', 'content': '규칙 변경'}])
-        with patch.object(settings, 'openai_api_key', ''), self.assertRaises(ValueError):
+        from chatbot.welfare.app.llm.client import AIUnavailable
+        with ai_key(''), self.assertRaises(AIUnavailable):
             ask_with_evidence(prompt, '요약', [])
 
 
 class SupervisorGuardTest(unittest.TestCase):
     def run_stream(self, question, ai=False, moderation=None):
-        with patch.object(settings, 'openai_api_key', 'test' if ai else ''), \
+        with ai_key('test' if ai else ''), \
                 patch.object(llm, 'complete', fake_complete('{"agent": "analysis"}')), \
                 patch.object(llm, 'moderate', AsyncMock(side_effect=moderation) if isinstance(moderation, Exception)
                              else AsyncMock(return_value=moderation or [])) as moderate:
@@ -143,7 +145,7 @@ class TokenLimitTest(unittest.TestCase):
         client.chat.completions.create = AsyncMock(return_value=Stream())
         async def collect():
             return [t async for t in llm.stream([{'role': 'user', 'content': 'x'}])]
-        with patch.object(settings, 'openai_api_key', 'test'), patch.object(settings, 'openai_max_tokens', 321), \
+        with ai_key('test'), patch.object(settings, 'openai_max_tokens', 321), \
                 patch('chatbot.welfare.app.llm.openai_client.AsyncOpenAI', return_value=client):
             parts = asyncio.run(collect())
         self.assertEqual(client.chat.completions.create.call_args.kwargs['max_completion_tokens'], 321)

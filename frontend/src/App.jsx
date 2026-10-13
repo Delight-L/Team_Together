@@ -5,6 +5,7 @@ import { api, query, number } from './api';
 import { Icon, Bomi, EvidenceTable, Trend } from './components';
 import BomiChat from './BomiChat';
 import { Records, Activity, Upload } from './Workspace';
+import AISettings from './AISettings';
 import { RegionalOverview, summarizeRegions, exampleQuestion } from './Briefing';
 import { DataDialog, Comparison, ReportQuality } from './Experience';
 import GuideTour from './GuideTour';
@@ -22,9 +23,9 @@ const menus = [
 ];
 // 예전 메뉴 이름으로 이동을 요청해도 합쳐진 메뉴의 해당 탭으로 연결합니다.
 const legacyViews = { compare: ['chart', 'compare'], followup: ['records'], missions: ['records'] };
-const adminMenus = [['data', '데이터 관리'], ['activity', '활동 이력']];
+const adminMenus = [['data', '데이터 관리'], ['activity', '활동 이력'], ['ai', 'AI 설정']];
 // 메뉴마다 서로 다른 아이콘을 써서 메뉴를 접었을 때도 구분되게 합니다.
-const menuIcons = { records: 'clipboard', activity: 'history' };
+const menuIcons = { records: 'clipboard', activity: 'history', ai: 'sparkle' };
 const subtitles = {
   map: '확인 후보 지역을 표와 지도에서 함께 찾습니다.',
   chart: '선택한 동의 지표별 근거를 확인하고, 다른 동·기간과 비교합니다.',
@@ -33,6 +34,7 @@ const subtitles = {
   report: '분석과 사업 검토 결과를 보고서 초안으로 정리합니다.',
   data: '새 분석 자료를 검사한 뒤 반영합니다.',
   activity: '자료가 언제 어떻게 반영됐는지 확인합니다.',
+  ai: '보미와 보고서에 쓸 외부 AI 사용 여부·제공사·모델을 정합니다.',
   chat: '선택한 지역을 바탕으로 보미가 복지사업과 담당 기관을 안내합니다.',
 };
 const titles = {
@@ -602,6 +604,7 @@ export default function App() {
               )}
               {view === 'data' && user.admin && <div className="scroll-view"><Upload /><div className="data-source-strip"><span>분석 출처와 판단 기준은 데이터 기준에서 확인할 수 있습니다.</span><button className="text-button" onClick={() => openSupport()}>데이터 기준 보기</button></div></div>}
               {view === 'activity' && user.admin && <Activity />}
+              {view === 'ai' && user.admin && <AISettings />}
               {view === 'chat' && (
                 <div className="chat-context-view">
                   <span className="eyebrow">CONNECTED ANALYSIS</span>
@@ -645,6 +648,7 @@ export default function App() {
 
         <BomiChat
           key={user.id}
+          userId={user.id}
           layout="panel"
           draft={chatDraft}
           onAction={(action) => {
@@ -881,7 +885,7 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     [draftBusy, setDraftBusy] = useState(false),
     [error, setError] = useState('');
   // AI 문장 다듬기: AI 연결이 있을 때만 고를 수 있고, 저장된 근거와 대조를 통과한 문장만 씁니다.
-  const [aiAvailable, setAiAvailable] = useState(false), [useAi, setUseAi] = useState(true);
+  const [aiAvailable, setAiAvailable] = useState(false), [useAi, setUseAi] = useState(false);
   useEffect(() => { let live = true; api('/chat/config').then(d => live && setAiAvailable(!!d.aiAvailable)).catch(() => {}); return () => { live = false; }; }, []);
   useEffect(() => {
     setDraft(null);

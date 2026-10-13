@@ -454,7 +454,7 @@ DB1 / DB2 업데이트
 
 - Python 3 가상환경(`.venv`), Node.js 22.12 이상(npm 포함)
 - PostgreSQL 접속 정보: 루트에 `.env`를 만들고 `.env.example`을 참고해 `DB_HOST`, `DB_USER`, `DB_PASSWORD` 등을 넣습니다. `.env`는 Git에 올리지 않습니다.
-- (선택) `OPENAI_API_KEY`: 보미의 AI 해석·AI 대화에 사용합니다. 없으면 데이터 근거 안내와 자료 검색으로만 답합니다.
+- (선택) `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY`: 보미의 AI 해석·AI 대화에 사용합니다. 외부 AI는 기본 꺼짐이며 관리자 «AI 설정»에서 켜고 제공사를 고릅니다. 끄면 데이터 근거 안내와 자료 검색으로만 답합니다.
 
 ### 처음 한 번 설치
 

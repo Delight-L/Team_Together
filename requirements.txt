@@ -7,11 +7,10 @@ numpy>=1.26,<3
 openpyxl>=3.1.5,<4
 python-docx>=1.2,<2
 
-# Optional AI mode; local guidance works without credentials.
-google-genai>=1.0,<2
-
-# 보미 챗봇·보고서 AI: API 키 없이도 자료 검색·데이터 근거로 동작하고, 키 설정 시 AI를 사용
+# 보미 챗봇·보고서 AI(관리자 «AI 설정»에서 제공사 선택, 기본 꺼짐). 키가 없어도 자료 기반으로 동작
 openai>=1.50
+anthropic>=1.0,<2
+google-genai>=1.0,<2
 pydantic-settings>=2.4
 
 # Approved elder model runtime

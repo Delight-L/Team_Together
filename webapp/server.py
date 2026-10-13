@@ -19,7 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
-from webapp import routes_account, routes_analysis, routes_chat, routes_groups, routes_work, sessions
+from webapp import routes_account, routes_admin, routes_analysis, routes_chat, routes_groups, routes_work, sessions
 from webapp.common import ROOT, ApiError, Request, Response, StreamResponse
 # 테스트와 다른 모듈이 webapp.server.dashboard_data로 불러 씁니다.
 from webapp.common import dashboard_data  # noqa: F401
@@ -52,6 +52,10 @@ ROUTES = {
     ('GET', '/api/groups/review'): routes_groups.review_load,
     ('GET', '/api/groups/services'): routes_groups.services,
     ('POST', '/api/groups/review'): routes_groups.review_save,
+
+    ('GET', '/api/admin/ai'): routes_admin.ai_view,
+    ('POST', '/api/admin/ai'): routes_admin.ai_save,
+    ('POST', '/api/admin/ai/test'): routes_admin.ai_test,
 
     ('GET', '/api/chat/config'): routes_chat.config,
     ('POST', '/api/chat'): routes_chat.chat,

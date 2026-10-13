@@ -24,6 +24,8 @@ frontend/dist/
 
 # 실행 중 생기는 파일: 담당자 업무 기록 DB, 로그, 임시 폴더
 db/runtime/*.sqlite3*
+# 관리자가 «AI 설정»에서 저장한 AI 키·모델(서버에만 보관)
+db/runtime/ai_settings.json
 *.log
 .tmp/
 

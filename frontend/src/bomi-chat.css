@@ -12,9 +12,21 @@
 .bomi-new { font-size: 11px; padding: 6px 9px; border: 1px solid #d6e4f8; border-radius: 8px; color: #2563eb; background: #fff; flex-shrink: 0; }
 .bomi-chat-head .icon-button { flex-shrink: 0; }
 .bomi-scope { margin: 0; font-size: 12px; color: #4b6488; }
-.bomi-mode { margin: 0; font-size: 11px; color: #7086a4; }
-.bomi-mode summary { cursor: pointer; }
-.bomi-mode select { margin-top: 6px; width: 100%; font-size: 12px; padding: 7px; }
+/* AI 사용 스위치(기본 꺼짐)와 현재 답변 방식 안내 */
+.bomi-ai-switch { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; font-size: 11px; font-weight: 600; padding: 5px 8px; border: 1px solid #d6e4f8; border-radius: 999px; color: #4b6488; background: #fff; cursor: pointer; }
+.bomi-ai-switch .track { position: relative; width: 26px; height: 14px; border-radius: 999px; background: #c9d5e6; transition: background .15s; }
+.bomi-ai-switch .thumb { position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.bomi-ai-switch.on { color: #6d28d9; border-color: #c4b5fd; background: #f5f3ff; }
+.bomi-ai-switch.on .track { background: #7c3aed; }
+.bomi-ai-switch.on .thumb { transform: translateX(12px); }
+.bomi-ai-switch:disabled { cursor: not-allowed; opacity: .55; }
+.bomi-ai-switch:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.bomi-mode-line { margin: 0; font-size: 11px; color: #4b6488; padding: 6px 9px; border-radius: 8px; background: #f2f6fc; }
+.bomi-mode-line.ai { color: #5b21b6; background: #f5f3ff; }
+.bomi-badge { display: inline-block; margin-right: 6px; padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+.bomi-badge.ai { color: #6d28d9; background: #ede9fe; }
+.bomi-badge.data { color: #1d4ed8; background: #e0ecff; }
+@media (prefers-reduced-motion: reduce) { .bomi-ai-switch .track, .bomi-ai-switch .thumb { transition: none; } }
 .bomi-messages { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
 .bomi-welcome { border: 1px solid #d6e9fc; background: #f8fbfe; border-radius: 12px; padding: 14px; }
 .bomi-welcome h3 { margin: 0 0 6px; font-size: 15px; color: #10264e; }

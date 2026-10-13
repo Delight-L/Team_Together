@@ -6,23 +6,23 @@
 - report:   약식보고서 초안 작성 (agents/report_writer.py)
 - guide:    복지탐정 업무와 무관한 질문 안내
 
-담당 선택은 AI를 쓸 수 있으면 OpenAI가, 키가 없거나 «외부 AI 사용 안 함»이거나 호출이 실패하면 키워드 규칙이 합니다.
+담당 선택은 AI를 쓸 수 있으면 관리자가 고른 AI가, 키가 없거나 «외부 AI 사용 안 함»이거나 호출이 실패하면 키워드 규칙이 합니다.
 명확한 보고서 요청은 AI 없이 바로 보고서 에이전트로 보냅니다.
 """
 import asyncio
 import json
 import logging
 
-from openai import OpenAIError
 
 from agents import report_writer
 from chatbot.guardrails import mask_messages
 from chatbot.welfare import service as welfare_service
-from chatbot.welfare.app.agent.resources import search
-from chatbot.welfare.app.config import settings
+from chatbot.welfare.app.agent.resources import RESOURCES, search
+from chatbot.welfare.app.llm.client import LLM_ERRORS, ai_ready
 from db import group_workspace, mission_store, region_workspace
 
 LOGGER = logging.getLogger(__name__)
+HISTORY_SIZE = 6  # 기억하는 이전 대화: 질문·답 3쌍
 AGENTS = {'analysis': '지역 분석 에이전트', 'welfare': '복지사업 에이전트',
           'report': '보고서 작성 에이전트', 'guide': '보미 안내'}
 WELFARE_WORDS = ('사업', '지원', '서비스', '복지', '신청', '돌봄', '동행', '모임', '상담', '기관',
@@ -60,7 +60,7 @@ def rule_route(question, context):
 
 
 async def _ai_route(question, history):
-    from chatbot.welfare.app.llm.openai_client import llm
+    from chatbot.welfare.app.llm.client import llm
     recent = [{'role': m['role'], 'content': m['content'][:500]} for m in history[-4:]]
     answer = await llm.complete([{'role': 'system', 'content': ROUTER_PROMPT}, *recent,
                                  {'role': 'user', 'content': question}], json_mode=True, max_tokens=50)
@@ -77,13 +77,13 @@ def route(question, history, context, use_ai):
     if use_ai:
         try:
             return asyncio.run(_ai_route(question, history)), 'AI'
-        except (OpenAIError, ValueError, AttributeError) as exc:
+        except (*LLM_ERRORS, ValueError, AttributeError) as exc:
             LOGGER.warning('총괄 에이전트 AI 담당 선택 실패, 규칙으로 대체: %s', type(exc).__name__)
     return rule_route(question, context), '규칙'
 
 
 def _analysis(question, history, context, data, group, use_ai):
-    recent = [{'role': m['role'], 'content': m['content'][:4000]} for m in history[-8:]]
+    recent = [{'role': m['role'], 'content': m['content'][:4000]} for m in history]
     if group:
         group_ctx, detail = group
         if use_ai:
@@ -94,22 +94,26 @@ def _analysis(question, history, context, data, group, use_ai):
     return region_workspace.explain_region(context, question, data)
 
 
-def _report(question, context, use_ai):
-    workflow = {}
+def _report(question, history, context, data, use_ai, source_ids=()):
+    """보고서 에이전트: 대화에서 찾은 사업·신규 구상안이 있으면 대화 기반 초안, 없으면 업무 기록 초안."""
+    workflow, rows = {}, []
     if context.get('district'):
         workflow = mission_store.load_all().get(mission_store.identity(context), {})
-    return report_writer.report_reply(context, workflow, use_ai, question)
+        rows = region_workspace.region_status(data, context['city'], context['month'], context['district'])['rows']
+    by_id = {record['id']: record for record in RESOURCES}
+    sources = [by_id[source_id] for source_id in source_ids if source_id in by_id]
+    return report_writer.report_reply(context, workflow, use_ai, question, rows, history, sources)
 
 
-def _answer(agent, question, history, context, data, group, use_ai):
+def _answer(agent, question, history, context, data, group, use_ai, source_ids=()):
     """분석·보고서·안내 담당의 답(dict)과, 사용자에게 알릴 오류 문구(없으면 None)를 돌려줍니다."""
     if agent == 'report':
-        return _report(question, context, use_ai), None
+        return _report(question, history, context, data, use_ai, source_ids), None
     if agent == 'guide':
         return {'answer': GUIDE, 'mode': '보미 안내 · 외부 AI 호출 없음'}, None
     try:
         return _analysis(question, history, context, data, group, use_ai), None
-    except (OpenAIError, ValueError) as exc:
+    except (*LLM_ERRORS, ValueError) as exc:
         if not use_ai:
             raise
         # AI 해석이 실패하면 외부 AI 없이 데이터 근거로 다시 답합니다.
@@ -120,25 +124,27 @@ def _answer(agent, question, history, context, data, group, use_ai):
 
 def _flagged(question):
     """가드레일: 유해 콘텐츠 검사. 검사 API가 실패하면 서비스를 멈추지 않고 통과시킵니다."""
-    from chatbot.welfare.app.llm.openai_client import llm
+    from chatbot.welfare.app.llm.client import llm
     try:
         return asyncio.run(llm.moderate(question))
-    except (OpenAIError, AttributeError, IndexError) as exc:
+    except (*LLM_ERRORS, AttributeError, IndexError) as exc:
         LOGGER.warning('유해 콘텐츠 검사 실패, 검사 없이 진행: %s', type(exc).__name__)
         return []
 
 
-def stream(messages, context, data, group=None, use_ai=True):
+def stream(messages, context, data, group=None, use_ai=True, source_ids=()):
     """검사를 먼저 끝낸 뒤 (이벤트, 내용) 생성기를 돌려줍니다. 검사 실패는 스트림 시작 전에 400이 됩니다."""
     if len(messages[-1]['content']) > 2000:
         raise ValueError('질문은 1~2,000자로 입력하세요.')
+    # 최근 대화 3쌍(6개)과 이번 질문만 씁니다.
+    messages = messages[-(HISTORY_SIZE + 1):]
     # 가드레일: 개인정보는 담당 선택·답변·외부 AI 전송 전에 모두 가립니다.
     messages, pii = mask_messages(messages)
-    use_ai = use_ai and bool(settings.openai_api_key)
-    return _events(messages, context, data, group, use_ai, pii)
+    use_ai = use_ai and ai_ready()
+    return _events(messages, context, data, group, use_ai, pii, source_ids)
 
 
-def _events(messages, context, data, group, use_ai, pii):
+def _events(messages, context, data, group, use_ai, pii, source_ids=()):
     """화면으로 보낼 이벤트를 차례대로 만듭니다.
 
     route(담당) → [sources·token(복지사업) 또는 replace(그 밖)] → notice·actions(있으면) → done
@@ -164,7 +170,7 @@ def _events(messages, context, data, group, use_ai, pii):
         return
 
     try:
-        result, error = _answer(agent, question, history, context, data, group, use_ai)
+        result, error = _answer(agent, question, history, context, data, group, use_ai, source_ids)
     except Exception:
         # 응답 머리글을 이미 보냈으므로 오류도 이벤트로 알립니다.
         LOGGER.exception('보미 %s 에이전트 처리 실패', agent)

@@ -7,8 +7,7 @@
 import asyncio
 
 from chatbot.guardrails import redact_unverified
-from chatbot.welfare.app.config import settings
-from chatbot.welfare.app.llm.openai_client import llm
+from chatbot.welfare.app.llm.client import AIUnavailable, EmptyAnswer, ai_ready, llm
 
 
 def clean_history(history):
@@ -34,12 +33,12 @@ async def _collect(messages):
 
 
 def ask_with_evidence(prompt, question, history):
-    """(답변, 가린 정보 종류 목록)을 돌려줍니다. AI 연결이 없거나 답이 비면 ValueError입니다."""
-    if not settings.openai_api_key:
-        raise ValueError('AI 연결 설정이 없습니다. 데이터 근거 안내 모드를 사용하세요.')
+    """(답변, 가린 정보 종류 목록)을 돌려줍니다. AI를 쓸 수 없거나 실패하면 LLM_ERRORS 중 하나가 납니다."""
+    if not ai_ready():
+        raise AIUnavailable('관리자 AI 설정이 꺼져 있거나 API 키가 없습니다.')
     messages = [{'role': 'system', 'content': prompt}, *clean_history(history),
                 {'role': 'user', 'content': str(question).strip()}]
     answer = asyncio.run(_collect(messages))
     if not answer.strip():
-        raise ValueError('AI 답변이 비어 있습니다. 데이터 근거 안내로 다시 시도하세요.')
+        raise EmptyAnswer('AI 답변이 비어 있습니다.')
     return redact_unverified(answer, prompt)

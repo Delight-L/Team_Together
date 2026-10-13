@@ -9,6 +9,7 @@ from chatbot.welfare.service import stream_reply, validate_messages
 from chatbot.welfare.app.agent.resources import search
 from chatbot.welfare.app.agent.orchestrator import handle_chat, llm
 from chatbot.welfare.app.config import settings
+from chatbot.tests.ai_config import ai_key
 
 
 def reply(question, context, history=()):
@@ -44,7 +45,7 @@ class WelfareTest(unittest.TestCase):
     context = {'city': '강남구', 'district': '세곡동', 'month': '2025-12'}
 
     def setUp(self):
-        key_patch = patch.object(settings, 'openai_api_key', '')
+        key_patch = ai_key('')
         key_patch.start()
         self.addCleanup(key_patch.stop)
 
@@ -54,7 +55,7 @@ class WelfareTest(unittest.TestCase):
         self.assertIn('세곡동행', result['answer'])
         self.assertIn('출처:', result['answer'])
         self.assertIn('미확인', result['sources'][0]['status'])
-        self.assertIn('API 키 없이', result['mode'])
+        self.assertIn('AI 사용 안 함', result['mode'])
         factory.assert_not_called()
 
     def test_region_coverage(self):
@@ -108,7 +109,7 @@ class WelfareTest(unittest.TestCase):
             clients.append(client)
             return client
 
-        with patch.object(settings, 'openai_api_key', 'test'), patch.object(settings, 'openai_model', 'test-model'), \
+        with ai_key('test'), patch.object(settings, 'openai_model', 'test-model'), \
                 patch('chatbot.welfare.app.llm.openai_client.AsyncOpenAI', side_effect=factory):
             first = reply('병원 동행', self.context)
             second = reply('청년 월세 지원', self.context)
@@ -127,7 +128,7 @@ class WelfareTest(unittest.TestCase):
         async def fail(messages):
             yield '불완전한 AI 답변'
             raise OpenAIError('test-secret')
-        with patch.object(settings, 'openai_api_key', 'test'), patch.object(llm, 'stream', fail):
+        with ai_key('test'), patch.object(llm, 'stream', fail):
             result = reply('병원 동행', self.context)
         self.assertIn('연결 실패', result['mode'])
         self.assertNotIn('불완전한 AI 답변', result['answer'])
@@ -136,7 +137,7 @@ class WelfareTest(unittest.TestCase):
     def test_new_program_is_labeled_as_idea_even_without_model_label(self):
         async def tokens(messages):
             yield '사업명(가칭): 생활기술 모임'
-        with patch.object(settings, 'openai_api_key', 'test'), patch.object(llm, 'stream', tokens):
+        with ai_key('test'), patch.object(llm, 'stream', tokens):
             result = reply('기존 사업 말고 새로운 복지사업을 추천해줘', self.context)
         self.assertIn('현재 운영 중인 사업이 아님', result['answer'])
         self.assertIn('생활기술 모임', result['answer'])
@@ -155,7 +156,7 @@ class WelfareTest(unittest.TestCase):
                 await asyncio.sleep(1)
             finally:
                 closed.append(True)
-        with patch.object(settings, 'openai_api_key', 'test'), patch.object(llm, 'stream', tokens):
+        with ai_key('test'), patch.object(llm, 'stream', tokens):
             stream = stream_reply([{'role': 'user', 'content': '병원 동행'}], self.context)
             self.assertEqual(next(stream)[0], 'sources')
             self.assertEqual(next(stream)[0], 'token')

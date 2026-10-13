@@ -1,9 +1,7 @@
 import json
 import re
 from collections.abc import AsyncIterator
-from openai import OpenAIError
-from chatbot.welfare.app.config import settings
-from chatbot.welfare.app.llm.openai_client import llm
+from chatbot.welfare.app.llm.client import LLM_ERRORS, EmptyAnswer, ai_ready, llm
 from chatbot.welfare.app.schemas import ChatMessage
 from chatbot.welfare.app.agent.resources import search, local_answer
 from chatbot.guardrails import redact_unverified
@@ -61,14 +59,10 @@ async def handle_chat(history: list[ChatMessage], context: dict | None = None, u
     context = context or {}
     planning = is_planning_request(history[-1].content)
     records = search(search_question(history), city=context.get("city", ""), district=context.get("district", ""))
-    if not settings.openai_api_key:
-        mode = "자료 검색 · API 키 없이 동작"
-    elif not use_ai:
-        mode = "자료 검색 · 외부 AI 사용 안 함"
-    else:
-        mode = "AI 대화"
+    use_ai = use_ai and ai_ready()
+    mode = "AI 대화" if use_ai else "자료 검색 · AI 사용 안 함"
     yield "sources", {"records": records, "mode": mode}
-    if not settings.openai_api_key or not use_ai:
+    if not use_ai:
         answer = ('신규 사업 기획 아이디어를 작성하려면 AI 대화 기능이 필요합니다. 현재는 저장된 기존 사업 조회만 가능합니다. AI 대화를 켠 뒤 다시 요청해 주세요.'
                   if planning else local_answer(records))
         yield "token", {"text": answer}
@@ -86,14 +80,14 @@ async def handle_chat(history: list[ChatMessage], context: dict | None = None, u
             parts.append(text)
             yield "token", {"text": text}
         if not parts:
-            raise OpenAIError("빈 AI 응답")
+            raise EmptyAnswer("빈 AI 응답")
         # 답변 속 연락처·URL·금액이 검색된 팀 자료에 없으면 가린 답변으로 바꿉니다.
         answer, hidden = redact_unverified("".join(parts), json.dumps(material, ensure_ascii=False))
         if hidden:
             yield "replace", {"text": planning_label + answer, "mode": "AI 대화 · 자료에 없는 정보 가림"}
             yield "notice", {"message": "답변에 팀 자료에서 확인되지 않은 " + "·".join(hidden) + "이(가) 있어 가렸어요. 담당 기관에 직접 확인해 주세요."}
-    except OpenAIError:
-        yield "error", {"message": "AI 응답을 완료하지 못해 자료 검색 안내로 전환했습니다. 서버의 OpenAI 설정과 연결을 확인해 주세요."}
+    except LLM_ERRORS:
+        yield "error", {"message": "AI 응답을 완료하지 못해 자료 검색 안내로 전환했습니다. 관리자 AI 설정과 연결을 확인해 주세요."}
         answer = ('AI 연결 문제로 신규 사업 기획안을 완성하지 못했습니다. 잠시 후 다시 요청해 주세요.'
                   if planning else local_answer(records))
         yield "replace", {"text": answer, "mode": "자료 검색 · AI 연결 실패"}

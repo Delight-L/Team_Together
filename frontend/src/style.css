@@ -2079,3 +2079,13 @@ tr:last-child td {
     margin-top: 16px;
   }
 }
+
+/* 관리자 «AI 설정» 화면 */
+.ai-settings { max-width: 760px; }
+.ai-settings .ai-state { padding: 10px 12px; border-radius: 10px; font-weight: 600; background: #f2f6fc; color: #4b6488; }
+.ai-settings .ai-state.on { background: #f5f3ff; color: #5b21b6; }
+.ai-settings .ai-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 14px 0 6px; }
+.ai-settings .ai-fields label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: #12213e; }
+.ai-settings .ai-fields input, .ai-settings .ai-fields select { font-weight: 400; min-width: 0; }
+.ai-settings .ai-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.ai-settings .success { color: #15803d; }

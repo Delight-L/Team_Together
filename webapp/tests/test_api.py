@@ -20,6 +20,10 @@ from shared.report import NS
 from webapp import limits, server
 from db import mission_store
 from chatbot.welfare.app.config import settings as welfare_settings
+from chatbot import ai_settings
+from chatbot.tests.ai_config import ai_key
+
+REAL_AI_SETTINGS = ai_settings.current  # setUp에서 끈 상태로 바꾸기 전의 실제 설정 함수
 
 
 class ApiTest(unittest.TestCase):
@@ -44,7 +48,7 @@ class ApiTest(unittest.TestCase):
 
     def setUp(self):
         self.cookie = ''
-        key_patch = patch.object(welfare_settings, 'openai_api_key', '')
+        key_patch = ai_key('')
         key_patch.start()
         self.addCleanup(key_patch.stop)
         # 여러 테스트가 짧은 시간에 질문하므로 사용량 한도를 새로 만듭니다(한도 검사는 별도 테스트).
@@ -291,6 +295,26 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(result['runId'],'test-run')
             self.assertEqual(publish.call_args.args[1],'admin')
             self.assertEqual(self.request('POST','/api/upload/publish',{'token':prepared['token']})[0],400)
+
+    def test_admin_ai_settings(self):
+        store = patch.object(ai_settings, 'STORE', Path(self.temp.name) / 'ai_settings.json')
+        store.start()
+        self.addCleanup(store.stop)
+        self.login()
+        self.assertEqual(self.request('GET', '/api/admin/ai')[0], 401)
+        self.assertEqual(self.request('POST', '/api/admin/ai', {'enabled': True, 'provider': 'openai'})[0], 401)
+        self.login('admin', 'admin1234')
+        with patch.object(ai_settings, 'current', REAL_AI_SETTINGS), \
+                patch.object(ai_settings, '_env_key', return_value=''):
+            status, view = self.request('GET', '/api/admin/ai')
+            self.assertEqual(status, 200)
+            self.assertFalse(view['enabled'])
+            status, view = self.request('POST', '/api/admin/ai', {'enabled': True, 'provider': 'gemini',
+                                                                  'model': '', 'apiKey': 'gm-secret-9876'})
+            self.assertEqual(status, 200)
+            self.assertTrue(view['ready'])
+            self.assertNotIn('gm-secret', json.dumps(view))
+            self.assertEqual(self.request('POST', '/api/admin/ai', {'provider': 'other'})[0], 400)
 
 
 if __name__ == '__main__': unittest.main()
