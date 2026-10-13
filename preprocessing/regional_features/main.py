@@ -5,8 +5,6 @@ import json
 import os
 import math
 from pathlib import Path
-import tempfile
-import traceback
 from preprocessing.archives import discover, sha256
 from preprocessing.readers import read_workbook, month_from_name
 from preprocessing.features import months, load_weather, assemble

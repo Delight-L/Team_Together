@@ -2038,7 +2038,7 @@ tr:last-child td {
   .chat-footer .chat-topics,
   .chat-footer .topic-buttons { animation: none; }
 }
-/* 복지이음: 기존 패널 크기와 지도 공유 상태를 유지합니다. */
+/* 보미의 복지사업 답변과 참고 자료 표시 스타일입니다. */
 .welfare-status { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; color:#64748b; font-size:10px; }
 .welfare-status small { font-size:10px; }
 .welfare-chat .chat-messages { padding-top:12px; }

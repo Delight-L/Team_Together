@@ -61,7 +61,8 @@ ALTER ROLE welfind_reader SET statement_timeout = '30s';
 SQL
 
 # Oracle 제공 Ubuntu 이미지는 iptables에 REJECT 규칙이 있어 VCN 보안 목록만 열면 접속되지 않습니다.
-iptables -I INPUT 6 -m state --state NEW -p tcp --dport 5432 -j ACCEPT
+# REJECT 위치가 이미지마다 달라(5번·6번 등) 번호를 고정하지 않고 맨 앞에 넣습니다.
+iptables -I INPUT -m state --state NEW -p tcp --dport 5432 -j ACCEPT
 netfilter-persistent save || (apt-get install -y iptables-persistent && netfilter-persistent save)
 
 echo "WELFIND PostgreSQL 설치 완료"

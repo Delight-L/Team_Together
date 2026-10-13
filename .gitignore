@@ -1,33 +1,40 @@
+# 데이터·문서 파일은 기본적으로 올리지 않습니다(필요한 파일만 아래에서 예외로 허용).
 *.csv
 *.pdf
 *.xlsx
 *.jpg
-*.venv/
-__pycache__/
-*.py[cod]
-.tmp/
-*.env
-!.env.example
 *.txt
-!chatbot/welfare/requirements.txt
 *.geojson
 *.zip
 
-# React dependencies/build output and local workflow database
+# 비밀 정보: .env는 올리지 않고 예시 파일만 올립니다.
+*.env
+!.env.example
+**/api_key.txt
+**/.env.txt
+
+# 파이썬·노드 설치물과 빌드 결과
+*.venv/
+__pycache__/
+*.py[cod]
 node_modules/
 .pnpm-store/
 frontend/dist/
-db/runtime/*.sqlite3*
-!ci/bomi-face.png
-
-# 담당자 업무 기록은 저장소에 포함하지 않습니다.
-
-# Runtime state and developer scratch files
-db/runtime/*.sqlite3*
 .build/
+
+# 실행 중 생기는 파일: 담당자 업무 기록 DB, 로그, 임시 폴더
+db/runtime/*.sqlite3*
 *.log
-**/api_key.txt
-**/.env.txt
+.tmp/
+
+# 다시 만들 수 있는 실행 보고서
+data/processed/group_dashboard.json
+agents/regional_analysis/analysis2_execution_report.json
+preprocessing/**/outputs/*manifest.json
+preprocessing/**/outputs/**/preprocessing_manifest.json
+preprocessing/**/outputs/validation_report.json
+
+# 예외: 화면·분석·테스트에 필요한 데이터 파일은 저장소에 포함합니다.
 !agents/risk_analysis/data/gangnam_analysis1_cluster_profile_2025H2(1).csv
 !agents/risk_analysis/data/gangnam_db1_dong_month_behavior_mart_2025_07_12(1).csv
 !agents/risk_analysis/data/gangnam_db1_final_k2_cluster_result_2025(1).csv
@@ -38,7 +45,6 @@ db/runtime/*.sqlite3*
 !agents/regional_analysis/Analysis2/reference/gangnam_analysis2_detection_2022_2025.csv
 !agents/regional_analysis/Analysis2/reference/gangnam_analysis2_evidence_card_2022_2025.csv
 !preprocessing/regional_types/outputs/analysis1_preprocessed/analysis1_input.csv
-!preprocessing/regional_types/outputs/analysis1_preprocessed/analysis1_profile.csv
 !preprocessing/regional_types/raw_data/1인가구(거처종류별)_20260922163814.csv
 !preprocessing/regional_types/raw_data/1인가구(연령별)_20260923095001.csv
 !preprocessing/regional_types/raw_data/gangnam_db1_features_202507.csv
@@ -51,11 +57,3 @@ db/runtime/*.sqlite3*
 !preprocessing/regional_types/raw_data/장애인 현황(장애유형별, 동별).csv
 !preprocessing/regional_types/raw_data/장애인+현황(등급별_연령별)_20260923095357.csv
 !preprocessing/regional_features/reference/weather_monthly.csv
-
-# Regenerable execution reports; CSV/reference baselines remain versioned.
-data/processed/group_dashboard.json
-agents/regional_analysis/analysis2_execution_report.json
-preprocessing/**/outputs/*manifest.json
-preprocessing/**/outputs/**/preprocessing_manifest.json
-preprocessing/**/outputs/validation_report.json
-!preprocessing/regional_types/outputs/previous_preprocessing_agent/analysis1_preprocessed/preprocessing_manifest.json

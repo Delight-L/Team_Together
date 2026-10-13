@@ -42,13 +42,26 @@ def main() -> None:
     parser.add_argument("--min-relative-change", type=float, default=MIN_RELATIVE_CHANGE_PP)
     parser.add_argument("--z-threshold", type=float, default=ROBUST_Z_THRESHOLD, choices=[1.5, 2.5, 3.5])
     args = parser.parse_args()
-    output_dir = Path(args.output_dir); output_dir.mkdir(parents=True, exist_ok=True)
-    metrics = [x.strip() for x in args.metrics.split(",") if x.strip()] if args.metrics else None
-    result = run_risk_analysis(load_preprocessed_csv(args.input), context=load_preprocessed_csv(args.context) if args.context else None, min_relative_change_pp=args.min_relative_change, z_threshold=args.z_threshold, metric_columns=metrics)
-    files = {"전체 지표 판정": "risk_metric_assessment.csv", "위험 변화 후보": "risk_metric_signals.csv", "동별 요약": "risk_region_alerts.csv"}
-    for label, filename in files.items():
-        frame = {"전체 지표 판정": result.assessment, "위험 변화 후보": result.signals, "동별 요약": result.region_alerts}[label]
-        path = output_dir / filename; frame.to_csv(path, index=False, encoding="utf-8-sig")
+
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    metrics = None
+    if args.metrics:
+        metrics = [name.strip() for name in args.metrics.split(",") if name.strip()]
+    context = load_preprocessed_csv(args.context) if args.context else None
+
+    result = run_risk_analysis(load_preprocessed_csv(args.input), context=context,
+                               min_relative_change_pp=args.min_relative_change, z_threshold=args.z_threshold,
+                               metric_columns=metrics)
+
+    outputs = [
+        ("전체 지표 판정", result.assessment, "risk_metric_assessment.csv"),
+        ("위험 변화 후보", result.signals, "risk_metric_signals.csv"),
+        ("동별 요약", result.region_alerts, "risk_region_alerts.csv"),
+    ]
+    for label, frame, filename in outputs:
+        path = output_dir / filename
+        frame.to_csv(path, index=False, encoding="utf-8-sig")
         print(f"{label}: {len(frame)}건 → {path}")
     print_user_alerts(result.signals, result.region_alerts)
 

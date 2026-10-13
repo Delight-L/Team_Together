@@ -1,5 +1,4 @@
 import hashlib
-import shutil
 import stat
 import zipfile
 from pathlib import Path, PurePosixPath

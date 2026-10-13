@@ -12,7 +12,7 @@ from datetime import date, datetime
 from agents import report_writer, service_matching
 from db import experience_store, mission_store
 from shared import report
-from webapp import sessions
+from webapp import limits, sessions
 from webapp.common import ApiError, Response, dashboard_data, evidence_for, region_context
 
 # 사업 검토를 저장할 때 함께 남기는 사업 정보 항목
@@ -114,9 +114,15 @@ def experience_save(request):
 
 
 def report_content(request):
-    """POST /api/report/content: 저장된 분석·사업 검토로 보고서 문장 초안을 만듭니다."""
+    """POST /api/report/content: 저장된 분석·사업 검토로 보고서 문장 초안을 만듭니다.
+
+    ai=true이면 AI가 문장을 다듬고, 저장된 근거와 대조를 통과한 경우에만 그 문장을 씁니다.
+    """
     context, data, evidence = work_context(request)
-    return report_writer.generate_draft(context, load_workflow(context))
+    use_ai = request.params.get('ai') is True
+    if use_ai:
+        limits.check_chat(request.user)  # AI 문장 다듬기도 보미 사용량에 포함합니다.
+    return report_writer.write_draft(context, load_workflow(context), use_ai=use_ai)
 
 
 def report_preview(request):

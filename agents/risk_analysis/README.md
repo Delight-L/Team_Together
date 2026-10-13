@@ -4,13 +4,7 @@
 
 ## 1. 준비
 
-`main.py`, `analyzer.py`, `data_provider.py`, `config.py` 네 파일을 같은 폴더에 둡니다.
-
-필요 패키지는 한 번만 설치합니다.
-
-```bash
-pip install pandas numpy
-```
+이 폴더의 `main.py`(실행), `analyzer.py`(탐지 로직), `data_provider.py`(CSV 검증), `config.py`(지표 규칙), `region_context.py`(지역 유형)를 함께 씁니다. 필요한 패키지는 프로젝트 루트의 `requirements.txt`로 설치합니다.
 
 ## 2. CSV 필수 열
 
@@ -20,26 +14,20 @@ pip install pandas numpy
 
 `기준연월`은 `2025-07` 형태여야 합니다. 같은 동·같은 월은 한 행만 있어야 합니다.
 
-## 3. 포함된 전처리 CSV로 윈도우에서 실행
+## 3. 포함된 전처리 CSV로 실행
 
-1. 이 폴더로 이동합니다.
-
-```bash
-cd "C:\Users\user\Desktop\together project\risk_analysis_agent"
-```
-
-2. 아래처럼 **한 줄 전체를 한 번에** 입력합니다. 줄 끝의 `\`는 쓰지 않습니다.
+프로젝트 루트에서 **한 줄 전체를 한 번에** 입력합니다.
 
 ```bash
-python main.py --input "data\gangnam_db1_dong_month_behavior_mart_2025_07_12(1).csv" --min-relative-change 5 --z-threshold 3.5 --output-dir outputs
+python main.py --risk --input "agents/risk_analysis/data/gangnam_db1_dong_month_behavior_mart_2025_07_12(1).csv" --min-relative-change 5 --z-threshold 3.5 --output-dir outputs
 ```
 
-이 명령은 압축파일에 같이 넣은 전처리 CSV를 임시 입력으로 사용한다. 현재 분석 지표는 `config.py`에 제공 CSV의 실제 열 이름으로 이미 연결돼 있다.
+이 명령은 저장소에 포함된 전처리 CSV를 입력으로 사용합니다. 분석 지표는 `config.py`에 이 CSV의 실제 열 이름으로 연결돼 있습니다. 경로는 명령을 입력한 폴더 기준이라, 결과는 프로젝트 루트의 `outputs` 폴더에 저장됩니다.
 
 특정 지표만 분석하려면 열 이름을 쉼표로 넣습니다.
 
 ```bash
-python main.py --input "data\gangnam_db1_dong_month_behavior_mart_2025_07_12(1).csv" --metrics "flow_per_point,평일 총 이동 횟수,휴일 총 이동 횟수 평균" --min-relative-change 5 --z-threshold 2.5 --output-dir outputs
+python main.py --risk --input "agents/risk_analysis/data/gangnam_db1_dong_month_behavior_mart_2025_07_12(1).csv" --metrics "flow_per_point,평일 총 이동 횟수,휴일 총 이동 횟수 평균" --min-relative-change 5 --z-threshold 2.5 --output-dir outputs
 ```
 
 ## 4. 결과

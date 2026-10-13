@@ -19,7 +19,13 @@ from sqlalchemy import text
 
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / 'data/processed/group_dashboard.json'
-VERSION = 'flow-groups-v1'
+VERSION = 'flow-groups-v2'
+CITY_PREFIXES = {'강남구': '11230', '춘천시': '32010'}
+
+
+def belongs_to_city(code, city):
+    prefix = CITY_PREFIXES.get(city)
+    return bool(prefix and re.fullmatch(prefix + r'\d{2}', str(code)))
 AGES = ['10대', '20대', '30대', '40대', '50대', '60대 이상']
 SEXES = ['남성', '여성']
 DAYS = ['월', '화', '수', '목', '금', '토', '일']
@@ -45,9 +51,9 @@ def clean_frame(frame, columns, codes):
         raise ValueError('원자료 필수 열 누락')
     frame = frame.copy()
     frame['code'] = frame.BLOCK_CD.astype(str).str[:7]
-    frame = frame[frame.code.str.startswith('11230')].copy()
+    frame = frame[frame.code.str.startswith(tuple(CITY_PREFIXES.values()))].copy()
     if frame.empty or not set(frame.code).issubset(codes):
-        raise ValueError('강남구 지역코드 매핑을 확인하세요.')
+        raise ValueError('지원 지역의 지역코드 매핑을 확인하세요.')
     if frame.duplicated(['STD_YM', 'BLOCK_CD', 'X_COORD', 'Y_COORD']).any():
         raise ValueError('월·블록·좌표 중복: 합산하지 않습니다.')
     values = frame[list(columns)].apply(pd.to_numeric, errors='raise')
@@ -85,7 +91,7 @@ def aggregate_age(frame, names):
 def build_snapshot(source_dir=ROOT / 'data/processed'):
     mapping = ROOT / 'shared/data/flow_region_codes.csv'
     regions = pd.read_csv(mapping, dtype=str)
-    names = dict(regions[regions.city == '강남구'][['region_code', 'region_name']].itertuples(index=False, name=None))
+    names = dict(regions[regions.city.isin(CITY_PREFIXES)][['region_code', 'region_name']].itertuples(index=False, name=None))
     sources = {name: source_dir / (name + '.csv') for name in ['age_pop', 'wkdy_pop', 'time_pop']}
     hashes = {name: digest(path) for name, path in sources.items()}
     hashes['region_codes'] = digest(mapping)
@@ -109,9 +115,9 @@ def build_snapshot(source_dir=ROOT / 'data/processed'):
                 entry['hours'] = activity_values(labels, values, denominator)
                 entry['hour_points'] = len(part)
     result = dict(version=VERSION, run_id=identity, source_files=hashes, months=sorted(age.month.unique()),
-                  districts=[dict(code=k, name=v) for k, v in names.items()], ages=AGES, sexes=SEXES,
+                  districts=[dict(code=k, name=v, city=next(city for city in CITY_PREFIXES if belongs_to_city(k, city))) for k, v in names.items()], ages=AGES, sexes=SEXES,
                   groups=groups, activity=list(activity.values()),
-                  mapping='BLOCK_CD 앞 7자리 → shared/data/flow_region_codes.csv (강남구 22동)',
+                  mapping='BLOCK_CD 앞 7자리 → shared/data/flow_region_codes.csv (강남구 22동 · 춘천시 25개 읍·면·동)',
                   unit='원자료 유동량', note='추정 유동량의 공간 집계이며 고유 인원·거주 인구·고립 인구가 아닙니다.')
     return result
 
@@ -159,29 +165,29 @@ def load_snapshot():
 def catalogue(city, month, snapshot=None):
     """선택 월의 그룹 목록을 복사하여 캐시 원본이 화면 처리로 바뀌지 않게 합니다."""
     data = snapshot if snapshot is not None else load_snapshot()
-    groups = []
-    if city == '강남구':
-        for row in data['groups']:
-            if row['month'] == month:
-                groups.append(row)
-    return dict(source='DB1 · 집단별 유동인구', runId=data['run_id'], months=data['months'] if city == '강남구' else [], ages=AGES, sexes=SEXES,
-                groups=deepcopy(groups), districts=data['districts'] if city == '강남구' else [],
-                note=data['note'], mapping=data['mapping'], telecomAvailable=False)
+    city_groups = [row for row in data['groups'] if belongs_to_city(row['code'], city)]
+    districts = [row for row in data['districts'] if belongs_to_city(row['code'], city)]
+    return dict(source='DB1 · 집단별 유동인구', runId=data['run_id'],
+                months=sorted({row['month'] for row in city_groups}), ages=AGES, sexes=SEXES,
+                groups=deepcopy([row for row in city_groups if row['month'] == month]),
+                districts=deepcopy(districts), note=data['note'], mapping=data['mapping'], telecomAvailable=False)
 
 
 def group_detail(context, snapshot=None):
     """같은 연령·성별의 월별 추이, 다른 동 비교, 선택 동의 구성비를 나눠 조회합니다."""
     data = snapshot if snapshot is not None else load_snapshot()
-    if context.get('city') != '강남구' or context.get('age') not in AGES or context.get('sex') not in SEXES:
+    if context.get('city') not in CITY_PREFIXES or context.get('age') not in AGES or context.get('sex') not in SEXES:
         raise ValueError('유효한 지역·연령대·성별을 선택하세요.')
     code = str(context.get('code', ''))
-    if not re.fullmatch(r'11230\d{2}', code):
+    if not belongs_to_city(code, context['city']):
         raise ValueError('행정동 코드가 올바르지 않습니다.')
     series = []
     peers = []
     composition = []
     current = None
     for row in data['groups']:
+        if not belongs_to_city(row['code'], context['city']):
+            continue
         same_group = row['age'] == context['age'] and row['sex'] == context['sex']
         same_month = row['month'] == context['month']
         if row['code'] == code and same_group and row['month'] <= context['month']:
@@ -210,6 +216,8 @@ def group_detail(context, snapshot=None):
 
 def regional_context(context):
     """DB1 동별 분석을 별도 scope로 전달한다. 집단 신호로 재명명하지 않는다."""
+    if context['city'] != '강남구':
+        return dict(scope='district', structure=None, detection=None)
     from db.analysis_repository import get_engine
     with get_engine().connect() as conn:
         structure = conn.execute(text('''SELECT cluster_type, payload, source_file FROM db1.analysis1_region_typology
