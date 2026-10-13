@@ -198,8 +198,9 @@ def write_draft(context, workflow, use_ai=False, request=''):
     problems = check_grounding(polished, draft)
     if problems:
         LOGGER.info('보고서 AI 문장이 근거 대조를 통과하지 못함: %s', problems)
-        return draft | {'notice': 'AI 문장이 저장된 근거와 맞지 않아(' + ', '.join(problems[:3]) +
-                        ') 저장된 근거로 구성한 초안을 보여 드립니다.'}
+        reason = '확인되지 않은 링크가 발견되어' if problems == ['근거에 없는 URL'] else '자료와 일치하지 않는 내용이 있어'
+        return draft | {'notice': 'AI가 다듬은 내용에서 ' + reason +
+                        ' 저장된 자료로 만든 기본 초안을 표시했습니다. 초안은 수정해서 사용할 수 있습니다.'}
     result = dict(draft)
     for key in SECTION_KEYS:
         result[key] = polished[key].strip()

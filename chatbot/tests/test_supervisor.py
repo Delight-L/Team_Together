@@ -136,7 +136,13 @@ class ReportPolishTest(unittest.TestCase):
                     self.polished(situation='변화가 큼')):
             draft = self.write(json.dumps(bad))
             self.assertEqual(draft['summary'], self.base['summary'])
-            self.assertIn('저장된 근거와 맞지 않아', draft['notice'])
+            self.assertIn('자료와 일치하지 않는 내용', draft['notice'])
+
+    def test_unverified_link_shows_plain_notice_and_original_draft(self):
+        draft = self.write(json.dumps(self.polished(summary='참고 https://example.org/new')))
+        self.assertEqual(draft['summary'], self.base['summary'])
+        self.assertIn('확인되지 않은 링크', draft['notice'])
+        self.assertIn('초안은 수정해서 사용할 수 있습니다', draft['notice'])
 
     def test_ai_error_and_invalid_json_fall_back(self):
         for answer in (OpenAIError('secret'), 'not json'):

@@ -133,6 +133,19 @@ class WelfareTest(unittest.TestCase):
         self.assertNotIn('불완전한 AI 답변', result['answer'])
         self.assertNotIn('test-secret', str(result))
 
+    def test_new_program_is_labeled_as_idea_even_without_model_label(self):
+        async def tokens(messages):
+            yield '사업명(가칭): 생활기술 모임'
+        with patch.object(settings, 'openai_api_key', 'test'), patch.object(llm, 'stream', tokens):
+            result = reply('기존 사업 말고 새로운 복지사업을 추천해줘', self.context)
+        self.assertIn('현재 운영 중인 사업이 아님', result['answer'])
+        self.assertIn('생활기술 모임', result['answer'])
+
+    def test_planning_without_ai_does_not_substitute_existing_programs(self):
+        result = reply('기존 사업 말고 신규 사업을 구상해줘', self.context)
+        self.assertIn('AI 대화 기능이 필요', result['answer'])
+        self.assertNotIn('출처:', result['answer'])
+
     def test_stop_closes_original_async_stream(self):
         closed = []
 

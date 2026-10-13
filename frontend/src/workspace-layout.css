@@ -189,3 +189,54 @@
   .gd-files-panel .gd-file-list button { gap: 5px; }
   .gd-files-panel .gd-file-list button > svg { width: 15px; flex-shrink: 0; }
 }
+
+/* 지역 배경의 두 인구 지표는 나란히 정렬해 하단 잘림을 줄입니다. */
+.gd-summary .gd-overview { padding-bottom: 0; }
+.gd-population-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 6px; }
+.gd-summary .gd-population-grid .gd-senior { margin: 0; padding: 10px; display: flex; flex-direction: column; }
+.gd-population-grid .gd-senior > span { min-height: 34px; line-height: 1.4; }
+.gd-summary .gd-population-grid .gd-senior strong { margin: 6px 0; line-height: 1.15; }
+.gd-population-grid .gd-senior p { margin: 4px 0 0; font-size: 10px; line-height: 1.45; }
+.gd-population-grid .gd-share-track { margin-top: auto; }
+.gd-summary .gd-context-note { margin: 6px 0 0; }
+@media (max-height: 900px) {
+  .gd-summary .gd-mini-trend .gd-line { height: 80px; }
+  .gd-summary .gd-context-cards > article { padding: 12px; }
+  .gd-summary .gd-households { height: 32px; }
+  .gd-summary .gd-household-legend { margin: 8px 0; gap: 8px; }
+  .gd-summary .gd-context-cards h4 { margin: 8px 0; }
+  .gd-summary .gd-compare-legend { margin: 10px 0; }
+}
+@media (max-width: 900px) {
+  .gd-population-grid { grid-template-columns: 1fr; }
+  .gd-population-grid .gd-senior > span { min-height: 0; }
+}
+/* 첨부 브리핑 디자인: 단계 안내와 파일 탭의 간격을 한곳에서 맞춥니다. */
+.group-shell .gd-workspace { grid-template-rows: auto auto minmax(0, 1fr); }
+.group-shell .gd-process { gap: 12px; padding: 4px 12px; min-height: 54px; }
+.group-shell .gd-process li { gap: 12px; }
+.group-shell .gd-process li + li::before { display: block; margin: 0; font-size: 20px; }
+.group-shell .gd-process li > button { padding: 4px 6px; min-height: 44px; gap: 10px; }
+.group-shell .gd-process li.current > button { background: #f0f6ff; }
+.group-shell .gd-process li > button > b { width: 36px; height: 36px; box-sizing: border-box; }
+.group-shell .gd-process span { display: block; margin-top: 3px; }
+.group-shell .gd-process button:focus-visible { outline: 2px solid #2563eb; outline-offset: -2px; }
+.gd-tabs-shell { grid-area: 2 / 1; min-width: 0; background: #eee5d6; border-radius: 12px 12px 0 0; padding: 6px 8px 0; }
+.gd-tabs-shell .gd-tabs-label { position: static; padding: 0 2px 4px; line-height: 16px; }
+.group-shell .gd-tabs-shell .gd-tabbar { position: static; height: 38px; padding: 0; border-radius: 0; gap: 6px; }
+.gd-tabs-shell .gd-tabbar .gd-tab { flex-shrink: 0; }
+.gd-tabs-shell .gd-tabbar .gd-evidence-tab { min-width: 204px; }
+.gd-tabs-shell .gd-tabbar .gd-files-tab { min-width: 130px; }
+.gd-tabs-shell .gd-tabbar .gd-add { flex-shrink: 0; width: 38px; margin: 0; }
+.group-shell .gd-case:not(.gd-files-panel) { overflow-y: auto; scrollbar-width: thin; }
+.group-shell .gd-scope-note { margin: 0 0 8px; }
+.gd-summary { gap: 12px; }
+.gd-summary .gd-context-cards { gap: 12px; }
+@media (max-width: 900px) {
+  .group-shell .gd-process { gap: 4px; padding: 4px 6px; }
+  .group-shell .gd-process li { gap: 4px; }
+  .group-shell .gd-process li > button { gap: 5px; padding: 4px; }
+  .group-shell .gd-process strong { font-size: 11px; }
+  .group-shell .gd-process span { display: none; }
+  .gd-tabs-shell .gd-tabs-label small { display: none; }
+}
