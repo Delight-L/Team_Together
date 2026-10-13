@@ -9,7 +9,6 @@ __pycache__/
 *.env
 !.env.example
 *.txt
-!chatbot/welfare/requirements.txt
 *.geojson
 *.zip
 
