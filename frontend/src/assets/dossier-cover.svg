@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 50" preserveAspectRatio="none">
+  <defs><linearGradient id="cover" x2="0" y2="1"><stop stop-color="#f8ecda"/><stop offset="1" stop-color="#f2dfc4"/></linearGradient></defs>
+  <path d="M0 50Q0 25 20 25H23Q29 25 32 14Q35 3 49 3H822Q844 3 849 15Q851 22 866 22H1267Q1290 22 1300 50Z" fill="url(#cover)"/>
+</svg>

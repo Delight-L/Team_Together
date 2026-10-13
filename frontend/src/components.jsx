@@ -3,6 +3,9 @@ import { number } from './api';
 
 export function Icon({ name, size = 20 }) {
   const paths = {
+    discover: <><circle cx="10" cy="10" r="7"/><path d="m15 16 6 6M5 12l4-4 3 2 3-4"/></>,
+    neighborhood: <><path d="M2 22h20M4 22V9l5-4 5 4v13M7 5V3l3-2 3 2v4M7 11h1m3 0h1M7 15h1m3 0h1M7 19h1"/><circle cx="18" cy="13" r="3"/><path d="M13 22v-2a5 5 0 0 1 10 0v2M18 3v4M16 5h4"/></>,
+    support: <><path d="M12 9C5 5 11 0 14 4c3-4 9 1 2 5l-2 2ZM2 15h3v7H2zM5 16l4-2 7 2q3 1 1 3h-6m6-1 4-3q3-1 2 2l-6 5H9l-4-2"/></>,
     dashboard: (
       <>
         <rect x="3" y="3" width="7" height="7" rx="2" />

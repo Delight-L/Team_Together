@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { api, query } from './api';
 import { Icon } from './components';
@@ -8,6 +8,7 @@ import { groupKey, groupLabel, openGroup, closeGroup, restoreWorkspace, availabl
 import { summarizeRegions } from './Briefing';
 import './group-dashboard.css';
 import RegionContextCards from './RegionContextCards';
+import { tabPage, tabPageForSelected } from './tabPaging.mjs';
 
 const fmt = (n, digits = 1) => Number.isFinite(n) ? n.toLocaleString('ko-KR', { maximumFractionDigits: digits }) : '—';
 const pct = n => Number.isFinite(n) ? `${n > 0 ? '+' : ''}${fmt(n, 2)}%` : '비교 불가';
@@ -133,6 +134,8 @@ function Directory({ catalog, loading, error, retry, city, month, onOpen, state,
 }
 
 function GroupCase({ group, active, shown, evidenceShown, summaryStep, user, onRegion, onEvidence, candidate }) {
+  const [summaryPage, setSummaryPage] = useState(0);
+  useEffect(() => { setSummaryPage(summaryStep === 2 ? 1 : 0); }, [summaryStep]);
   const [reviewRequest, setReviewRequest] = useState(0);
   const [data, setData] = useState(null), [error, setError] = useState(''), [retry, setRetry] = useState(0);
   const [draft, setDraft, clearDraft, storageFailed] = useDraft(draftKey(user, group, `group-review:${group.code}:${group.age}:${group.sex}`), { note: '', need: '' });
@@ -172,9 +175,9 @@ function GroupCase({ group, active, shown, evidenceShown, summaryStep, user, onR
   }
   return <><section hidden={!shown && !evidenceShown} className={`gd-case ${evidenceShown ? 'gd-evidence-panel' : ''}`} role="tabpanel" id={'panel-' + groupKey(group)} aria-label={groupLabel(group)} ref={contentRef}>
     {error ? <div role="alert" className="gd-error">{error}<button onClick={() => { setError(''); setRetry(r => r + 1); }}>다시 연결</button></div> : !row ? <p role="status">집단별 근거를 읽고 있습니다…</p> : <>
-      <div hidden={evidenceShown} className="gd-summary"><div className="gd-overview"><div className="gd-overview-copy"><header className="gd-case-heading"><div><span className="gd-eyebrow">{group.month} · 집단 브리핑</span><h2>{groupLabel(group)}</h2></div>{candidate ? <span className="gd-badge gd-candidate-badge">{candidate.status}</span> : <span className="gd-badge">선택한 집단</span>}</header>
+      <div hidden={evidenceShown} className="gd-summary" data-summary-page={summaryPage}><nav className="gd-summary-pages" aria-label="브리핑 내용 이동">{['변화 요약', '지역 배경', '읍·면·동 전체 변화'].map((label, index) => <button key={label} aria-current={summaryPage === index ? 'page' : undefined} onClick={() => setSummaryPage(index)}>{label}</button>)}</nav><div className="gd-overview"><div className="gd-overview-copy"><header className="gd-case-heading"><div><span className="gd-eyebrow">{group.month} · 집단 브리핑</span><h2>{groupLabel(group)}</h2></div>{candidate ? <span className="gd-badge gd-candidate-badge">{candidate.status}</span> : <span className="gd-badge">선택한 집단</span>}</header>
       {candidate && <p className="gd-candidate-note">{group.district}은(는) {group.month} 읍·면·동별 분석에서 <b>{candidate.status}</b>입니다(후보 지표 {candidate.count}개). 그래서 이 동의 그룹을 먼저 보여 드려요.</p>}
-      <h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `지난달보다 유동량이 ${fmt(Math.abs(row.change_pct), 2)}% ${row.change_pct >= 0 ? '늘었습니다' : '줄었습니다'}.` : '지난달과 비교할 자료가 충분하지 않습니다.'}</h3>
+      <div className="gd-headline-row"><div><h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `${fmt(Math.abs(row.change_pct), 2)}% ${row.change_pct > 0 ? '증가' : row.change_pct < 0 ? '감소' : '변화 없음'}` : '비교 자료 부족'}</h3><p className="gd-metric-label">전월 대비 유동량</p></div><button className="primary gd-support-link" onClick={openServices}>지원사업 후보 확인 <Icon name="arrow" size={22}/></button></div>
       <p className="gd-caption"><abbr title="그 지역에서 관측된 활동 규모입니다. 실제 사람 수와는 다릅니다.">유동량</abbr>은 그 지역에서 관측된 활동 규모(실제 사람 수 아님)이며, 지난달과 이번 달 모두 자료가 있는 구역끼리 비교했습니다.</p></div>
       <article className="gd-mini-trend"><h4>월별 유동량 추이</h4><LineChart points={data.series} label={`${groupLabel(group)} 월별 구역별 평균 유동량`} /><small>각 월 전체 구역의 평균</small></article>
       <article className="gd-mini-share"><h4>읍·면·동 전체 유동량 중 비중</h4><strong>{fmt(row.share, 2)}<small>%</small></strong><div className="gd-share-track"><i style={{width: `${Number.isFinite(row.share) ? Math.max(0, Math.min(100, row.share)) : 0}%`}}/></div><p>유동량은 실제 사람 수와 다릅니다.</p></article></div>
@@ -185,10 +188,10 @@ function GroupCase({ group, active, shown, evidenceShown, summaryStep, user, onR
 <details open><summary><Icon name="services" size={21}/>요일·시간대 활동 · 지역 전체 별도 집계</summary><p className="gd-caution">이 집단의 요일·시간대가 아닙니다. 지역 전체의 활동으로 서비스 운영 접점을 검토합니다.</p><div className="gd-activity"><div><h4>요일별 활동 <small>요일 평균=100</small></h4>{data.activity.weekdays?.map(d => <div className="gd-day" key={d.label}><span>{d.label}</span><i style={{ width: `${Math.min((d.index || 0) / 2, 100)}%` }} /><b>{fmt(d.index)}</b></div>) || <p>요일 자료 없음</p>}</div><div><h4>시간대 활동 <small>최대 시간대=100</small></h4>{data.activity.hours ? <LineChart points={data.activity.hours} field="index" label="지역 전체 시간대 활동 지수" /> : <p>시간대 자료 없음</p>}</div></div></details>
 <details open><summary>자료 출처·범위와 계산 방법</summary><p>연령·성별 유동인구 자료 · 기준월 {group.month}</p><p>{data.note}</p>{user.admin && <p>{data.source} · {data.mapping}</p>}<p>구성비 = 집단 유동량 / 읍·면·동 전체 유동량. 구역별 평균 = 유동량 합 / 관측 구역 수. 전월 변화율 = (공통 구역의 현재 평균 / 전월 평균 − 1) × 100. 분모 0·전월 누락은 계산하지 않습니다.</p><p>연령·성별 그룹별 통화·문자·이동 분석은 아직 연결되지 않았습니다. 읍·면·동 전체 분석과는 집계 범위가 달라 값을 섞지 않습니다.</p>{user.admin && <small>자료 버전 {data.runId.slice(0, 16)} · 읍·면·동 전체 지역 배경과 별도 집계</small>}</details>
 <details open ref={servicesRef} className="gd-review"><summary>지원 필요 확인 · 메모와 사업 검토</summary><p>유동량만으로 지원 필요나 이용 자격을 확정하지 않습니다. 검토 목적을 선택하고 실제 사업의 조건을 확인하세요.</p><label>검토할 지원 목적<select value={need} disabled={saving} onChange={e => { changeDraft({ need: e.target.value }); serviceRequest.current?.abort(); setMatches(null); setServiceError(''); }}><option value="">선택하세요</option>{['관계·사회참여', '안부·상담', '생활·경제'].map(n => <option key={n}>{n}</option>)}</select></label><label>이 집단의 검토 메모<textarea aria-label="집단 검토 메모" disabled={saving} rows="3" maxLength={3000} placeholder="관측 사실, 추가 확인 사항, 실제로 확인한 필요를 구분해서 기록하세요." value={note} onChange={e => changeDraft({ note: e.target.value })} /></label><div className="gd-review-actions"><button className="secondary" onClick={save} disabled={saving}>{saving ? '저장 중…' : '검토 메모 저장'}</button><button className="primary" disabled={!need || searching} onClick={findServices}>{searching ? '사업을 찾는 중…' : '조건 확인할 사업 찾기'}</button></div><p role="status">{storageFailed ? "임시 저장에 실패했습니다. 내용을 복사하거나 저장해 주세요." : status || (saved?.updatedAt ? `마지막 저장 ${saved.updatedAt.slice(0, 16).replace('T', ' ')}` : '')}</p>{serviceError && <p role="alert" className="gd-error">{serviceError}</p>}</details>
-<details open><summary><Icon name="chart" size={21}/>읍·면·동 전체 변화의 상세 근거</summary><p className="gd-caution">읍·면·동 전체 통화·문자·이동 결과이며, 선택한 {group.age} {group.sex} 집단의 결과가 아닙니다.</p>{regionalRows.length ? <PagedTable><thead><tr><th>지표</th><th>전월 변화</th><th>읍·면·동 전체 판정</th></tr></thead><tbody>{regionalRows.map(r => <tr key={r.metric_label}><th>{r.metric_label}</th><td>{pct(r.change_pct)}</td><td>{r.is_risk_signal ? '변화 후보' : r.has_enough_history ? '기준 미해당' : '비교 보류'}</td></tr>)}</tbody></PagedTable> : <p>같은 읍·면·동·월의 분석 자료가 없습니다.</p>}<p>과거 흐름과 여러 지표를 함께 비교한 결과입니다.</p><button className="text-button" onClick={() => onRegion(group)}>읍·면·동 전체 분석 화면으로 →</button></details>
-<details open><summary><Icon name="report" size={21}/>지역 배경 자료 출처</summary><p className="gd-caution">읍·면·동 전체의 지역 유형이며 이 집단의 가구·건강 상태를 뜻하지 않습니다. 월별 유동자료와 기준기간이 다릅니다.</p>{structure ? <><h3>{structure.cluster_type}</h3><p>1인가구 비중 {fmt(structure.payload.hh_1_ratio * 100)}% · 65세 이상 주민 비중 {fmt(structure.payload.resident_ratio_65_plus * 100)}%</p>{structure.payload.elderly_living_alone_rate_65plus != null && <p>65세 이상 등록인구 중 독거노인 비율 {fmt(structure.payload.elderly_living_alone_rate_65plus * 100)}% · {structure.payload.elder_year}년 연간 / 인구 기준 {structure.payload.denominator_reference?.replace(/^(\d{4})Q([1-4])$/, '$1년 $2분기')}</p>}{structure.payload.context_note && <p className="gd-caution">{structure.payload.context_note}</p>}<small>지역 유형 분석 자료 · 기간은 자료마다 다릅니다{user.admin ? ` · ${structure.source_file}` : ''}</small></> : <p>연결된 지역 유형 자료가 없습니다.</p>}</details>
+<details open><summary><Icon name="chart" size={21}/>읍·면·동 전체 변화의 상세 근거</summary><p className="gd-caution">읍·면·동 전체 통화·문자·이동 결과이며, 선택한 {group.age} {group.sex} 집단의 결과가 아닙니다.</p>{regionalRows.length ? <PagedTable><thead><tr><th>지표</th><th>전월 변화</th><th>읍·면·동 전체 판정</th></tr></thead><tbody>{regionalRows.map(r => <tr key={r.metric_label}><th>{r.metric_label}</th><td>{pct(r.change_pct)}</td><td>{r.is_risk_signal ? '변화 후보' : r.has_enough_history ? '기준 미해당' : '비교 보류'}</td></tr>)}</tbody></PagedTable> : <p>같은 동·월의 분석 자료가 없습니다.</p>}<p>과거 흐름과 여러 지표를 함께 비교한 결과입니다.</p><button className="text-button" onClick={() => onRegion(group)}>읍·면·동 전체 분석 화면으로 →</button></details>
+<details open><summary><Icon name="report" size={21}/>지역 배경 자료 출처</summary><p className="gd-caution">읍·면·동 전체의 지역 유형이며 이 집단의 가구·건강 상태를 뜻하지 않습니다. 월별 유동자료와 기준기간이 다릅니다.</p>{structure ? <><h3>{structure.cluster_type}</h3><p>1인가구 비중 {fmt(structure.payload.hh_1_ratio * 100)}% · 65세 이상 주민 비중 {fmt(structure.payload.resident_ratio_65_plus * 100)}%</p><small>지역 유형 분석 자료 · 기간은 자료마다 다릅니다{user.admin ? ` · ${structure.source_file}` : ''}</small></> : <p>연결된 지역 유형 자료가 없습니다.</p>}</details>
 <details open><summary>같은 동의 연령·성별 유동량 구성</summary><p>선택한 동의 유동량 구성입니다. 주민등록 인구나 가구 유형을 의미하지 않습니다.</p><div className="gd-composition">{data.composition.map(g => <div key={g.age + g.sex} className={g.age === group.age && g.sex === group.sex ? 'selected' : ''}><span>{g.age} · {g.sex}</span><div><i style={{ width: `${g.share || 0}%` }} /></div><b>{fmt(g.share, 2)}%</b></div>)}</div></details>
-<details open><summary>같은 연령·성별의 지역별 변화 비교</summary><p>각 동의 전월 공통 구역 기준 변화율입니다. 위험 순위나 개인 이동 경로가 아닙니다.</p><PagedTable><thead><tr><th>읍·면·동</th><th>유동량 변화</th><th>공통 구역</th></tr></thead><tbody>{data.peers.map(p => <tr key={p.code}><th>{p.district}{p.code === group.code ? ' · 선택' : ''}</th><td>{pct(p.change_pct)}</td><td>{fmt(p.matched_points, 0)}개</td></tr>)}</tbody></PagedTable></details>
+<details open><summary>같은 연령·성별의 지역별 변화 비교</summary><p>각 동의 전월 공통 구역 기준 변화율입니다. 위험 순위나 개인 이동 경로가 아닙니다.</p><PagedTable><thead><tr><th>행정동</th><th>유동량 변화</th><th>공통 구역</th></tr></thead><tbody>{data.peers.map(p => <tr key={p.code}><th>{p.district}{p.code === group.code ? ' · 선택' : ''}</th><td>{pct(p.change_pct)}</td><td>{fmt(p.matched_points, 0)}개</td></tr>)}</tbody></PagedTable></details>
 <details open><summary>시간대 활동 값 · 읍·면·동 전체</summary><p>읍·면·동 전체 집계이며 선택한 연령·성별 집단의 결과가 아닙니다.</p><PagedTable><thead><tr><th>시간대</th><th>활동 지수 (최대 시간대=100)</th></tr></thead><tbody>{(data.activity.hours || []).map(point => <tr key={point.label}><th>{point.label}</th><td>{fmt(point.index,2)}</td></tr>)}</tbody></PagedTable></details>
 {matches && <details open><summary>관련 사업 검색 결과</summary><ServiceResults matches={matches}/></details>}
 </EvidencePages>
@@ -206,6 +209,22 @@ export default function GroupDashboard({ city, month: preferredMonth, user, onRe
   const month = state.month || preferredMonth;
   const setState = update => setStored(old => update(restoreWorkspace(old, city)));
   const searchRef = useRef(null), tabRefs = useRef({});
+  const tabsWindowRef = useRef(null), tabsTrackRef = useRef(null);
+  const [tabWindowWidth, setTabWindowWidth] = useState(336);
+  const [firstTab, setFirstTab] = useState(0);
+  const measureTabs = useCallback(() => {
+    const window = tabsWindowRef.current;
+    if (window) setTabWindowWidth(window.clientWidth);
+  }, []);
+  useEffect(() => {
+    const observer = new ResizeObserver(measureTabs);
+    if (tabsWindowRef.current) observer.observe(tabsWindowRef.current);
+    measureTabs();
+    return () => observer.disconnect();
+  }, [measureTabs]);
+  const tabWidths = [215, 170, ...state.tabs.map(() => 336)].map(width => Math.min(width, tabWindowWidth));
+  const page = tabPage(tabWidths, firstTab, tabWindowWidth);
+  const scrollTabs = direction => setFirstTab(direction < 0 ? page.previous : page.end);
   // 종합 현황에서 고른 기준월로 동별 판정을 다시 계산해, 후보 동의 그룹을 먼저 보여 줍니다.
   const statusByDistrict = useMemo(() => {
     if (!analysis) return {};
@@ -239,6 +258,10 @@ export default function GroupDashboard({ city, month: preferredMonth, user, onRe
   const evidenceShown = workspaceTab === 'evidence';
   const filesShown = workspaceTab === 'files' || (!active && !evidenceShown);
   const activeKey = active ? groupKey(active) : '';
+  const selectedTabIndex = evidenceShown ? 0 : filesShown ? 1 : state.tabs.findIndex(g => groupKey(g) === activeKey) + 2;
+  useEffect(() => {
+    setFirstTab(tabPageForSelected(tabWidths, selectedTabIndex, tabWindowWidth).start);
+  }, [selectedTabIndex, tabWindowWidth, state.tabs.length]);
   useEffect(() => { onActiveGroup?.(active || null); }, [activeKey, onActiveGroup]);
   const openEvidence = () => setWorkspaceTab('evidence');
   // 위쪽 3단계를 누르면 열린 브리핑의 해당 부분으로 이동합니다. 3단계는 지원 검토 칸을 펼칩니다.
@@ -251,7 +274,7 @@ export default function GroupDashboard({ city, month: preferredMonth, user, onRe
       const target = panel?.querySelector(step === 1 ? '.gd-overview' : step === 2 ? '.gd-context-cards' : '.gd-review');
       if (step === 3 && target) { target.open = true;  }
       if (step === 3) target?.querySelector('select')?.focus();
-      const scroller = target?.closest('.gd-case');
+      const scroller = target?.closest('.main-content');
       if (scroller) scroller.scrollTo({ top: scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 12, behavior: 'smooth' });
     }, 0);
   };
@@ -266,23 +289,25 @@ export default function GroupDashboard({ city, month: preferredMonth, user, onRe
     else if (event.key === 'Delete' && index >= 0) { close(groupKey(state.tabs[index])); return; }
     else return;
     event.preventDefault();
-    if (i === 0) { openEvidence(); tabRefs.current.evidence?.focus(); return; }
-    if (i === 1) { setShowFiles(true); tabRefs.current.files?.focus(); return; }
-    const id = groupKey(state.tabs[i - 2]); setState(s => ({ ...s, active: id })); setShowFiles(false); tabRefs.current[id]?.focus();
+    setFirstTab(tabPageForSelected(tabWidths, i, tabWindowWidth).start);
+    const focusTab = id => requestAnimationFrame(() => tabRefs.current[id]?.focus());
+    if (i === 0) { openEvidence(); focusTab('evidence'); return; }
+    if (i === 1) { setShowFiles(true); focusTab('files'); return; }
+    const id = groupKey(state.tabs[i - 2]); setState(s => ({ ...s, active: id })); setShowFiles(false); focusTab(id);
   };
   return <div className="gd-root">
     {document.getElementById('group-period-slot') && createPortal(<label>기준월<select aria-label="집단 자료 기준월" value={catalog?.months.includes(month) ? month : ''} disabled={loading || !catalog?.months.length} onChange={e => { const selected = e.target.value; setState(s => ({ ...s, month: selected })); }}>
-      {!catalog?.months.includes(month) && <option value="">{loading ? '기간 확인 중…' : '제공 자료 없음'}</option>}{catalog?.months.slice().reverse().map(m => <option key={m} value={m}>{m.slice(0, 4)}년 {Number(m.slice(5))}월</option>)}
+      {!catalog?.months.includes(month) && <option value="">{loading ? '기간 확인 중…' : '제공 자료 없음'}</option>}{catalog?.months.slice().reverse().map(m => <option key={m} value={m}>{m}</option>)}
     </select></label>, document.getElementById('group-period-slot'))}
     {workspaceStorageFailed && <p className="gd-scope-note" role="status">탭 임시 저장에 실패했습니다. 새로고침 시 열린 탭을 복원하지 못할 수 있습니다.</p>}
     {active && active.month !== month && <p className="gd-scope-note">조사 파일 기준월은 {month}, 현재 열린 브리핑은 <b>{active.month} · {groupLabel(active)}</b>입니다.</p>}
-    <div className="gd-workspace"><ol className="gd-process" aria-label="브리핑 읽는 순서">{[['변화 발견', '지역과 집단의 변화를 확인합니다.'], ['지역 배경 확인', '가구 구성과 읍·면·동 전체의 변화를 봅니다.'], ['지원 서비스 검토', '확인한 필요에 맞는 사업을 검토합니다.']].map(([title, text], i) => <li key={title} className={active && !filesShown && summaryStep === i + 1 && (evidenceShown === (i === 2)) ? 'current' : ''}><button aria-current={active && !filesShown && summaryStep === i + 1 && (evidenceShown === (i === 2)) ? 'step' : undefined} disabled={!active} onClick={() => goStep(i + 1)} title={active ? `${title}로 이동` : '먼저 그룹을 여세요'}><b>{i + 1}</b><div><strong>{title}</strong><span>{text}</span></div></button></li>)}</ol><div className="gd-tabs-shell"><div className="gd-tabs-label">관찰 그룹 브리핑 <small>· 읍·면·동·연령·성별 그룹을 열어 보는 탭</small></div><div className="gd-tabbar" role="tablist" aria-label="조사 파일과 관찰 그룹 브리핑 탭">
-        <div className={`gd-tab gd-evidence-tab ${evidenceShown ? 'active' : ''}`}><button role="tab" id="tab-evidence" aria-selected={evidenceShown} aria-controls={active ? 'panel-' + groupKey(active) : 'panel-evidence-empty'} tabIndex={evidenceShown ? 0 : -1} ref={el => { tabRefs.current.evidence = el; }} onKeyDown={e => changeTab(e, -2)} onClick={openEvidence}><Icon name="clipboard" size={20}/><span><b>전체 근거와 지원 검토</b></span></button></div>
-        <div className={`gd-tab gd-files-tab ${filesShown ? 'active' : ''}`}><button role="tab" id="tab-files" aria-selected={filesShown} aria-controls="panel-files" tabIndex={filesShown ? 0 : -1} ref={el => { tabRefs.current.files = el; }} onKeyDown={e => changeTab(e, -1)} onClick={() => openFiles()}><Icon name="report" size={20} /><span><b>조사 파일</b></span></button></div>
-        {state.tabs.map((g, i) => { const id = groupKey(g), selected = !filesShown && !evidenceShown && id === state.active; return <div className={`gd-tab ${selected ? 'active' : ''}`} key={id}><button role="tab" id={'tab-' + id} aria-selected={selected} aria-controls={'panel-' + id} tabIndex={selected ? 0 : -1} ref={el => { tabRefs.current[id] = el; }} onKeyDown={e => changeTab(e, i)} onClick={() => { setState(s => ({ ...s, active: id })); setShowFiles(false); }}><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M3 7V5h6l2 2h10v14H3Z"/></svg><span><b>{groupLabel(g)}</b><small>{g.month}</small></span></button><button aria-label={`${groupLabel(g)} ${g.month} 탭 닫기`} onClick={() => close(id)}>×</button></div>; })}<button className="gd-add" aria-label="조사 파일에서 관찰 그룹 추가" title="조사 파일에서 그룹 추가" onClick={() => openFiles(true)}>＋</button></div></div>
+    <div className="gd-workspace"><ol className="gd-process" aria-label="브리핑 읽는 순서">{[['변화 발견', '지역과 집단의 변화를 확인합니다.'], ['지역 배경 확인', '가구 구성과 읍·면·동 전체의 변화를 봅니다.'], ['지원 서비스 검토', '확인한 필요에 맞는 사업을 검토합니다.']].map(([title, text], i) => <li key={title} className={active && !filesShown && summaryStep === i + 1 && (evidenceShown === (i === 2)) ? 'current' : ''}><button aria-current={active && !filesShown && summaryStep === i + 1 && (evidenceShown === (i === 2)) ? 'step' : undefined} disabled={!active} onClick={() => goStep(i + 1)} title={active ? `${title}로 이동` : '먼저 그룹을 여세요'}><b>{i + 1}</b><span className="gd-step-icon"><Icon name={['discover', 'neighborhood', 'support'][i]} size={34}/></span><div><strong>{title}</strong><span>{text}</span></div></button></li>)}</ol><div className="gd-tabbar"><div className="gd-tabs-window" ref={tabsWindowRef}><div className="gd-tabs-track" ref={tabsTrackRef} role="tablist" aria-label="조사 파일과 관찰 그룹 브리핑 탭"><span className="gd-tabs-label">관찰 그룹 브리핑 <small>· 동·연령·성별 그룹을 열어 보는 탭</small></span>
+        <div className={`gd-tab gd-evidence-tab ${evidenceShown ? 'active' : ''}`} hidden={page.start > 0} style={{ width: tabWidths[0] }}><button role="tab" id="tab-evidence" aria-selected={evidenceShown} aria-controls={active ? 'panel-' + groupKey(active) : 'panel-evidence-empty'} tabIndex={evidenceShown ? 0 : -1} ref={el => { tabRefs.current.evidence = el; }} onKeyDown={e => changeTab(e, -2)} onClick={openEvidence}><Icon name="clipboard" size={20}/><span><b>전체 근거와 지원 검토</b></span></button></div>
+        <div className={`gd-tab gd-files-tab ${filesShown ? 'active' : ''}`} hidden={page.start > 1 || page.end <= 1} style={{ width: tabWidths[1] }}><button role="tab" id="tab-files" aria-selected={filesShown} aria-controls="panel-files" tabIndex={filesShown ? 0 : -1} ref={el => { tabRefs.current.files = el; }} onKeyDown={e => changeTab(e, -1)} onClick={() => openFiles()}><Icon name="report" size={20} /><span><b>조사 파일</b></span></button></div>
+        {state.tabs.map((g, i) => { const id = groupKey(g), selected = !filesShown && !evidenceShown && id === state.active; return <div className={`gd-tab gd-group-tab ${selected ? 'active' : ''}`} key={id} hidden={i + 2 < page.start || i + 2 >= page.end} style={{ width: tabWidths[i + 2] }}><button role="tab" id={'tab-' + id} aria-selected={selected} aria-controls={'panel-' + id} tabIndex={selected ? 0 : -1} ref={el => { tabRefs.current[id] = el; }} onKeyDown={e => changeTab(e, i)} onClick={() => { setState(s => ({ ...s, active: id })); setShowFiles(false); }}><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M3 7V5h6l2 2h10v14H3Z"/></svg><span><b>{groupLabel(g)}</b><small>{g.month}</small></span></button><button aria-label={`${groupLabel(g)} ${g.month} 탭 닫기`} onClick={() => close(id)}><Icon name="close" size={18}/></button></div>; })}</div></div><div className="gd-tab-controls"><button className="gd-tab-arrow previous" aria-label="이전 파일 탭 보기" disabled={page.start === 0} onClick={() => scrollTabs(-1)}><Icon name="arrow" size={18}/></button><button className="gd-tab-arrow" aria-label="다음 파일 탭 보기" disabled={page.end >= tabWidths.length} onClick={() => scrollTabs(1)}><Icon name="arrow" size={18}/></button><button className="gd-add" aria-label="조사 파일에서 관찰 그룹 추가" title="조사 파일에서 그룹 추가" onClick={() => openFiles(true)}>＋</button></div></div>
       <section className="gd-case gd-files-panel" role="tabpanel" id="panel-files" aria-labelledby="tab-files" hidden={!filesShown}><Directory catalog={catalog} city={city} month={month} loading={loading} error={error} retry={() => setRetry(n => n + 1)} onOpen={open} state={state} searchRef={searchRef} statusOf={statusOf} /></section>
       {state.tabs.map(g => <GroupCase key={groupKey(g)} group={g} active={groupKey(g) === state.active} shown={!filesShown && !evidenceShown && groupKey(g) === state.active} evidenceShown={evidenceShown && groupKey(g) === state.active} onEvidence={openEvidence} summaryStep={summaryStep} user={user} onRegion={onRegion} candidate={CANDIDATE_ORDER.includes(statusOf(g)?.status) ? statusOf(g) : null} />)}
-<section id="panel-evidence-empty" role="tabpanel" aria-labelledby="tab-evidence" className="gd-case" hidden={!evidenceShown || !!active}><h2>전체 근거와 지원 검토</h2><p>조사 파일에서 읍·면·동·연령·성별 그룹을 선택하면 전체 근거와 지원 검토 내용을 확인할 수 있습니다.</p><button className="primary" onClick={() => openFiles()}>조사 파일에서 그룹 선택</button></section>
+<section id="panel-evidence-empty" role="tabpanel" aria-labelledby="tab-evidence" className="gd-case" hidden={!evidenceShown || !!active}><h2>전체 근거와 지원 검토</h2><p>조사 파일에서 동·연령·성별 그룹을 선택하면 전체 근거와 지원 검토 내용을 확인할 수 있습니다.</p><button className="primary" onClick={() => openFiles()}>조사 파일에서 그룹 선택</button></section>
     </div>
   </div>;
 }
