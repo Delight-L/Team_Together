@@ -57,6 +57,21 @@ class GroupDataTest(unittest.TestCase):
         self.assertEqual(unsupported['months'], [])
         self.assertEqual(unsupported['groups'], [])
 
+    def test_chuncheon_groups_are_isolated_from_gangnam(self):
+        frame = sample().assign(BLOCK_CD='3201052000001')
+        rows = aggregate_age(clean_frame(frame, list(AGE_COLS), {'3201052'}), {'3201052': '조운동'})
+        snapshot = self.snapshot | dict(groups=self.snapshot['groups'] + rows,
+            districts=[dict(code='1123065', name='역삼2동'), dict(code='3201052', name='조운동')])
+        context = self.context | dict(city='춘천시', code='3201052')
+        detail = group_detail(context, snapshot)
+        self.assertEqual(detail['current']['district'], '조운동')
+        self.assertAlmostEqual(detail['current']['change_pct'], -20)
+        self.assertEqual({r['code'] for r in detail['peers']}, {'3201052'})
+        self.assertEqual(len(catalogue('춘천시', '2025-08', snapshot)['groups']), 12)
+        self.assertEqual(len(catalogue('강남구', '2025-08', snapshot)['groups']), 12)
+        with self.assertRaises(ValueError):
+            group_detail(context | {'code': '1123065'}, snapshot)
+
     def test_chat_does_not_claim_telecom_or_eligibility(self):
         d = group_detail(self.context, self.snapshot)
         self.assertIn('아직 없습니다', explain(self.context, '통화 신호', d)['answer'])

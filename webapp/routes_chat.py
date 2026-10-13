@@ -5,6 +5,8 @@
 """
 from agents import report_writer, supervisor
 from chatbot import orchestrator
+from chatbot.guardrails import mask_question
+from webapp import limits
 from chatbot.welfare import service as welfare_service
 from chatbot.welfare.app.agent.resources import RESOURCES
 from chatbot.welfare.app.config import settings
@@ -26,9 +28,9 @@ def region_chat(request):
     """POST /api/region/chat: 동을 골랐으면 그 동의 근거를, 안 골랐으면 구 전체 후보를 설명합니다."""
     data = dashboard_data()
     context = region_context(request, data, district_required=False)
-    question = request.params.get('question', '')
+    question, history = mask_question(request.params.get('question', ''), request.params.get('history', []))
     if request.params.get('mode') == 'ai':
-        history = request.params.get('history', [])
+        limits.check_chat(request.user)
         return region_workspace.ai_explain_region(context, question, data, history)
     return region_workspace.explain_region(context, question, data)
 
@@ -38,6 +40,8 @@ def chat(request):
     data = dashboard_data()
     context = region_context(request, data, district_required=False)
     public_context = {'city': context['city'], 'district': context['district'], 'month': context['month']}
+    # 가드레일: 사용자별 질문 수 제한(1분·하루). 한도를 넘으면 429입니다.
+    limits.check_chat(request.user)
 
     # 화면에서 쓰는 방식: 대화 전체를 보내면 총괄 에이전트가 담당을 골라 답변을 이어서 보냅니다.
     if request.params.get('stream') is True:
@@ -62,6 +66,7 @@ def chat(request):
     history = request.params.get('history', [])
     if not isinstance(history, list):
         raise ValueError('대화 이력이 유효하지 않습니다.')
+    question, history = mask_question(question, history)
 
     topic = request.params.get('topic')
     if topic:

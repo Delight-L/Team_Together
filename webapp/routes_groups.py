@@ -1,5 +1,7 @@
 """종합 현황의 연령·성별 그룹 API."""
+from chatbot.guardrails import mask_question
 from chatbot.welfare.app.config import settings
+from webapp import limits
 from db import group_repository, group_workspace
 from webapp.common import check_city_access, group_context
 
@@ -38,9 +40,9 @@ def services(request):
 def chat(request):
     """POST /api/groups/chat: 보미 «이 화면 분석»(그룹을 열었을 때)."""
     context, group_detail = group_context(request)
-    question = request.params.get('question', '')
+    question, history = mask_question(request.params.get('question', ''), request.params.get('history', []))
     if request.params.get('mode') == 'ai':
-        history = request.params.get('history', [])
+        limits.check_chat(request.user)
         return group_workspace.ai_explain(context, question, group_detail, history)
     return group_workspace.explain(context, question, group_detail)
 

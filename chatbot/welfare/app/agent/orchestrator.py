@@ -6,6 +6,7 @@ from chatbot.welfare.app.config import settings
 from chatbot.welfare.app.llm.openai_client import llm
 from chatbot.welfare.app.schemas import ChatMessage
 from chatbot.welfare.app.agent.resources import search, local_answer
+from chatbot.guardrails import redact_unverified
 
 SYSTEM = """당신은 복지탐정(WELFIND)의 복지사업 안내 도우미 '보미'입니다.
 지역과 지원 필요를 확인하고 제공된 팀 자료에서 관련 사업을 안내하세요.
@@ -57,14 +58,19 @@ async def handle_chat(history: list[ChatMessage], context: dict | None = None, u
         return
     material = {"context": context, "records": records}
     messages = [{"role": "system", "content": SYSTEM + "\n선택 지역은 검색 맥락이며 자격 보장이 아닙니다. 기준월은 분석 기준으로 사업 운영 시점과 다릅니다.\n검색된 팀 자료:\n" + json.dumps(material, ensure_ascii=False)}, *(m.model_dump() for m in history[-20:])]
-    received = False
+    parts = []
     tokens = llm.stream(messages)
     try:
         async for text in tokens:
-            received = True
+            parts.append(text)
             yield "token", {"text": text}
-        if not received:
+        if not parts:
             raise OpenAIError("빈 AI 응답")
+        # 답변 속 연락처·URL·금액이 검색된 팀 자료에 없으면 가린 답변으로 바꿉니다.
+        answer, hidden = redact_unverified("".join(parts), json.dumps(material, ensure_ascii=False))
+        if hidden:
+            yield "replace", {"text": answer, "mode": "AI 대화 · 자료에 없는 정보 가림"}
+            yield "notice", {"message": "답변에 팀 자료에서 확인되지 않은 " + "·".join(hidden) + "이(가) 있어 가렸어요. 담당 기관에 직접 확인해 주세요."}
     except OpenAIError:
         yield "error", {"message": "AI 응답을 완료하지 못해 자료 검색 안내로 전환했습니다. 서버의 OpenAI 설정과 연결을 확인해 주세요."}
         yield "replace", {"text": local_answer(records), "mode": "자료 검색 · AI 연결 실패"}

@@ -70,6 +70,12 @@ function useChat(context, group) {
         else if (event === 'sources') update(m => ({ ...m, sources: payload.records, mode: payload.mode }));
         else if (event === 'replace') update(m => ({ ...m, text: payload.text, mode: payload.mode, source: payload.source || m.source }));
         else if (event === 'actions') update(m => ({ ...m, actions: payload.actions }));
+        else if (event === 'notice') {
+          // 가드레일 안내(개인정보 가림, 자료에 없는 정보 가림)는 해당 답변 아래에 표시합니다.
+          update(m => ({ ...m, notices: [...(m.notices || []), payload.message] }));
+          // 서버가 가린 질문으로 내 말풍선을 바꿔, 다음 질문 때 개인정보가 다시 전송되지 않게 합니다.
+          if (payload.question) setMessages(previous => previous.map((m, i) => i === index - 1 ? { ...m, text: payload.question } : m));
+        }
         else if (event === 'error') setError(payload.message);
       }, controller.signal);
     } catch (e) {
@@ -84,20 +90,28 @@ function useChat(context, group) {
 
 export default function BomiChat({ context, group, layout = 'embedded', expanded = false, onExpand, draft, actions = [], onAction, visible = true }) {
   const [input, setInput] = useState('');
+  // guided: 다른 화면에서 예시 질문을 넣어 준 상태. 입력란을 강조하고 보내는 방법을 안내합니다.
+  const [guided, setGuided] = useState(false);
   const chat = useChat(context, group);
   const end = useRef(null), field = useRef(null), appliedDraft = useRef(null);
   const contextKey = JSON.stringify(context);
   useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }); }, [chat.messages, chat.busy]);
+  // 지역이 바뀌면 안내를 지웁니다. 아래 예시 질문 효과보다 먼저 실행되어야 같은 순간에 넣은 안내가 남습니다.
+  useEffect(() => { setGuided(false); }, [contextKey]);
   useEffect(() => {
     if (draft?.contextKey === contextKey && appliedDraft.current !== draft.id) {
       appliedDraft.current = draft.id;
-      setInput(draft.question); field.current?.focus();
+      setInput(draft.question); setGuided(!!draft.guide);
+      field.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      field.current?.focus();
+      // 입력란 끝에 커서를 두어 예시 문장을 바로 고칠 수 있게 합니다.
+      requestAnimationFrame(() => field.current?.setSelectionRange(draft.question.length, draft.question.length));
     }
   }, [draft, contextKey]);
   function submit(value = input) {
     const question = value.trim();
     if (!question || chat.busy || question.length > 2000) return;
-    setInput(''); chat.send(question);
+    setInput(''); setGuided(false); chat.send(question);
   }
   const target = group ? 'group' : context.district ? 'district' : 'city';
   const place = group ? `${group.district} · ${group.age} · ${group.sex}` : `${context.city} ${context.district || '전체'}`;
@@ -112,7 +126,7 @@ export default function BomiChat({ context, group, layout = 'embedded', expanded
         <button className="icon-button" onClick={onExpand} aria-label={expanded ? '챗봇 패널로 돌아가기' : '챗봇 크게 보기'}><Icon name={expanded ? 'minimize' : 'expand'} size={17} /></button>
       </>}
     </header>
-    <p className="bomi-scope">{group ? '열어 둔 그룹' : context.district ? '선택한 동' : '구 전체'} 기준으로 분석 설명 · 복지사업 찾기 · 보고서 초안을 도와드려요.</p>
+    <p className="bomi-scope">{group ? '열어 둔 그룹' : context.district ? context.district : `${context.city} 전체`} 기준으로 분석 설명 · 복지사업 찾기 · 보고서 초안을 도와드려요.</p>
     <details className="bomi-mode"><summary>답변 방식 · {chat.mode === 'ai' ? 'AI 사용' : '외부 AI 사용 안 함'}{chat.config?.resourceCount ? ` · 복지사업 자료 ${chat.config.resourceCount}건` : ''}</summary>
       <select aria-label="답변 방식" value={chat.mode} disabled={chat.busy} onChange={e => chat.setAnswerMode(e.target.value)}>
         <option value="ai" disabled={!aiAvailable}>AI 사용{aiAvailable ? ' · 전송 시 외부 AI 사용' : ' · 연결 설정 필요'}</option>
@@ -127,6 +141,7 @@ export default function BomiChat({ context, group, layout = 'embedded', expanded
         <small>{m.role === 'user' ? '나' : m.agent ? `보미 · ${m.agent}` : '보미'}</small>
         <p>{m.text || '답변을 완료하지 못했습니다.'}</p>
         {(m.mode || m.source) && <span className="bomi-meta">{[m.mode?.split(' · ')[0], m.source].filter(Boolean).join(' · ')}</span>}
+        {m.notices?.map(n => <p key={n} className="bomi-notice" role="status">ⓘ {n}</p>)}
         {m.sources?.length > 0 && <details className="bomi-sources"><summary>참고한 팀 자료 · {m.sources.length}건</summary>
           {m.sources.map(r => <div key={r.id}><strong>{r.name}</strong><p>{r.source} · p. {r.pages}</p><small>{r.status}</small></div>)}
         </details>}
@@ -139,10 +154,11 @@ export default function BomiChat({ context, group, layout = 'embedded', expanded
       {SUGGESTIONS[target].map(q => <button key={q} disabled={chat.busy} onClick={() => submit(q)}>{q}</button>)}
       {actions.map(a => <button key={a.label} className="bomi-action" onClick={a.onClick}>{a.label} →</button>)}
     </div>
-    <form className="bomi-input" onSubmit={e => { e.preventDefault(); submit(); }}>
-      <textarea ref={field} rows="2" value={input} maxLength={2000} onChange={e => setInput(e.target.value)}
+    {guided && <p className="bomi-draft-guide" role="status">예시 질문을 넣어 두었어요. 그대로 보내거나 고쳐서 물어보세요. <kbd>Enter</kbd> 보내기</p>}
+    <form className={`bomi-input ${guided ? 'guided' : ''}`} onSubmit={e => { e.preventDefault(); submit(); }}>
+      <textarea ref={field} rows={guided ? 3 : 2} value={input} maxLength={2000} onChange={e => { setInput(e.target.value); if (!e.target.value) setGuided(false); }}
         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submit(); } }}
-        placeholder="예: 이 동은 왜 후보인가요? / 병원 동행 지원이 필요해요" aria-label="보미에게 질문" />
+        placeholder="예: 이 지역은 왜 후보인가요? / 병원 동행 지원이 필요해요" aria-label="보미에게 질문" />
       {chat.busy ? <button type="button" onClick={chat.stop}>중지</button>
         : <button className="primary" disabled={!input.trim()} aria-label="질문 보내기"><Icon name="send" size={20} /></button>}
     </form>

@@ -19,12 +19,12 @@ export function DataDialog({ onClose, data, context, rows, user }) {
 export function DataSummary({ data, context, rows, user, expanded = false }) {
   const previous = data.months.filter(m => m < context.month).at(-1);
   return <details open={expanded || undefined} className="card data-summary"><summary>데이터 기준 · {context.month}</summary>
-    <dl><dt>분석 자료</dt><dd>동별 통화·문자·평일 이동·휴일 이동 분석{user?.admin ? ` (${data.source})` : ''}</dd>
+    <dl><dt>분석 자료</dt><dd>읍·면·동별 통화·문자·평일 이동·휴일 이동 분석{user?.admin ? ` (${data.source})` : ''}</dd>
       <dt>제공 기간</dt><dd>{data.months[0] || '자료 없음'} ~ {data.months.at(-1) || '자료 없음'}</dd>
-      <dt>선택 지역 자료</dt><dd>{context.district ? `${context.district} · ${rows.length}개 지표` : '동을 선택하면 제공 범위를 확인할 수 있습니다.'}</dd>
+      <dt>선택 지역 자료</dt><dd>{context.district ? `${context.district} · ${rows.length}개 지표` : '읍·면·동을 선택하면 제공 범위를 확인할 수 있습니다.'}</dd>
       <dt>누락·이력 부족</dt><dd>과거 이력 부족 {rows.filter(r => !r.has_enough_history).length}개 · 전월 변화값 누락 {rows.filter(r => !Number.isFinite(r.change_pct)).length}개</dd></dl>
     <h3>확인 후보는 어떻게 정하나요?</h3>
-    <p>구 전체의 공통 변화를 뺀 뒤, 과거 흐름과 얼마나 다른지(평소 대비 차이)를 살펴봅니다. 전화·문자 또는 평일·휴일 이동의 값이 모두 -2 이하일 때 후보로 표시하며, 최소 12회 과거 이력이 필요합니다.</p>
+    <p>시·군·구 전체의 공통 변화를 뺀 뒤, 과거 흐름과 얼마나 다른지(평소 대비 차이)를 살펴봅니다. 전화·문자 또는 평일·휴일 이동의 값이 모두 -2 이하일 때 후보로 표시하며, 최소 12회 과거 이력이 필요합니다.</p>
     <p className="hint">지역 집계 결과이며 개인의 고립 여부를 판정하지 않습니다. 춘천시의 실제 분석 결과는 아직 연결되지 않았습니다.</p>
     {user?.admin && <details className="secondary-details"><summary>분석 버전·갱신 정보 (관리자)</summary><dl>
       <dt>분석 규칙</dt><dd>analysis2-v11 · 공통 변화 제거 후 Robust Z</dd>
@@ -165,13 +165,13 @@ export function Comparison({ data, context }) {
   const period = data.months.filter(m => m >= from && m <= to);
   const series = selected.map(n => ({ name: n, color: colorOf.current[n], values: period.map(month => chosenRows.find(r => r['행정동명'] === n && r['기준연월'] === month)?.change_pct ?? null) }));
   const addable = units.filter(u => !selected.includes(u.n));
-  return <section className="card info-card comparison-workspace"><h2>지역·기간 비교</h2><p className="hint">최대 4개 동의 전월 변화율을 한 그래프에서 같은 눈금으로 비교합니다.</p>
+  return <section className="card info-card comparison-workspace"><h2>지역·기간 비교</h2><p className="hint">최대 4개 읍·면·동의 전월 변화율을 한 그래프에서 같은 눈금으로 비교합니다.</p>
     <div className="comparison-filters"><label>지표<select aria-label="지표" value={metric} onChange={e => setMetric(e.target.value)}>{metrics.map(m => <option key={m}>{m}</option>)}</select></label><label>시작월<select aria-label="시작월" value={from} onChange={e => setFrom(e.target.value)}>{data.months.map(m => <option key={m}>{m}</option>)}</select></label><label>종료월<select aria-label="종료월" value={to} onChange={e => setTo(e.target.value)}>{data.months.map(m => <option key={m}>{m}</option>)}</select></label>
       <button className="secondary" disabled={!to} onClick={() => setFrom(recentStart(to))}>최근 6개월</button></div>
     <div className="comparison-selection" aria-label="비교할 지역">{selected.map(n => <button className="region-chip" key={n} aria-label={`${n} 비교에서 제외`} onClick={() => setSelected(s => s.filter(v => v !== n))}><i className="legend-swatch" style={{ background: colorOf.current[n] }} aria-hidden="true" />{n}<span aria-hidden="true">×</span></button>)}
-      <select className="region-add" aria-label="비교할 동 추가" value="" disabled={selected.length >= 4} onChange={e => e.target.value && setSelected(s => [...s, e.target.value])}><option value="">{selected.length >= 4 ? '최대 4개 동' : '＋ 동 추가'}</option>{addable.map(u => <option key={u.n}>{u.n}</option>)}</select>
-      <span className="hint">{selected.length}/4개 동</span></div>
-    {from > to ? <p className="error" role="alert">시작월은 종료월보다 늦을 수 없습니다.</p> : !selected.length ? <p className="empty">＋ 동 추가에서 비교할 동을 선택하세요.</p> : <>
+      <select className="region-add" aria-label="비교할 읍·면·동 추가" value="" disabled={selected.length >= 4} onChange={e => e.target.value && setSelected(s => [...s, e.target.value])}><option value="">{selected.length >= 4 ? '최대 4개 읍·면·동' : '＋ 읍·면·동 추가'}</option>{addable.map(u => <option key={u.n}>{u.n}</option>)}</select>
+      <span className="hint">{selected.length}/4개 읍·면·동</span></div>
+    {from > to ? <p className="error" role="alert">시작월은 종료월보다 늦을 수 없습니다.</p> : !selected.length ? <p className="empty">＋ 읍·면·동 추가에서 비교할 동을 선택하세요.</p> : <>
       <article className="comparison-chart"><h3>{metric} · 전월 변화율</h3><p className="hint">{from} ~ {to} · 0% 선 위는 증가, 아래는 감소입니다.</p><CompareChart period={period} series={series} metric={metric} /></article>
       <details className="secondary-details"><summary>월별 상세 수치 보기</summary>{chosenRows.length ? <div className="table-scroll"><table><thead><tr><th>지역</th><th>기준월</th><th>전월 변화율</th><th>판단</th></tr></thead><tbody>{[...chosenRows].sort((a,b) => a['행정동명'].localeCompare(b['행정동명']) || a['기준연월'].localeCompare(b['기준연월'])).map(r => <tr key={r['행정동명'] + r['기준연월']}><td>{r['행정동명']}</td><td>{r['기준연월']}</td><td>{number(r.change_pct)}{Number.isFinite(r.change_pct) ? '%' : ''}</td><td>{!r.has_enough_history ? '이력 부족' : r.is_risk_signal ? '확인 후보' : '기준 미해당'}</td></tr>)}</tbody></table></div> : <p className="hint">선택한 조건에 해당하는 자료가 없습니다.</p>}</details>
     </>}

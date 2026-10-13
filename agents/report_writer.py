@@ -174,7 +174,7 @@ async def _polish(draft, request):
     answer = await llm.complete([
         {'role': 'system', 'content': POLISH_PROMPT.format(**limits)},
         {'role': 'user', 'content': json.dumps(material, ensure_ascii=False)},
-    ], json_mode=True)
+    ], json_mode=True, max_tokens=3000)
     return json.loads(answer)
 
 

@@ -1,7 +1,7 @@
 """총괄 에이전트의 담당 선택과 보고서 AI 문장 대조 검사. 외부 AI는 가짜 응답으로 대체합니다."""
 import json
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from openai import OpenAIError
 
@@ -28,7 +28,7 @@ def events(question, ai=False, history=()):
 
 
 def fake_complete(answer):
-    async def complete(messages, json_mode=False):
+    async def complete(messages, json_mode=False, max_tokens=None):
         if isinstance(answer, Exception):
             raise answer
         return answer
@@ -40,6 +40,10 @@ class RouteTest(unittest.TestCase):
         key = patch.object(settings, 'openai_api_key', '')
         key.start()
         self.addCleanup(key.stop)
+        # 유해 콘텐츠 검사도 외부로 나가지 않게 통과 결과로 대체합니다(검사 자체는 test_guardrails에서 확인).
+        moderate = patch.object(llm, 'moderate', AsyncMock(return_value=[]))
+        moderate.start()
+        self.addCleanup(moderate.stop)
 
     def test_rules_pick_agent_without_ai(self):
         cases = {'보고서 초안 만들어 줘': 'report', '보고서 써줘': 'report',

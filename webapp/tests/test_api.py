@@ -17,7 +17,7 @@ from urllib.parse import urlencode
 from lxml import etree
 from shared.report import NS
 
-from webapp import server
+from webapp import limits, server
 from db import mission_store
 from chatbot.welfare.app.config import settings as welfare_settings
 
@@ -47,6 +47,10 @@ class ApiTest(unittest.TestCase):
         key_patch = patch.object(welfare_settings, 'openai_api_key', '')
         key_patch.start()
         self.addCleanup(key_patch.stop)
+        # 여러 테스트가 짧은 시간에 질문하므로 사용량 한도를 새로 만듭니다(한도 검사는 별도 테스트).
+        limiter = patch.object(limits, 'chat_limiter', limits.RateLimiter(10**6, 10**6))
+        limiter.start()
+        self.addCleanup(limiter.stop)
 
     def request(self,method,path,body=None,headers=None):
         connection = http.client.HTTPConnection('127.0.0.1',self.httpd.server_port,timeout=20)
@@ -131,6 +135,27 @@ class ApiTest(unittest.TestCase):
         self.assertTrue(text.endswith('event: done\ndata: {}\n\n'))
         self.assertEqual(self.request('POST', '/api/chat', base | {'group': 'x', 'messages': [{'role': 'user', 'content': '요약'}]})[0], 400)
         self.assertEqual(self.request('GET', '/api/chat/config')[1]['aiAvailable'], False)
+
+    def test_guardrails_rate_limit_pii_and_login_lock(self):
+        self.login()
+        body = self.context | {'stream': True, 'mode': 'data'}
+        ask = lambda q: self.request('POST', '/api/chat', body | {'messages': [{'role': 'user', 'content': q}]})
+        status, text = ask('010-1234-5678 이 동의 변화를 요약해 줘')
+        self.assertEqual(status, 200)
+        self.assertIn('event: notice', text.decode('utf-8'))
+        self.assertNotIn('5678', text.decode('utf-8'))
+        with patch.object(limits, 'chat_limiter', limits.RateLimiter(2, 100)):
+            self.assertEqual(ask('요약')[0], 200)
+            self.assertEqual(ask('요약')[0], 200)
+            status, result = ask('요약')
+            self.assertEqual(status, 429)
+            self.assertIn('1분 2회', result['error'])
+        with patch.object(limits, 'login_guard', limits.LoginGuard()):
+            for _ in range(limits.LOGIN_MAX_FAILURES):
+                self.assertEqual(self.request('POST', '/api/login', {'id': 'admin', 'password': 'wrong'})[0], 401)
+            status, result = self.request('POST', '/api/login', {'id': 'admin', 'password': 'admin1234'})
+            self.assertEqual(status, 429)
+            self.assertIn('로그인을 막았습니다', result['error'])
 
     def test_region_chat_explains_selected_district_and_city(self):
         payload = self.context | {'question':'변화 요약'}

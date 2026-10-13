@@ -11,7 +11,7 @@ export const GUIDE_STEPS = [
     text: '후보로 판정된 동의 그룹이 먼저 열립니다. 유동량이 지난달보다 얼마나 달라졌는지, 왜 이 동을 먼저 보는지 확인할 수 있어요.',
   },
   {
-    targets: ['.gd-chat-slot:not([hidden]) .bomi-chat'],
+    targets: ['.app-shell > .bomi-chat.panel'],
     title: '보미에게 물어보세요',
     text: '지금 보는 변화의 뜻과 근거, 필요한 지원과 담당 기관, 보고서 초안까지 한 채팅에서 물어볼 수 있어요. 질문에 맞는 담당 에이전트가 답해요.',
   },

@@ -7,6 +7,8 @@ import json
 import math
 
 ANALYZED_CITIES = {'강남구'}
+NEXT_STEPS = ('지역 분석에서 지표별 근거와 월별 추이를 확인한 뒤 «분석 확인 저장», «근거 검토 완료»를 차례로 누르세요. '
+              '그다음 사업 매칭 검토에서 관련 복지사업의 조건을 검토하고, 보고서 작성에서 결과를 정리할 수 있습니다.')
 
 
 def _rows(data, city, month, district=None):
@@ -77,19 +79,23 @@ def explain_region(context, question, data):
     question = str(question).strip()
     if not question or len(question) > 2000:
         raise ValueError('질문은 1~2,000자로 입력하세요.')
-    if any(word in question for word in ['뜻', '의미', '판정', '후보']) and not any(word in question for word in ['요약', '어디']):
+    # 근거·이유·변화를 물으면 용어 설명보다 이 동의 실제 수치를 먼저 답합니다.
+    wants_evidence = any(word in question for word in ['요약', '어디', '근거', '이유', '왜', '변화'])
+    asks_next = any(word in question for word in ['다음', '무엇을', '어떻게'])
+    if any(word in question for word in ['뜻', '의미', '판정', '후보']) and not wants_evidence:
         answer = ('판정은 동 단위 통화·문자·평일 이동·휴일 이동 지표로 계산합니다. «신규 후보»는 이번 달 처음 후보 기준에 해당한 동, '
                   '«연속 후보»는 지난달에 이어 해당한 동, «변화 후보»는 비교 이력이 부족하지만 기준에 해당한 동입니다. '
                   '«판단 보류»는 이력이 부족해 판단하지 않은 동, «기준 미해당»은 기준에 해당하지 않은 동입니다. '
                   '후보는 추가 확인이 필요하다는 뜻이며 개인의 고립 여부를 판정하지 않습니다.')
-    elif any(word in question for word in ['다음', '무엇을', '어떻게']):
-        answer = ('지역 분석에서 지표별 근거와 월별 추이를 확인한 뒤 «분석 확인 저장», «근거 검토 완료»를 차례로 누르세요. '
-                  '그다음 사업 매칭 검토에서 관련 복지사업의 조건을 검토하고, 보고서 작성에서 결과를 정리할 수 있습니다.')
-    elif any(word in question for word in ['서비스', '사업', '지원', '복지']):
+    elif asks_next and not wants_evidence:
+        answer = NEXT_STEPS
+    elif any(word in question for word in ['서비스', '사업', '지원', '복지']) and not wants_evidence:
         answer = ('분석 결과만으로 필요한 서비스나 이용 자격을 확정할 수 없습니다. "어르신 돌봄 지원사업을 찾아 줘"처럼 물어보면 팀 자료에서 관련 사업과 담당 기관을 찾아 드립니다. '
                   '업무로 기록하려면 사업 매칭 검토 메뉴를 이용하세요.')
     else:
         answer = _summary(data, context)
+        if asks_next:
+            answer += '\n\n' + NEXT_STEPS
     return dict(answer=answer, context={k: context.get(k, '') for k in ['city', 'district', 'month']},
                 mode='데이터 근거 안내 · 외부 AI 호출 없음', sources=[dict(label='동별 분석 결과', runId=str(data.get('runId', '')))])
 
@@ -137,4 +143,10 @@ def ai_explain_region(context, question, data, history):
     answer = asyncio.run(generate())
     if not answer.strip():
         raise ValueError('AI 답변이 비어 있습니다. 데이터 근거 안내로 다시 시도하세요.')
-    return grounded | {'answer': answer, 'mode': 'AI 해석 · 동별 분석 근거'}
+    # 분석 근거에는 연락처·URL·금액이 없으므로 답변에 나오면 가립니다.
+    from chatbot.guardrails import redact_unverified
+    answer, hidden = redact_unverified(answer, prompt)
+    result = grounded | {'answer': answer, 'mode': 'AI 해석 · 동별 분석 근거'}
+    if hidden:
+        result['notice'] = '답변에 분석 근거에서 확인되지 않은 ' + '·'.join(hidden) + '이(가) 있어 가렸어요.'
+    return result

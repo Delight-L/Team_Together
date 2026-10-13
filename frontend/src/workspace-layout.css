@@ -87,7 +87,6 @@
 .gd-files-panel .gd-directory { padding: 10px; }
 .gd-files-panel .gd-directory h2 { font-size: 18px; }
 .gd-files-panel .gd-directory-filters { margin: 6px 0; }
-.gd-files-panel .gd-file-list { grid-template-columns: repeat(3,minmax(0,1fr)); }
 .gd-files-panel .gd-file-list button { padding: 10px; min-width: 0; }
 @media (max-height: 760px) {
   .group-shell .page-heading p { display: none; }
@@ -121,7 +120,6 @@
   .app-shell:not(.nav-collapsed) { --nav-width: 166px; }
   .gd-summary .gd-overview { grid-template-columns: 1fr 1fr; }
   .gd-summary .gd-overview-copy { grid-column: 1/-1; }
-  .gd-files-panel .gd-file-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .gd-evidence-navigation label { min-width: 0; }
   .gd-evidence-navigation select { max-width: 250px; }
 }
@@ -147,8 +145,12 @@
 .gd-files-panel .gd-directory { display: flex; flex-direction: column; height: 100%; gap: 8px; padding: 16px; }
 .gd-files-panel .gd-directory > p { margin: 0; }
 .gd-files-panel .gd-directory-filters { margin: 0; }
-.gd-files-panel .gd-file-list { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; flex: 1; min-height: 0; align-content: stretch; }
-.gd-files-panel .gd-file-list button { min-height: 62px; padding: 10px; }
+/* 칸·줄 수는 GroupDashboard.jsx의 useCardGrid가 목록 영역 크기로 계산해 --gd-cols, --gd-rows로 넘깁니다. */
+.gd-files-panel .gd-file-list { grid-template-columns: repeat(var(--gd-cols, 4), minmax(0,1fr)); grid-template-rows: repeat(var(--gd-rows, 3), minmax(0,1fr)); gap: 8px; flex: 1; min-height: 0; align-content: stretch; overflow: hidden; }
+.gd-files-panel .gd-file-list button { min-height: 0; padding: 8px 10px; overflow: hidden; }
+.gd-files-panel .gd-file-list button > span:nth-child(2) { min-width: 0; }
+.gd-files-panel .gd-file-list button strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gd-files-panel .gd-file-list button small { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; word-break: keep-all; }
 .gd-files-panel .gd-file-list button strong { font-size: 12px; }
 .gd-files-panel .gd-file-list button small { margin-top: 5px; line-height: 1.4; }
 .gd-files-panel .gd-directory footer { margin-top: auto; padding-top: 8px; }
@@ -157,7 +159,7 @@
 @media (min-height: 850px) {
   .gd-files-panel .gd-directory { padding: 22px; gap: 14px; }
   .gd-files-panel .gd-file-list { gap: 14px; }
-  .gd-files-panel .gd-file-list button { min-height: 86px; padding: 16px 12px; }
+  .gd-files-panel .gd-file-list button { padding: 16px 12px; }
   .gd-files-panel .gd-file-list button strong { font-size: 14px; }
   .gd-files-panel .gd-file-list button small { font-size: 11px; }
   .gd-evidence-heading { padding: 14px 18px; }
@@ -178,13 +180,12 @@
 @media (max-height: 760px) {
   .gd-files-panel .gd-directory { gap: 5px; padding: 10px; }
   .gd-files-panel .gd-file-list { gap: 6px; }
-  .gd-files-panel .gd-file-list button { min-height: 52px; padding: 7px; }
+  .gd-files-panel .gd-file-list button { padding: 7px; }
   .gd-files-panel .gd-file-list button strong { font-size: 11px; }
   .gd-files-panel .gd-file-list button small { font-size: 9px; margin-top: 3px; }
   .gd-files-panel .gd-directory > p { font-size: 10px; line-height: 1.4; }
 }
 @media (max-width: 1100px) {
-  .gd-files-panel .gd-file-list { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .gd-files-panel .gd-file-list button { gap: 5px; }
   .gd-files-panel .gd-file-list button > svg { width: 15px; flex-shrink: 0; }
 }

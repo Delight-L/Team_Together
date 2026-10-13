@@ -182,3 +182,25 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .status-legend dd { margin: 0; }
 .status-tag[title] { cursor: help; }
 abbr[title] { text-decoration: underline dotted; cursor: help; }
+
+/* 분석 근거와 비교 카드의 내부 여백을 같은 기준으로 맞춥니다. */
+.analysis-card { padding: 20px; }
+.analysis-card > header { padding: 0; margin-bottom: 12px; }
+.analysis-card > .data-source-strip { padding: 0; margin: 0 0 12px; gap: 12px; flex-wrap: wrap; }
+.analysis-card > .empty { margin: 0; padding: 20px 0; }
+.analysis-card > .analysis-title, .analysis-card > .workflow-actions { padding: 12px 0; }
+.analysis-card > .hint { padding: 0; margin: 12px 0; }
+.analysis-card .table-scroll { margin: 12px 0; }
+.comparison-selection { margin-bottom: 12px; }
+.comparison-chart { padding: 20px; }
+.comparison-chart .hint { margin: 12px 0; }
+.comparison-chart .empty { margin: 0; padding: 20px 0; }
+
+/* 사업 검토 상단도 카드 안쪽 20px, 항목 사이 12px를 사용합니다. */
+.service-review-workspace { padding: 20px; }
+.service-review-workspace > .workflow-steps { margin: 0 0 20px; }
+.service-review-workspace > .eyebrow { display: block; margin: 0 0 6px; }
+.service-review-workspace > h2 { margin: 0 0 12px; }
+.service-review-workspace > p { margin: 0 0 12px; line-height: 1.6; }
+.service-review-workspace > .primary { margin: 0 0 12px; }
+.service-review-workspace > p:last-child { margin-bottom: 0; }

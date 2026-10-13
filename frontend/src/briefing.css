@@ -1472,3 +1472,9 @@
 .region-detail .region-insight > header .icon-button { display: none; }
 /* 지도 출처 표기는 이용 조건상 남기되 작고 흐리게 */
 .vector-map .maplibregl-ctrl-attrib { font-size: 9px; opacity: .7; }
+
+/* 지역 목록의 제목·안내·도움말·필터를 같은 여백으로 정렬합니다. */
+.region-directory > header { padding: 20px 20px 0; margin-bottom: 12px; }
+.region-directory > .hint { margin: 0 20px 12px; }
+.region-directory > .status-legend { margin: 0 20px 12px; }
+.region-directory > .directory-filters { padding: 0 20px 20px; }

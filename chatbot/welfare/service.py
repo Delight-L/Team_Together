@@ -44,6 +44,6 @@ def complete_reply(messages, context):
             result.update(sources=payload['records'], mode=payload['mode'])
         elif event == 'replace':
             result.update(answer=payload['text'], mode=payload['mode'])
-        elif event == 'error':
+        elif event in ('error', 'notice'):
             result['notice'] = payload['message']
     return result

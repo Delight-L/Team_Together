@@ -1,0 +1,140 @@
+"""보미 가드레일 검사: 개인정보 가리기, 미확인 정보 가리기, 유해 콘텐츠 차단, 답변 길이 상한. 외부 AI는 호출하지 않습니다."""
+import asyncio
+import json
+from types import SimpleNamespace
+import unittest
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from openai import OpenAIError
+
+from agents import supervisor
+from chatbot.guardrails import UNVERIFIED, mask_messages, mask_pii, mask_question, redact_unverified
+from chatbot.welfare.app.agent.orchestrator import handle_chat
+from chatbot.welfare.app.config import settings
+from chatbot.welfare.app.llm.openai_client import TRUNCATED, llm
+from chatbot.welfare.app.schemas import ChatMessage
+from chatbot.tests.test_supervisor import CONTEXT, DATA, fake_complete
+
+
+class PiiTest(unittest.TestCase):
+    def test_masks_personal_information(self):
+        cases = {
+            '주민번호 900101-1234567 확인': '주민등록번호',
+            '외국인 9001015234567': '주민등록번호',
+            '연락처 010-1234-5678 로 주세요': '전화번호',
+            '집 전화 02 345 6789': '전화번호',
+            'mail me at kim.gn@example.co.kr': '이메일',
+            '카드 1234-5678-9012-3456': '카드번호',
+            '테헤란로 123-4에 살아요': '상세 주소',
+            '래미안 101동 1203호': '상세 주소',
+        }
+        for text, kind in cases.items():
+            masked, found = mask_pii(text)
+            self.assertIn(kind, found, text)
+            self.assertIn(f'[{kind} 가림]', masked, text)
+
+    def test_keeps_work_terms(self):
+        for text in ('삼성1동 2025-12 변화 요약', '평일 이동 -6.1% 감소', '1588-0000 상담센터', '지하철 2호선 근처', '65세 이상 1인가구 3,080명'):
+            self.assertEqual(mask_pii(text), (text, []), text)
+
+    def test_masks_whole_history_and_legacy_fields(self):
+        messages, found = mask_messages([{'role': 'user', 'content': '010-1111-2222'},
+                                         {'role': 'assistant', 'content': '네'},
+                                         {'role': 'user', 'content': 'a@b.com 으로 보내 줘'}])
+        self.assertEqual(found, ['전화번호', '이메일'])
+        self.assertNotIn('010', json.dumps(messages))
+        question, history = mask_question('900101-1234567', [{'role': 'user', 'text': '010-1111-2222'}, 'x'])
+        self.assertNotIn('1234567', question)
+        self.assertNotIn('2222', history[0]['text'])
+        self.assertEqual(history[1], 'x')
+
+
+class RedactTest(unittest.TestCase):
+    material = json.dumps({'records': [{'name': '세곡동행', 'phone': '02-1234-5678',
+                                        'url': 'https://www.bokjiro.go.kr/a?b=1', 'benefit': '월 10만원 지원'}]}, ensure_ascii=False)
+
+    def test_keeps_facts_from_material(self):
+        text = '문의 02-1234-5678, 안내 https://www.bokjiro.go.kr/a?b=1 참고. 월 10만원 지원'
+        self.assertEqual(redact_unverified(text, self.material), (text, []))
+
+    def test_hides_invented_contact_url_and_money(self):
+        text = '문의 02-9999-0000 또는 1577-1234, https://fake.example.com 신청 시 50만원 지급'
+        result, hidden = redact_unverified(text, self.material)
+        self.assertEqual(hidden, ['URL', '연락처', '금액'])
+        for invented in ('9999', '1577', 'fake.example', '50만원'):
+            self.assertNotIn(invented, result)
+        self.assertEqual(result.count(UNVERIFIED), 4)
+
+
+class WelfareOutputTest(unittest.TestCase):
+    def test_ai_answer_with_invented_phone_is_replaced(self):
+        async def tokens(messages):
+            yield '세곡동행은 '
+            yield '010-5555-6666으로 문의하세요.'
+        async def collect():
+            return [e async for e in handle_chat([ChatMessage(role='user', content='세곡동행')], {'city': '강남구'})]
+        with patch.object(settings, 'openai_api_key', 'test'), patch.object(llm, 'stream', tokens):
+            events = dict(asyncio.run(collect()))
+        self.assertIn(UNVERIFIED, events['replace']['text'])
+        self.assertNotIn('5555', events['replace']['text'])
+        self.assertIn('연락처', events['notice']['message'])
+
+
+class SupervisorGuardTest(unittest.TestCase):
+    def run_stream(self, question, ai=False, moderation=None):
+        with patch.object(settings, 'openai_api_key', 'test' if ai else ''), \
+                patch.object(llm, 'complete', fake_complete('{"agent": "analysis"}')), \
+                patch.object(llm, 'moderate', AsyncMock(side_effect=moderation) if isinstance(moderation, Exception)
+                             else AsyncMock(return_value=moderation or [])) as moderate:
+            events = list(supervisor.stream([{'role': 'user', 'content': question}], CONTEXT, DATA, None, use_ai=ai))
+        return events, moderate
+
+    def test_pii_notice_and_masked_question(self):
+        events, _ = self.run_stream('010-1234-5678 주민 변화 요약해 줘')
+        notice = dict(events)['notice']
+        self.assertIn('전화번호', notice['message'])
+        self.assertNotIn('5678', notice['question'])
+        self.assertNotIn('5678', json.dumps(events, ensure_ascii=False))
+
+    def test_flagged_question_is_blocked_before_routing(self):
+        events, moderate = self.run_stream('혐오 표현 예시', ai=True, moderation=['hate'])
+        result = dict(events)
+        moderate.assert_awaited_once()
+        self.assertEqual(result['route']['by'], '안전 검사')
+        self.assertIn('답할 수 없어요', result['replace']['text'])
+
+    def test_moderation_failure_does_not_stop_service(self):
+        with patch.object(llm, 'stream', side_effect=OpenAIError('x')):
+            events, _ = self.run_stream('이 동의 변화를 요약해 줘', ai=True, moderation=OpenAIError('down'))
+        self.assertEqual(dict(events)['route']['agent'], 'analysis')
+
+    def test_data_mode_skips_moderation(self):
+        _, moderate = self.run_stream('이 동의 변화를 요약해 줘')
+        moderate.assert_not_awaited()
+
+
+class TokenLimitTest(unittest.TestCase):
+    def test_stream_sends_limit_and_marks_truncation(self):
+        class Stream:
+            def __aiter__(self):
+                async def chunks():
+                    yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content='긴 답변'), finish_reason=None)])
+                    yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=None), finish_reason='length')])
+                return chunks()
+            async def close(self):
+                pass
+        client = MagicMock()
+        client.__aenter__ = AsyncMock(return_value=client)
+        client.__aexit__ = AsyncMock(return_value=None)
+        client.chat.completions.create = AsyncMock(return_value=Stream())
+        async def collect():
+            return [t async for t in llm.stream([{'role': 'user', 'content': 'x'}])]
+        with patch.object(settings, 'openai_api_key', 'test'), patch.object(settings, 'openai_max_tokens', 321), \
+                patch('chatbot.welfare.app.llm.openai_client.AsyncOpenAI', return_value=client):
+            parts = asyncio.run(collect())
+        self.assertEqual(client.chat.completions.create.call_args.kwargs['max_completion_tokens'], 321)
+        self.assertEqual(parts, ['긴 답변', TRUNCATED])
+
+
+if __name__ == '__main__':
+    unittest.main()

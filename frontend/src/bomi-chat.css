@@ -36,6 +36,14 @@
 .bomi-suggestions .bomi-action { background: #eef5ff; }
 .bomi-message .bomi-action { display: block; margin-top: 8px; font-size: 12px; padding: 6px 10px; border: 1px solid #d6e4f8; border-radius: 16px; background: #eef5ff; color: #1d4ed8; }
 .bomi-input { display: flex; gap: 8px; align-items: stretch; }
+/* 가드레일 안내: 개인정보·자료에 없는 정보를 가렸을 때 답변 아래에 표시합니다. */
+.bomi-notice { margin: 6px 0 0; padding: 6px 8px; border-radius: 6px; background: #fff8e6; color: #8a5a00; font-size: 11px; line-height: 1.5; }
+/* 다른 화면에서 예시 질문을 넣어 준 경우: 입력란을 잠깐 강조하고 보내는 방법을 안내합니다. */
+.bomi-draft-guide { margin: 0; padding: 7px 10px; border-radius: 8px; background: #eef5ff; color: #1d4ed8; font-size: 12px; line-height: 1.5; }
+.bomi-draft-guide kbd { font: inherit; font-size: 11px; padding: 0 5px; border: 1px solid #b9cff5; border-radius: 4px; background: #fff; }
+.bomi-input.guided textarea { border-color: #2563eb; box-shadow: 0 0 0 3px #2563eb33; animation: bomi-guide-pulse 1.2s ease-out 2; }
+@keyframes bomi-guide-pulse { 0% { box-shadow: 0 0 0 0 #2563eb66; } 100% { box-shadow: 0 0 0 8px #2563eb00; } }
+@media (prefers-reduced-motion: reduce) { .bomi-input.guided textarea { animation: none; } }
 .bomi-input textarea { flex: 1; min-width: 0; resize: none; font-size: 13px; padding: 9px 11px; border-radius: 10px; }
 .bomi-input button { flex-shrink: 0; padding: 8px 12px; border-radius: 10px; }
 .bomi-footnote { margin: 0; font-size: 11px; color: #758dab; }

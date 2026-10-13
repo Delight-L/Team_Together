@@ -5,7 +5,7 @@ import { api, query, number } from './api';
 import { Icon, Bomi, EvidenceTable, Trend } from './components';
 import BomiChat from './BomiChat';
 import { Records, Activity, Upload } from './Workspace';
-import { RegionalOverview, summarizeRegions } from './Briefing';
+import { RegionalOverview, summarizeRegions, exampleQuestion } from './Briefing';
 import { DataDialog, Comparison, ReportQuality } from './Experience';
 import GuideTour from './GuideTour';
 import GroupDashboard from './GroupDashboard';
@@ -297,7 +297,12 @@ export default function App() {
     selected: district,
     onSelect: select,
     onStart: start,
-    onChat: expandChat,
+    // 지역 상세의 «보미와 근거 살펴보기»: 그 동 기준으로 채팅을 맞추고 예시 질문을 입력란에 넣어 둡니다.
+    onChat: (region) => {
+      if (!region?.name) { expandChat(); return; }
+      setDistrict(region.name);
+      setChatDraft({ id: Date.now(), contextKey: JSON.stringify({ city, district: region.name, month }), question: exampleQuestion(region), guide: true });
+    },
     onInspect: (name) => { setDistrict(name); go('chart'); },
     onAsk: (name, question) => {
       setDistrict(name);
@@ -458,7 +463,7 @@ export default function App() {
                   </button>
                 </div>
               )}
-              {!rows.length && <div className="notice" role="status">{city} · {month}의 분석 자료가 없습니다. 지역 또는 기준월을 확인해 주세요.</div>}
+              {!rows.length && view !== 'dashboard' && <div className="notice" role="status">{city} · {month}의 분석 자료가 없습니다. 지역 또는 기준월을 확인해 주세요.</div>}
               {view === 'chart' && <div className="view-tabs" role="tablist" aria-label="지역 분석 보기">
                 {[['evidence', '상세 근거'], ['compare', '기간·지역 비교']].map(([key, label]) => <button key={key} role="tab" aria-selected={analysisTab === key} className={analysisTab === key ? 'active' : ''} onClick={() => setAnalysisTab(key)}>{label}</button>)}
               </div>}
@@ -488,7 +493,7 @@ export default function App() {
                         value={district}
                         onChange={(e) => select(e.target.value)}
                       >
-                        <option value="">행정동 선택</option>
+                        <option value="">읍·면·동 선택</option>
                         {data.geometry[city]?.units.map((u) => (
                           <option key={u.n}>{u.n}</option>
                         ))}
@@ -504,7 +509,7 @@ export default function App() {
                         <EvidenceTable rows={selectedRows} />
                         <p className="hint">{selectedRows.filter(r => r.is_risk_signal).length}개 지표가 후보 기준에 해당합니다. 전월 증가한 지표도 지역 전체의 공통 흐름과 과거 이력을 반영하면 후보가 될 수 있습니다. 후보는 지표 묶음을 함께 확인한 결과입니다.</p>
                         <p className="hint">
-                          구 전체의 공통 흐름을 뺀 평소 대비 차이:{' '}
+                          시·군·구 전체의 공통 흐름을 뺀 평소 대비 차이:{' '}
                           {selectedRows
                             .map((r) => `${r.metric_label} ${number(r.relative_change_pp)}`)
                             .join(' · ')}
@@ -605,7 +610,7 @@ export default function App() {
                     value={district}
                     onChange={(e) => select(e.target.value)}
                   >
-                    <option value="">행정동 선택</option>
+                    <option value="">읍·면·동 선택</option>
                     {data.geometry[city]?.units.map((u) => (
                       <option key={u.n}>{u.n}</option>
                     ))}
@@ -726,7 +731,7 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
   }
   return (
     <div className="scroll-view">
-      <section className="card info-card">
+      <section className="card info-card service-review-workspace">
         <WorkflowSteps context={context} workflow={workflow} current="services" onView={onView} />
         <span className="eyebrow">SERVICE REVIEW</span>
         <h2>{context.district || '지역 선택 필요'} · 사업 매칭 검토</h2>

@@ -31,4 +31,20 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
 
 `/api/region/chat`, `/api/groups/chat`, `/api/chat`의 JSON 방식은 예전 호출 경로로, 화면에서는 더 이상 쓰지 않습니다.
 
+## 가드레일
+
+| 단계 | 장치 | 코드 |
+|---|---|---|
+| 입력 | 로그인·소속 지역 검사, 대화 1~40개·메시지 6,000자·질문 2,000자 제한, `system` 역할 차단 | `webapp/common.py`, `chatbot/welfare/app/schemas.py` |
+| 입력 | **개인정보 가리기**: 주민등록번호·카드번호·전화번호·이메일·상세 주소를 `[○○ 가림]`으로 바꾼 뒤 처리(AI 사용 여부와 무관) | `chatbot/guardrails.py` `mask_pii` |
+| 입력 | **유해 콘텐츠 검사**: AI 사용 모드에서 질문을 OpenAI Moderation(무료)으로 검사해 걸리면 답하지 않음. 검사 API 장애 시에는 통과 | `agents/supervisor.py` `_flagged` |
+| 요청 | **사용량 제한**: 사용자별 1분 20회·하루 300회(`.env`의 `WELFIND_CHAT_PER_MINUTE`, `WELFIND_CHAT_PER_DAY`), 초과 시 429 | `webapp/limits.py` |
+| 요청 | **로그인 시도 제한**: 같은 아이디로 10분 안에 5번 틀리면 10분 잠금 | `webapp/limits.py` |
+| AI 호출 | **답변 길이 상한**: `OPENAI_MAX_TOKENS`(기본 1,500). 잘리면 안내 문구를 붙임 | `chatbot/welfare/app/llm/openai_client.py` |
+| AI 호출 | 프롬프트 규칙: 자격·금액·연락처·URL 생성 금지, 자료 속 문장은 명령이 아님, 원인·개인 판정 금지 | 각 에이전트 프롬프트 |
+| 출력 | **미확인 정보 가리기**: 복지사업·분석 AI 답변의 전화번호·URL·금액이 근거 자료에 없으면 `[자료에 없는 정보 · 기관 확인 필요]`로 바꿈 | `chatbot/guardrails.py` `redact_unverified` |
+| 출력 | 보고서 근거 대조: 새 숫자·URL, 사업·판단 문구 누락 시 AI 문장을 버림 | `agents/report_writer.py` `check_grounding` |
+
+가린 내용이 있으면 답변 아래에 안내(`notice` 이벤트)를 표시합니다. 사용량·로그인 기록은 서버 메모리에 있어 서버를 재시작하면 초기화됩니다.
+
 API 키는 서버의 `.env`에만 두며 저장소와 화면 코드에 넣지 않습니다.

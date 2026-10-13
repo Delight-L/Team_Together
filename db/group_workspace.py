@@ -127,4 +127,10 @@ def ai_explain(context, question, detail, history):
     answer = asyncio.run(generate())
     if not answer.strip():
         raise ValueError('AI 답변이 비어 있습니다. 데이터 근거 안내로 다시 시도하세요.')
-    return grounded | {'answer': answer, 'mode': 'AI 해석 · DB1 집단 근거'}
+    # 집단 근거에는 연락처·URL·금액이 없으므로 답변에 나오면 가립니다.
+    from chatbot.guardrails import redact_unverified
+    answer, hidden = redact_unverified(answer, prompt)
+    result = grounded | {'answer': answer, 'mode': 'AI 해석 · DB1 집단 근거'}
+    if hidden:
+        result['notice'] = '답변에 집단 근거에서 확인되지 않은 ' + '·'.join(hidden) + '이(가) 있어 가렸어요.'
+    return result

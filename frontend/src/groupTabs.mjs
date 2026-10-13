@@ -14,7 +14,7 @@ const validMonth = m => typeof m === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(
 export function restoreWorkspace(value, city) {
   const tabs = [], seen = new Set();
   for (const g of Array.isArray(value?.tabs) ? value.tabs : []) {
-    if (!g || g.city !== city || !/^11230\d{2}$/.test(g.code) || !validMonth(g.month)
+    if (!g || g.city !== city || !({ '강남구': /^11230\d{2}$/, '춘천시': /^32010\d{2}$/ }[city]?.test(g.code)) || !validMonth(g.month)
       || !['10대', '20대', '30대', '40대', '50대', '60대 이상'].includes(g.age)
       || !['남성', '여성'].includes(g.sex) || typeof g.district !== 'string') continue;
     const id = groupKey(g);
