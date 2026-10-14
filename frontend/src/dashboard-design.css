@@ -277,3 +277,12 @@
 .group-shell .gd-process li:nth-child(3) .gd-step-icon { color: #00aaca; }
 .group-shell .gd-summary .gd-context-cards > article,
 .group-shell .gd-evidence-content > details { overflow-y: auto; scrollbar-width: thin; }
+
+/* 비중 카드(B안): 값과 전월 대비 %p, 월별 추이선 */
+.group-shell .gd-share-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.group-shell .gd-summary .gd-share-head strong { margin: 6px 0 2px; }
+.group-shell .gd-share-delta { padding: 2px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; background: var(--status-pending-bg); color: var(--status-pending); }
+.group-shell .gd-share-delta.down { background: var(--status-candidate-bg); color: var(--status-candidate); }
+.group-shell .gd-summary .gd-mini-share .gd-line { width: 100%; height: 100px; }
+.group-shell .gd-mini-share .gd-share-insight { margin: 4px 0 0; color: var(--text-sub); font-weight: 600; }
+@container (max-height: 420px) { .group-shell .gd-mini-share .gd-share-insight { display: none; } }

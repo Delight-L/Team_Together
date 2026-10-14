@@ -286,6 +286,9 @@ class ApiTest(unittest.TestCase):
         # 완료한 업무도 새 분석으로 다시 시작합니다. 이전 회차와 보고서 차수는 남습니다.
         self.assertEqual(self.request('POST','/api/workflow/restart',context)[0],400)  # 확인 없이 불가
         self.assertEqual(self.request('POST','/api/workflow/restart',context | {'confirmed':True})[0],400)  # 같은 분석이면 불가
+        # 다시 시작 전의 검토·후속 조치 기록은 이전 회차로 보관됩니다.
+        status,first=self.request('POST','/api/experience',context | {'version':0,'note':'1회차 검토','followup':'기관 문의','status':'기관 문의 중'})
+        self.assertEqual(status,200)
         newer=patch('backend.api.routes_work.dashboard_data',return_value=self.data | {'runId':'newer-run'})
         with newer:
             status,restarted=self.request('POST','/api/workflow/restart',context | {'confirmed':True})
@@ -297,6 +300,15 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(len(restarted['previous_rounds']),1)
             self.assertEqual(restarted['previous_rounds'][0]['report']['revision'],2)
             self.assertEqual(self.request('POST','/api/workflow/confirm',context)[0],200)
+            record=self.request('GET','/api/experience?'+urlencode(context))[1]
+            self.assertEqual(record.get('note',''),'')
+            self.assertEqual([r['note'] for r in record['previous_rounds']],['1회차 검토'])
+            self.assertEqual(record['previous_rounds'][0]['round'],1)
+            # 다시 시작 전에 열어 둔 화면(옛 version)은 새 회차를 덮어쓰지 못합니다.
+            self.assertEqual(self.request('POST','/api/experience',context | {'version':first['version'],'note':'옛 화면'})[0],400)
+            status,second=self.request('POST','/api/experience',context | {'version':record['version'],'note':'2회차 검토'})
+            self.assertEqual(status,200)
+            self.assertEqual(len(second['previous_rounds']),1)
         self.assertEqual([v['revision'] for v in self.request('GET','/api/report/versions?'+urlencode(context))[1]['items']],[2,1])
         self.assertEqual(self.request('GET','/api/report?'+urlencode(context | {'revision':2}))[1],latest)
         self.assertEqual(self.request('POST','/api/report',context | {'token':new_draft['token'],'confirmed':True})[0],400)

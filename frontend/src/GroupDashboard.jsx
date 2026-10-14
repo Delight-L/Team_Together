@@ -58,12 +58,15 @@ function ServiceResults({ matches }) {
   return <article className="gd-service-result"><h3>{service.name}</h3><PageButtons page={current} pages={matches.items.length} onPage={value => {setPage(value);setTextPage(0);}} label="사업 이동"/><p style={{whiteSpace:'pre-wrap'}}>{text.slice(part * 400, part * 400 + 400)}</p>{pages > 1 && <PageButtons page={part} pages={pages} onPage={setTextPage} label="사업 상세 내용 이동"/>}{/^https?:\/\//i.test(service.source_url || '') && <a href={service.source_url} target="_blank" rel="noreferrer">공식 안내 확인 ↗</a>}</article>;
 }
 
-function LineChart({ points, field = 'mean', label }) {
+// unit: 눈금 단위(예: '%'), lastColor: 이번 달 점을 강조할 색(없으면 강조하지 않음)
+function LineChart({ points, field = 'mean', label, unit = '', lastColor }) {
   const fillId = useId();
   const values = points.filter(p => Number.isFinite(p[field]));
   if (!values.length) return <p className="gd-empty">표시할 자료가 없습니다.</p>;
   // 세로축은 자료 범위에 맞춰 변화가 잘 보이게 합니다(0부터 시작하지 않을 수 있음).
   const { low, high, ticks, fromZero } = fitDomain(values.map(p => p[field]));
+  const digits = high - low < 6 ? 1 : 0;
+  const lastIndex = points.findLastIndex(p => Number.isFinite(p[field]));
   const x = i => 32 + i * 370 / Math.max(points.length - 1, 1);
   const y = v => 112 - (v - low) / (high - low) * 96;
   // 월이 빠진 구간은 선으로 연결하지 않는다.
@@ -73,10 +76,31 @@ function LineChart({ points, field = 'mean', label }) {
   return <><svg className="gd-line" viewBox="0 0 430 148" role="img" aria-label={label}>
     <defs><linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1"><stop stopColor="#60a5fa" stopOpacity=".24"/><stop offset="1" stopColor="#60a5fa" stopOpacity=".02"/></linearGradient></defs>
     {segments.map((seg, i) => <polygon key={i} points={[...seg, [seg.at(-1)[0], 112], [seg[0][0], 112]].map(p => p.join(",")).join(" ")} fill={`url(#${fillId})`} />)}
-    {ticks.map((v, i) => <g key={i}><line x1="32" x2="405" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x="26" y={y(v) + 4} textAnchor="end">{fmt(v, high - low < 6 ? 1 : 0)}</text></g>)}
+    {ticks.map((v, i) => <g key={i}><line x1="32" x2="405" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x="26" y={y(v) + 4} textAnchor="end">{fmt(v, digits)}{unit}</text></g>)}
     {segments.map((s, i) => <polyline key={i} points={s.map(p => p.join(',')).join(' ')} fill="none" stroke="#2563eb" strokeWidth="3" />)}
-    {points.map((p, i) => <g key={p.month || p.label}>{Number.isFinite(p[field]) && <circle cx={x(i)} cy={y(p[field])} r="4" fill="#2563eb"><title>{p.month || p.label}: {fmt(p[field], 2)}</title></circle>}{(points.length < 9 || i % 6 === 0 || i === points.length - 1) && <text x={x(i)} y="138" textAnchor="middle">{p.month ? Number(p.month.slice(5)) + '월' : p.label}</text>}</g>)}
-  </svg>{!fromZero && <small className="gd-axis-note">세로축은 {fmt(low, high - low < 6 ? 1 : 0)}부터 시작합니다.</small>}</>;
+    {points.map((p, i) => <g key={p.month || p.label}>{Number.isFinite(p[field]) && <circle cx={x(i)} cy={y(p[field])} r={lastColor && i === lastIndex ? 6 : 4} fill={lastColor && i === lastIndex ? lastColor : '#2563eb'} stroke={lastColor && i === lastIndex ? '#fff' : undefined} strokeWidth="2"><title>{p.month || p.label}: {fmt(p[field], 2)}{unit}</title></circle>}{(points.length < 9 || i % 6 === 0 || i === points.length - 1) && <text x={x(i)} y="138" textAnchor="middle">{p.month ? Number(p.month.slice(5)) + '월' : p.label}</text>}</g>)}
+  </svg>{!fromZero && <small className="gd-axis-note">세로축은 {fmt(low, digits)}{unit}부터 시작합니다.</small>}</>;
+}
+
+// 읍·면·동 전체 유동량 중 비중: 이번 달 값, 전월 대비 %p, 월별 추이를 함께 보여 줍니다.
+function ShareTrend({ row, series, label }) {
+  const shares = series.filter(p => Number.isFinite(p.share));
+  const previous = series.length > 1 ? series.at(-2)?.share : undefined;
+  const delta = Number.isFinite(row.share) && Number.isFinite(previous) ? row.share - previous : null;
+  const down = delta !== null && delta < 0;
+  // 기간 안에서 가장 높거나 낮을 때만 짧게 해석을 붙입니다.
+  let insight = '';
+  if (shares.length >= 3 && Number.isFinite(row.share)) {
+    const values = shares.map(p => p.share);
+    if (row.share <= Math.min(...values)) insight = `최근 ${shares.length}개월 중 가장 낮은 비중입니다.`;
+    else if (row.share >= Math.max(...values)) insight = `최근 ${shares.length}개월 중 가장 높은 비중입니다.`;
+  }
+  return <article className="gd-mini-share"><h4>읍·면·동 전체 유동량 중 비중</h4>
+    <div className="gd-share-head"><strong>{fmt(row.share, 2)}<small>%</small></strong>
+      {delta !== null && <span className={`gd-share-delta ${down ? 'down' : 'up'}`}>전월 대비 {delta > 0 ? '+' : delta < 0 ? '−' : '±'}{fmt(Math.abs(delta), 2)}%p</span>}</div>
+    {shares.length >= 2 ? <LineChart points={series} field="share" unit="%" label={label} lastColor={down ? '#e0264a' : '#2563eb'} /> : null}
+    {insight && <p className="gd-share-insight">{insight}</p>}
+    <p>유동량은 실제 사람 수와 다릅니다.</p></article>;
 }
 
 // 조사 파일 카드가 글자 겹침 없이 들어가는 최소 폭입니다. 높이는 실제 카드 내용과 여백으로 잽니다.
@@ -183,7 +207,7 @@ function GroupCase({ group, active, shown, evidenceShown, summaryStep, user, onR
       <div className="gd-headline-row"><div><h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `${fmt(Math.abs(row.change_pct), 2)}% ${row.change_pct > 0 ? '증가' : row.change_pct < 0 ? '감소' : '변화 없음'}` : '비교 자료 부족'}</h3><p className="gd-metric-label">전월 대비 유동량</p></div><button className="primary gd-support-link" onClick={openServices}>지원사업 후보 확인 <Icon name="arrow" size={22}/></button></div>
       <p className="gd-caption"><abbr title="그 지역에서 관측된 활동 규모입니다. 실제 사람 수와는 다릅니다.">유동량</abbr>은 그 지역에서 관측된 활동 규모(실제 사람 수 아님)이며, 지난달과 이번 달 모두 자료가 있는 구역끼리 비교했습니다.</p></div>
       <article className="gd-mini-trend"><h4>월별 유동량 추이</h4><LineChart points={data.series} label={`${groupLabel(group)} 월별 구역별 평균 유동량`} /><small>각 월 전체 구역의 평균</small></article>
-      <article className="gd-mini-share"><h4>읍·면·동 전체 유동량 중 비중</h4><strong>{fmt(row.share, 2)}<small>%</small></strong><div className="gd-share-track"><i style={{width: `${Number.isFinite(row.share) ? Math.max(0, Math.min(100, row.share)) : 0}%`}}/></div><p>유동량은 실제 사람 수와 다릅니다.</p></article></div>
+      <ShareTrend row={row} series={data.series} label={`${groupLabel(group)} 월별 읍·면·동 유동량 중 비중`} /></div>
       <RegionContextCards structure={structure} detection={detection} group={group}/>
       </div><section hidden={!evidenceShown} ref={moreRef} className="gd-more" aria-label="전체 근거와 지원 검토"><header className="gd-evidence-heading"><h2>전체 근거와 지원 검토</h2><p>{groupLabel(group)} · {group.month}</p></header>
       <EvidencePages requestedPage={reviewRequest || (summaryStep === 3 ? 1 : 0)}>

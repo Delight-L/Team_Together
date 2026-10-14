@@ -72,9 +72,19 @@ export function ReviewWorkspace({ context, onView, seed, user, onSaved }) {
       .finally(() => active && setBusy(false));
     return () => { active = false; };
   }, []);
+  // 업무를 새 분석으로 다시 시작하면 이전 회차 기록은 읽기 전용으로 남습니다.
+  const rounds = record.previous_rounds || [];
+  function copyRound(round) {
+    const filled = record.note || record.followup || record.assignee;
+    if (filled && !window.confirm(`${round.round}회차 내용으로 지금 작성 중인 내용을 바꿀까요?`)) return;
+    const next = { ...record, checks: { ...(round.checks || {}) }, assignee: round.assignee || '', due: round.due || '',
+      note: round.note || '', followup: round.followup || '', status: round.status || '확인 예정' };
+    setRecord(next); setLocalDraft({ record: next, seedId: localDraft?.seedId });
+    setNotice(`${round.round}회차 내용을 가져왔습니다. 지금 근거에 맞게 고친 뒤 저장하세요.`);
+  }
   async function save() { setBusy(true); setError(''); try { setRecord({ ...blank, ...await api('/experience', { ...record, ...context }) }); clearLocalDraft(); onSaved?.(); setNotice(''); showToast(`${context.district} · ${context.month} · 검토·후속 조치 기록을 저장했어요.`); } catch (e) { setError(e.message); } finally { setBusy(false); } }
   return <section className="card info-card review-workspace">
-    <div className="workspace-heading"><div><h2>검토·후속 조치</h2><p>{context.district} · {context.month} <span className="status-caption">{record.status}</span></p></div>
+    <div className="workspace-heading"><div><h2>검토·후속 조치</h2><p>{context.district} · {context.month}{rounds.length > 0 && ` · ${rounds.length + 1}회차`} <span className="status-caption">{record.status}</span></p></div>
       <button className="text-button" onClick={() => onView('compare')}>월별 변화 비교 →</button></div>
     <p className="hint">{storageFailed ? '브라우저 임시 보관에 실패했습니다. 새로고침 전에 기록을 저장하세요.' : '작성 중인 내용은 이 탭에 임시 보관됩니다. 로그아웃 전에 저장해 주세요.'}</p>
     <div className="section-switch" role="group" aria-label="작성 구역">
@@ -94,6 +104,13 @@ export function ReviewWorkspace({ context, onView, seed, user, onSaved }) {
     </div>
     {error && <p className="error" role="alert">{error}</p>}{notice && <p className="hint" role="status">{notice}</p>}
     <div className="form-actions"><button className="primary" disabled={busy} onClick={save}>{busy ? '처리 중…' : '검토·후속 조치 저장'}</button><span className="hint">두 구역의 내용을 함께 저장합니다.</span></div>
+    {rounds.length > 0 && <details className="secondary-details"><summary>이전 회차 기록 {rounds.length}건</summary>
+      <p className="hint">업무를 새 분석으로 다시 시작하기 전의 기록입니다. 고칠 수 없으며, 필요하면 지금 회차로 가져와 고친 뒤 저장하세요.</p>
+      {[...rounds].reverse().map(r => <article className="service-card" key={r.round}>
+        <strong>{r.round}회차 · {(r.ended_at || '').slice(0, 16).replace('T', ' ')} 종료 · {r.status}</strong>
+        <p>담당자 {personName(r.assignee) || '미지정'} · 기한 {r.due || '미지정'}</p><p>{r.note}</p><p>{r.followup}</p>
+        <button className="secondary" disabled={busy} onClick={() => copyRound(r)}>이 내용을 지금 회차로 가져오기</button></article>)}
+    </details>}
     <details className="secondary-details"><summary>이전 기록·다시 불러오기</summary>
       <p className="hint">저장한 기록은 같은 지역 담당자와 공유합니다.</p>
       <button className="secondary" disabled={busy} onClick={reload}>최신 기록 다시 불러오기</button>

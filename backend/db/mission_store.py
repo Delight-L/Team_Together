@@ -158,6 +158,9 @@ def restart(request, record):
         db.execute(text("""INSERT INTO work.missions (key,value) VALUES (:key,:value)
             ON CONFLICT (key) DO UPDATE SET value=excluded.value"""),
                    {"key": key, "value": json.dumps(restarted, ensure_ascii=False)})
+        # 검토·후속 조치 기록도 같은 트랜잭션에서 회차를 나눕니다(순환 import를 피해 여기서 불러옵니다).
+        from backend.db import experience_store
+        experience_store.start_new_round(db, request, item.get("analysis_run_id"))
     return restarted
 
 

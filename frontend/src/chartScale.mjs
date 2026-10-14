@@ -19,7 +19,11 @@ export function fitDomain(values, { pad = 0.15 } = {}) {
   // 눈금 세 개(아래·가운데·위)가 읽기 쉬운 숫자가 되도록 간격을 맞춥니다.
   const step = niceStep((max - min) / 2);
   const low = Math.floor(min / step) * step;
-  const high = Math.max(low + 2 * step, Math.ceil(max / step) * step);
-  const mid = (low + high) / 2;
+  // 칸 수를 짝수로 맞춰 가운데 눈금도 간격의 배수(읽기 쉬운 숫자)가 되게 합니다.
+  let spans = Math.max(2, Math.ceil((max - low) / step - 1e-9));
+  if (spans % 2) spans += 1;
+  const round = v => Number(v.toFixed(10));
+  const high = round(low + spans * step);
+  const mid = round(low + spans / 2 * step);
   return { low, high, ticks: [low, mid, high], fromZero: low === 0 };
 }

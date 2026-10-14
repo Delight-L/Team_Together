@@ -22,3 +22,10 @@ test('값이 모두 같거나 없으면 안전한 범위를 돌려준다', () =>
   assert.ok(same.low < 50 && same.high > 50);
   assert.deepEqual(fitDomain([NaN]).ticks, [0, 0.5, 1]);
 });
+
+test('가운데 눈금도 간격의 배수가 된다', () => {
+  const d = fitDomain([10.6, 10.9, 11.2, 11.5, 11.0, 10.75]);
+  const step = (d.ticks[1] - d.ticks[0]);
+  assert.ok(Math.abs(d.ticks[2] - d.ticks[1] - step) < 1e-9);
+  assert.ok(Math.abs(d.ticks[1] / step - Math.round(d.ticks[1] / step)) < 1e-9);
+});
