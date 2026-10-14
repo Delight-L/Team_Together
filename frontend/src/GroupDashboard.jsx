@@ -97,6 +97,22 @@ function LineChart({ points, field = 'mean', label, unit = '', lastColor }) {
   </svg>{!fromZero && <small className="gd-axis-note">세로축은 {fmt(low, digits)}{unit}부터 시작합니다.</small>}</>;
 }
 
+// 요약 왼쪽 칸의 핵심 수치 세 가지. 모두 화면이 이미 받은 집단 자료로 계산합니다(위험 순위가 아님).
+function GroupFacts({ group, row, data }) {
+  const previous = data.series.length > 1 ? data.series.at(-2)?.mean : undefined;
+  const shares = data.composition.filter(g => Number.isFinite(g.share)).sort((a, b) => b.share - a.share);
+  const shareRank = shares.findIndex(g => g.age === group.age && g.sex === group.sex) + 1;
+  const changes = data.peers.map(p => p.change_pct).filter(Number.isFinite).sort((a, b) => a - b);
+  const mid = changes.length ? (changes.length % 2 ? changes[(changes.length - 1) / 2] : (changes[changes.length / 2 - 1] + changes[changes.length / 2]) / 2) : null;
+  const facts = [
+    Number.isFinite(row.mean) && ['월 평균 유동량', fmt(row.mean, 1), Number.isFinite(previous) ? `전월 ${fmt(previous, 1)}` : '전월 자료 없음'],
+    shareRank > 0 && ['동 안 비중 순서', `${shareRank}번째`, `${group.district} ${shares.length}개 그룹 중`],
+    mid !== null && [`${group.city} 같은 그룹 변화`, `${mid > 0 ? '+' : ''}${fmt(mid, 2)}%`, `${changes.length}개 동의 중앙값`],
+  ].filter(Boolean);
+  if (!facts.length) return null;
+  return <dl className="gd-facts">{facts.map(([label, value, note]) => <div key={label}><dt>{label}</dt><dd><b>{value}</b><small>{note}</small></dd></div>)}</dl>;
+}
+
 // 읍·면·동 전체 유동량 중 비중: 이번 달 값, 전월 대비 %p, 월별 추이를 함께 보여 줍니다.
 function ShareTrend({ row, series, label }) {
   const shares = series.filter(p => Number.isFinite(p.share));
@@ -140,8 +156,9 @@ function useCardGrid(list) {
       const style = getComputedStyle(list);
       const columnGap = parseFloat(style.columnGap) || 0, rowGap = parseFloat(style.rowGap) || 0;
       const cols = Math.max(1, Math.min(4, Math.floor((list.clientWidth + columnGap) / (CARD_MIN_WIDTH + columnGap))));
-      const fits = Math.max(1, Math.floor((list.clientHeight + rowGap) / (cardHeight(list) + rowGap)));
-      const rows = Math.min(fits, Math.ceil(PAGE_SIZE / cols));
+      // 높이가 모자라도 한 페이지 개수를 줄이지 않습니다. 넘치는 카드는 목록 안에서 위아래로 스크롤합니다.
+      const rows = Math.ceil(PAGE_SIZE / cols);
+      list.style.setProperty('--gd-card-h', cardHeight(list) + 'px');
       setGrid(old => old.cols === cols && old.rows === rows ? old : { cols, rows });
     };
     measure();
@@ -219,7 +236,7 @@ function GroupCase({ group, active, shown, evidenceShown, summaryStep, user, onR
     {error ? <div role="alert" className="gd-error">{error}<button onClick={() => { setError(''); setRetry(r => r + 1); }}>다시 연결</button></div> : !row ? <p role="status">집단별 근거를 읽고 있습니다…</p> : <>
       <div hidden={evidenceShown} className="gd-summary" data-summary-page={summaryPage}><nav className="gd-summary-pages" aria-label="브리핑 내용 이동">{['변화 요약', '지역 배경', '읍·면·동 전체 변화'].map((label, index) => <button key={label} aria-current={summaryPage === index ? 'page' : undefined} onClick={() => setSummaryPage(index)}>{label}</button>)}</nav><div className="gd-overview"><div className="gd-overview-copy"><header className="gd-case-heading"><div><span className="gd-eyebrow">{group.month} · 집단 브리핑</span><h2>{groupLabel(group)}</h2></div>{candidate ? <span className="gd-badge gd-candidate-badge">{candidate.status}</span> : <span className="gd-badge">선택한 집단</span>}</header>
       {candidate && <p className="gd-candidate-note">{group.district}은(는) {group.month} 읍·면·동별 분석에서 <b>{candidate.status}</b>입니다(후보 지표 {candidate.count}개). 그래서 이 동의 그룹을 먼저 보여 드려요.</p>}
-      <div className="gd-headline-row"><div><h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `${fmt(Math.abs(row.change_pct), 2)}% ${row.change_pct > 0 ? '증가' : row.change_pct < 0 ? '감소' : '변화 없음'}` : '비교 자료 부족'}</h3><p className="gd-metric-label">전월 대비 유동량</p></div><button className="primary gd-support-link" onClick={openServices}>지원사업 후보 확인 <Icon name="arrow" size={22}/></button></div>
+      <GroupFacts group={group} row={row} data={data} /><div className="gd-headline-row"><div><h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `${fmt(Math.abs(row.change_pct), 2)}% ${row.change_pct > 0 ? '증가' : row.change_pct < 0 ? '감소' : '변화 없음'}` : '비교 자료 부족'}</h3><p className="gd-metric-label">전월 대비 유동량</p></div><button className="primary gd-support-link" onClick={openServices}>지원사업 후보 확인 <Icon name="arrow" size={22}/></button></div>
       <p className="gd-caption"><abbr title="그 지역에서 관측된 활동 규모입니다. 실제 사람 수와는 다릅니다.">유동량</abbr>은 그 지역에서 관측된 활동 규모(실제 사람 수 아님)이며, 지난달과 이번 달 모두 자료가 있는 구역끼리 비교했습니다.</p></div>
       <article className="gd-mini-trend"><h4>월별 유동량 추이</h4><LineChart points={data.series} label={`${groupLabel(group)} 월별 구역별 평균 유동량`} /><small>각 월 전체 구역의 평균</small></article>
       <ShareTrend row={row} series={data.series} label={`${groupLabel(group)} 월별 읍·면·동 유동량 중 비중`} /></div>

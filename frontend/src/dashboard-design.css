@@ -195,7 +195,8 @@
 .group-shell .gd-tabbar { scrollbar-width: none; }
 .group-shell .gd-tabbar::-webkit-scrollbar { display: none; }
 
-@container (max-width: 850px) or (max-height: 420px) {
+/* 위·아래 두 줄이 한 화면에 들어가지 않는 크기에서는 요약을 세 페이지로 나눕니다. */
+@container (max-width: 850px) or (max-height: 540px) {
   .group-shell .gd-summary { display: flex; padding: 12px; gap: 8px; }
   .group-shell .gd-summary-pages { display: flex; gap: 5px; flex-shrink: 0; }
   .group-shell .gd-summary-pages button { flex: 1; padding: 7px 4px; border: 1px solid #dce6f4; border-radius: 7px; font-size: 12px; color: #4b6488; }
@@ -267,9 +268,11 @@
 /* Keep the measured file grid and population cards aligned with the new cover. */
 .group-shell .gd-files-panel .gd-file-list {
   grid-template-columns: repeat(var(--gd-cols, 4), minmax(0, 1fr));
-  grid-template-rows: repeat(var(--gd-rows, 3), minmax(0, 1fr));
-  grid-auto-rows: auto;
+  /* 카드가 원래 높이보다 줄지 않게 하고, 다 안 들어가면 목록을 스크롤합니다. */
+  grid-template-rows: repeat(var(--gd-rows, 3), minmax(var(--gd-card-h, 56px), 1fr));
+  grid-auto-rows: auto; overflow-y: auto; overscroll-behavior: contain; min-height: 120px;
 }
+.group-shell .gd-files-panel .gd-directory { overflow-y: auto; }
 .group-shell .gd-files-panel .gd-file-list button { min-height: 0; }
 .group-shell .gd-summary .gd-population-grid .gd-senior { margin: 0; }
 .group-shell .gd-process li.current > button { background: #f0f6ff; }
@@ -292,7 +295,18 @@
 .group-shell .gd-summary .gd-mini-trend .gd-line, .group-shell .gd-summary .gd-mini-share .gd-line { flex: 1 1 auto; min-height: 72px; max-height: 260px; }
 /* 왼쪽 요약 칸이 높아지면 제목·설명은 위에, 핵심 수치와 버튼은 그래프 아래선에 맞춰 아래에 둡니다. */
 .group-shell .gd-summary .gd-overview-copy { display: flex; flex-direction: column; }
-.group-shell .gd-summary .gd-overview-copy .gd-headline-row { margin-top: auto; }
+/* 남는 높이를 수치 줄 위아래로 나눠 한쪽에 큰 빈칸이 생기지 않게 합니다. */
+.group-shell .gd-summary .gd-overview-copy .gd-facts, .group-shell .gd-summary .gd-overview-copy .gd-headline-row { margin-top: auto; }
+/* 핵심 수치 줄: 큰 수치 위에 세 칸으로 둡니다. 칸이 좁으면 아래로 줄바꿈합니다. */
+.group-shell .gd-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0 14px; }
+.group-shell .gd-facts > div { padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); min-width: 0; }
+.group-shell .gd-facts dt { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.group-shell .gd-facts dd { margin: 3px 0 0; display: flex; flex-direction: column; }
+.group-shell .gd-facts dd b { font-size: 17px; color: var(--text-strong); line-height: 1.3; }
+.group-shell .gd-facts dd small { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@container (max-height: 460px) { .group-shell .gd-facts { display: none; } }
+/* 모바일은 위아래로 스크롤하므로 높이와 관계없이 보여 주고 한 칸씩 쌓습니다. */
+@media (max-width: 640px) { .group-shell .gd-summary .gd-facts { display: grid; grid-template-columns: minmax(0, 1fr); } }
 /* 추이·비중 카드의 설명 문구는 카드 아래쪽에 맞춥니다. */
 .group-shell .gd-summary .gd-mini-trend .gd-axis-note { margin-top: 6px; }
 
