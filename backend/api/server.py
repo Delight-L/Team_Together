@@ -14,6 +14,7 @@ import argparse
 import json
 import logging
 import mimetypes
+import os
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -252,10 +253,11 @@ class Handler(BaseHTTPRequestHandler):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='WELFIND 화면 서버')
-    parser.add_argument('--port', type=int, default=8503)
+    parser.add_argument('--host', default=os.getenv('HOST', '127.0.0.1'))
+    parser.add_argument('--port', type=int, default=int(os.getenv('PORT', '8503')))
     args = parser.parse_args(argv)
-    server = ThreadingHTTPServer(('127.0.0.1', args.port), Handler)
-    print(f'WELFIND React: http://127.0.0.1:{args.port}', flush=True)
+    server = ThreadingHTTPServer((args.host, args.port), Handler)
+    print(f'WELFIND React: http://{args.host}:{args.port}', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
