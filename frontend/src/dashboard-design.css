@@ -108,7 +108,7 @@
 .group-shell .bomi-chat-head > svg { flex-shrink: 0; color: #2563eb; }
 
 .bomi-welcome-character { display: none; }
-.group-shell .bomi-welcome { display: grid; grid-template-columns: 100px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 125px; padding: 14px; background: #f8fbfe; border-radius: 10px; }
+.group-shell .bomi-welcome { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 14px; background: #f8fbfe; border-radius: 10px; }
 .group-shell .bomi-welcome-character { display: block; width: 100px; height: 100px; object-fit: contain; }
 
 .group-shell button:focus-visible { outline: 2px solid #075dff; outline-offset: 3px; }
@@ -135,7 +135,6 @@
   .group-shell .gd-headline-row { align-items: flex-start; flex-direction: column; gap: 8px; }
   .group-shell .gd-support-link { font-size: 12px; padding: 8px 12px; }
   .group-shell .gd-summary .gd-context-cards h3 { font-size: 16px; }
-  .group-shell .bomi-welcome { grid-template-columns: 72px minmax(0, 1fr); }
   .group-shell .bomi-welcome-character { width: 72px; }
 }
 @media (max-width: 1150px) {
@@ -160,7 +159,6 @@
   .group-shell .gd-summary { padding: 17px 10px 10px; }
   .group-shell .gd-case-heading { flex-wrap: wrap; }
   .group-shell .gd-files-panel .gd-file-list { grid-template-columns: 1fr 1fr; }
-  .group-shell .bomi-welcome { grid-template-columns: 92px minmax(0, 1fr); }
   .group-shell .bomi-welcome-character { width: 92px; }
 }
 @media (max-width: 480px) {

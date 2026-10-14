@@ -147,17 +147,20 @@ export default function BomiChat({ context, group, userId, layout = 'embedded', 
   return <aside className={`bomi-chat ${layout} ${layout === 'panel' ? 'chat-panel' : ''} ${expanded ? 'expanded' : ''}`} style={{ display: visible ? undefined : 'none' }} inert={inert} aria-label="보미에게 질문">
     <header className="bomi-chat-head">
       <img src="/brand/bomi-face.png" alt="" />
-      <div><strong>보미에게 질문</strong><small><span className="online-dot" />{place} · {month}</small></div>
+      <div><strong>보미에게 질문</strong></div>
+      <nav className="bomi-chat-actions" aria-label="대화 설정">
       <button type="button" role="switch" aria-label="AI 사용" aria-checked={chat.mode === 'ai'} className={`bomi-ai-switch ${chat.mode === 'ai' ? 'on' : ''}`}
         disabled={chat.busy || !aiAvailable} onClick={() => chat.setAi(!chat.aiOn)}
         title={aiAvailable ? '켜면 질문을 외부 AI로 보내 답변을 만듭니다' : '관리자가 AI 설정에서 AI를 켜야 사용할 수 있어요'}>
         <span className="track" aria-hidden="true"><span className="thumb" /></span>AI {chat.mode === 'ai' ? '켜짐' : '꺼짐'}
       </button>
       <button className="bomi-new" disabled={chat.busy} onClick={() => { chat.reset(); setInput(''); }}>새 대화</button>
+      </nav>
       {onExpand && <>
         <button className="icon-button" onClick={onExpand} aria-label={expanded ? '챗봇 패널로 돌아가기' : '챗봇 크게 보기'}><Icon name={expanded ? 'minimize' : 'expand'} size={17} /></button>
       </>}
     </header>
+    <p className="bomi-context"><span className="online-dot" aria-hidden="true" /><span>{place}</span><span>{month}</span></p>
     <p className="bomi-scope">{group ? '열어 둔 그룹' : context.district ? context.district : `${context.city} 전체`} 기준으로 분석 설명 · 복지사업 찾기 · 보고서 초안을 도와드려요.</p>
     <p className={`bomi-mode-line ${chat.mode === 'ai' ? 'ai' : ''}`} role="status">
       {chat.mode === 'ai'
@@ -168,8 +171,8 @@ export default function BomiChat({ context, group, userId, layout = 'embedded', 
     </p>
     <div className="bomi-messages" aria-live="polite">
       {!chat.messages.length && <div className="bomi-welcome">
-        <h3>무엇을 도와드릴까요?</h3>
-        <p>지금 보는 화면의 분석 근거, 관련 복지사업, 보고서 초안까지 한 곳에서 물어보세요. 질문에 맞는 담당 에이전트가 답해요.</p>
+        <h3>보미에게 물어보세요</h3>
+        <p>현재 화면의 분석 근거, 관련 복지사업, 보고서 초안을 보미와 함께 확인하세요.</p>
       </div>}
       {chat.messages.map((m, i) => m.role === 'assistant' && !m.text && chat.busy && i === chat.messages.length - 1 ? <Typing key={i} /> : <article key={i} className={`bomi-message ${m.role}`}>
         <small>{m.role === 'user' ? '나' : m.agent ? `보미 · ${m.agent}` : '보미'}</small>
