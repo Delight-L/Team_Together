@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Icon, EvidenceTable } from './components';
+import { areaUnit } from './regionalPresentation.mjs';
 import { number } from './api';
 import { MissionMap } from './MissionMap';
 import ElderlyBackground from './ElderlyBackground';
@@ -113,7 +114,7 @@ export function RegionInsight({ region, city, month, onClose, onStart, onChat, b
       )}
       <p className="hint">{region.count > 0 ? `과거 흐름과 비교하여 ${region.count}개 지표가 후보 기준에 해당합니다. 아래 지표를 함께 검토하세요.` : region.status === '자료 없음' ? '분석 자료가 없어 판단할 수 없습니다.' : region.pending ? '과거 이력이 부족한 지표가 있어 추가 자료 확인이 필요합니다.' : '현재 후보 기준에 해당하는 지표가 없습니다.'}</p>
       <p className="hint">개인의 고립 판정이 아니며, 계절·행사 영향은 추가 확인이 필요합니다.</p>
-      <ElderlyBackground structure={region.structure} />
+      <ElderlyBackground structure={region.structure} city={city} />
       <div className="insight-actions">
         <button className="primary" disabled={busy || !region.rows.length} onClick={onStart}>
           상세 분석·업무 시작
@@ -159,14 +160,14 @@ export function RegionalOverview({
     [regions, filter, search, sort],
   );
   const region = regions.find((r) => r.name === selected);
-  const unitLabel = regions.length && regions.every(r => r.name.endsWith('동')) ? '동' : '읍·면·동';
+  const unitLabel = areaUnit(city);
   const analyzedCount = regions.filter(r => r.rows.length > 0).length;
   return (
     <div className="regional-overview">
       {/* 동을 고르면 표 자리에 상세가 열립니다. 지도는 가리지 않고 모든 동을 계속 보여 줍니다. */}
       {region ? (
         <section className="card region-directory region-detail">
-          <button className="text-button back-to-list" onClick={() => onSelect('')}>← 전체 읍·면·동 목록</button>
+          <button className="text-button back-to-list" onClick={() => onSelect('')}>← 전체 {unitLabel} 목록</button>
           <RegionInsight region={region} city={city} month={month} onClose={() => onSelect('')} onStart={onStart} onChat={onChat} busy={busy} />
         </section>
       ) : (
@@ -175,7 +176,7 @@ export function RegionalOverview({
           <div>
             <span className="eyebrow">COMPARE ALL DISTRICTS</span>
             <h2>
-              읍·면·동별 분석 현황 <span>{shown.length}개 {unitLabel}</span>
+              {unitLabel}별 분석 현황 <span>{shown.length}개 {unitLabel}</span>
             </h2>
           </div>
         </header>
@@ -183,10 +184,10 @@ export function RegionalOverview({
         <StatusLegend />
         <div className="directory-filters">
           <input
-            aria-label="읍·면·동 검색"
+            aria-label={`${unitLabel} 검색`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="읍·면·동 검색"
+            placeholder={`${unitLabel} 검색`}
           />
           <select
             aria-label="지역 상태 필터"
@@ -215,10 +216,10 @@ export function RegionalOverview({
           <table>
             <thead>
               <tr>
-                <th>읍·면·동</th>
+                <th>{unitLabel}</th>
                 <th>분석 상태</th>
                 <th>후보 지표</th>
-                <th title="과거 흐름에서 얼마나 벗어났는지 나타내는 값입니다. 0에서 멀수록 평소와 다릅니다.">평소 대비 차이</th>
+                <th title="과거 흐름에서 얼마나 벗어났는지 나타내는 값입니다. 0에서 멀수록 평소와 다릅니다.">평소 대비 차이(점수)</th>
                 <th>근거</th>
               </tr>
             </thead>
@@ -250,7 +251,7 @@ export function RegionalOverview({
           </table>
           {!shown.length && <p className="empty">검색 조건에 맞는 지역이 없습니다.</p>}
         </div>
-        <footer>‘후보 우선’은 후보 지표가 많은 지역, 그다음 평소와 차이가 큰 지역 순서입니다.</footer>
+        <footer>‘후보 우선’은 후보 지표가 많은 지역, 그다음 평소와 차이가 큰 지역 순서입니다. 평소 대비 차이는 시·군·구 공통 흐름을 뺀 변화가 과거 변동 폭보다 얼마나 큰지 나타낸 단위 없는 점수로, 동의 지표 중 가장 낮은 값을 보여 줍니다. 음수는 평소보다 줄어든 방향이며 약 -2 이하이면 후보 기준에 가깝습니다.</footer>
       </section>
       )}
       <section className="card directory-map">
@@ -268,7 +269,7 @@ export function RegionalOverview({
           />
         </div>
         <footer className="hint">
-          표나 지도에서 읍·면·동을 선택하면 왼쪽에 근거가 열립니다. 이름에 마우스를 올리면 판정이 보입니다.
+          표나 지도에서 {unitLabel}을 선택하면 왼쪽에 근거가 열립니다. 이름에 마우스를 올리면 판정이 보입니다.
         </footer>
       </section>
     </div>

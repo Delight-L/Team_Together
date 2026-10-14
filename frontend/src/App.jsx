@@ -11,6 +11,7 @@ import { DataDialog, Comparison, ReportQuality } from './Experience';
 import GuideTour from './GuideTour';
 import GroupDashboard from './GroupDashboard';
 import ElderlyBackground from './ElderlyBackground';
+import { areaUnit } from './regionalPresentation.mjs';
 import { userName } from './personas.mjs';
 import { Toaster, showToast } from './toast';
 
@@ -535,13 +536,13 @@ export default function App() {
                         value={district}
                         onChange={(e) => select(e.target.value)}
                       >
-                        <option value="">읍·면·동 선택</option>
+                        <option value="">{areaUnit(city)} 선택</option>
                         {data.geometry[city]?.units.map((u) => (
                           <option key={u.n}>{u.n}</option>
                         ))}
                       </select>
                     </header>
-                    <ElderlyBackground structure={city === '강남구' ? data.regionalStructures?.find(r => r.dong_name === district) : null} />
+                    <ElderlyBackground city={city} structure={city === '강남구' ? data.regionalStructures?.find(r => r.dong_name === district) : null} />
                     <div className="data-source-strip"><span>기준월 {month} · 동별 통화·문자·이동 분석 결과</span><button className="text-button" onClick={() => openSupport()}>데이터 기준 보기</button></div>
                     {selectedRows.length ? (
                       <>
@@ -550,11 +551,11 @@ export default function App() {
                           <span className="pill">{month} · 분석 결과</span>
                         </div>
                         <EvidenceTable rows={selectedRows} />
-                        <p className="hint">{selectedRows.filter(r => r.is_risk_signal).length}개 지표가 후보 기준에 해당합니다. 전월 증가한 지표도 지역 전체의 공통 흐름과 과거 이력을 반영하면 후보가 될 수 있습니다. 후보는 지표 묶음을 함께 확인한 결과입니다.</p>
+                        <p className="hint">{selectedRows.filter(r => r.is_risk_signal).length}개 지표가 후보 기준에 해당합니다.</p>
                         <p className="hint">
-                          시·군·구 전체의 공통 흐름을 뺀 평소 대비 차이:{' '}
+                          시·군·구 공통 변화를 뺀 전월 변화:{' '}
                           {selectedRows
-                            .map((r) => `${r.metric_label} ${number(r.relative_change_pp)}`)
+                            .map((r) => `${r.metric_label} ${number(r.relative_change_pp)}${Number.isFinite(r.relative_change_pp) ? '%p' : ''}`)
                             .join(' · ')}
                         </p>
                         <div className="workflow-actions">
@@ -658,7 +659,7 @@ export default function App() {
                     value={district}
                     onChange={(e) => select(e.target.value)}
                   >
-                    <option value="">읍·면·동 선택</option>
+                    <option value="">{areaUnit(city)} 선택</option>
                     {data.geometry[city]?.units.map((u) => (
                       <option key={u.n}>{u.n}</option>
                     ))}

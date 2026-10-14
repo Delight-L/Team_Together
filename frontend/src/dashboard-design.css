@@ -359,3 +359,25 @@
 .group-shell .gd-tabbar .gd-tab b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .group-shell .gd-tabbar .gd-tab small { white-space: nowrap; flex-shrink: 0; }
 .group-shell .gd-tabbar .gd-tab { padding-left: 12px; padding-right: 12px; }
+
+/* 가독성 하한: 판정 사유·주의 문구·범례가 화면 크기별 축소 규칙에 밀려 9~10px로 작아지지 않게 합니다.
+   설명 문장은 12px, 배지·범례·축 글자는 11px 아래로 내려가지 않습니다. */
+.score-note { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--text-muted); }
+.app-shell.group-shell .gd-summary .gd-candidate-note,
+.app-shell.group-shell .gd-summary .gd-caption,
+.app-shell.group-shell .gd-summary .gd-context-note,
+.app-shell.group-shell .gd-summary .gd-context-cards p,
+.app-shell.group-shell .gd-summary .gd-mini-share p,
+.app-shell.group-shell .gd-summary .gd-mini-trend > small,
+.app-shell.group-shell .gd-population-grid .gd-senior p,
+.app-shell.group-shell .gd-files-panel .gd-directory > p { font-size: 12px; line-height: 1.5; }
+.app-shell.group-shell .gd-summary .gd-household-legend,
+.app-shell.group-shell .gd-summary .gd-compare-legend,
+.app-shell.group-shell .gd-summary .gd-axis-label,
+.app-shell.group-shell .gd-summary .gd-compare-row,
+.app-shell.group-shell .gd-summary .gd-axis-note,
+.app-shell.group-shell .gd-summary .gd-badge,
+.app-shell.group-shell .gd-files-panel .gd-file-list button small,
+.app-shell.group-shell .gd-files-panel .gd-file-list .gd-candidate,
+.app-shell.group-shell .gd-files-panel .gd-source,
+.app-shell.group-shell .gd-tabbar .gd-tab small { font-size: 11px; }
