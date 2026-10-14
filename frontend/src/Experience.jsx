@@ -4,6 +4,7 @@ import { useDraft } from './useDraft';
 import { draftKey } from './draftStore.mjs';
 import { reportChecks } from './experienceLogic.mjs';
 import { personName } from './personas.mjs';
+import { showToast } from './toast';
 
 // 데이터 기준 창: 지역 분석·데이터 관리의 «데이터 기준 보기»에서 엽니다.
 export function DataDialog({ onClose, data, context, rows, user }) {
@@ -71,7 +72,7 @@ export function ReviewWorkspace({ context, onView, seed, user, onSaved }) {
       .finally(() => active && setBusy(false));
     return () => { active = false; };
   }, []);
-  async function save() { setBusy(true); setError(''); try { setRecord({ ...blank, ...await api('/experience', { ...record, ...context }) }); clearLocalDraft(); onSaved?.(); setNotice('검토·후속 조치 기록을 저장했습니다.'); } catch (e) { setError(e.message); } finally { setBusy(false); } }
+  async function save() { setBusy(true); setError(''); try { setRecord({ ...blank, ...await api('/experience', { ...record, ...context }) }); clearLocalDraft(); onSaved?.(); setNotice(''); showToast(`${context.district} · ${context.month} · 검토·후속 조치 기록을 저장했어요.`); } catch (e) { setError(e.message); } finally { setBusy(false); } }
   return <section className="card info-card review-workspace">
     <div className="workspace-heading"><div><h2>검토·후속 조치</h2><p>{context.district} · {context.month} <span className="status-caption">{record.status}</span></p></div>
       <button className="text-button" onClick={() => onView('compare')}>월별 변화 비교 →</button></div>

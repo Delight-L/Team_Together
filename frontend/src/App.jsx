@@ -12,6 +12,16 @@ import GuideTour from './GuideTour';
 import GroupDashboard from './GroupDashboard';
 import ElderlyBackground from './ElderlyBackground';
 import { userName } from './personas.mjs';
+import { Toaster, showToast } from './toast';
+
+// 업무 저장 API별로 저장 성공 알림에 쓸 문구입니다.
+const SAVED_MESSAGES = {
+  '/workflow/start': '① 분석 확인을 저장했어요.',
+  '/workflow/confirm': '② 근거 검토 완료를 저장했어요.',
+  '/workflow/review': '사업 검토 결과를 저장했어요.',
+  '/workflow/restart': '최신 분석으로 업무를 다시 시작했어요.',
+  '/report': '최종 보고서를 저장했어요.',
+};
 
 const menus = [
   ['dashboard', '종합 현황'],
@@ -242,12 +252,15 @@ export default function App() {
   async function mutate(path, extra = {}) {
     setBusy(true);
     setNotice('');
+    // 이미 시작한 업무를 다시 여는 것은 새로 저장한 것이 아니므로 알리지 않습니다.
+    const reopening = path === '/workflow/start' && workflow.done?.includes(0);
     try {
       const result = await api(path, { ...context, ...extra });
       // 저장 중 지역을 바꿨다면 이전 지역의 상태를 새 지역 화면에 덮어쓰지 않습니다.
       if (latestContext.current === context) {
         setWorkflow(result);
-        setNotice('저장했습니다.');
+        // 성공은 잠시 보였다가 사라지는 알림으로, 무엇을 저장했는지 함께 알립니다.
+        if (SAVED_MESSAGES[path] && !reopening) showToast(`${context.district} · ${context.month} · ${SAVED_MESSAGES[path]}`);
       }
       return result;
     } catch (e) {
@@ -653,6 +666,7 @@ export default function App() {
       </div>
       {data && supportOpen && <DataDialog onClose={() => setSupportOpen(false)} data={data} context={context} rows={selectedRows} user={user} />}
       {data && tourOpen && <GuideTour onClose={closeTour} />}
+      <Toaster />
       {data && (
 
         <BomiChat

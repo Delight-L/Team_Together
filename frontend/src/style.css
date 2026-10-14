@@ -2122,3 +2122,9 @@ tr:last-child td {
 .group-shell .eyebrow { font-size: 9px; color: #8795ad; }
 .group-shell th { font-size: 10px; color: #8b9ab0; background: #f9fbfe; }
 .group-shell td { color: #596f90; }
+
+/* 저장 성공 알림(toast.jsx): 화면 아래 가운데에 잠시 보였다가 사라집니다. */
+.toast-stack { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; width: max-content; max-width: calc(100vw - 32px); }
+.toast { margin: 0; padding: 12px 20px; border-radius: var(--radius-pill); background: var(--text-strong); color: var(--surface); font-size: 14px; font-weight: 500; line-height: 1.5; box-shadow: 0 8px 24px #12213e33; animation: toast-in .2s ease-out; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }

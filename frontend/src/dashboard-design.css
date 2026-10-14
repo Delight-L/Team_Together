@@ -18,14 +18,14 @@
 
 /* Warm file cover and raised tabs, with CSS-only paper and clip details. */
 .group-shell .gd-tabbar { align-self: end; display: flex; height: 50px; padding: 0 12px 0 56px; gap: 8px; background: url('./assets/dossier-cover.svg') center bottom / 100% 50px no-repeat; border-radius: 0; overflow: hidden; }
-.group-shell .gd-tabs-window { flex: 1; min-width: 0; height: 50px; overflow: hidden; }
+.group-shell .gd-tabs-window { flex: 1; min-width: 0; height: 50px; overflow: hidden; display: flex; align-items: center; }
 .group-shell .gd-tabs-window::-webkit-scrollbar { display: none; }
 .group-shell .gd-tabs-track { position: relative; display: flex; align-items: stretch; width: max-content; height: 50px; }
 .group-shell .gd-tab-controls { display: flex; align-items: center; gap: 3px; flex-shrink: 0; margin-left: auto; padding-bottom: 4px; }
 .group-shell .gd-tab-controls .gd-tab-arrow { display: grid; place-items: center; width: 28px; height: 32px; padding: 0; border: 1px solid #dec8a8; border-radius: 7px; background: #fffaf2; color: #2563eb; }
 .group-shell .gd-tab-controls .gd-tab-arrow:disabled { opacity: .35; cursor: default; }
 .group-shell .gd-tab-arrow.previous svg { transform: rotate(180deg); }
-.group-shell .gd-tabbar .gd-add { margin-left: 2px; height: 32px; min-width: 32px; }
+.group-shell .gd-tabbar .gd-add { flex-shrink: 0; margin-left: 6px; height: 32px; min-width: 32px; }
 .group-shell .gd-tabs-label { display: none; }
 .group-shell .gd-tabbar .gd-tab { position: relative; flex-shrink: 0; margin: 3px 0 0; height: 47px; border: 0; border-radius: 0; transform: none; background: url('./assets/dossier-tab-inactive.svg') center bottom / 100% 100% no-repeat; box-shadow: none; padding: 0 18px; }
 .group-shell .gd-tabbar .gd-group-tab { width: 336px; }
@@ -183,7 +183,8 @@
 .group-shell .gd-summary .gd-senior strong { font-size: 26px; margin: 4px 0; line-height: 1.15; }
 .group-shell .gd-summary .gd-compare { padding: 5px 10px; margin: 5px 0; }
 .group-shell .gd-summary .gd-compare-row { margin: 3px 0; }
-.group-shell .gd-summary .gd-mini-trend .gd-line { height: 70px; }
+.group-shell .gd-summary .gd-mini-trend .gd-line { height: 100px; }
+.group-shell .gd-axis-note { display: block; color: #71829e; font-size: 11px; }
 .group-shell .gd-summary .gd-mini-share strong { margin: 8px 0; font-size: 28px; }
 .group-shell .gd-summary .gd-case-heading h2 { font-size: 24px; }
 .group-shell .gd-summary .gd-narrative { font-size: 34px; }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from './api';
 import { ReviewWorkspace } from './Experience';
 import { personName } from './personas.mjs';
+import { showToast } from './toast';
 
 const nextStep = (workflow) => workflow?.workflow_complete || workflow?.done?.includes(2)
   ? ['report', '보고서 작성']
@@ -151,7 +152,8 @@ export function Upload() {
     setBusy(true);
     try {
       const result = await api('/upload/publish', { token: prepared.token });
-      setNotice('DB1 반영 완료 · ' + result.runId);
+      setNotice('');
+      showToast('분석 자료를 DB1에 반영했어요 · ' + result.runId);
       setPrepared(null);
     } catch (e) {
       setNotice(e.message);

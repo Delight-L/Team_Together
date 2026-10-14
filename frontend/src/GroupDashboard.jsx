@@ -8,7 +8,9 @@ import { groupKey, groupLabel, openGroup, closeGroup, restoreWorkspace, availabl
 import { summarizeRegions } from './Briefing';
 import './group-dashboard.css';
 import RegionContextCards from './RegionContextCards';
+import { showToast } from './toast';
 import { tabPage, tabPageForSelected } from './tabPaging.mjs';
+import { fitDomain } from './chartScale.mjs';
 
 const fmt = (n, digits = 1) => Number.isFinite(n) ? n.toLocaleString('ko-KR', { maximumFractionDigits: digits }) : '—';
 const pct = n => Number.isFinite(n) ? `${n > 0 ? '+' : ''}${fmt(n, 2)}%` : '비교 불가';
@@ -60,9 +62,10 @@ function LineChart({ points, field = 'mean', label }) {
   const fillId = useId();
   const values = points.filter(p => Number.isFinite(p[field]));
   if (!values.length) return <p className="gd-empty">표시할 자료가 없습니다.</p>;
-  const max = Math.max(...values.map(p => p[field]), 1);
+  // 세로축은 자료 범위에 맞춰 변화가 잘 보이게 합니다(0부터 시작하지 않을 수 있음).
+  const { low, high, ticks, fromZero } = fitDomain(values.map(p => p[field]));
   const x = i => 32 + i * 370 / Math.max(points.length - 1, 1);
-  const y = v => 112 - v / max * 84;
+  const y = v => 112 - (v - low) / (high - low) * 96;
   // 월이 빠진 구간은 선으로 연결하지 않는다.
   const segments = []; let segment = [];
   points.forEach((p, i) => { if (Number.isFinite(p[field])) segment.push([x(i), y(p[field])]); else if (segment.length) { segments.push(segment); segment = []; } });
@@ -70,10 +73,10 @@ function LineChart({ points, field = 'mean', label }) {
   return <><svg className="gd-line" viewBox="0 0 430 148" role="img" aria-label={label}>
     <defs><linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1"><stop stopColor="#60a5fa" stopOpacity=".24"/><stop offset="1" stopColor="#60a5fa" stopOpacity=".02"/></linearGradient></defs>
     {segments.map((seg, i) => <polygon key={i} points={[...seg, [seg.at(-1)[0], 112], [seg[0][0], 112]].map(p => p.join(",")).join(" ")} fill={`url(#${fillId})`} />)}
-    {[0, max / 2, max].map((v, i) => <g key={i}><line x1="32" x2="405" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x="26" y={y(v) + 4} textAnchor="end">{fmt(v, 0)}</text></g>)}
+    {ticks.map((v, i) => <g key={i}><line x1="32" x2="405" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x="26" y={y(v) + 4} textAnchor="end">{fmt(v, high - low < 6 ? 1 : 0)}</text></g>)}
     {segments.map((s, i) => <polyline key={i} points={s.map(p => p.join(',')).join(' ')} fill="none" stroke="#2563eb" strokeWidth="3" />)}
     {points.map((p, i) => <g key={p.month || p.label}>{Number.isFinite(p[field]) && <circle cx={x(i)} cy={y(p[field])} r="4" fill="#2563eb"><title>{p.month || p.label}: {fmt(p[field], 2)}</title></circle>}{(points.length < 9 || i % 6 === 0 || i === points.length - 1) && <text x={x(i)} y="138" textAnchor="middle">{p.month ? Number(p.month.slice(5)) + '월' : p.label}</text>}</g>)}
-  </svg></>;
+  </svg>{!fromZero && <small className="gd-axis-note">세로축은 {fmt(low, high - low < 6 ? 1 : 0)}부터 시작합니다.</small>}</>;
 }
 
 // 조사 파일 카드가 글자 겹침 없이 들어가는 최소 폭입니다. 높이는 실제 카드 내용과 여백으로 잽니다.
@@ -164,7 +167,7 @@ function GroupCase({ group, active, shown, evidenceShown, summaryStep, user, onR
   const openServices = () => { onEvidence(); setReviewRequest(value => value + 1); };
   async function save() {
     setSaving(true); setStatus('');
-    try { const result = await api('/groups/review', { ...group, note, need, sourceRun: data.runId }); setSaved(result); clearDraft(); setStatus('이 집단의 검토 메모를 저장했습니다.'); }
+    try { const result = await api('/groups/review', { ...group, note, need, sourceRun: data.runId }); setSaved(result); clearDraft(); showToast(`${groupLabel(group)} · ${group.month} · 검토 메모를 저장했어요.`); }
     catch (e) { setStatus(e.message); } finally { setSaving(false); }
   }
   async function findServices() {
@@ -201,6 +204,9 @@ function GroupCase({ group, active, shown, evidenceShown, summaryStep, user, onR
   </section></>;
 }
 
+// ＋(탭 추가) 버튼이 차지하는 너비(여백 포함)
+const ADD_TAB_WIDTH = 44;
+
 export default function GroupDashboard({ city, month: preferredMonth, user, onRegion, analysis, onActiveGroup }) {
   const [catalog, setCatalog] = useState(null), [loading, setLoading] = useState(true), [error, setError] = useState(''), [retry, setRetry] = useState(0);
   // v2: 후보 우선 규칙(처음 방문 시 1순위 후보 동의 그룹)이 생기기 전에 저장된 탭 기록은 한 번 새로 시작합니다.
@@ -214,7 +220,8 @@ export default function GroupDashboard({ city, month: preferredMonth, user, onRe
   const [firstTab, setFirstTab] = useState(0);
   const measureTabs = useCallback(() => {
     const window = tabsWindowRef.current;
-    if (window) setTabWindowWidth(window.clientWidth);
+    // 크롬처럼 마지막 탭 바로 뒤에 ＋ 버튼을 두므로 그 자리를 빼고 탭을 나눕니다.
+    if (window) setTabWindowWidth(Math.max(120, window.clientWidth - ADD_TAB_WIDTH));
   }, []);
   useEffect(() => {
     const observer = new ResizeObserver(measureTabs);
@@ -304,7 +311,7 @@ export default function GroupDashboard({ city, month: preferredMonth, user, onRe
     <div className="gd-workspace"><ol className="gd-process" aria-label="브리핑 읽는 순서">{[['변화 발견', '지역과 집단의 변화를 확인합니다.'], ['지역 배경 확인', '가구 구성과 읍·면·동 전체의 변화를 봅니다.'], ['지원 서비스 검토', '확인한 필요에 맞는 사업을 검토합니다.']].map(([title, text], i) => <li key={title} className={active && !filesShown && summaryStep === i + 1 && (evidenceShown === (i === 2)) ? 'current' : ''}><button aria-current={active && !filesShown && summaryStep === i + 1 && (evidenceShown === (i === 2)) ? 'step' : undefined} disabled={!active} onClick={() => goStep(i + 1)} title={active ? `${title}로 이동` : '먼저 그룹을 여세요'}><b>{i + 1}</b><span className="gd-step-icon"><Icon name={['discover', 'neighborhood', 'support'][i]} size={34}/></span><div><strong>{title}</strong><span>{text}</span></div></button></li>)}</ol><div className="gd-tabbar"><div className="gd-tabs-window" ref={tabsWindowRef}><div className="gd-tabs-track" ref={tabsTrackRef} role="tablist" aria-label="조사 파일과 관찰 그룹 브리핑 탭"><span className="gd-tabs-label">관찰 그룹 브리핑 <small>· 동·연령·성별 그룹을 열어 보는 탭</small></span>
         <div className={`gd-tab gd-evidence-tab ${evidenceShown ? 'active' : ''}`} hidden={page.start > 0} style={{ width: tabWidths[0] }}><button role="tab" id="tab-evidence" aria-selected={evidenceShown} aria-controls={active ? 'panel-' + groupKey(active) : 'panel-evidence-empty'} tabIndex={evidenceShown ? 0 : -1} ref={el => { tabRefs.current.evidence = el; }} onKeyDown={e => changeTab(e, -2)} onClick={openEvidence}><Icon name="clipboard" size={20}/><span><b>전체 근거와 지원 검토</b></span></button></div>
         <div className={`gd-tab gd-files-tab ${filesShown ? 'active' : ''}`} hidden={page.start > 1 || page.end <= 1} style={{ width: tabWidths[1] }}><button role="tab" id="tab-files" aria-selected={filesShown} aria-controls="panel-files" tabIndex={filesShown ? 0 : -1} ref={el => { tabRefs.current.files = el; }} onKeyDown={e => changeTab(e, -1)} onClick={() => openFiles()}><Icon name="report" size={20} /><span><b>조사 파일</b></span></button></div>
-        {state.tabs.map((g, i) => { const id = groupKey(g), selected = !filesShown && !evidenceShown && id === state.active; return <div className={`gd-tab gd-group-tab ${selected ? 'active' : ''}`} key={id} hidden={i + 2 < page.start || i + 2 >= page.end} style={{ width: tabWidths[i + 2] }}><button role="tab" id={'tab-' + id} aria-selected={selected} aria-controls={'panel-' + id} tabIndex={selected ? 0 : -1} ref={el => { tabRefs.current[id] = el; }} onKeyDown={e => changeTab(e, i)} onClick={() => { setState(s => ({ ...s, active: id })); setShowFiles(false); }}><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M3 7V5h6l2 2h10v14H3Z"/></svg><span><b>{groupLabel(g)}</b><small>{g.month}</small></span></button><button aria-label={`${groupLabel(g)} ${g.month} 탭 닫기`} onClick={() => close(id)}><Icon name="close" size={18}/></button></div>; })}</div></div><div className="gd-tab-controls"><button className="gd-tab-arrow previous" aria-label="이전 파일 탭 보기" disabled={page.start === 0} onClick={() => scrollTabs(-1)}><Icon name="arrow" size={18}/></button><button className="gd-tab-arrow" aria-label="다음 파일 탭 보기" disabled={page.end >= tabWidths.length} onClick={() => scrollTabs(1)}><Icon name="arrow" size={18}/></button><button className="gd-add" aria-label="조사 파일에서 관찰 그룹 추가" title="조사 파일에서 그룹 추가" onClick={() => openFiles(true)}>＋</button></div></div>
+        {state.tabs.map((g, i) => { const id = groupKey(g), selected = !filesShown && !evidenceShown && id === state.active; return <div className={`gd-tab gd-group-tab ${selected ? 'active' : ''}`} key={id} hidden={i + 2 < page.start || i + 2 >= page.end} style={{ width: tabWidths[i + 2] }}><button role="tab" id={'tab-' + id} aria-selected={selected} aria-controls={'panel-' + id} tabIndex={selected ? 0 : -1} ref={el => { tabRefs.current[id] = el; }} onKeyDown={e => changeTab(e, i)} onClick={() => { setState(s => ({ ...s, active: id })); setShowFiles(false); }}><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M3 7V5h6l2 2h10v14H3Z"/></svg><span><b>{groupLabel(g)}</b><small>{g.month}</small></span></button><button aria-label={`${groupLabel(g)} ${g.month} 탭 닫기`} onClick={() => close(id)}><Icon name="close" size={18}/></button></div>; })}</div><button className="gd-add" aria-label="조사 파일에서 관찰 그룹 추가" title="조사 파일에서 그룹 추가" onClick={() => openFiles(true)}>＋</button></div><div className="gd-tab-controls"><button className="gd-tab-arrow previous" aria-label="이전 파일 탭 보기" disabled={page.start === 0} onClick={() => scrollTabs(-1)}><Icon name="arrow" size={18}/></button><button className="gd-tab-arrow" aria-label="다음 파일 탭 보기" disabled={page.end >= tabWidths.length} onClick={() => scrollTabs(1)}><Icon name="arrow" size={18}/></button></div></div>
       <section className="gd-case gd-files-panel" role="tabpanel" id="panel-files" aria-labelledby="tab-files" hidden={!filesShown}><Directory catalog={catalog} city={city} month={month} loading={loading} error={error} retry={() => setRetry(n => n + 1)} onOpen={open} state={state} searchRef={searchRef} statusOf={statusOf} /></section>
       {state.tabs.map(g => <GroupCase key={groupKey(g)} group={g} active={groupKey(g) === state.active} shown={!filesShown && !evidenceShown && groupKey(g) === state.active} evidenceShown={evidenceShown && groupKey(g) === state.active} onEvidence={openEvidence} summaryStep={summaryStep} user={user} onRegion={onRegion} candidate={CANDIDATE_ORDER.includes(statusOf(g)?.status) ? statusOf(g) : null} />)}
 <section id="panel-evidence-empty" role="tabpanel" aria-labelledby="tab-evidence" className="gd-case" hidden={!evidenceShown || !!active}><h2>전체 근거와 지원 검토</h2><p>조사 파일에서 동·연령·성별 그룹을 선택하면 전체 근거와 지원 검토 내용을 확인할 수 있습니다.</p><button className="primary" onClick={() => openFiles()}>조사 파일에서 그룹 선택</button></section>
