@@ -21,7 +21,7 @@
 1. **관리자 «AI 설정»**(관리 메뉴, `backend/api/routes_admin.py`, `backend/chatbot/ai_settings.py`)
    - 기관 전체의 AI 사용 허용 여부(기본 꺼짐), 제공사(OpenAI · Anthropic Claude · Google Gemini), 모델, API 키를 정합니다.
    - 키를 화면에서 넣지 않으면 서버 `.env`의 `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY`를 씁니다.
-   - 설정은 서버의 `backend/db/runtime/ai_settings.json`에 저장되고(Git 제외), 키 원문은 화면으로 돌려보내지 않습니다(끝 4자리만 표시).
+   - 설정은 공유 PostgreSQL `work.app_settings`에 저장되고, 키 원문은 화면으로 돌려보내지 않습니다(끝 4자리만 표시).
    - Claude 기본 모델은 `claude-opus-5-5`이며, 안전 검사로 답을 거절하면 서버가 다른 Claude 모델로 이어 답하는 fallback을 켜 두었습니다.
 2. **사용자 «AI» 스위치**(보미 머리글)
    - 기본 꺼짐. 관리자가 허용했을 때만 켤 수 있고, 켠 상태는 사용자별로 이 브라우저에 기억합니다.
@@ -58,4 +58,4 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
 
 가린 내용이 있으면 답변 아래에 안내(`notice` 이벤트)를 표시합니다. 사용량·로그인 기록은 서버 메모리에 있어 서버를 재시작하면 초기화됩니다.
 
-API 키는 서버(`.env` 또는 관리자 «AI 설정»의 `backend/db/runtime/ai_settings.json`)에만 두며 저장소와 화면 코드에 넣지 않습니다.
+API 키는 서버(`.env` 또는 관리자 «AI 설정»(DB `work.app_settings`))에만 두며 저장소와 화면 코드에 넣지 않습니다.

@@ -16,6 +16,8 @@ report_versions = Table("report_versions", metadata, Column("key", Text, primary
 experience = Table("experience", metadata, Column("key", Text, primary_key=True), Column("value", Text, nullable=False))
 group_reviews = Table("group_reviews", metadata, Column("identity", Text, primary_key=True),
                       Column("payload", Text, nullable=False))
+# 관리자 설정(예: AI 설정). 서버 파일은 재배포·재시작 때 지워지므로 DB에 둡니다.
+app_settings = Table("app_settings", metadata, Column("key", Text, primary_key=True), Column("value", Text, nullable=False))
 
 _ready = set()
 _ready_lock = threading.Lock()

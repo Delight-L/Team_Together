@@ -1,18 +1,26 @@
 """기관 전체의 외부 AI 설정: 사용 여부(기본 꺼짐), 제공사, 모델, API 키.
 
-- 관리자가 «AI 설정» 화면에서 바꾸며, 서버의 db/runtime/ai_settings.json에 저장합니다(Git 제외).
+- 관리자가 «AI 설정» 화면에서 바꾸며, 공유 PostgreSQL work.app_settings에 저장합니다.
+  (배포 서버의 파일은 재시작·재배포 때 지워지므로 파일에 두지 않습니다.)
 - 키를 화면에서 넣지 않았으면 .env의 키(OPENAI_API_KEY 등)를 씁니다.
 - 키 원문은 화면으로 돌려보내지 않고 끝 4자리만 보여 줍니다.
 """
 from dataclasses import dataclass
+import copy
 import json
 import os
-from pathlib import Path
 import threading
+import time
+
+from sqlalchemy import text
 
 from backend.chatbot.welfare.app.config import settings as env_settings
+from backend.db import work_store
 
-STORE = Path(__file__).resolve().parents[1] / "db" / "runtime" / "ai_settings.json"
+SETTING_KEY = "ai"
+# 질문마다 원격 DB를 다시 읽지 않도록 잠시 기억합니다. 이 서버에서 저장하면 바로 비웁니다.
+CACHE_SECONDS = 30
+_cache = {"at": 0.0, "value": None}
 PROVIDERS = {
     "openai": {"label": "OpenAI", "default_model": "gpt-4o-mini", "env_keys": ["OPENAI_API_KEY"]},
     "anthropic": {"label": "Anthropic (Claude)", "default_model": "claude-opus-5-5", "env_keys": ["ANTHROPIC_API_KEY"]},
@@ -35,11 +43,26 @@ class AIConfig:
         return self.enabled and bool(self.api_key)
 
 
-def _read():
+def _read(fresh=False):
+    now = time.monotonic()
+    if not fresh and _cache["value"] is not None and now - _cache["at"] < CACHE_SECONDS:
+        return copy.deepcopy(_cache["value"])
+    with work_store.transaction() as db:
+        row = db.execute(text("SELECT value FROM work.app_settings WHERE key=:key"), {"key": SETTING_KEY}).fetchone()
     try:
-        return json.loads(STORE.read_text(encoding="utf-8"))
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+        saved = json.loads(row[0]) if row else {}
+    except json.JSONDecodeError:
+        saved = {}
+    _cache.update(at=now, value=saved)
+    return copy.deepcopy(saved)
+
+
+def _write(saved):
+    with work_store.transaction() as db:
+        db.execute(text("""INSERT INTO work.app_settings (key,value) VALUES (:key,:value)
+            ON CONFLICT (key) DO UPDATE SET value=excluded.value"""),
+                   {"key": SETTING_KEY, "value": json.dumps(saved, ensure_ascii=False)})
+    _cache.update(at=0.0, value=None)
 
 
 def _env_key(provider):
@@ -104,7 +127,7 @@ def save(changes):
         raise ValueError("API 키 형식이 올바르지 않습니다.")
 
     with _lock:
-        saved = _read()
+        saved = _read(fresh=True)
         saved["enabled"] = bool(changes.get("enabled"))
         saved["provider"] = provider
         saved.setdefault("models", {})[provider] = model
@@ -113,6 +136,5 @@ def save(changes):
             keys.pop(provider, None)
         elif api_key:
             keys[provider] = api_key
-        STORE.parent.mkdir(parents=True, exist_ok=True)
-        STORE.write_text(json.dumps(saved, ensure_ascii=False, indent=2), encoding="utf-8")
+        _write(saved)
     return public_view()

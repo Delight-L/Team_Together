@@ -74,8 +74,9 @@ def save_event(request, step, record=None):
         if step == 0:
             if not record.get("run_id") or not record.get("evidence"):
                 raise ValueError("실제 DB1 분석 결과가 있어야 업무를 시작할 수 있습니다.")
-            if item.get("analysis_run_id") and item["analysis_run_id"] != record["run_id"]:
-                raise ValueError("이 업무에 저장된 분석 버전과 다릅니다. 저장된 근거를 확인하세요.")
+            if 0 in done:
+                # 이미 시작한 업무는 저장 당시 근거를 그대로 씁니다. 분석이 새로 적재돼도 다시 열 수 있습니다.
+                return item
             item["analysis_run_id"] = record["run_id"]
             item["analysis_evidence"] = record["evidence"]
             item["analysis_source"] = record.get("source_note", "저장된 DB1 분석")
@@ -159,7 +160,26 @@ def service_key(service):
     return json.dumps([service["source_id"], service["region_id"], service["external_id"]], ensure_ascii=False)
 
 
-def load_report(request):
+def load_report(request, revision=None):
+    """저장한 보고서 파일입니다. revision이 없으면 최신본, 있으면 그 저장본입니다."""
     with transaction() as db:
-        row = db.execute(text("SELECT document FROM work.report_files WHERE key=:key"), {"key": identity(request)}).fetchone()
+        if revision is None:
+            row = db.execute(text("SELECT document FROM work.report_files WHERE key=:key"), {"key": identity(request)}).fetchone()
+        else:
+            row = db.execute(text("SELECT document FROM work.report_versions WHERE key=:key AND revision=:revision"),
+                             {"key": identity(request), "revision": revision}).fetchone()
         return bytes(row[0]) if row else None
+
+
+def report_versions(request):
+    """이 업무에서 최종 저장한 보고서 목록(최신순). 파일 본문은 넣지 않습니다."""
+    with transaction() as db:
+        rows = db.execute(text("SELECT revision, record FROM work.report_versions WHERE key=:key ORDER BY revision DESC"),
+                          {"key": identity(request)}).fetchall()
+    items = []
+    for revision, record in rows:
+        record = json.loads(record or "{}")
+        items.append({"revision": revision, "created_at": record.get("created_at", ""),
+                      "author": record.get("author", ""), "department": record.get("department", ""),
+                      "title": (record.get("content") or {}).get("title", "")})
+    return items
