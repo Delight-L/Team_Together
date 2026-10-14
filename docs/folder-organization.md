@@ -62,7 +62,7 @@ PostgreSQL의 `db1`, `db2`, `work` 스키마 이름과 테이블은 폴더 이�
 현재 통합 실행기는 `pipelines/db1`을 호출합니다. 두 구현의 통합·삭제는 별도 검증 후 결정합니다.
 
 루트 `.env`, 가상환경 `.venv`, `frontend/node_modules`는 계속 같은 위치를 사용합니다.
-관리자 AI 설정은 `backend/db/runtime/ai_settings.json`에 보관하며 Git에서 제외합니다.
+관리자 AI 설정은 공유 PostgreSQL `work.app_settings`에 보관합니다(배포 서버 재시작 후에도 유지).
 `TEAM_TOGETHER_DATA_ROOT`는 저장소와 같은 자료 배치를 가진 기준 폴더를 지정합니다.
 지역 유형 원자료의 상대 위치는 `pipelines/preprocessing/regional_types/raw_data`입니다.
 

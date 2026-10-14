@@ -24,8 +24,9 @@ SERVICE_FIELDS = (
 )
 
 
-def report_filename(context):
-    return f"사업검토보고_{context['district']}_{context['month']}.docx"
+def report_filename(context, revision=None):
+    suffix = f"_{revision}차" if revision else ''
+    return f"사업검토보고_{context['district']}_{context['month']}{suffix}.docx"
 
 
 def load_workflow(context):
@@ -55,10 +56,17 @@ def missions(request):
     return {'items': items}
 
 
+def with_analysis_note(current, data):
+    """저장된 근거가 지금 화면의 분석 버전과 다르면 analysis_changed로 알려 줍니다."""
+    saved = current.get('analysis_run_id')
+    return dict(current, analysis_changed=bool(saved) and saved != str(data.get('runId', '')))
+
+
 def workflow(request):
     """GET /api/workflow: 선택한 동의 업무 진행 상황."""
-    context = region_context(request, dashboard_data())
-    return load_workflow(context)
+    data = dashboard_data()
+    context = region_context(request, data)
+    return with_analysis_note(load_workflow(context), data)
 
 
 def experience(request):
@@ -88,12 +96,23 @@ def services(request):
 
 
 def saved_report(request):
-    """GET /api/report: 최종 저장한 Word 보고서를 내려받습니다."""
+    """GET /api/report: 최종 저장한 Word 보고서를 내려받습니다. revision을 주면 그 차수 저장본입니다."""
     context = region_context(request, dashboard_data())
-    document = mission_store.load_report(context)
+    revision = request.params.get('revision')
+    if revision is not None:
+        if not str(revision).isdigit():
+            raise ValueError('보고서 차수가 올바르지 않습니다.')
+        revision = int(revision)
+    document = mission_store.load_report(context, revision)
     if not document:
         raise ValueError('저장된 보고서가 없습니다.')
-    return Response(document, filename=report_filename(context))
+    return Response(document, filename=report_filename(context, revision))
+
+
+def saved_report_versions(request):
+    """GET /api/report/versions: 이 업무에서 저장한 보고서 목록(최신순)."""
+    context = region_context(request, dashboard_data())
+    return {'items': mission_store.report_versions(context)}
 
 
 def report_draft_file(request):
@@ -191,7 +210,7 @@ def workflow_start(request):
     context, data, evidence = work_context(request)
     with sessions.write_lock:
         mission_store.save_event(context, 0, {'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']})
-        return load_workflow(context)
+        return with_analysis_note(load_workflow(context), data)
 
 
 def workflow_confirm(request):

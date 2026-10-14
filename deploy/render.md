@@ -24,6 +24,6 @@ docker run --rm -p 10000:10000 --env-file .env welfind:local
 
 http://localhost:10000/api/health 와 로그인·대시보드·보고서 기능을 확인합니다.
 DB 업무 기록은 PostgreSQL에 저장되지만 로그인 세션·미리보기는 메모리에 있습니다.
-현재 관리자 AI 설정은 backend/db/runtime/ai_settings.json에 저장되므로 무료 서비스
-재시작 후 보존되지 않습니다. API 키는 Render 환경변수에 설정하고 영구 AI 설정은
-별도 PostgreSQL 이전이 필요합니다.
+관리자 AI 설정(사용 여부·제공사·모델)은 PostgreSQL work.app_settings에 저장되어 재시작 후에도 유지됩니다.
+API 키는 Render 환경변수(OPENAI_API_KEY / ANTHROPIC_API_KEY / GEMINI_API_KEY)에 두는 것을 권장합니다.
+키가 없으면 «외부 AI 사용 허용»을 켜도 사용자 화면의 AI 스위치는 잠겨 있습니다.

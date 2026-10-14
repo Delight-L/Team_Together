@@ -551,6 +551,7 @@ export default function App() {
                               ? '① 완료 · 아래 근거와 추이를 확인한 뒤 ② 근거 검토 완료를 누르세요.'
                               : '① 분석 확인 저장: 이 동을 내 업무로 등록합니다(업무 기록에 나타남). ② 근거 검토 완료: 근거를 확인했다고 기록하며, 이후 사업 매칭 검토를 할 수 있습니다.'}
                         </p>
+                        {workflow.analysis_changed && <p className="notice">이 업무는 시작할 때 저장한 분석 근거로 이어집니다. 그 뒤 분석 자료가 새로 적재되어 위 수치와 사업 검토·보고서에 쓰이는 근거가 다를 수 있습니다.</p>}
                       </>
                     ) : (
                       <div className="empty">
@@ -885,6 +886,14 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     [draftBusy, setDraftBusy] = useState(false),
     [error, setError] = useState('');
   // AI 문장 다듬기: AI 연결이 있을 때만 고를 수 있고, 저장된 근거와 대조를 통과한 문장만 씁니다.
+  // 같은 업무에서 여러 번 저장한 보고서 목록(최신순). 저장할 때마다 다시 불러옵니다.
+  const [versions, setVersions] = useState([]);
+  useEffect(() => {
+    let live = true;
+    if (!workflow.workflow_complete) { setVersions([]); return; }
+    api('/report/versions?' + query(context)).then(d => live && setVersions(d.items || [])).catch(() => live && setVersions([]));
+    return () => { live = false; };
+  }, [workflow.report?.revision, workflow.workflow_complete, context.city, context.district, context.month]);
   const [aiAvailable, setAiAvailable] = useState(false), [useAi, setUseAi] = useState(false);
   useEffect(() => { let live = true; api('/chat/config').then(d => live && setAiAvailable(!!d.aiAvailable)).catch(() => {}); return () => { live = false; }; }, []);
   useEffect(() => {
@@ -951,7 +960,10 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   return <div className="scroll-view"><section className="card info-card report-workspace">
     <WorkflowSteps context={context} workflow={workflow} current="report" onView={onView} />
     <div className="workspace-heading"><div><span className="eyebrow">검토보고서</span><h2>{context.district || '지역 선택 필요'} · 복지서비스 연계 검토보고</h2><p className="hint">{context.month} · 초안을 다듬고 Word 파일을 확인한 뒤 저장하세요.</p></div></div>
-    {workflow.workflow_complete && <div className="saved-report"><span>최종 보고서가 저장되어 있습니다. 새로 작성해도 이전 저장본은 이력에 남습니다.</span><a className="text-button" href={'/api/report?' + query(context)}>저장된 Word 보고서 내려받기 →</a></div>}
+    {workflow.workflow_complete && <div className="saved-report"><span>최종 보고서가 저장되어 있습니다. 새로 작성해도 이전 저장본은 아래 목록에 남습니다.</span><a className="text-button" href={'/api/report?' + query(context)}>최신 Word 보고서 내려받기 →</a></div>}
+    {versions.length > 1 && <details className="report-versions"><summary>저장한 보고서 {versions.length}건 · 이전 차수 내려받기</summary><ul>{versions.map(v =>
+      <li key={v.revision}><span><strong>{v.revision}차</strong> {v.created_at.replace('T', ' ').slice(0, 16)} · {v.author}{v.department ? ` (${v.department})` : ''}{v.title ? ` · ${v.title}` : ''}</span>
+        <a className="text-button" href={'/api/report?' + query({ ...context, revision: v.revision })}>내려받기 →</a></li>)}</ul></details>}
     <ol className="report-steps" aria-label="보고서 작업 순서">{['초안 준비', '내용 수정', '파일 확인·저장'].map((label, i) => <li key={label} className={step === i + 1 ? 'current' : ''}><button aria-current={step === i + 1 ? 'step' : undefined} disabled={working || (i > 0 && !content) || (i === 2 && !draft)} onClick={() => setStep(i + 1)}><span>{i + 1}</span>{label}</button></li>)}</ol>
     <p className="hint draft-caption">{storageFailed ? '브라우저 임시 보관에 실패했습니다. 새로고침 전에 내용을 복사해 두세요.' : '작성 내용은 이 탭에 임시 보관됩니다. 로그아웃 전에 저장해 주세요.'}</p>
     {staleContent && <p className="notice">사업 검토 근거가 달라졌습니다. 편집한 내용은 남아 있습니다. 필요한 문장을 복사해 둔 뒤 ‘초안 준비’에서 최신 근거로 다시 만들어 주세요.</p>}

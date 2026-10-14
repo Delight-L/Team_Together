@@ -1,23 +1,21 @@
 """관리자 AI 설정: 기본 꺼짐, 키 원문 비공개, 제공사별 호출 연결."""
 import asyncio
 import json
-import tempfile
 import unittest
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from backend.chatbot import ai_settings
 from backend.chatbot.tests.ai_config import ai_key
+from backend.db.tests.work_db import temporary_work_store
 from backend.chatbot.welfare.app.llm import anthropic_client, client, gemini_client
 
 
 class SettingsTest(unittest.TestCase):
     def setUp(self):
-        folder = tempfile.TemporaryDirectory()
-        self.addCleanup(folder.cleanup)
-        for target in (patch.object(ai_settings, 'STORE', Path(folder.name) / 'ai_settings.json'),
-                       patch.object(ai_settings, '_env_key', return_value='')):
+        ai_settings._cache.update(at=0.0, value=None)
+        self.addCleanup(ai_settings._cache.update, at=0.0, value=None)
+        for target in (temporary_work_store(), patch.object(ai_settings, '_env_key', return_value='')):
             target.start()
             self.addCleanup(target.stop)
 

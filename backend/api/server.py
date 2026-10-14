@@ -67,6 +67,7 @@ ROUTES = {
     ('GET', '/api/experience/history'): routes_work.experience_history,
     ('GET', '/api/services'): routes_work.services,
     ('GET', '/api/report'): routes_work.saved_report,
+    ('GET', '/api/report/versions'): routes_work.saved_report_versions,
     ('GET', '/api/report/draft'): routes_work.report_draft_file,
     ('POST', '/api/experience'): routes_work.experience_save,
     ('POST', '/api/report/content'): routes_work.report_content,

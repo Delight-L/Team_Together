@@ -5,7 +5,6 @@
 """
 import http.client
 import json
-from pathlib import Path
 import tempfile
 import threading
 import unittest
@@ -272,6 +271,18 @@ class ApiTest(unittest.TestCase):
             versions=conn.execute(sql('SELECT revision,document FROM work.report_versions WHERE key=:key ORDER BY revision'),
                                  {'key':mission_store.identity(context | {'user':{'id':'admin'}})}).fetchall()
         self.assertEqual([(revision,file) for revision,file in versions],[(1,document),(2,latest)])
+        # 여러 번 저장한 보고서는 목록으로 보고 차수별로 내려받습니다.
+        listed=self.request('GET','/api/report/versions?'+urlencode(context))[1]['items']
+        self.assertEqual([v['revision'] for v in listed],[2,1])
+        self.assertEqual(self.request('GET','/api/report?'+urlencode(context | {'revision':1}))[1],document)
+        self.assertEqual(self.request('GET','/api/report?'+urlencode(context | {'revision':9}))[0],400)
+        self.assertEqual(self.request('GET','/api/report?'+urlencode(context | {'revision':'x'}))[0],400)
+        # 분석이 새로 적재돼도 이미 시작한 업무는 다시 열 수 있고, 저장 당시 근거를 유지합니다.
+        with patch('backend.api.routes_work.dashboard_data',return_value=self.data | {'runId':'newer-run'}):
+            status,reopened=self.request('POST','/api/workflow/start',context)
+        self.assertEqual(status,200)
+        self.assertTrue(reopened['analysis_changed'])
+        self.assertTrue(reopened['workflow_complete'])
         self.assertEqual(self.request('POST','/api/report',context | {'token':new_draft['token'],'confirmed':True})[0],400)
         missions=self.request('GET','/api/missions')[1]['items']
         self.assertEqual(len(missions),1)
@@ -299,9 +310,8 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(self.request('POST','/api/upload/publish',{'token':prepared['token']})[0],400)
 
     def test_admin_ai_settings(self):
-        store = patch.object(ai_settings, 'STORE', Path(self.temp.name) / 'ai_settings.json')
-        store.start()
-        self.addCleanup(store.stop)
+        ai_settings._cache.update(at=0.0, value=None)
+        self.addCleanup(ai_settings._cache.update, at=0.0, value=None)
         self.login()
         self.assertEqual(self.request('GET', '/api/admin/ai')[0], 401)
         self.assertEqual(self.request('POST', '/api/admin/ai', {'enabled': True, 'provider': 'openai'})[0], 401)
