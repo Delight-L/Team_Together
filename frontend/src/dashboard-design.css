@@ -47,12 +47,12 @@
 .group-shell .gd-add { color: #2563eb; margin-left: 8px; }
 .group-shell .gd-case { position: relative; background: #fff; border: 7px solid #f2dfc4; border-top: 0; border-radius: 0 0 18px 18px; box-shadow: 0 3px 5px #8c6a2521; padding: 18px 18px 10px; overflow: hidden; container-type: size; }
 .group-shell .gd-case:not(.gd-evidence-panel):not(.gd-files-panel) { align-self: stretch; height: auto; max-height: none; }
-.group-shell .gd-summary { position: relative; height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(140px, .55fr) minmax(0, 1fr); border: 1px solid #edf0f6; border-radius: 8px; padding: 12px 10px 10px 30px; background: linear-gradient(140deg, #fff, #fefefe); gap: 10px; }
+.group-shell .gd-summary { position: relative; height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(auto, 1fr) auto; border: 1px solid #edf0f6; border-radius: 8px; padding: 12px 10px 10px 30px; background: linear-gradient(140deg, #fff, #fefefe); gap: 10px; }
 .group-shell .gd-case:has(.gd-summary:not([hidden]))::before { content: ''; position: absolute; z-index: 2; top: 4px; left: 10px; width: 14px; height: 42px; border: 3px solid #b6b9be; border-right-color: #f0f0f0; border-radius: 12px; transform: rotate(-13deg); box-shadow: 2px 2px 2px #73737322, inset 2px 0 0 #eee; pointer-events: none; }
 .group-shell .gd-case:has(.gd-summary:not([hidden]))::after { content: ''; position: absolute; z-index: 3; top: 8px; left: 14px; width: 7px; height: 34px; border: 2px solid #c9c9ca; border-top: 0; border-left-color: #f6f6f6; border-radius: 0 0 8px 8px; transform: rotate(-13deg); pointer-events: none; }
 
 /* Top row: primary change, trend, share. Values still come from the API. */
-.group-shell .gd-summary .gd-overview { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1.02fr) minmax(0, .73fr); padding: 0; gap: 12px; align-items: stretch; }
+.group-shell .gd-summary .gd-overview { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); padding: 0; gap: 12px; align-items: stretch; }
 .group-shell .gd-overview-copy { grid-column: auto; min-width: 0; }
 .group-shell .gd-case-heading { flex-wrap: nowrap; margin: 0 0 8px; }
 .group-shell .gd-case-heading h2 { color: #0c1837; font-size: clamp(21px, 1.7vw, 30px); line-height: 1.2; }
@@ -286,3 +286,12 @@
 .group-shell .gd-summary .gd-mini-share .gd-line { width: 100%; height: 100px; }
 .group-shell .gd-mini-share .gd-share-insight { margin: 4px 0 0; color: var(--text-sub); font-weight: 600; }
 @container (max-height: 420px) { .group-shell .gd-mini-share .gd-share-insight { display: none; } }
+
+/* 아래 카드는 내용 높이만큼, 남는 높이는 위쪽 추이·비중 그래프가 채웁니다. */
+.group-shell .gd-summary .gd-mini-trend, .group-shell .gd-summary .gd-mini-share { display: flex; flex-direction: column; min-height: 0; }
+.group-shell .gd-summary .gd-mini-trend .gd-line, .group-shell .gd-summary .gd-mini-share .gd-line { flex: 1 1 auto; min-height: 0; max-height: 260px; }
+/* 왼쪽 요약 칸이 높아지면 제목·설명은 위에, 핵심 수치와 버튼은 그래프 아래선에 맞춰 아래에 둡니다. */
+.group-shell .gd-summary .gd-overview-copy { display: flex; flex-direction: column; }
+.group-shell .gd-summary .gd-overview-copy .gd-headline-row { margin-top: auto; }
+/* 추이·비중 카드의 설명 문구는 카드 아래쪽에 맞춥니다. */
+.group-shell .gd-summary .gd-mini-trend .gd-axis-note { margin-top: 6px; }

@@ -61,24 +61,39 @@ function ServiceResults({ matches }) {
 // unit: 눈금 단위(예: '%'), lastColor: 이번 달 점을 강조할 색(없으면 강조하지 않음)
 function LineChart({ points, field = 'mean', label, unit = '', lastColor }) {
   const fillId = useId();
+  // 그래프 칸의 실제 높이에 맞춰 viewBox 높이를 정합니다. 칸이 커지면 글자는 그대로, 선만 세로로 넓어집니다.
+  const svgRef = useRef(null), [height, setHeight] = useState(148);
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width: w, height: h } = entry.contentRect;
+      if (w && h) setHeight(Math.max(120, Math.round(430 * h / w)));
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const values = points.filter(p => Number.isFinite(p[field]));
   if (!values.length) return <p className="gd-empty">표시할 자료가 없습니다.</p>;
   // 세로축은 자료 범위에 맞춰 변화가 잘 보이게 합니다(0부터 시작하지 않을 수 있음).
   const { low, high, ticks, fromZero } = fitDomain(values.map(p => p[field]));
   const digits = high - low < 6 ? 1 : 0;
   const lastIndex = points.findLastIndex(p => Number.isFinite(p[field]));
-  const x = i => 32 + i * 370 / Math.max(points.length - 1, 1);
-  const y = v => 112 - (v - low) / (high - low) * 96;
+  // 단위(%)가 붙은 눈금은 글자가 길어 왼쪽 여백을 더 둡니다.
+  const left = unit ? 48 : 32;
+  const x = i => left + i * (402 - left) / Math.max(points.length - 1, 1);
+  const base = height - 36;
+  const y = v => base - (v - low) / (high - low) * (height - 52);
   // 월이 빠진 구간은 선으로 연결하지 않는다.
   const segments = []; let segment = [];
   points.forEach((p, i) => { if (Number.isFinite(p[field])) segment.push([x(i), y(p[field])]); else if (segment.length) { segments.push(segment); segment = []; } });
   if (segment.length) segments.push(segment);
-  return <><svg className="gd-line" viewBox="0 0 430 148" role="img" aria-label={label}>
+  return <><svg ref={svgRef} className="gd-line" viewBox={`0 0 430 ${height}`} role="img" aria-label={label}>
     <defs><linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1"><stop stopColor="#60a5fa" stopOpacity=".24"/><stop offset="1" stopColor="#60a5fa" stopOpacity=".02"/></linearGradient></defs>
-    {segments.map((seg, i) => <polygon key={i} points={[...seg, [seg.at(-1)[0], 112], [seg[0][0], 112]].map(p => p.join(",")).join(" ")} fill={`url(#${fillId})`} />)}
-    {ticks.map((v, i) => <g key={i}><line x1="32" x2="405" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x="26" y={y(v) + 4} textAnchor="end">{fmt(v, digits)}{unit}</text></g>)}
+    {segments.map((seg, i) => <polygon key={i} points={[...seg, [seg.at(-1)[0], base], [seg[0][0], base]].map(p => p.join(",")).join(" ")} fill={`url(#${fillId})`} />)}
+    {ticks.map((v, i) => <g key={i}><line x1={left} x2="405" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x={left - 6} y={y(v) + 4} textAnchor="end">{fmt(v, digits)}{unit}</text></g>)}
     {segments.map((s, i) => <polyline key={i} points={s.map(p => p.join(',')).join(' ')} fill="none" stroke="#2563eb" strokeWidth="3" />)}
-    {points.map((p, i) => <g key={p.month || p.label}>{Number.isFinite(p[field]) && <circle cx={x(i)} cy={y(p[field])} r={lastColor && i === lastIndex ? 6 : 4} fill={lastColor && i === lastIndex ? lastColor : '#2563eb'} stroke={lastColor && i === lastIndex ? '#fff' : undefined} strokeWidth="2"><title>{p.month || p.label}: {fmt(p[field], 2)}{unit}</title></circle>}{(points.length < 9 || i % 6 === 0 || i === points.length - 1) && <text x={x(i)} y="138" textAnchor="middle">{p.month ? Number(p.month.slice(5)) + '월' : p.label}</text>}</g>)}
+    {points.map((p, i) => <g key={p.month || p.label}>{Number.isFinite(p[field]) && <circle cx={x(i)} cy={y(p[field])} r={lastColor && i === lastIndex ? 6 : 4} fill={lastColor && i === lastIndex ? lastColor : '#2563eb'} stroke={lastColor && i === lastIndex ? '#fff' : undefined} strokeWidth="2"><title>{p.month || p.label}: {fmt(p[field], 2)}{unit}</title></circle>}{(points.length < 9 || i % 6 === 0 || i === points.length - 1) && <text x={x(i)} y={height - 10} textAnchor="middle">{p.month ? Number(p.month.slice(5)) + '월' : p.label}</text>}</g>)}
   </svg>{!fromZero && <small className="gd-axis-note">세로축은 {fmt(low, digits)}{unit}부터 시작합니다.</small>}</>;
 }
 
