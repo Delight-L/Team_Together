@@ -182,7 +182,25 @@ export default function App() {
     [month, setMonth] = useState(''),
     [district, setDistrict] = useState('');
   // 메뉴 접힘 상태도 React가 관리합니다. 화면 내용/선택 지역은 그대로 유지됩니다.
-  const [navCollapsed, setNavCollapsed] = useState(() => window.innerWidth <= 1100);
+  // 1440px 미만에서는 메뉴를 아이콘만 보이게 접고, 1100px 미만에서는 보미를 오른쪽 서랍으로 엽니다.
+  const navQuery = '(max-width: 1439px)', drawerQuery = '(max-width: 1099px)';
+  const [navCollapsed, setNavCollapsed] = useState(() => window.matchMedia(navQuery).matches);
+  const [chatDrawer, setChatDrawer] = useState(() => window.matchMedia(drawerQuery).matches);
+  const [chatOpen, setChatOpen] = useState(false);
+  useEffect(() => {
+    // 기준 너비를 넘나들 때만 바꿔서, 사용자가 직접 펼치거나 접은 상태는 존중합니다.
+    const nav = window.matchMedia(navQuery), drawer = window.matchMedia(drawerQuery);
+    const onNav = e => setNavCollapsed(e.matches);
+    const onDrawer = e => { setChatDrawer(e.matches); setChatOpen(false); };
+    nav.addEventListener('change', onNav); drawer.addEventListener('change', onDrawer);
+    return () => { nav.removeEventListener('change', onNav); drawer.removeEventListener('change', onDrawer); };
+  }, []);
+  useEffect(() => {
+    if (!chatOpen) return;
+    const close = e => { if (e.key === 'Escape') setChatOpen(false); };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [chatOpen]);
   const [analysisTab, setAnalysisTab] = useState('evidence');
   // 모든 화면 이동은 go를 거칩니다. 좁은 화면에서는 이동 후 메뉴를 접어 본문을 가리지 않게 합니다.
   function go(target) {
@@ -271,7 +289,9 @@ export default function App() {
     }
   }
   function expandChat() {
-    document.querySelector('.bomi-chat textarea')?.focus();
+    if (chatDrawer) setChatOpen(true);
+    // 서랍이 열리는 중에도 입력란에 바로 쓸 수 있게 다음 그림 단계에서 초점을 옮깁니다.
+    requestAnimationFrame(() => document.querySelector('.bomi-chat textarea')?.focus());
   }
   async function logout() {
     if (hasDrafts() && !window.confirm('로그아웃하면 임시 보관 중인 작성 내용이 삭제됩니다. 로그아웃할까요?')) return;
@@ -323,6 +343,7 @@ export default function App() {
       if (!region?.name) { expandChat(); return; }
       setDistrict(region.name);
       setChatDraft({ id: Date.now(), contextKey: JSON.stringify({ city, district: region.name, month }), question: exampleQuestion(region), guide: true });
+      if (chatDrawer) setChatOpen(true);
     },
     onInspect: (name) => { setDistrict(name); go('chart'); },
     onAsk: (name, question) => {
@@ -336,7 +357,7 @@ export default function App() {
 
   return (
     <div
-      className={`app-shell with-chat ${navCollapsed ? 'nav-collapsed' : ''} ${view === 'dashboard' ? 'briefing-shell group-shell' : ''}`}
+      className={`app-shell with-chat ${navCollapsed ? 'nav-collapsed' : ''} ${chatDrawer ? 'chat-drawer' : ''} ${chatOpen ? 'chat-open' : ''} ${view === 'dashboard' ? 'briefing-shell group-shell' : ''}`}
     >
       <button className="panel-handle menu-handle" onClick={() => setNavCollapsed(v => !v)} aria-label={navCollapsed ? '왼쪽 메뉴 펼치기' : '왼쪽 메뉴 접기'} aria-expanded={!navCollapsed} title={navCollapsed ? '메뉴 펼치기' : '메뉴 접기'}>{navCollapsed ? '›' : '‹'}</button>
       <nav className="sidebar" aria-label="주 메뉴">
@@ -683,11 +704,18 @@ export default function App() {
             if (action.view) go(action.view);
           }}
           visible={true}
+          inert={chatDrawer && !chatOpen}
           context={view === 'dashboard' && chatGroup ? {city: chatGroup.city, district: chatGroup.district, month: chatGroup.month} : context}
           group={view === 'dashboard' ? chatGroup : undefined}
         />
 
       )}
+      {data && chatDrawer && (chatOpen
+        ? <>
+          <button className="chat-drawer-backdrop" aria-label="보미 대화창 닫기" onClick={() => setChatOpen(false)} />
+          <button className="chat-drawer-close icon-button" aria-label="보미 대화창 닫기" title="닫기 (Esc)" onClick={() => setChatOpen(false)}><Icon name="close" size={18} /></button>
+        </>
+        : <button className="chat-fab" onClick={expandChat} aria-label="보미에게 질문하기"><Icon name="chat" size={20} /><span>보미</span></button>)}
     </div>
   );
 }

@@ -114,7 +114,8 @@ function useChat(context, group, userId) {
   return { messages, busy, error, send, reset, stop, config, mode, aiOn, setAi };
 }
 
-export default function BomiChat({ context, group, userId, layout = 'embedded', expanded = false, onExpand, draft, actions = [], onAction, visible = true }) {
+// inert: 좁은 화면에서 서랍이 닫혀 있을 때 키보드 초점이 숨은 대화창으로 들어가지 않게 합니다.
+export default function BomiChat({ context, group, userId, layout = 'embedded', expanded = false, onExpand, draft, actions = [], onAction, visible = true, inert }) {
   const [input, setInput] = useState('');
   // guided: 다른 화면에서 예시 질문을 넣어 준 상태. 입력란을 강조하고 보내는 방법을 안내합니다.
   const [guided, setGuided] = useState(false);
@@ -143,7 +144,7 @@ export default function BomiChat({ context, group, userId, layout = 'embedded', 
   const place = group ? `${group.district} · ${group.age} · ${group.sex}` : `${context.city} ${context.district || '전체'}`;
   const month = group?.month || context.month;
   const aiAvailable = !!chat.config?.aiAvailable;
-  return <aside className={`bomi-chat ${layout} ${layout === 'panel' ? 'chat-panel' : ''} ${expanded ? 'expanded' : ''}`} style={{ display: visible ? undefined : 'none' }} aria-label="보미에게 질문">
+  return <aside className={`bomi-chat ${layout} ${layout === 'panel' ? 'chat-panel' : ''} ${expanded ? 'expanded' : ''}`} style={{ display: visible ? undefined : 'none' }} inert={inert} aria-label="보미에게 질문">
     <header className="bomi-chat-head">
       <img src="/brand/bomi-face.png" alt="" />
       <div><strong>보미에게 질문</strong><small><span className="online-dot" />{place} · {month}</small></div>

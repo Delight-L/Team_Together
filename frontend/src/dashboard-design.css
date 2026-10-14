@@ -289,9 +289,54 @@
 
 /* 아래 카드는 내용 높이만큼, 남는 높이는 위쪽 추이·비중 그래프가 채웁니다. */
 .group-shell .gd-summary .gd-mini-trend, .group-shell .gd-summary .gd-mini-share { display: flex; flex-direction: column; min-height: 0; }
-.group-shell .gd-summary .gd-mini-trend .gd-line, .group-shell .gd-summary .gd-mini-share .gd-line { flex: 1 1 auto; min-height: 0; max-height: 260px; }
+.group-shell .gd-summary .gd-mini-trend .gd-line, .group-shell .gd-summary .gd-mini-share .gd-line { flex: 1 1 auto; min-height: 72px; max-height: 260px; }
 /* 왼쪽 요약 칸이 높아지면 제목·설명은 위에, 핵심 수치와 버튼은 그래프 아래선에 맞춰 아래에 둡니다. */
 .group-shell .gd-summary .gd-overview-copy { display: flex; flex-direction: column; }
 .group-shell .gd-summary .gd-overview-copy .gd-headline-row { margin-top: auto; }
 /* 추이·비중 카드의 설명 문구는 카드 아래쪽에 맞춥니다. */
 .group-shell .gd-summary .gd-mini-trend .gd-axis-note { margin-top: 6px; }
+
+/* ── 모바일(640px 이하) ──────────────────────────────────────────
+   왼쪽 메뉴는 화면 아래 탭 막대로 옮기고, 본문은 화면 너비를 모두 쓰며 위아래로 스크롤합니다.
+   종합 현황은 한 열로 쌓아 카드가 화면 높이에 잘리지 않게 합니다. */
+@media (max-width: 640px) {
+  .app-shell, .app-shell.with-chat, .app-shell.chat-drawer, .app-shell.group-shell { grid-template-columns: minmax(0, 1fr); }
+  .app-shell .main-wrap { grid-column: 1; padding-bottom: 64px; }
+  .app-shell .menu-handle { display: none; }
+  .app-shell .sidebar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; height: 60px; width: 100%;
+    display: flex; flex-direction: row; align-items: stretch; gap: 0; padding: 0 4px;
+    overflow-x: auto; overflow-y: hidden; border-right: 0; border-top: 1px solid #e3e8f0; background: #fff;
+    scrollbar-width: none;
+  }
+  .app-shell .sidebar::-webkit-scrollbar { display: none; }
+  .app-shell .sidebar .logo-toggle, .app-shell .sidebar .workspace-tag, .app-shell .sidebar .nav-label,
+  .app-shell .sidebar-bottom .user-avatar, .app-shell .sidebar-bottom > div { display: none; }
+  .app-shell .sidebar > button {
+    flex: 1 0 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    margin: 0; padding: 6px 2px; border-radius: 0; min-height: 0; height: 60px;
+  }
+  .app-shell .sidebar > button span { display: block; font-size: 10px; line-height: 1.2; white-space: nowrap; }
+  .app-shell .sidebar > button.active { box-shadow: inset 0 3px var(--blue); }
+  .app-shell .sidebar-bottom { position: static; margin: 0; padding: 0; border: 0; background: none; display: flex; align-items: center; }
+  .app-shell .sidebar-bottom button { width: 48px; height: 60px; }
+  .chat-fab { bottom: 76px; right: 14px; }
+
+  .app-shell.group-shell .main-content { overflow-y: auto; overflow-x: hidden; padding: 12px; }
+  .group-shell .gd-root, .group-shell .gd-workspace, .group-shell .gd-case { overflow: visible; height: auto; max-height: none; }
+  .group-shell .gd-workspace { display: flex; flex-direction: column; }
+  .group-shell .gd-process span { display: none; }
+  .group-shell .gd-case { padding: 10px; }
+  .group-shell .gd-summary { height: auto; display: flex; flex-direction: column; gap: 12px; padding: 12px; }
+  .group-shell .gd-summary .gd-overview, .group-shell .gd-summary .gd-context-cards { grid-template-columns: minmax(0, 1fr); }
+  .group-shell .gd-summary .gd-overview-copy { grid-column: auto; }
+  .group-shell .gd-summary .gd-headline-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .group-shell .gd-summary .gd-support-link { width: 100%; justify-content: center; }
+  .group-shell .gd-summary .gd-mini-trend .gd-line, .group-shell .gd-summary .gd-mini-share .gd-line { height: 150px; flex: none; }
+  .group-shell .gd-summary .gd-context-cards > article { overflow: visible; height: auto; }
+  /* 좁은 탭에는 이름만 한 줄로 보여 줍니다(전체 이름은 탭의 title). */
+  .gd-tabbar .gd-tab > button:first-child > svg, .gd-tabbar .gd-tab small { display: none; }
+  .gd-tabbar .gd-tab > button:first-child { min-width: 0; padding: 7px 8px; }
+  .gd-tabbar .gd-tab > button:first-child > span { min-width: 0; }
+  .gd-tabbar .gd-tab b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
