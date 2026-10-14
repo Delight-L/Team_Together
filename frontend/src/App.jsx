@@ -291,6 +291,11 @@ export default function App() {
   const start = async () => {
     if (await mutate('/workflow/start')) go('chart');
   };
+  // 분석이 새로 적재된 업무를 최신 근거로 처음부터 다시 진행합니다. 이전 기록과 보고서는 이력에 남습니다.
+  const restart = async () => {
+    if (!window.confirm('최신 분석으로 업무를 다시 시작할까요?\n근거 검토·사업 검토를 새로 해야 하며, 이전 진행 기록과 저장한 보고서는 이력에 남습니다.')) return;
+    await mutate('/workflow/restart', { confirmed: true });
+  };
   const briefingProps = {
     regions,
     assessment: data?.assessment || [],
@@ -551,7 +556,10 @@ export default function App() {
                               ? '① 완료 · 아래 근거와 추이를 확인한 뒤 ② 근거 검토 완료를 누르세요.'
                               : '① 분석 확인 저장: 이 동을 내 업무로 등록합니다(업무 기록에 나타남). ② 근거 검토 완료: 근거를 확인했다고 기록하며, 이후 사업 매칭 검토를 할 수 있습니다.'}
                         </p>
-                        {workflow.analysis_changed && <p className="notice">이 업무는 시작할 때 저장한 분석 근거로 이어집니다. 그 뒤 분석 자료가 새로 적재되어 위 수치와 사업 검토·보고서에 쓰이는 근거가 다를 수 있습니다.</p>}
+                        {workflow.analysis_changed && <div className="notice analysis-changed">
+                          <p>이 업무는 시작할 때 저장한 분석 근거로 이어집니다. 그 뒤 분석 자료가 새로 적재되어 위 수치와 사업 검토·보고서에 쓰이는 근거가 다를 수 있습니다.</p>
+                          <button className="secondary" disabled={busy} onClick={restart}>새 분석으로 다시 시작</button>
+                        </div>}
                       </>
                     ) : (
                       <div className="empty">
@@ -885,15 +893,16 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     [draft, setDraft] = useState(null),
     [draftBusy, setDraftBusy] = useState(false),
     [error, setError] = useState('');
-  // AI 문장 다듬기: AI 연결이 있을 때만 고를 수 있고, 저장된 근거와 대조를 통과한 문장만 씁니다.
-  // 같은 업무에서 여러 번 저장한 보고서 목록(최신순). 저장할 때마다 다시 불러옵니다.
+  // 같은 업무에서 저장한 보고서 목록(최신순). 다시 시작한 업무는 이전 회차 보고서도 여기에 남습니다.
   const [versions, setVersions] = useState([]);
+  const hasReports = !!workflow.workflow_complete || !!workflow.previous_rounds?.length;
   useEffect(() => {
     let live = true;
-    if (!workflow.workflow_complete) { setVersions([]); return; }
+    if (!hasReports) { setVersions([]); return; }
     api('/report/versions?' + query(context)).then(d => live && setVersions(d.items || [])).catch(() => live && setVersions([]));
     return () => { live = false; };
-  }, [workflow.report?.revision, workflow.workflow_complete, context.city, context.district, context.month]);
+  }, [workflow.report?.revision, hasReports, workflow.previous_rounds?.length, context.city, context.district, context.month]);
+  // AI 문장 다듬기: AI 연결이 있을 때만 고를 수 있고, 저장된 근거와 대조를 통과한 문장만 씁니다.
   const [aiAvailable, setAiAvailable] = useState(false), [useAi, setUseAi] = useState(false);
   useEffect(() => { let live = true; api('/chat/config').then(d => live && setAiAvailable(!!d.aiAvailable)).catch(() => {}); return () => { live = false; }; }, []);
   useEffect(() => {
@@ -961,7 +970,7 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     <WorkflowSteps context={context} workflow={workflow} current="report" onView={onView} />
     <div className="workspace-heading"><div><span className="eyebrow">검토보고서</span><h2>{context.district || '지역 선택 필요'} · 복지서비스 연계 검토보고</h2><p className="hint">{context.month} · 초안을 다듬고 Word 파일을 확인한 뒤 저장하세요.</p></div></div>
     {workflow.workflow_complete && <div className="saved-report"><span>최종 보고서가 저장되어 있습니다. 새로 작성해도 이전 저장본은 아래 목록에 남습니다.</span><a className="text-button" href={'/api/report?' + query(context)}>최신 Word 보고서 내려받기 →</a></div>}
-    {versions.length > 1 && <details className="report-versions"><summary>저장한 보고서 {versions.length}건 · 이전 차수 내려받기</summary><ul>{versions.map(v =>
+    {(versions.length > 1 || (versions.length && !workflow.workflow_complete)) && <details className="report-versions"><summary>저장한 보고서 {versions.length}건 · 이전 차수 내려받기</summary><ul>{versions.map(v =>
       <li key={v.revision}><span><strong>{v.revision}차</strong> {v.created_at.replace('T', ' ').slice(0, 16)} · {v.author}{v.department ? ` (${v.department})` : ''}{v.title ? ` · ${v.title}` : ''}</span>
         <a className="text-button" href={'/api/report?' + query({ ...context, revision: v.revision })}>내려받기 →</a></li>)}</ul></details>}
     <ol className="report-steps" aria-label="보고서 작업 순서">{['초안 준비', '내용 수정', '파일 확인·저장'].map((label, i) => <li key={label} className={step === i + 1 ? 'current' : ''}><button aria-current={step === i + 1 ? 'step' : undefined} disabled={working || (i > 0 && !content) || (i === 2 && !draft)} onClick={() => setStep(i + 1)}><span>{i + 1}</span>{label}</button></li>)}</ol>

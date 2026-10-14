@@ -111,6 +111,7 @@ def save_event(request, step, record=None):
                 db.execute(insert_version, dict(key=key, revision=revision, document=bytes(previous[0]),
                                                 record=json.dumps(item.get('report', {}), ensure_ascii=False)))
             record['revision'] = revision + 1
+            record['analysis_run_id'] = item.get('analysis_run_id')
             db.execute(insert_version, dict(key=key, revision=record['revision'], document=document,
                                             record=json.dumps(record, ensure_ascii=False)))
             db.execute(text("""INSERT INTO work.report_files (key,document) VALUES (:key,:document)
@@ -123,6 +124,41 @@ def save_event(request, step, record=None):
         db.execute(text("""INSERT INTO work.missions (key,value) VALUES (:key,:value)
             ON CONFLICT (key) DO UPDATE SET value=excluded.value"""), {"key": key, "value": json.dumps(item, ensure_ascii=False)})
     return item
+
+
+def restart(request, record):
+    """저장된 근거가 지금 분석과 다를 때 업무를 최신 분석으로 다시 시작합니다(① 분석 확인까지 저장).
+
+    이전 회차의 진행 기록은 previous_rounds에 보관합니다. 보고서 파일은 report_versions에 남아
+    다음 저장 때 차수가 이어집니다.
+    """
+    if not record.get("run_id") or not record.get("evidence"):
+        raise ValueError("실제 DB1 분석 결과가 있어야 업무를 시작할 수 있습니다.")
+    if not request.get("district"):
+        raise ValueError("행정동을 먼저 선택하세요.")
+    key = identity(request)
+    with transaction() as db:
+        lock(db, key)
+        row = db.execute(text("SELECT value FROM work.missions WHERE key=:key"), {"key": key}).fetchone()
+        item = normalize(json.loads(row[0]) if row else {})
+        if 0 not in item.get("done", []):
+            raise ValueError("아직 시작하지 않은 업무입니다. 상세 분석·업무 시작을 누르세요.")
+        if item.get("analysis_run_id") == record["run_id"]:
+            raise ValueError("이미 최신 분석으로 진행 중인 업무입니다.")
+        previous = item.pop("previous_rounds", [])
+        item["ended_at"] = timestamp()
+        restarted = {
+            "workflow_version": WORKFLOW_VERSION, "done": [0], "reviews": [], "questions": [],
+            "is_demo": request.get("workflow_mode") == "demo",
+            "card_earned": False, "workflow_complete": False,
+            "analysis_run_id": record["run_id"], "analysis_evidence": record["evidence"],
+            "analysis_source": record.get("source_note", "저장된 DB1 분석"),
+            "previous_rounds": previous + [item],
+        }
+        db.execute(text("""INSERT INTO work.missions (key,value) VALUES (:key,:value)
+            ON CONFLICT (key) DO UPDATE SET value=excluded.value"""),
+                   {"key": key, "value": json.dumps(restarted, ensure_ascii=False)})
+    return restarted
 
 
 def service_candidates(city):
@@ -181,5 +217,6 @@ def report_versions(request):
         record = json.loads(record or "{}")
         items.append({"revision": revision, "created_at": record.get("created_at", ""),
                       "author": record.get("author", ""), "department": record.get("department", ""),
-                      "title": (record.get("content") or {}).get("title", "")})
+                      "title": (record.get("content") or {}).get("title", ""),
+                      "analysis_run_id": record.get("analysis_run_id", "")})
     return items

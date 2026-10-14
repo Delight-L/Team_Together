@@ -213,12 +213,25 @@ def workflow_start(request):
         return with_analysis_note(load_workflow(context), data)
 
 
+def workflow_restart(request):
+    """POST /api/workflow/restart: 분석이 새로 적재된 업무를 최신 분석으로 다시 시작합니다.
+
+    이전 진행 기록은 previous_rounds에 남고, 저장한 보고서는 차수 목록에 그대로 남습니다.
+    """
+    context, data, evidence = work_context(request)
+    if request.params.get('confirmed') is not True:
+        raise ValueError('다시 시작을 확인하세요.')
+    with sessions.write_lock:
+        mission_store.restart(context, {'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']})
+        return with_analysis_note(load_workflow(context), data)
+
+
 def workflow_confirm(request):
     """POST /api/workflow/confirm: ② 근거 검토 완료."""
     context, data, evidence = work_context(request)
     with sessions.write_lock:
         mission_store.save_event(context, 1, {'confirmed': True})
-        return load_workflow(context)
+        return with_analysis_note(load_workflow(context), data)
 
 
 def workflow_review(request):
@@ -242,7 +255,7 @@ def workflow_review(request):
             'source_url': chosen['service'].get('source_url'),
             'service_snapshot': service_snapshot(chosen['service']),
         })
-        return load_workflow(context)
+        return with_analysis_note(load_workflow(context), data)
 
 
 def report_save(request):
@@ -259,4 +272,4 @@ def report_save(request):
         record['confirmed'] = True
         mission_store.save_event(context, 3, record)
         sessions.remove_preview(token)
-        return load_workflow(context)
+        return with_analysis_note(load_workflow(context), data)

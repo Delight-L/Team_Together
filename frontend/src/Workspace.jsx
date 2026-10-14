@@ -39,7 +39,7 @@ export function Records({ context, user, reviewSeed, onReviewSaved, onSelect, on
           {items.map((item) => (
             <li key={item.city + item.district + item.month}>
               <button className={isCurrent(item) ? 'selected' : ''} aria-current={isCurrent(item) || undefined} onClick={() => onSelect(item)}>
-                <span><b>{item.district}</b><small>{item.city} · {item.month}</small></span>
+                <span><b>{item.district}</b><small>{item.city} · {item.month}{item.workflow.previous_rounds?.length ? ` · ${item.workflow.previous_rounds.length + 1}회차` : ''}</small></span>
                 <span className={`record-status ${item.workflow.workflow_complete ? 'done' : ''}`}>{statusOf(item.workflow)}</span>
                 <span className="record-progress" title="근거 검토 → 사업 검토 → 보고서 중 마친 단계 수">{(item.workflow.done || []).filter((n) => n > 0).length}/3단계</span>
               </button>

@@ -73,6 +73,7 @@ ROUTES = {
     ('POST', '/api/report/content'): routes_work.report_content,
     ('POST', '/api/report/preview'): routes_work.report_preview,
     ('POST', '/api/workflow/start'): routes_work.workflow_start,
+    ('POST', '/api/workflow/restart'): routes_work.workflow_restart,
     ('POST', '/api/workflow/confirm'): routes_work.workflow_confirm,
     ('POST', '/api/workflow/review'): routes_work.workflow_review,
     ('POST', '/api/report'): routes_work.report_save,

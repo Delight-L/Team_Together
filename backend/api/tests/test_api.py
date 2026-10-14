@@ -283,6 +283,22 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(status,200)
         self.assertTrue(reopened['analysis_changed'])
         self.assertTrue(reopened['workflow_complete'])
+        # 완료한 업무도 새 분석으로 다시 시작합니다. 이전 회차와 보고서 차수는 남습니다.
+        self.assertEqual(self.request('POST','/api/workflow/restart',context)[0],400)  # 확인 없이 불가
+        self.assertEqual(self.request('POST','/api/workflow/restart',context | {'confirmed':True})[0],400)  # 같은 분석이면 불가
+        newer=patch('backend.api.routes_work.dashboard_data',return_value=self.data | {'runId':'newer-run'})
+        with newer:
+            status,restarted=self.request('POST','/api/workflow/restart',context | {'confirmed':True})
+            self.assertEqual(status,200)
+            self.assertEqual(restarted['done'],[0])
+            self.assertFalse(restarted['workflow_complete'])
+            self.assertFalse(restarted['analysis_changed'])
+            self.assertEqual(restarted['analysis_run_id'],'newer-run')
+            self.assertEqual(len(restarted['previous_rounds']),1)
+            self.assertEqual(restarted['previous_rounds'][0]['report']['revision'],2)
+            self.assertEqual(self.request('POST','/api/workflow/confirm',context)[0],200)
+        self.assertEqual([v['revision'] for v in self.request('GET','/api/report/versions?'+urlencode(context))[1]['items']],[2,1])
+        self.assertEqual(self.request('GET','/api/report?'+urlencode(context | {'revision':2}))[1],latest)
         self.assertEqual(self.request('POST','/api/report',context | {'token':new_draft['token'],'confirmed':True})[0],400)
         missions=self.request('GET','/api/missions')[1]['items']
         self.assertEqual(len(missions),1)
