@@ -1,0 +1,25 @@
+.git
+.env
+**/.env
+**/*.key
+**/*.pem
+.venv
+**/node_modules
+frontend/dist
+**/__pycache__
+**/.pytest_cache
+**/tests
+**/*.pyc
+**/*.log
+**/*.sqlite*
+**/runtime
+**/ai_settings.json
+.tmp
+.claude
+output
+data
+**/data/raw
+**/raw_data
+docs
+**/*.pptx
+assets/brand/통일 수정본
