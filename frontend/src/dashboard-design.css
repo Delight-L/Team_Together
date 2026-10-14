@@ -28,7 +28,7 @@
 .group-shell .gd-tabbar .gd-add { flex-shrink: 0; margin-left: 6px; height: 32px; min-width: 32px; }
 .group-shell .gd-tabs-label { display: none; }
 .group-shell .gd-tabbar .gd-tab { position: relative; flex-shrink: 0; margin: 3px 0 0; height: 47px; border: 0; border-radius: 0; transform: none; background: url('./assets/dossier-tab-inactive.svg') center bottom / 100% 100% no-repeat; box-shadow: none; padding: 0 18px; }
-.group-shell .gd-tabbar .gd-group-tab { width: 336px; }
+.group-shell .gd-tabbar .gd-group-tab { width: 272px; }
 .group-shell .gd-tabbar .gd-group-tab > button:first-child { min-width: 0; overflow: hidden; }
 .group-shell .gd-tabbar .gd-group-tab > button:first-child > span { min-width: 0; }
 .group-shell .gd-tabbar .gd-group-tab b { overflow: hidden; text-overflow: ellipsis; }
@@ -42,8 +42,8 @@
 .group-shell .gd-tabbar .gd-tab small { color: inherit; font-size: 13px; }
 .group-shell .gd-tabbar .gd-tab > button + button { display: grid; place-items: center; flex-shrink: 0; align-self: center; width: 28px; height: 44px; padding: 0; color: #a8bee5; line-height: 1; }
 .group-shell .gd-tabbar .gd-tab > button + button svg { width: 18px; height: 18px; }
-.group-shell .gd-tabbar .gd-evidence-tab { width: 215px; min-width: 0; }
-.group-shell .gd-tabbar .gd-files-tab { width: 170px; min-width: 0; }
+.group-shell .gd-tabbar .gd-evidence-tab { width: 196px; min-width: 0; }
+.group-shell .gd-tabbar .gd-files-tab { width: 140px; min-width: 0; }
 .group-shell .gd-add { color: #2563eb; margin-left: 8px; }
 .group-shell .gd-case { position: relative; background: #fff; border: 7px solid #f2dfc4; border-top: 0; border-radius: 0 0 18px 18px; box-shadow: 0 3px 5px #8c6a2521; padding: 18px 18px 10px; overflow: hidden; container-type: size; }
 .group-shell .gd-case:not(.gd-evidence-panel):not(.gd-files-panel) { align-self: stretch; height: auto; max-height: none; }
@@ -199,13 +199,13 @@
   .group-shell .gd-summary-pages { display: flex; gap: 5px; flex-shrink: 0; }
   .group-shell .gd-summary-pages button { flex: 1; padding: 7px 4px; border: 1px solid #dce6f4; border-radius: 7px; font-size: 12px; color: #4b6488; }
   .group-shell .gd-summary-pages button[aria-current] { background: #eaf2ff; border-color: #93b8fa; color: #2563eb; font-weight: 700; }
-  .group-shell .gd-summary[data-summary-page='0'] .gd-context-cards,
-  .group-shell .gd-summary:not([data-summary-page='0']) .gd-overview,
-  .group-shell .gd-summary[data-summary-page='1'] .gd-context-cards > article:nth-child(2),
-  .group-shell .gd-summary[data-summary-page='2'] .gd-context-cards > article:first-child { display: none; }
-  .group-shell .gd-summary .gd-context-cards { display: block; flex: 1; }
-  .group-shell .gd-summary .gd-context-cards > article { height: 100%; }
-  .group-shell .gd-summary .gd-overview { flex: 1; min-height: 0; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; }
+  /* 구역을 숨기지 않고 한 열로 쌓아 요약 안에서 스크롤합니다. 위쪽 버튼은 각 구역으로 이동합니다. */
+  .group-shell .gd-summary { flex-direction: column; overflow-y: auto; overscroll-behavior: contain; height: 100%; }
+  .group-shell .gd-summary-pages { position: sticky; top: -12px; z-index: 2; margin: -12px -12px 0; padding: 12px 12px 8px; background: #fff; }
+  .group-shell .gd-summary .gd-context-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; flex: none; }
+  .group-shell .gd-summary .gd-context-cards > article { height: auto; overflow: visible; }
+  .group-shell .gd-summary .gd-overview { flex: none; min-height: 0; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; }
+  .group-shell .gd-summary .gd-mini-trend .gd-line, .group-shell .gd-summary .gd-mini-share .gd-line { flex: none; height: 120px; }
   .group-shell .gd-summary .gd-overview-copy { grid-column: 1 / -1; }
   .group-shell .gd-summary .gd-headline-row { flex-direction: row; }
   .group-shell .gd-summary .gd-context-cards p { font-size: 12px; }
@@ -352,3 +352,10 @@
   .gd-tabbar .gd-tab > button:first-child > span { min-width: 0; }
   .gd-tabbar .gd-tab b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+/* 탭 이름은 너비가 줄면 한 줄 말줄임표로 줄입니다. */
+.group-shell .gd-tabbar .gd-tab > button:first-child { min-width: 0; overflow: hidden; }
+.group-shell .gd-tabbar .gd-tab > button:first-child > span { min-width: 0; overflow: hidden; }
+.group-shell .gd-tabbar .gd-tab b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.group-shell .gd-tabbar .gd-tab small { white-space: nowrap; flex-shrink: 0; }
+.group-shell .gd-tabbar .gd-tab { padding-left: 12px; padding-right: 12px; }
