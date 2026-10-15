@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from backend.chatbot.welfare.app.llm.client import LLM_ERRORS, EmptyAnswer, ai_ready, llm
 from backend.chatbot.welfare.app.schemas import ChatMessage
 from backend.chatbot.welfare.app.dialogue.resources import search, local_answer
-from backend.chatbot.guardrails import redact_unverified
+from backend.chatbot.guardrails import StreamRedactor
 
 SYSTEM = """당신은 복지 담당 직원의 기존 사업 조회와 신규 사업 구상을 돕는 '보미'입니다.
 사용자 요청과 앞선 대화를 보고 다음 두 역할을 구분하세요.
@@ -14,7 +14,7 @@ SYSTEM = """당신은 복지 담당 직원의 기존 사업 조회와 신규 사
 신규 구상 요청을 자료에 없다는 이유로 거절하거나 기존 사업 목록으로 대신 답하지 마세요.
 신규 사업에는 '신규 사업 기획 아이디어 · 현재 운영 중인 사업이 아님'을 명시하고 2~3개 안을 제안하세요. 요청한 개수가 있으면 그에 맞추세요.
 각 안에 사업명(가칭), 목적, 제안 대상, 핵심 활동, 운영 방식, 성과 지표, 실행 전 확인 사항을 포함하세요.
-지역·대상·직원 요청과 제공된 분석 근거가 있으면 반영하세요. 기존 사업 자료는 참고 사례로만 구분해 활용하세요.
+지역·대상·직원 요청과 제공된 분석 근거가 있으면 반영하세요. 분석 근거(context.analysis)는 동 전체의 통화·문자·이동 집계 변화이며 개인의 고립 판정이나 변화 원인이 아닙니다. 신규 기획안에서는 어떤 후보 지표를 근거로 삼았는지 밝히고, 그 변화를 확인할 성과 지표와 연결하세요. 기존 사업 자료는 참고 사례로만 구분해 활용하세요.
 확인된 사실과 기획 제안을 구분하세요. 실제 분석 자료가 제공되지 않았다면 지역의 고립 증가·수요·원인을 지어내지 말고 수요 조사를 실행 전 확인 사항에 넣으세요.
 신규 기획안의 대상은 제안 대상이며 실제 이용 자격이 아닙니다. 예산 금액·확정 일정·효과·기관 참여를 만들어 내지 말고 필요한 자원, 협의할 기관 유형, 측정할 지표로 설명하세요.
 정보가 부족해도 가능한 범위의 기획안을 먼저 제시하고, 구체화에 필요한 예산 범위·운영 기간·인력 등을 마지막에 질문하세요.
@@ -75,17 +75,19 @@ async def handle_chat(history: list[ChatMessage], context: dict | None = None, u
     if planning_label:
         yield "token", {"text": planning_label}
     tokens = llm.stream(messages)
+    # 답변 속 연락처·URL·금액이 검색된 팀 자료에 없으면 가립니다. 줄 단위로 검사한 뒤 보내므로 가리기 전 내용은 화면에 나오지 않습니다.
+    redactor = StreamRedactor(json.dumps(material, ensure_ascii=False))
     try:
         async for text in tokens:
             parts.append(text)
-            yield "token", {"text": text}
+            if ready := redactor.feed(text):
+                yield "token", {"text": ready}
         if not parts:
             raise EmptyAnswer("빈 AI 응답")
-        # 답변 속 연락처·URL·금액이 검색된 팀 자료에 없으면 가린 답변으로 바꿉니다.
-        answer, hidden = redact_unverified("".join(parts), json.dumps(material, ensure_ascii=False))
-        if hidden:
-            yield "replace", {"text": planning_label + answer, "mode": "AI 대화 · 자료에 없는 정보 가림"}
-            yield "notice", {"message": "답변에 팀 자료에서 확인되지 않은 " + "·".join(hidden) + "이(가) 있어 가렸어요. 담당 기관에 직접 확인해 주세요."}
+        if rest := redactor.flush():
+            yield "token", {"text": rest}
+        if redactor.hidden:
+            yield "notice", {"message": "답변에 팀 자료에서 확인되지 않은 " + "·".join(redactor.hidden) + "이(가) 있어 가렸어요. 담당 기관에 직접 확인해 주세요."}
     except LLM_ERRORS:
         yield "error", {"message": "AI 응답을 완료하지 못해 자료 검색 안내로 전환했습니다. 관리자 AI 설정과 연결을 확인해 주세요."}
         answer = ('AI 연결 문제로 신규 사업 기획안을 완성하지 못했습니다. 잠시 후 다시 요청해 주세요.'

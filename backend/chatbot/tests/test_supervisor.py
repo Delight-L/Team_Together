@@ -79,6 +79,32 @@ class RouteTest(unittest.TestCase):
         self.assertEqual(draft['context']['district'], '삼성1동')
         self.assertIn('교류 지원', result['replace']['text'])
 
+    def test_welfare_ai_gets_risk_signal_summary(self):
+        seen = {}
+        async def tokens(messages):
+            seen['system'] = messages[0]['content']
+            yield '기획안'
+        with ai_key('test'), patch.object(llm, 'complete', fake_complete('{"agent": "welfare"}')), \
+                patch.object(llm, 'stream', tokens):
+            events('신규 사업 구상해 줘', ai=True)
+        self.assertIn('후보_지표', seen['system'])
+        self.assertIn('전화 연락', seen['system'])
+        self.assertIn('-12.3%', seen['system'])
+        summary = supervisor.signal_summary(CONTEXT, DATA, ({'age': '70대', 'sex': '여성'}, {}))
+        self.assertEqual(summary['후보_지표_수'], 1)
+        self.assertIn('동 전체 값', summary['선택_그룹'])
+        self.assertIsNone(supervisor.signal_summary(CONTEXT | {'district': ''}, DATA))
+
+    def test_group_report_says_district_basis(self):
+        group = ({'age': '70대', 'sex': '여성', 'district': '삼성1동'}, {})
+        with patch('backend.db.mission_store.load_all', return_value={}):
+            result = dict(supervisor.stream([{'role': 'user', 'content': '보고서 초안 만들어 줘'}],
+                                            CONTEXT, DATA, group, use_ai=False))
+            without_group = dict(events('보고서 초안 만들어 줘'))
+        self.assertIn('삼성1동 동 전체 기준', result['notice']['message'])
+        self.assertIn('70대 · 여성', result['notice']['message'])
+        self.assertNotIn('notice', without_group)
+
     def test_long_question_rejected_before_stream(self):
         with self.assertRaises(ValueError):
             supervisor.stream([{'role': 'user', 'content': 'x' * 2001}], CONTEXT, DATA)
