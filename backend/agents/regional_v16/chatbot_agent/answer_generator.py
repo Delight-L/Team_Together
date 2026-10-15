@@ -275,6 +275,41 @@ def _concise_signal_list(intent,evidence):
     paragraphs.append('지역 집계만으로 주민의 고립 여부나 변화의 원인을 판단할 수는 없어요.')
     return '\n\n'.join(paragraphs)
 
+def _metric_value_answer(intent, evidence):
+    rows=sorted(evidence.rows,key=lambda item:(str(item.get('date','')),str(item.get('행정동',''))))
+    row=rows[0] if rows else {}
+    if not row:
+        return '선택한 조건의 활동 집계값을 찾지 못했습니다.'
+    metric=METRICS[intent.metric]
+    subject=f"{row.get('행정동')} {_age_label(row.get('age_band'))}" if row.get('age_band') else str(row.get('행정동'))
+    if len(rows) > 1:
+        changes=[]
+        for item in rows:
+            value=item.get(intent.metric+'_log_change')
+            if isinstance(value,(int,float)) and math.isfinite(value):
+                changes.append((item, math.expm1(value)*100))
+        if changes:
+            first, last = changes[0], changes[-1]
+            low=min(changes,key=lambda item:item[1])
+            high=max(changes,key=lambda item:item[1])
+            return (f"{subject}의 {metric} 전월 변화율은 {first[0]['date']}~{last[0]['date']}에 확인됩니다. "
+                    f"가장 낮은 달은 {low[0]['date']} {low[1]:.1f}%, 가장 높은 달은 {high[0]['date']} {high[1]:.1f}%입니다. "
+                    '이 수치는 선택한 동의 집계 변화이며, 개인의 상태를 뜻하지 않습니다.')
+    return f"{observation_period_text(row.get('date'))} {subject}의 집계값은 {metric} {_value(row.get(intent.metric))}입니다."
+
+def _pct(value):
+    return f"{float(value) * 100:.2f}%" if _number(value) else '확인 불가'
+
+def _context_answer(evidence):
+    row=evidence.rows[0] if evidence.rows else {}
+    if not row:
+        return '선택한 동의 저장된 클러스터 자료가 없습니다. 동별 수치가 아닌 강남구 전체 참고자료가 필요하면 그렇게 요청해 주세요.'
+    cluster=row.get('cluster_type')
+    if not cluster:
+        return f"{row.get('dong_name')}의 클러스터 분류가 저장되어 있지 않습니다. 동별 수치가 아닌 강남구 전체 참고자료가 필요하면 그렇게 요청해 주세요."
+    return (f"{row.get('dong_name')}은 “{cluster}” 클러스터입니다. "
+            '비슷한 지역 구조를 가진 동끼리 묶은 분류이며, 개인의 위험도나 신호 원인을 뜻하지 않습니다.')
+
 
 def _support_answer(evidence):
     """Show the numbers people can act on, then explain their limited relation."""
@@ -411,6 +446,8 @@ def _context_lines(evidence,skip_regions=False,skip_local=False):
 def template_answer(intent:QueryIntent,evidence:Evidence,knowledge:str,explanation:str='')->str:
     if intent.question_type=='age_activity':return _age_activity_answer(intent,evidence)
     if intent.question_type=='consumption':return _consumption_answer(intent,evidence)
+    if intent.question_type=='activity' and intent.metric:return _metric_value_answer(intent,evidence)
+    if intent.question_type=='context':return _context_answer(evidence)
     if intent.question_type in {'rank_regions','signals'}:
         return _concise_signal_list(intent,evidence)
     if intent.question_type=='support':

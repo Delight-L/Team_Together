@@ -79,7 +79,8 @@ def _all_period(text: str) -> bool:
 
 def _limit(text: str) -> int | None:
     # People often ask for "3곳" rather than "3개 동".
-    match = re.search(r"(\d{1,2})\s*(?:개\s*)?(?:동|곳)", text)
+    # Do not read the number in a district name (for example, 삼성2동) as a rank limit.
+    match = re.search(r"(?<![가-힣A-Za-z])(\d{1,2})\s*(?:개\s*)?(?:동|곳)", text)
     if match:
         return max(1, min(int(match.group(1)), 22))
     korean = {"한": 1, "두": 2, "세": 3, "네": 4, "다섯": 5}
@@ -95,24 +96,30 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
     metric = next((code for word,code in METRICS.items() if word in question), None)
     limit = _limit(question)
     age_words=bool(re.search(r'연령|나이|세대|[2-6]0\s*대|60\s*세',q))
+    incremental_follow_up = bool(re.search(r'같은\s*기준월|그럼\s*[2-6]0대|지금\s*선택한|현재\s*선택한', q))
     if any(word in q for word in ('소비','상권','거래')) and any(word in q for word in ('기준','급증 판단','급증 판정')):
         purpose, kind = 'plan_review', 'consumption_criteria'
     elif is_methodology_question(question):
         purpose, kind = "track_change", "methodology"
     elif age_words and re.search(r'볼\s*수|가능|지원|제공',q):
         purpose, kind = 'track_change', 'capabilities'
-    elif age_words and any(word in q for word in ('변화','달라','차이','추이','비교','지표','활동','어떻게')) and not any(word in q for word in ('신호','탐지','기준','이유')):
+    elif age_words and any(word in q for word in ('변화','달라','차이','추이','비교','지표','활동','어떻게')) and not any(word in q for word in ('신호','탐지','판정 기준','이유')):
         purpose, kind = 'track_change', 'age_activity'
     elif any(word in q for word in ('데이터 상태','처리 상태','업데이트 상태','초기 이력','초기이력')):
         purpose,kind='track_change','data_status'
     elif any(word in q for word in ('소비','상권','카드')):
         purpose,kind='plan_review','consumption'
-    elif any(word in q for word in ("지역 특성", "지역적 특성", "지역의 특성", "지역 배경", "보조자료", "함께 볼", "유형", "예방사업", "현장", "추가 확인", "날씨", "다른 설명")):
-        purpose, kind = "plan_review", "context" if "특성" in q or "유형" in q else "support"
+    elif any(word in q for word in ("지역 특성", "지역적 특성", "지역의 특성", "지역 배경", "지역 정보", "동 정보", "이 동의 특성", "선택한 동", "선택 지역", "보조자료", "함께 볼", "유형", "예방사업", "현장", "추가 확인", "날씨", "다른 설명")):
+        # '선택한 동의 지역 정보' is a typology request, not a request to
+        # attach district-wide surveys and consumption cards.
+        context_words=("특성", "유형", "지역 정보", "동 정보", "지역 배경", "이 동", "선택한 동", "선택 지역")
+        purpose, kind = "plan_review", "context" if any(word in q for word in context_words) else "support"
     elif any(word in q for word in ("왜", "이유", "근거", "잡혔", "선정")) or looks_like_reason_followup(question):
         purpose, kind = "track_change", "reason"
     elif any(word in q for word in ("전월", "이전", "이어", "연속", "계속")):
         purpose, kind = "track_change", "previous"
+    elif metric and any(word in q for word in ("알려", "수는", "다시", "값", "얼마")):
+        purpose, kind = "track_change", "activity"
     elif any(word in q for word in ("어떤 활동", "얼마나 변", "변화 보여", "추이","회복","신호 이후","지속성")):
         purpose, kind = "track_change", "activity"
     elif any(word in q for word in ("이례", "robust", "z", "가장 크게")):
@@ -134,8 +141,8 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
         kind == "signals" and signal != "any"
         and any(word in q for word in ("구간", "언제", "시기", "기간"))
     )
-    follow_up = not dong and (kind in {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"} or signal_period_follow_up)
+    follow_up = incremental_follow_up or (not dong and (kind in {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"} or signal_period_follow_up))
     return QueryIntent(purpose, kind, dong, start, end, signal, metric, tuple(needs), limit,
-                       (), follow_up, all_period,age_band=age,
+                       (), follow_up, all_period, age_band=age,
                        age_scope_explicit=bool(age or bands or ambiguous or re.search(r'전\s*연령|전체\s*연령',question)),age_bands=bands,
                        include_values=bool(re.search(r'원값|실제\s*값|월별\s*값|원수치',question)))

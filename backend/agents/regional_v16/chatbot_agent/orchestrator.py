@@ -1,5 +1,6 @@
 """4단계 챗봇 오케스트레이터. 단계 구현은 각각의 전용 모듈에 둔다."""
 from __future__ import annotations
+import re
 from pathlib import Path
 from dataclasses import replace
 from threading import RLock
@@ -17,6 +18,7 @@ from .llm_intent_resolver import IntentResolver
 from .query_planner import complete_and_validate
 from .dialogue_router import DIALOGUE_REPLIES
 from .analysis2_knowledge import methodology_answer
+from .observation_period import observation_period
 
 class Chatbot:
  def __init__(self, project_root: Path, model: str="gemini-2.5-flash-lite", intent_resolver=None, moderator=None, repository=None):
@@ -44,6 +46,19 @@ class Chatbot:
   if not guard.allowed: return AnswerResult(guard.message, Evidence("입력 안내",guard.message))
   guard=self.moderator.check(question.strip())
   if not guard.allowed: return AnswerResult(guard.message, Evidence("입력 안전 안내",guard.message))
+  # 지역·연령 집계는 개인의 상태를 판정할 수 없으므로, 이 요청에는
+  # 신호·보조자료를 먼저 나열하지 않고 제한을 직접 답한다.
+  if re.search(r"고립.*(?:확정|판단)|(?:확정|판단).*고립", question):
+   text='확정할 수 없습니다. 화면의 신호는 지역 집단에서 관찰된 행동 변화에 관한 정보이며, 해당 동 주민이나 특정 개인의 고립을 판단하는 근거가 아닙니다.'
+   return AnswerResult(text,Evidence("해석 범위 안내",text))
+  # 기준월과 실제 관측월을 혼동하지 않도록, 직전 확정 조회의 기간을
+  # 바로 설명한다. 처리 이력·전체 데이터 범위는 이 질문에 포함하지 않는다.
+  previous=self.memory.last_scope()
+  if previous and previous.start_month and previous.start_month==previous.end_month and re.search(r"실제.*(?:어느|몇).*(?:달|월)|관측.*(?:기간|달|월)",question):
+   start,end=observation_period(previous.start_month) or (None,None)
+   if start and end:
+    text=f"{previous.start_month[:4]}년 {int(previous.start_month[5:])}월은 자료의 기준월입니다. 실제 관측기간은 {start[:4]}년 {int(start[5:])}~{int(end[5:])}월입니다."
+    return AnswerResult(text,Evidence("관측기간 안내",text))
   # 2. 목적 체크와 메뉴 필터링
   self.intent_resolver.available_period=self.repo.available_period()
   intent=self.intent_resolver.resolve(question,self.repo.districts(),self.memory)
@@ -54,7 +69,7 @@ class Chatbot:
    text=methodology_answer(question)
    return AnswerResult(text,Evidence("이상신호 판정 기준",text),
                        ("삼성1동은 왜 확인 대상인가요?", "연령별 기준도 다른가요?"))
-  if self.dashboard_scope and not intent.dong and not intent.dongs:
+  if self.dashboard_scope and intent.question_type not in {'signals','rank_regions'} and not intent.dong and not intent.dongs:
    intent=replace(intent,dong=self.dashboard_scope['dong'],start_month=intent.start_month or self.dashboard_scope['label_month'],end_month=intent.end_month or self.dashboard_scope['label_month'],age_band=intent.age_band if intent.age_scope_explicit or intent.question_type=='age_activity' else intent.age_band or self.dashboard_scope.get('age_band'),needs=tuple(x for x in intent.needs if x not in {'행정동','기간'}))
   if intent.purpose == "dialogue":
    text=DIALOGUE_REPLIES.get(intent.question_type,DIALOGUE_REPLIES["off_topic"])

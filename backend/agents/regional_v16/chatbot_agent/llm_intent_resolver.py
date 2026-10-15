@@ -195,6 +195,14 @@ JSON만 반환하세요:
                 client.close()
             raw=_json_object(getattr(response,"text","") or "")
             intent=self._apply_local_constraints(self._validate(raw,districts), rule_intent, explicit_names)
+            if (re.search(r"이상\s*신호", question)
+                    and re.search(r"발생한\s*지역|탐지된\s*지역", question)
+                    and re.search(r"요약|상태", question)):
+                intent = replace(intent, purpose="find_region", question_type="signals",
+                                 start_month=rule_intent.start_month or intent.start_month,
+                                 end_month=rule_intent.end_month or intent.end_month,
+                                 needs=tuple(x for x in intent.needs if x not in {"행정동", "지표", "조회 목적"}),
+                                 summary_only=True)
             self.last_source='gemini'
             if intent.question_type=='age_activity':
                 bands,unsupported=comparison_ages(question)
@@ -206,13 +214,32 @@ JSON만 반환하세요:
             if ambiguous:return replace(intent,needs=(*intent.needs,'연령'))
             if age:return replace(intent,age_band=age,age_scope_explicit=True)
             if re.search(r'전\s*연령|전체\s*연령',question):return replace(intent,age_band=None,age_scope_explicit=True)
+            if (intent.question_type in {"signals", "rank_regions"}
+                    and re.search(r"신호", question)
+                    and re.search(r"요약|상태", question)
+                    and re.search(r"지역|동", question)):
+                intent = replace(intent, summary_only=True)
             return intent
         except Exception as exc:
             self.last_source='local_model_error'
             # Do not log API messages or credentials; make silent fallback diagnosable.
             LOGGER.warning('Gemini intent classification failed (%s, status=%s); using local fallback',
                            type(exc).__name__,getattr(exc,'code',None))
-            return self._fallback(question,districts,memory,explicit_names)
+        intent = self._fallback(question,districts,memory,explicit_names)
+        if (re.search(r"이상\s*신호", question)
+                and re.search(r"발생한\s*지역|탐지된\s*지역", question)
+                and re.search(r"요약|상태", question)):
+            intent = replace(intent, purpose="find_region", question_type="signals",
+                             start_month=rule_intent.start_month or intent.start_month,
+                             end_month=rule_intent.end_month or intent.end_month,
+                             needs=tuple(x for x in intent.needs if x not in {"행정동", "지표", "조회 목적"}),
+                             summary_only=True)
+        if (intent.question_type in {"signals", "rank_regions"}
+                and re.search(r"신호", question)
+                and re.search(r"요약|상태", question)
+                and re.search(r"지역|동", question)):
+            intent = replace(intent, summary_only=True)
+        return intent
 
     def _fallback(self,question,districts,memory,names):
         parsed=self._apply_explicit_districts(parse_intent(question,districts),names)
@@ -220,8 +247,16 @@ JSON만 반환하세요:
         compact=re.sub(r'\s+','',normalize_year_shorthand(question))
         date_only=bool((parsed.start_month and parsed.end_month or parsed.all_available_period) and
                        not re.sub(r'20\d{2}|\d+|상반기|하반기|분기|기간|전체|년|월|부터|까지|로|[~～∼–.,!?-]','',compact))
-        age_only=bool(re.fullmatch(r'(?:[2-6]0대(?:이상)?|60(?:세|살)이상)',compact))
+        age_only=bool(re.fullmatch(r'(?:그럼)?(?:[2-6]0대(?:이상)?|60(?:세|살)이상)(?:는)?[.!?]?',compact))
         dong_only=compact in districts
+        previous=memory.last_scope()
+        if previous and age_only and previous.question_type in {"activity","age_activity"}:
+            age,unsupported=age_condition(question)
+            return QueryIntent(previous.purpose,previous.question_type,
+                               previous.districts[0] if len(previous.districts)==1 else None,
+                               previous.start_month,previous.end_month,previous.signal,previous.metric,
+                               ("연령",) if unsupported else (),None,previous.districts,True,False,None,
+                               age or previous.age_band,True,(age,) if age and previous.question_type=="age_activity" else previous.age_bands)
         if pending and (date_only or age_only or dong_only):
             age,unsupported=age_condition(question)
             bands,_=comparison_ages(question)
@@ -235,6 +270,10 @@ JSON만 반환하세요:
                            age_scope_explicit=age_only or pending.age_scope_explicit,
                            all_available_period=parsed.all_available_period,
                            needs=needs,use_previous_scope=True,clarifying_question=None)
+        # Regional information is a data-backed typology request even when it
+        # starts with a short dashboard pronoun such as "이 동".
+        if parsed.question_type in {"context", "support"}:
+            return parsed
         dialogue=fallback_dialogue(question,districts,memory)
         return dialogue if dialogue is not None else parsed
 
@@ -248,6 +287,11 @@ JSON만 반환하세요:
         range; a partial local parse must never overwrite semantic dates.
         """
         intent = cls._apply_explicit_districts(intent, names)
+        # These are explicit response contracts in the current question, not
+        # a best-effort semantic guess.  Preserve them even when Gemini calls
+        # the same short Korean phrasing a generic signal query.
+        if rule_intent.question_type == "context":
+            intent = replace(intent, purpose="plan_review", question_type="context")
         # ``지역 배경 자료/정보`` has a stable response contract: it asks for
         # the numeric supporting context, not only a cluster label.  Gemini may
         # call both forms "context", but preserve the user's requested output
@@ -284,7 +328,9 @@ JSON만 반환하세요:
         metric=raw.get("metric") if raw.get("metric") in METRICS else None
         limit=raw.get("limit")
         limit=max(1,min(int(limit),22)) if isinstance(limit,(int,float)) else None
-        needs=tuple(str(x) for x in raw.get("needs",[]) if str(x) in {"행정동","기간","지표","조회 목적","연령"})
+        # 조회 목적은 분류 결과이지 사용자에게 되물을 입력 슬롯이 아니다.
+        # Gemini가 이를 needs에 섞어 보내도 실제 조회를 막지 않도록 버린다.
+        needs=tuple(str(x) for x in raw.get("needs",[]) if str(x) in {"행정동","기간","지표","연령"})
         # This is a response-contract check, not keyword intent routing: a
         # signal list is a region-finding query and its district is the result.
         # Never let an inconsistent model field turn it into a district prompt.
