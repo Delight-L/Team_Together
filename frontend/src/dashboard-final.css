@@ -407,3 +407,27 @@
 
 .ev-actual-cards .ev-actual-local strong { color:#7c3aed; }
 .ev-actual-cards .ev-actual-absolute strong { color:#e45d70; }
+
+/* 유동량 참고: 비중은 한 줄로 줄이고, 남는 높이는 월별 추이 그래프가 모두 씁니다.
+   그래프 높이는 칸 크기로 정해지고, LineChart가 그 크기에 맞춰 viewBox 높이를 다시 계산합니다. */
+.app-shell.group-shell .gd-summary .gd-unified-flow { justify-content:flex-start; }
+.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-trend { flex:1 1 0;min-height:110px;display:flex;flex-direction:column; }
+.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-trend .gd-line { flex:1 1 0;height:0;min-height:100px;max-height:none; }
+.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-trend > small.gd-axis-note { display:block;font-size:10px;line-height:1.3;margin:2px 0 0;color:#71829e; }
+.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-share { display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:2px 8px;flex:none; }
+.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-share h4 { font-size:11px;margin:0;color:#61799a; }
+.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-share strong { font-size:17px;line-height:1.2;margin:0; }
+.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-share strong small { font-size:11px; }
+.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-share .gd-share-track { grid-column:1/-1;height:5px; }
+
+/* 보미 패널 너비 조절: 사용자가 정한 폭이 있으면 모든 화면에서 세 번째 열로 씁니다(서랍 모드 제외). */
+.app-shell.with-chat.chat-resized:not(.chat-drawer) { grid-template-columns:var(--nav-width) minmax(0,1fr) min(var(--chat-width),50vw); }
+.app-shell:not(.chat-drawer) .bomi-chat.panel { position:relative; }
+.chat-resizer { position:absolute;z-index:35;top:0;bottom:0;left:-7px;width:14px;cursor:col-resize;touch-action:none;outline:none; }
+.chat-resizer::before { content:"";position:absolute;top:0;bottom:0;left:6px;width:2px;background:transparent;transition:background .15s; }
+.chat-resizer::after { content:"";position:absolute;top:50%;left:2px;width:10px;height:46px;transform:translateY(-50%);box-sizing:border-box;border:1px solid #d5dce6;border-radius:6px;box-shadow:0 2px 6px #172b4d14;
+  background:radial-gradient(circle,#94a3b8 1.2px,transparent 1.6px) center/4px 6px repeat-y,#fff;transition:border-color .15s,background-color .15s; }
+.chat-resizer:hover::before,.chat-resizer:focus-visible::before,body.chat-resizing .chat-resizer::before { background:#2563eb80; }
+.chat-resizer:hover::after,.chat-resizer:focus-visible::after,body.chat-resizing .chat-resizer::after { border-color:#2563eb;background-color:#f5f8ff; }
+.chat-resizer:focus-visible::after { outline:2px solid #2563eb;outline-offset:2px; }
+body.chat-resizing,body.chat-resizing * { cursor:col-resize!important;user-select:none!important; }

@@ -36,9 +36,12 @@ export default function ClusterMap({regions,selected,onSelect}){
    map=new MapLibreMap({container:container.current,style,center:[127.065,37.5],zoom:11,dragRotate:false,pitchWithRotate:false,attributionControl:false});
    mapRef.current=map;map.touchZoomRotate.disableRotation();
    map.addControl(new AttributionControl({compact:true,customAttribution:'경계: SGIS / admdongkor · CC BY 4.0'}),'bottom-right');
+   // 출처 표시는 라이선스상 남기되, 넓은 지도에서도 펼쳐지지 않게 항상 접어 둡니다(ⓘ를 누르면 펼쳐짐).
+   const foldAttribution=()=>{const a=container.current?.querySelector('.maplibregl-ctrl-attrib');a?.removeAttribute('open');a?.classList.remove('maplibregl-compact-show');};
+   foldAttribution();
    const fit=()=>map.fitBounds(featureBounds(initial),{padding:{top:34,bottom:36,left:34,right:34},duration:0,maxZoom:12.5});
    map.on('load',()=>{
-    fit();setReady(true);
+    fit();setReady(true);foldAttribution();
     for(const f of initial){const name=f.properties.name;const el=document.createElement('button');el.type='button';el.className='ri-map-label';el.textContent=name;el.setAttribute('aria-label',`지도에서 ${name} 선택`);el.addEventListener('click',()=>latest.current.onSelect(name));
      const marker=new Marker({element:el}).setLngLat(boundaryCenter(f)).addTo(map);markers.push({marker,el,name});}
     for(const {el,name} of markers){el.classList.toggle('selected',name===latest.current.selected);el.setAttribute('aria-pressed',String(name===latest.current.selected));}
@@ -47,7 +50,7 @@ export default function ClusterMap({regions,selected,onSelect}){
    map.on('mouseenter','district-fill',()=>map.getCanvas().style.cursor='pointer');
    map.on('mouseleave','district-fill',()=>map.getCanvas().style.cursor='');
    map.on('moveend',()=>{for(const {el,name} of markers){el.classList.toggle('selected',name===latest.current.selected);el.setAttribute('aria-pressed',String(name===latest.current.selected));}});
-   const observer=new ResizeObserver(()=>{map.resize();fit();});observer.observe(container.current);map._riResize=observer;
+   const observer=new ResizeObserver(()=>{map.resize();fit();foldAttribution();});observer.observe(container.current);map._riResize=observer;
    map._riMarkers=markers;
   }catch{map?.remove();mapRef.current=null;setFailed(true);}
   return ()=>{map?._riResize?.disconnect();markers.forEach(m=>m.marker.remove());map?.remove();mapRef.current=null;};

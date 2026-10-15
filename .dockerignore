@@ -18,6 +18,9 @@ frontend/dist
 .claude
 output
 data
+# 지역 분석 화면(지역 유형·소비·서울서베이)과 집단 브리핑 조사 맥락이 읽는 작은 집계 파일만 포함합니다.
+!data/processed/region_insights.json
+!data/processed/survey_dashboard.json
 **/data/raw
 **/raw_data
 docs

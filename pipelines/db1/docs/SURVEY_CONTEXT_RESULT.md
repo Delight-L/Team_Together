@@ -30,4 +30,4 @@
 
 연도별 원본과 코드 연결을 설정에 등록하면 기존 조사 이력에 추가된다. 파일만 넣으면 자동으로 새 문항을 해석하는 기능은 없다. 원본 다운로드와 설정 등록은 운영 담당자가 연결한다. 2022년 청년 자료는 정적 참고이며 매년 복제하지 않는다. 가구조사 모집단 가중치 합과 코드북의 모집단 수가 달라 인구 확대 추정은 제공하지 않는다.
 
-설명·조회·운영 방법은 `Context/README.md`와 `AI_AGENT_HANDOFF.md`, 실행 검증은 `outputs/integrated/survey_context_validation.json`을 참조한다.
+설명·조회·운영 방법은 [조사 맥락 안내](../README.md#survey-context)와 `AI_AGENT_HANDOFF.md`, 실행 검증은 `outputs/integrated/survey_context_validation.json`을 참조한다.

@@ -231,12 +231,12 @@ Analysis2는 중간 월을 건너뛰지 않고 순서대로 처리한다. 예를
 
 ## Analysis2 연령별 전처리 이력 (2026-10-07)
 
-`a2_age_feature`는 동·연령·월별 전처리 지표이며 탐지 결과가 아닙니다. `service`는 20s·30s·40s·50s·60plus, `five_year`는 원본 연령 코드를 보존합니다. 2022-01~2025-06은 기준선, 이후는 업데이트 구간입니다. `a2_age_raw`는 성별·5세 단위 원본 셀을 보존합니다. `quality_status=available`은 전처리 값의 기본 완전성만 뜻합니다. 기존 통합 뷰의 동별 탐지 신호를 이 연령대에 복사하거나 연령별 고립 신호로 설명하지 마세요. `scan`은 새로운 동별 이력에 맞춰 연령별 이력도 추가합니다. 상세한 분모·품질·업데이트 규칙과 결과 위치는 [Analysis2/AGE_PREPROCESSING.md](Analysis2/AGE_PREPROCESSING.md)에 있습니다.
+`a2_age_feature`는 동·연령·월별 전처리 지표이며 탐지 결과가 아닙니다. `service`는 20s·30s·40s·50s·60plus, `five_year`는 원본 연령 코드를 보존합니다. 2022-01~2025-06은 기준선, 이후는 업데이트 구간입니다. `a2_age_raw`는 성별·5세 단위 원본 셀을 보존합니다. `quality_status=available`은 전처리 값의 기본 완전성만 뜻합니다. 기존 통합 뷰의 동별 탐지 신호를 이 연령대에 복사하거나 연령별 고립 신호로 설명하지 마세요. `scan`은 새로운 동별 이력에 맞춰 연령별 이력도 추가합니다. 상세한 분모·품질·업데이트 규칙과 결과 위치는 [Analysis2/AGE_PREPROCESSING.md](../Analysis2/AGE_PREPROCESSING.md)에 있습니다.
 
 
 ## Analysis2 동·연령별 변화 탐지 (2026-10-07)
 
-`v_a2_age_detection`에서 동·연령·월별 결과를 조회하세요. `a2_age_model`에 고정 기준·보정 임계값·버전, `a2_age_common_change`에 강남구 연령별 공통 변화를 저장합니다. `communication_signal`/`mobility_signal`은 해당 도메인의 감소 신호, `combined_signal`/`isolation_related_candidate`는 두 도메인이 겹친 집단 수준 후보입니다. NULL은 판정 불가능이며 0으로 바꾸지 마세요. `assessment_status`, `review_reasons`, 보조 근거 가용성을 함께 읽으세요. 2025-07~12 결과는 소통 신호 10건, 이동 신호 0건, 동시 후보 0건, 부분 판정 4건입니다. 이는 고립이 없다는 뜻이 아닙니다. 보정 임계값은 탐색용으로 고립 정답 자료를 통한 정확도 검증은 아직 없습니다. 기존 통합 뷰의 동별 탐지와 연령별 탐지를 구분하며, Analysis3 소비의 교차 확인 근거는 새 `v_a23_age_*` 조회에 있으며 고립 확정 근거로 설명하지 마세요. 상세 규칙과 결과 위치는 [Analysis2/AGE_DETECTION.md](Analysis2/AGE_DETECTION.md)를 참조하세요.
+`v_a2_age_detection`에서 동·연령·월별 결과를 조회하세요. `a2_age_model`에 고정 기준·보정 임계값·버전, `a2_age_common_change`에 강남구 연령별 공통 변화를 저장합니다. `communication_signal`/`mobility_signal`은 해당 도메인의 감소 신호, `combined_signal`/`isolation_related_candidate`는 두 도메인이 겹친 집단 수준 후보입니다. NULL은 판정 불가능이며 0으로 바꾸지 마세요. `assessment_status`, `review_reasons`, 보조 근거 가용성을 함께 읽으세요. 2025-07~12 결과는 소통 신호 10건, 이동 신호 0건, 동시 후보 0건, 부분 판정 4건입니다. 이는 고립이 없다는 뜻이 아닙니다. 보정 임계값은 탐색용으로 고립 정답 자료를 통한 정확도 검증은 아직 없습니다. 기존 통합 뷰의 동별 탐지와 연령별 탐지를 구분하며, Analysis3 소비의 교차 확인 근거는 새 `v_a23_age_*` 조회에 있으며 고립 확정 근거로 설명하지 마세요. 상세 규칙과 결과 위치는 [Analysis2/AGE_DETECTION.md](../Analysis2/AGE_DETECTION.md)를 참조하세요.
 
 
 ## 동·연령별 행동과 소비 연결 (2026-10-07)
@@ -259,7 +259,7 @@ Analysis2는 중간 월을 건너뛰지 않고 순서대로 처리한다. 예를
 
 2022년 서울 청년 가구조사·청년조사는 `v_survey_annual`의 별도 survey로 저장한다. 가구조사는 가중 통계, 청년조사는 비가중 응답자 구성비다. 19~39세 및 5년 구간을 보존하며 19세 포함 구간을 DB1 20s로 복사하지 않는다. `ctx_evidence_guide`는 외출·대면교류·온라인 소통·소비 해석과 지원 필요의 참고 문항을 제공한다. 2025년 행동 탐지의 정답 또는 강남구 동별 고립률이 아니다.
 
-새 조사 원본은 연도별 문항·가중치를 확인하고 `config/db1_config.json`의 `survey_context`에 등록한다. 갱신은 `run_db1.ps1 -Command survey-context`이며 일반 `scan`/`watch`에 연결했다. 상세 정의·질의·정정 절차는 [Context/README.md](../Context/README.md), 실행 결과는 [docs/SURVEY_CONTEXT_RESULT.md](SURVEY_CONTEXT_RESULT.md)에 있다.
+새 조사 원본은 연도별 문항·가중치를 확인하고 `config/db1_config.json`의 `survey_context`에 등록한다. 갱신은 `run_db1.ps1 -Command survey-context`이며 일반 `scan`/`watch`에 연결했다. 상세 정의·질의·정정 절차는 [조사 맥락 안내](../README.md#survey-context), 실행 결과는 [docs/SURVEY_CONTEXT_RESULT.md](SURVEY_CONTEXT_RESULT.md)에 있다.
 
 
 ## 신호 이후 네 지표 수준·회복 추적 (2026-10-07)
@@ -336,7 +336,7 @@ v1에서 v2로 최초 이전할 때만 `activity_level.py --migrate-from-v1`을 
 
 SNS 음수 제외 및 증감률 계산에 따른 기존 8건 보류 해석은 철회했습니다. SNS는 시점별 표준화 상대 지수여서 시간 비교에 사용할 수 없습니다. 같은 기준월·연령 내 지역 비교만 제공하고, 0값은 비사용으로 단정하지 않습니다.
 
-필수 설명·보류 기준은 [docs/AI_AGENT_HANDOFF.md](AI_AGENT_HANDOFF.md), 시나리오별 결과는 [docs/RETROSPECTIVE_VALIDATION_20261007.md](RETROSPECTIVE_VALIDATION_20261007.md)를 참조하세요. `outputs/validation/retrospective_20261007/agent_case_review.json`은 2025년까지 10건의 검증 스냅샷입니다. 새 월에 자동 적용되는 위험 결과나 정답 자료가 아닙니다. 재실행 방법은 `Analysis2/validation/README.md`에 있습니다. 원천 공개일·휴일 정의·SNS 품질 및 분모는 추가 확인이 필요합니다.
+필수 설명·보류 기준은 [docs/AI_AGENT_HANDOFF.md](AI_AGENT_HANDOFF.md), 시나리오별 결과는 [docs/RETROSPECTIVE_VALIDATION_20261007.md](RETROSPECTIVE_VALIDATION_20261007.md)를 참조하세요. `outputs/validation/retrospective_20261007/agent_case_review.json`은 2025년까지 10건의 검증 스냅샷입니다. 새 월에 자동 적용되는 위험 결과나 정답 자료가 아닙니다. 재실행 방법은 [과거 재현·민감도 검증](../README.md#validation)에 있습니다. 원천 공개일·휴일 정의·SNS 품질 및 분모는 추가 확인이 필요합니다.
 
 
 ## 원천 정의 정정 및 AI agent 인수 안내
