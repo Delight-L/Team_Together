@@ -140,6 +140,7 @@ class ExplainAiTest(unittest.TestCase):
 class SupervisorGuardTest(unittest.TestCase):
     def run_stream(self, question, ai=False, moderation=None):
         with ai_key('test' if ai else ''), \
+                patch.object(supervisor.v16_service, 'data_ready', return_value=False), \
                 patch.object(llm, 'complete', fake_complete('{"agent": "analysis"}')), \
                 patch.object(llm, 'moderate', AsyncMock(side_effect=moderation) if isinstance(moderation, Exception)
                              else AsyncMock(return_value=moderation or [])) as moderate:

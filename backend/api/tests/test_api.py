@@ -16,6 +16,7 @@ from urllib.parse import urlencode
 from lxml import etree
 from backend.services.report import NS
 
+from backend.agents import v16_service
 from backend.api import limits, server
 from backend.db import mission_store
 from backend.db.tests.work_db import temporary_work_store
@@ -56,6 +57,10 @@ class ApiTest(unittest.TestCase):
         limiter = patch.object(limits, 'chat_limiter', limits.RateLimiter(10**6, 10**6))
         limiter.start()
         self.addCleanup(limiter.stop)
+        # v16 근거 자료(DB1 SQLite)는 저장소에 없으므로 기본은 «자료 없는 서버»로 검사합니다. 실제 자료 검사는 V16ApiTest.
+        self.v16_data = patch.object(v16_service, 'data_ready', return_value=False)
+        self.v16_data.start()
+        self.addCleanup(self.v16_data.stop)
 
     def request(self,method,path,body=None,headers=None):
         connection = http.client.HTTPConnection('127.0.0.1',self.httpd.server_port,timeout=20)
@@ -102,6 +107,42 @@ class ApiTest(unittest.TestCase):
             name, data = block.split('\n', 1)
             events[name.removeprefix('event: ')] = json.loads(data.removeprefix('data: '))
         return status, events
+
+    @unittest.skipUnless(v16_service.data_ready(), 'v16 DB1 SQLite가 없어 건너뜀(저장소에 올리지 않는 자료)')
+    def test_v16_narrative_and_age_followup_keep_the_displayed_reference_month(self):
+        self.login()
+        with patch.object(v16_service, 'data_ready', return_value=True):
+            status, events = self.ask('이 동의 변화를 요약해 줘')
+            self.assertEqual(events['route']['agent'], 'regional_v16')
+            self.assertIn('삼성1동', events['replace']['text'])
+            self.assertIn('지역 배경 정보 보여줘', ' '.join(events['follow_ups']['questions']))
+            question = '2025년 하반기 이상신호 탐지 지역 알려줘'
+            status, events = self.ask(question)
+            self.assertEqual(status, 200)
+            answer = events['replace']['text']
+            self.assertIn('평일 이동 횟수가 6.1% 줄었고, 휴일 이동 횟수가 3.6% 늘었어요.', answer)
+            self.assertIn('연령별 변화도 함께', answer)
+            self.assertIn('별도의 이동 이상신호가 잡히지 않았어요.', answer)
+            self.assertIn('지역 배경 정보 보여줘', ' '.join(events['follow_ups']['questions']))
+            status, followup = self.ask('연령별 평일 이동 변화는 어때?', messages=[
+                {'role': 'user', 'content': question}, {'role': 'assistant', 'content': answer},
+                {'role': 'user', 'content': '연령별 평일 이동 변화는 어때?'}])
+            self.assertEqual(status, 200)
+            text = followup['replace']['text']
+            self.assertIn('삼성1동의 2025년 12월 기준', text)
+            self.assertIn('20대에서는 평일 이동 횟수가 7.3% 줄었어요.', text)
+            self.assertIn('60세 이상에서는 평일 이동 횟수가 5.7% 줄었어요.', text)
+            self.assertNotIn('2025년 7월 기준', text)
+            self.assertNotIn('2025년 11월 기준', text)
+            self.assertNotIn('휴일 이동 횟수', text)
+
+    def test_v16_direct_api_reports_missing_data(self):
+        self.login()
+        body = self.context | {'mode': 'data', 'messages': [{'role': 'user', 'content': '이상신호 기준은?'}]}
+        status, result = self.request('POST', '/api/chat/v16', body)
+        self.assertEqual(status, 200)
+        self.assertIn('DB1 SQLite', result.decode('utf-8'))
+        self.assertIs(self.request('GET', '/api/chat/config')[1]['v16Available'], False)
 
     def test_welfare_chat_and_sources(self):
         self.login()

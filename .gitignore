@@ -78,3 +78,9 @@ pipelines/db1/config/db1_config.local.json
 
 # 검토용 스크린샷·생성 이미지 (로컬 보관)
 output/
+
+# v16 지역 분석 에이전트의 DB1 SQLite(약 100MB)는 저장소에 올리지 않고 따로 전달합니다.
+# 위치를 바꾸려면 DB1_DATABASE_PATH 환경 변수로 지정합니다.
+pipelines/regional_analysis/chatbot_v16/outputs/*.sqlite
+pipelines/regional_analysis/chatbot_v16/outputs/*.sqlite-*
+pipelines/regional_analysis/chatbot_v16/outputs/runtime/

@@ -49,7 +49,7 @@ function saveAiSwitch(userId, on) {
   try { localStorage.setItem(aiSwitchKey(userId), on ? 'on' : 'off'); } catch { /* 기억하지 못해도 동작에는 문제없음 */ }
 }
 // 서버가 알려 준 답변 방식(mode)에 AI 단계가 있으면 AI가 만든 답입니다.
-export const usedAi = mode => /AI (대화|해석|문장 다듬기)/.test(mode || '');
+export const usedAi = mode => /AI (대화|해석|문장 다듬기|의도 판단)/.test(mode || '');
 
 function useChat(context, group, userId) {
   const contextKey = JSON.stringify([context, group || null]);
@@ -112,6 +112,8 @@ function useChat(context, group, userId) {
         else if (event === 'sources') update(m => ({ ...m, sources: payload.records, mode: payload.mode }));
         else if (event === 'replace') update(m => ({ ...m, text: payload.text, mode: payload.mode, source: payload.source || m.source }));
         else if (event === 'actions') update(m => ({ ...m, actions: payload.actions }));
+        // v16 지역 변화 신호 에이전트가 제안하는 다음 질문: 답변 아래 버튼으로 보여 주고 누르면 바로 보냅니다.
+        else if (event === 'follow_ups') update(m => ({ ...m, followUps: payload.questions }));
         else if (event === 'notice') {
           // 가드레일 안내(개인정보 가림, 자료에 없는 정보 가림)는 해당 답변 아래에 표시합니다.
           update(m => ({ ...m, notices: [...(m.notices || []), payload.message] }));
@@ -202,6 +204,10 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
           {[m.mode.split(' · ')[0], m.source].filter(Boolean).join(' · ')}
         </span>}
         {m.notices?.map(n => <p key={n} className="bomi-notice" role="status">ⓘ {n}</p>)}
+        {m.role === 'assistant' && m.followUps?.length > 0 && <div className="bomi-followups" aria-label="다음 질문">
+          <span>다음 질문</span>
+          {m.followUps.map(q => <button type="button" key={q} disabled={chat.busy} onClick={() => submit(q)}>{q}</button>)}
+        </div>}
         {m.sources?.length > 0 && <details className="bomi-sources"><summary>참고한 팀 자료 · {m.sources.length}건</summary>
           {m.sources.map(r => <div key={r.id}><strong>{r.name}</strong><p>{r.source} · p. {r.pages}</p><small>{r.status}</small></div>)}
         </details>}

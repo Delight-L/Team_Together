@@ -22,8 +22,8 @@ export const number = (value, digits = 1) => (Number.isFinite(value) ? value.toF
 
 // 보미의 답변 스트림을 로그인 세션과 선택한 지역 맥락에 연결합니다.
 // body: 지역 맥락(city·district·month), messages, mode('ai'|'data'), 열어 둔 그룹(group)
-export async function streamChat(body, onEvent, signal) {
-  const response = await fetch('/api/chat', {
+export async function streamChat(body, onEvent, signal, endpoint = '/api/chat') {
+  const response = await fetch(endpoint, {
     method: 'POST', credentials: 'same-origin', signal,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...body, stream: true }),

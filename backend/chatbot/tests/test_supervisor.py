@@ -45,11 +45,15 @@ class RouteTest(unittest.TestCase):
         moderate = patch.object(llm, 'moderate', AsyncMock(return_value=[]))
         moderate.start()
         self.addCleanup(moderate.stop)
+        # v16 근거 자료(DB1 SQLite)가 없는 서버 기준: 동 분석은 기존 지역 분석 담당이 답합니다(v16 연결은 test_supervisor_v16).
+        v16_data = patch.object(supervisor.v16_service, 'data_ready', return_value=False)
+        v16_data.start()
+        self.addCleanup(v16_data.stop)
 
     def test_rules_pick_agent_without_ai(self):
         cases = {'보고서 초안 만들어 줘': 'report', '보고서 써줘': 'report',
                  '병원에 함께 가줄 지원이 있나요?': 'welfare', '세곡동행': 'welfare',
-                 '이 동의 변화를 요약해 줘': 'analysis', '후보 판정은 무슨 뜻인가요?': 'analysis'}
+                 '이 동의 변화를 요약해 줘': 'regional_v16', '후보 판정은 무슨 뜻인가요?': 'regional_v16'}
         for question, agent in cases.items():
             self.assertEqual(supervisor.rule_route(question, CONTEXT), agent, question)
 
@@ -117,10 +121,22 @@ class RouteTest(unittest.TestCase):
         self.assertIn('보고서 초안', result['replace']['text'])
         with ai_key('test'), \
                 patch.object(llm, 'complete', fake_complete(OpenAIError('secret'))):
-            self.assertEqual(supervisor.route('후보 판정은 무슨 뜻', [], CONTEXT, True), ('analysis', '규칙'))
+            self.assertEqual(supervisor.route('후보 판정은 무슨 뜻', [], CONTEXT, True), ('regional_v16', '규칙'))
         with ai_key('test'), \
                 patch.object(llm, 'complete', fake_complete('{"agent": "unknown"}')):
             self.assertEqual(supervisor.route('세곡동행', [], CONTEXT, True), ('welfare', '규칙'))
+
+    def test_v16_dispatch_does_not_use_legacy_analysis_generation(self):
+        with ai_key('test'), patch.object(supervisor.v16_service, 'data_ready', return_value=True), \
+                patch.object(llm, 'complete', fake_complete('{"agent": "regional_v16"}')), \
+                patch.object(llm, 'stream') as legacy_stream, \
+                patch.object(supervisor.v16_service, 'reply', return_value={
+                    'answer': '삼성1동의 이동 변화입니다.', 'mode': 'v16 · AI 의도 판단 · DB1 근거'}) as reply:
+            result = events('이 동의 변화를 요약해 줘', ai=True)
+        self.assertEqual(dict(result)['route']['agent'], 'regional_v16')
+        self.assertIn('AI 의도 판단', dict(result)['replace']['mode'])
+        self.assertTrue(reply.call_args.kwargs['use_ai'])
+        legacy_stream.assert_not_called()
 
     def test_ai_analysis_failure_falls_back_to_data(self):
         async def broken(messages):

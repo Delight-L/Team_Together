@@ -41,6 +41,11 @@
 .bomi-message.user { align-self: flex-end; background: var(--line); border-radius: 12px 12px 0 12px; }
 .bomi-message.assistant { align-self: flex-start; background: var(--surface-tint); border: 1px solid var(--line); border-radius: 12px 12px 12px 0; }
 .bomi-meta { display: block; margin-top: 6px; font-size: 11px; color: var(--text-muted); }
+/* v16이 제안하는 다음 질문 버튼 */
+.bomi-followups { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.bomi-followups > span { font-size: 12px; font-weight: 700; color: var(--text-sub); }
+.bomi-followups button { padding: 7px 10px; border: 1px solid #d6e4f8; border-radius: 8px; background: #fff; color: #1d4ed8; font-size: 12px; line-height: 1.5; text-align: left; }
+.bomi-followups button:disabled { opacity: .6; }
 .bomi-sources { margin-top: 6px; font-size: 11px; }
 .bomi-sources summary { cursor: pointer; color: #2563eb; }
 .bomi-sources div { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
