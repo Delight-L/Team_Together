@@ -49,3 +49,11 @@ test('저장 성공 후 제거, 저장소 실패 시 메모리 보존, 로그아
   assert.equal(readDraft(key), null);
   assert.equal(draftStorageFailed(key), false);
 });
+
+test('연령별 작성본 분리와 기존 전체 연령 키 보존', () => {
+ assert.equal(draftKey(user,context,'report'),'welfind-draft-v1:'+JSON.stringify([user.id,context.city,context.district,context.month,'report']));
+ const age30=draftKey(user,{...context,age:'30대'},'report');
+ const age40=draftKey(user,{...context,age:'40대'},'report');
+ assert.notEqual(age30,age40);
+ assert.notEqual(age40,draftKey(user,context,'report'));
+});

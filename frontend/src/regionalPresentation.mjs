@@ -7,8 +7,8 @@ export function householdParts(payload = {}) {
   const parts = [['hh_1_ratio', '1인'], ['hh_2_ratio', '2인'], ['hh_3_ratio', '3인'], ['hh_4plus_ratio', '4인 이상']].map(([key, label]) => ({ label, value: ratioPercent(payload[key]) }));
   return parts.every(p => p.value !== null) && Math.abs(parts.reduce((n, p) => n + p.value, 0) - 100) < 0.1 ? parts : [];
 }
-export function comparisonRows(payload = {}) {
-  return [['call_contacts', '전화 연락'], ['weekday_move_count', '평일 이동']].map(([key, label]) => ({ label, local: logPercent(payload[key + '_log_change']), common: logPercent(payload[key + '_gangnam_median_change'] ?? payload[key + '_common_change']) }));
+export function comparisonRows(payload = {}, metrics = [['call_contacts', '전화 연락'], ['weekday_move_count', '평일 이동']]) {
+  return metrics.map(([key, label]) => ({ label, local: logPercent(payload[key + '_log_change']), common: logPercent(payload[key + '_gangnam_median_change'] ?? payload[key + '_common_change']) }));
 }
 export function signedBar(value, extent) {
   const width = Number.isFinite(value) && extent > 0 ? Math.min(Math.abs(value) / extent, 1) * 50 : 0;

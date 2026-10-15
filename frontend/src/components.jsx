@@ -114,7 +114,7 @@ export function EvidenceTable({ rows }) {
         <tbody>
           {rows.map((r) => (
             <tr key={r.metric_label}>
-              <td>{r.metric_label}</td>
+              <td>{r.metric_label}{r.is_risk_signal && r.detection_path ? ` · ${r.detection_path}` : ''}</td>
               <td>
                 {number(r.change_pct)}
                 {Number.isFinite(r.change_pct) ? '%' : ''}

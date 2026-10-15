@@ -5,6 +5,7 @@ import { number } from './api';
 import { MissionMap } from './MissionMap';
 import ElderlyBackground from './ElderlyBackground';
 import { candidateFirst } from './regionDirectory.mjs';
+import { signalCount, relevantScores } from './ageSignals.mjs';
 export { MissionMap } from './MissionMap';
 
 // 종합 현황과 지역 현황은 같은 원자료를 사용하지만 다른 업무를 돕습니다.
@@ -16,7 +17,7 @@ export function summarizeRegions(assessment, geometry, city, month, months, stru
   return (geometry?.units || []).map((unit) => {
     const rows = current.filter((r) => r['행정동명'] === unit.n);
     const earlier = old.filter((r) => r['행정동명'] === unit.n);
-    const count = rows.filter((r) => r.is_risk_signal).length;
+    const count = signalCount(rows);
     const comparable =
       rows.some((r) => r.has_enough_history) && earlier.some((r) => r.has_enough_history);
     const pending = rows.length > 0 && rows.some((r) => !r.has_enough_history);
@@ -24,14 +25,14 @@ export function summarizeRegions(assessment, geometry, city, month, months, stru
       ? '자료 없음'
       : count > 0
         ? comparable
-          ? earlier.some((r) => r.is_risk_signal)
+          ? earlier.some((r) => r.is_risk_signal && rows.some(c => c.is_risk_signal && (!c.age_band || c.age_band === r.age_band)))
             ? '연속 후보'
             : '신규 후보'
           : '변화 후보'
         : pending
           ? '판단 보류'
           : '기준 미해당';
-    const zValues = rows.map((r) => r.risk_robust_z).filter(Number.isFinite);
+    const zValues = relevantScores(rows);
     return {
       structure: city === '강남구' ? structures.find(r => r.dong_name === unit.n) : null,
       name: unit.n,
@@ -106,14 +107,14 @@ export function RegionInsight({ region, city, month, onClose, onStart, onChat, b
           {region.count}
           <small>개</small>
         </strong>
-        <span>함께 확인할 변화 지표</span>
+        <span>함께 확인할 탐지 집단</span>
       </div>
       {region.rows.length ? (
         <EvidenceTable rows={region.rows} />
       ) : (
         <p className="empty">이 지역의 실제 분석 자료가 없습니다.</p>
       )}
-      <p className="hint">{region.count > 0 ? `과거 흐름과 비교하여 ${region.count}개 지표가 후보 기준에 해당합니다. 아래 지표를 함께 검토하세요.` : region.status === '자료 없음' ? '분석 자료가 없어 판단할 수 없습니다.' : region.pending ? '과거 이력이 부족한 지표가 있어 추가 자료 확인이 필요합니다.' : '현재 후보 기준에 해당하는 지표가 없습니다.'}</p>
+      <p className="hint">{region.count > 0 ? `과거 흐름과 비교하여 ${region.count}개 연령집단이 후보 기준에 해당합니다. 아래 지표를 함께 검토하세요.` : region.status === '자료 없음' ? '분석 자료가 없어 판단할 수 없습니다.' : region.pending ? '과거 이력이 부족한 지표가 있어 추가 자료 확인이 필요합니다.' : '현재 후보 기준에 해당하는 연령집단이 없습니다.'}</p>
       <p className="hint">개인의 고립 판정이 아니며, 계절·행사 영향은 추가 확인이 필요합니다.</p>
       <ElderlyBackground structure={region.structure} city={city} />
       <div className="insight-actions">
@@ -228,8 +229,8 @@ export function RegionalOverview({
               <tr>
                 <th>{unitLabel}</th>
                 <th>분석 상태</th>
-                <th>후보 지표</th>
-                <th title="과거 흐름에서 얼마나 벗어났는지 나타내는 값입니다. 0에서 멀수록 평소와 다릅니다.">평소 대비 차이(점수)</th>
+                <th>탐지 집단</th>
+                <th title="과거 흐름에서 얼마나 벗어났는지 나타내는 값입니다. 0에서 멀수록 평소와 다릅니다.">평소 대비 차이</th>
                 <th>근거</th>
               </tr>
             </thead>
@@ -261,7 +262,7 @@ export function RegionalOverview({
           </table>
           {!shown.length && <p className="empty">검색 조건에 맞는 지역이 없습니다.</p>}
         </div>
-        <footer>‘후보 우선’은 후보 지표가 많은 지역, 그다음 평소와 차이가 큰 지역 순서입니다. 평소 대비 차이는 시·군·구 공통 흐름을 뺀 변화가 과거 변동 폭보다 얼마나 큰지 나타낸 단위 없는 점수로, 동의 지표 중 가장 낮은 값을 보여 줍니다. 음수는 평소보다 줄어든 방향이며 약 -2 이하이면 후보 기준에 가깝습니다.</footer>
+        <footer>‘후보 우선’은 탐지 집단이 많은 지역, 그다음 평소와 차이가 큰 지역 순서입니다.</footer>
       </section>
       )}
       <section className="card directory-map">
@@ -285,5 +286,4 @@ export function RegionalOverview({
     </div>
   );
 }
-
 

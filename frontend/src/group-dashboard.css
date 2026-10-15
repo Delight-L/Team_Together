@@ -236,3 +236,29 @@
 .gd-file-list .gd-candidate { font-style: normal; flex-shrink: 0; font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 12px; background: #ffe9ee; color: #c2264a; }
 .gd-candidate-badge { background: #ffe9ee; color: #c2264a; }
 .gd-candidate-note { margin: 0 0 8px; padding: 8px 11px; border-radius: 8px; background: #fff4f6; color: #7a2236; font-size: 12px; line-height: 1.6; }
+
+/* Detection evidence supplements the restored flow briefing. */
+.gd-detection-plot { background:#fff; padding:18px; border:1px solid #e2e8f0; border-radius:12px; min-width:0; }
+.gd-detection-plot header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+.gd-detection-plot h3 { margin:5px 0 0; color:#172b4d; font-size:19px; }
+.gd-detection-plot svg { width:100%; max-height:340px; display:block; }
+.gd-detection-key { display:flex; align-items:center; gap:6px; font-size:12px; color:#9f1239; white-space:nowrap; }
+.gd-detection-key i { width:8px; height:8px; border-radius:50%; background:#e11d48; }
+.gd-plot-metric { font-size:15px; font-weight:700; fill:#233650; }
+.gd-plot-detail { font-size:10px; fill:#64748b; }
+.gd-plot-zone, .gd-plot-zero { font-size:12px; font-weight:600; fill:#64748b; }
+.gd-plot-value { font-size:14px; font-weight:700; fill:#2563eb; }
+.gd-detection-plot .risk { fill:#be123c; }
+.gd-plot-caption { margin:10px 0 0; color:#718096; font-size:11px; line-height:1.5; }
+.group-shell .gd-summary .gd-signal-card { display:none; }
+.group-shell .gd-summary[data-summary-page='3'] { display:flex; flex-direction:column; }
+.group-shell .gd-summary[data-summary-page='3'] .gd-overview,
+.group-shell .gd-summary[data-summary-page='3'] .gd-context-cards { display:none; }
+.group-shell .gd-summary[data-summary-page='3'] .gd-signal-card { display:block; flex:1; min-height:0; overflow:auto; }
+@container (max-width:850px) or (max-height:420px) {
+ .group-shell .gd-detection-plot { padding:12px; }
+ .group-shell .gd-detection-plot h3 { font-size:16px; }
+ .group-shell .gd-detection-plot header { margin-bottom:8px; }
+}
+
+.gd-evidence-back { margin:0 0 12px; font-size:13px; font-weight:600; }

@@ -70,7 +70,7 @@ def generate_draft(context, workflow, selection=None, experience=None):
         raise ValueError('보고서를 작성할 행정동을 먼저 선택하세요.')
     if 2 not in workflow.get('done', []) or not workflow.get('analysis_evidence'):
         raise ValueError('분석 근거 확인과 사업 매칭 검토 기록 저장을 먼저 완료하세요.')
-    region = f"{context['city']} {context['district']}"
+    region = f"{context['city']} {context['district']}" + (f" {context['age']}" if context.get('age') else '')
     from backend.agents.report_material import select_material, record_sections
     selected_rows, reviews, options = select_material(workflow, selection)
     signals = [r for r in selected_rows if r.get('is_risk_signal')]
@@ -111,13 +111,13 @@ def generate_draft(context, workflow, selection=None, experience=None):
                + ('관련 복지서비스 연계 가능성을 검토하고자 함' if viable else
                   '서비스 이용 조건과 현장 수요를 추가 확인한 후 연계 여부를 검토하고자 함'))
     from backend.db.mission_store import review_revision
-    return {'title': f"{context['district']} 복지서비스 연계 검토보고",
+    return {'title': f"{context['district']}{(' ' + context['age']) if context.get('age') else ''} 복지서비스 연계 검토보고",
             'summary': summary, 'situation': _fit_blocks(situation, LIMITS['situation']),
             'proposal': _fit_blocks(proposals, LIMITS['proposal']),
             'next_steps': _fit_blocks(next_steps.split('\n'), LIMITS['next_steps']),
             'selection': options if selection is not None else None,
             'experience_version': (experience or {}).get('version') if options.get('include_note') or options.get('include_followup') else None,
-            'context': {k: context[k] for k in ('city', 'district', 'month')},
+            'context': {k: context[k] for k in ('city', 'district', 'month', 'age') if k in context},
             'review_id': review_revision(workflow),
             'review_snapshot': saved_reviews,
             'mode': '저장된 근거로 구성 · 외부 AI 호출 없음'}
@@ -154,7 +154,7 @@ def conversation_draft(context, workflow, evidence_rows, history, sources):
     plan = latest_plan(history)
     if not sources and not plan:
         raise ValueError(NEED_MATERIAL)
-    region = f"{context['city']} {context['district']}"
+    region = f"{context['city']} {context['district']}" + (f" {context['age']}" if context.get('age') else '')
 
     signals = [row for row in evidence_rows if row.get('is_risk_signal')]
     situation = [f"대상 지역: {region} / 기준월: {context['month']}"]
@@ -183,10 +183,10 @@ def conversation_draft(context, workflow, evidence_rows, history, sources):
                   '신규 구상안은 수요 조사·예산·운영 기관 협의 후 추진 여부 결정\n'
                   '사업 매칭 검토에 판단을 기록한 뒤 최종 보고서로 저장')
     from backend.db.mission_store import review_revision
-    return {'title': f"{context['district']} 복지서비스 연계 검토보고(대화 기반 초안)",
+    return {'title': f"{context['district']}{(' ' + context['age']) if context.get('age') else ''} 복지서비스 연계 검토보고(대화 기반 초안)",
             'summary': summary, 'situation': _fit_blocks(situation, LIMITS['situation']),
             'proposal': _fit_blocks(proposals, LIMITS['proposal']), 'next_steps': next_steps,
-            'context': {k: context[k] for k in ('city', 'district', 'month')},
+            'context': {k: context[k] for k in ('city', 'district', 'month', 'age') if k in context},
             # 보고서 탭이 지금 업무 기록과 같은 근거로 인식하도록 현재 검토 기록 버전을 넣습니다.
             'review_id': review_revision(workflow), 'review_snapshot': workflow.get('reviews', []),
             'conversation_sources': [{'id': r['id'], 'name': r['name']} for r in sources[:4]],

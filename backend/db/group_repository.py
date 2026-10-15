@@ -170,13 +170,37 @@ def catalogue(city, month, snapshot=None):
     return dict(source='DB1 · 집단별 유동인구', runId=data['run_id'],
                 months=sorted({row['month'] for row in city_groups}), ages=AGES, sexes=SEXES,
                 groups=deepcopy([row for row in city_groups if row['month'] == month]),
-                districts=deepcopy(districts), note=data['note'], mapping=data['mapping'], telecomAvailable=False)
+                districts=deepcopy(districts), note=data['note'], mapping=data['mapping'], telecomAvailable=False, ageTelecomAvailable=city=='강남구')
+
+
+def pool_sexes(rows):
+    """Sum matching male/female observations; recompute changes from common-grid totals."""
+    grouped = {}
+    for row in rows:
+        if row['sex'] in SEXES:
+            grouped.setdefault((row['month'], row['code'], row['age']), {})[row['sex']] = row
+    result = []
+    for pair in grouped.values():
+        if set(pair) != set(SEXES):
+            continue
+        a, b = pair['남성'], pair['여성']
+        keys = ['points', 'matched_points', 'previous_points']
+        if any(a.get(k) != b.get(k) for k in keys):
+            raise ValueError('남녀 유동량의 관측 구역이 일치하지 않습니다.')
+        row = deepcopy(a)
+        row['sex'] = '통합'
+        for key in ['value', 'mean', 'share', 'matched_before', 'matched_after']:
+            row[key] = a[key] + b[key] if a.get(key) is not None and b.get(key) is not None else None
+        before, after = row['matched_before'], row['matched_after']
+        row['change_pct'] = (after / before - 1) * 100 if before is not None and before > 0 and after is not None else None
+        result.append(row)
+    return result
 
 
 def group_detail(context, snapshot=None):
     """같은 연령·성별의 월별 추이, 다른 동 비교, 선택 동의 구성비를 나눠 조회합니다."""
     data = snapshot if snapshot is not None else load_snapshot()
-    if context.get('city') not in CITY_PREFIXES or context.get('age') not in AGES or context.get('sex') not in SEXES:
+    if context.get('city') not in CITY_PREFIXES or context.get('age') not in AGES or context.get('sex') not in SEXES + ['통합']:
         raise ValueError('유효한 지역·연령대·성별을 선택하세요.')
     code = str(context.get('code', ''))
     if not belongs_to_city(code, context['city']):
@@ -185,7 +209,7 @@ def group_detail(context, snapshot=None):
     peers = []
     composition = []
     current = None
-    for row in data['groups']:
+    for row in (pool_sexes(data['groups']) if context['sex'] == '통합' else data['groups']):
         if not belongs_to_city(row['code'], context['city']):
             continue
         same_group = row['age'] == context['age'] and row['sex'] == context['sex']
@@ -211,7 +235,7 @@ def group_detail(context, snapshot=None):
     return dict(current=deepcopy(current), series=timeline,
                 peers=deepcopy(peers), composition=deepcopy(composition), activity=deepcopy(regional),
                 source='DB1 · age_pop / wkdy_pop / time_pop', runId=data['run_id'],
-                note=data['note'], mapping=data['mapping'], sourceFiles=data['source_files'], telecomAvailable=False)
+                note=data['note'], mapping=data['mapping'], sourceFiles=data['source_files'], telecomAvailable=False, ageTelecomAvailable=context['city']=='강남구' and context['age']!='10대')
 
 
 def regional_context(context):
@@ -226,8 +250,11 @@ def regional_context(context):
             FROM db1.analysis2_detections WHERE admin_dong_code=:code
             AND CAST(reference_month AS text) LIKE :month ORDER BY created_at DESC LIMIT 1'''),
             {'code': context['code'], 'month': context['month'] + '%'}).mappings().first()
-    return dict(scope='district', structure=dict(structure) if structure else None,
-                detection=dict(detection) if detection else None)
+    from backend.db.age_analysis_repository import detection_for
+    age_detection = detection_for(context)
+    from backend.db.survey_context import survey_for
+    return dict(scope='dong_age', structure=dict(structure) if structure else None,
+                detection=age_detection, survey=survey_for(context), districtDetection=dict(detection) if detection else None)
 
 
 def main():

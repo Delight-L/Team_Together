@@ -138,7 +138,7 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
         badge.textContent = String(priority + 1);
         const name = document.createElement('b');
         name.textContent = region.name;
-        button.title = `${region.name} · ${region.status} · 지표 ${region.count}개`;
+        button.title = `${region.name} · ${region.status} · 집단 ${region.count}개`;
         button.append(badge, name);
       } else button.textContent = region.name;
       button.addEventListener('click', (event) => {
