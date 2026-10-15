@@ -104,6 +104,16 @@ def ai_available():
     return bool(_configuration()[1])
 
 
+def data_ready():
+    """챗봇 설정/상태 API가 사용하는 v16 자료 준비 여부입니다."""
+    try:
+        from agents.regional_v16.repository import Repository
+        Repository(V16_ROOT).available_period()
+        return True
+    except Exception:
+        return False
+
+
 def _bounded_history(history):
     return [{"role": item["role"], "content": item["content"][:6000]}
             for item in (history or [])[-12:]
