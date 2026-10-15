@@ -45,7 +45,7 @@ AI 문장은 `check_grounding`으로 기초 초안과 대조하고, 아래 중 �
 
 `frontend/src/App.jsx → backend/api/routes_work.py → backend/agents/report_writer.py` 경로로 보고서 초안을 작성합니다.
 Word 파일은 `backend/services/report.py`에서 생성합니다. 보미의 보고서 요청은 `backend/api/routes_chat.py → backend/agents/supervisor.py(총괄 에이전트) → backend/agents/report_writer.py` 경로로 같은 초안 함수를 호출합니다.
-챗봇 구조는 [보미 챗봇 안내](../backend/chatbot/README.md)를 참고하세요.
+챗봇 구조는 [보미 챗봇 안내](../backend/README.md#bomi)를 참고하세요.
 
 - `POST /api/report/content`: 서버에 저장된 기록으로 편집용 초안 생성(`ai: true`이면 AI 문장 다듬기)
 - `POST /api/chat`: 총괄 에이전트가 분석·복지사업·보고서·안내 중 담당을 골라 답변
