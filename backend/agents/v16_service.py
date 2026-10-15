@@ -94,15 +94,14 @@ def _visible_evidence_summary(bot: Chatbot, screen: object) -> str | None:
 
 
 def _configuration():
-    # Read, rather than load_dotenv: the sub-agent must not change main keys.
-    values = dotenv_values(V16_ROOT / ".env")
-    key = (values.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
-    model = (values.get("GEMINI_MODEL") or os.getenv("GEMINI_MODEL") or "gemini-2.5-flash-lite").strip()
-    return key, model
+    # 관리자 AI 설정을 지역분석에도 그대로 적용합니다.
+    from backend.chatbot import ai_settings
+    config = ai_settings.current()
+    return config.provider, config.api_key, config.model
 
 
 def ai_available():
-    return bool(_configuration()[0])
+    return bool(_configuration()[1])
 
 
 def _bounded_history(history):
@@ -215,21 +214,35 @@ class _ScopedResolver(IntentResolver):
         parsed = self._apply_explicit_districts(parse_intent(question, districts), names)
         if self.use_ai and self.key:
             try:
-                from google import genai
                 prompt = INTENT_PROMPT + "\n" + json.dumps({
                     "allowed_districts": sorted(districts), "available_period": self.available_period,
                     "dashboard_defaults": self.context, "history": memory.as_prompt_data(),
                     "current_question": question,
                 }, ensure_ascii=False)
-                client = genai.Client(api_key=self.key, http_options={"timeout": 20000})
-                try:
-                    response = client.models.generate_content(model=self.model, contents=prompt, config={
-                        "temperature": 0, "response_mime_type": "application/json", "response_json_schema": INTENT_SCHEMA,
-                    })
-                finally:
-                    client.close()
-                intent = self._apply_local_constraints(self._validate(_json_object(response.text or ""), districts), parsed, names)
-                self.last_source = "gemini"
+                if self.provider == "gemini":
+                    from google import genai
+                    client = genai.Client(api_key=self.key, http_options={"timeout": 20000})
+                    try:
+                        response = client.models.generate_content(model=self.model, contents=prompt, config={
+                            "temperature": 0, "response_mime_type": "application/json", "response_json_schema": INTENT_SCHEMA,
+                        })
+                        text = response.text or ""
+                    finally:
+                        client.close()
+                elif self.provider == "openai":
+                    from openai import OpenAI
+                    response = OpenAI(api_key=self.key, timeout=20).chat.completions.create(
+                        model=self.model, messages=[{"role": "user", "content": prompt}],
+                        temperature=0, response_format={"type": "json_object"})
+                    text = response.choices[0].message.content or ""
+                else:
+                    from anthropic import Anthropic
+                    response = Anthropic(api_key=self.key).messages.create(
+                        model=self.model, max_tokens=1200, temperature=0,
+                        messages=[{"role": "user", "content": prompt}])
+                    text = "".join(getattr(block, "text", "") for block in response.content)
+                intent = self._apply_local_constraints(self._validate(_json_object(text), districts), parsed, names)
+                self.last_source = self.provider
                 if intent.question_type == "age_activity":
                     bands, unsupported = comparison_ages(question)
                     if unsupported:
@@ -306,11 +319,12 @@ class _ScopedResolver(IntentResolver):
 
 def reply(question, history, context, use_ai=True, group=None):
     """Return an existing supervisor reply dictionary with request-local memory."""
-    key, model = _configuration()
+    provider, key, model = _configuration()
     public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month")}
     question = _expand_visible_screen_question(question, context.get('screen'))
     question = _expand_dashboard_metric_question(question, public_context)
     resolver = _ScopedResolver(V16_ROOT, model, None, public_context, key, bool(use_ai))
+    resolver.provider = provider
     bot = Chatbot(V16_ROOT, model=model, intent_resolver=resolver, moderator=_SupervisorModerator())
     bot.allow_ai_generation = False
     resolver.available_period = bot.repo.available_period()
