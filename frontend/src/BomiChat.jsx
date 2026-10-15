@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api, streamChat } from './api';
 import { Icon } from './components';
+import { chatFileName, chatTranscript, downloadChat, usedAi } from './chatExport.mjs';
 import './bomi-chat.css';
 
 // 보미 챗봇은 모든 메뉴에서 같은 화면을 씁니다.
@@ -48,8 +49,7 @@ function loadAiSwitch(userId) {
 function saveAiSwitch(userId, on) {
   try { localStorage.setItem(aiSwitchKey(userId), on ? 'on' : 'off'); } catch { /* 기억하지 못해도 동작에는 문제없음 */ }
 }
-// 서버가 알려 준 답변 방식(mode)에 AI 단계가 있으면 AI가 만든 답입니다.
-export const usedAi = mode => /AI (대화|해석|문장 다듬기|의도 판단)/.test(mode || '');
+export { usedAi };
 
 function useChat(context, group, userId) {
   const contextKey = JSON.stringify([context, group || null]);
@@ -164,6 +164,11 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
   const place = group ? `${group.district} · ${group.age} · ${group.sex}` : `${context.city} ${context.district || '전체'}`;
   const month = group?.month || context.month;
   const aiAvailable = !!chat.config?.aiAvailable;
+  // 대화 내보내기: 브라우저에서 바로 .txt 파일을 만듭니다(서버로 보내지 않음).
+  function exportChat() {
+    const exportedAt = new Date();
+    downloadChat(chatTranscript({ messages: chat.messages, place, month, aiMode: chat.mode === 'ai', exportedAt }), chatFileName(place, exportedAt));
+  }
   return <aside className={`bomi-chat ${layout} ${layout === 'panel' ? 'chat-panel' : ''} ${expanded ? 'expanded' : ''}`} style={{ display: visible ? undefined : 'none' }} inert={inert} aria-label="보미에게 질문">
     <header className="bomi-chat-head">
       <img src="/brand/bomi-face.png" alt="" />
@@ -174,6 +179,7 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
         title={aiAvailable ? '켜면 질문을 외부 AI로 보내 답변을 만듭니다' : '관리자가 AI 설정에서 AI를 켜야 사용할 수 있어요'}>
         <span className="track" aria-hidden="true"><span className="thumb" /></span>AI {chat.mode === 'ai' ? '켜짐' : '꺼짐'}
       </button>
+      <button className="bomi-new" disabled={chat.busy || !chat.messages.length} onClick={exportChat} title="지금까지의 대화를 텍스트 파일(.txt)로 내려받습니다">내보내기</button>
       <button className="bomi-new" disabled={chat.busy} onClick={() => { chat.reset(); setInput(''); }}>새 대화</button>
       </nav>
       {onExpand && <>
