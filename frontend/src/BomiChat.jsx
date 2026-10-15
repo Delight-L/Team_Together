@@ -133,7 +133,7 @@ function useChat(context, group, userId) {
 }
 
 // inert: 좁은 화면에서 서랍이 닫혀 있을 때 키보드 초점이 숨은 대화창으로 들어가지 않게 합니다.
-export default function BomiChat({ context, group, userId, view, layout = 'embedded', expanded = false, onExpand, draft, actions = [], onAction, visible = true, inert }) {
+export default function BomiChat({ context, group, userId, view, layout = 'embedded', expanded = false, onExpand, draft, actions = [], onAction, visible = true, inert, resizer }) {
   const [input, setInput] = useState('');
   // guided: 다른 화면에서 예시 질문을 넣어 준 상태. 입력란을 강조하고 보내는 방법을 안내합니다.
   const [guided, setGuided] = useState(false);
@@ -170,6 +170,7 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
     downloadChat(chatTranscript({ messages: chat.messages, place, month, aiMode: chat.mode === 'ai', exportedAt }), chatFileName(place, exportedAt));
   }
   return <aside className={`bomi-chat ${group || context.age ? 'has-case' : ''} ${layout} ${layout === 'panel' ? 'chat-panel' : ''} ${expanded ? 'expanded' : ''}`} style={{ display: visible ? undefined : 'none' }} inert={inert} aria-label="보미에게 질문">
+    {resizer}
     <header className="bomi-chat-head">
       <img src="/brand/bomi-face.png" alt="" />
       <div><strong>보미에게 질문</strong></div>

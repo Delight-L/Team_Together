@@ -20,6 +20,7 @@ COPY main.py ./
 COPY backend/ ./backend/
 COPY pipelines/ ./pipelines/
 COPY assets/brand/ ./assets/brand/
+COPY data/processed/region_insights.json data/processed/survey_dashboard.json ./data/processed/
 COPY --from=frontend /build/dist ./frontend/dist/
 RUN useradd --create-home appuser && chown -R appuser:appuser /app
 USER appuser

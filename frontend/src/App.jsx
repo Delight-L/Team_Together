@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { api, query, number } from './api';
 import { Icon, Bomi, EvidenceTable, Trend } from './components';
 import BomiChat from './BomiChat';
+import ChatResizer, { clampChatWidth } from './ChatResizer';
 import { Records, Activity, Upload } from './Workspace';
 import AISettings from './AISettings';
 import { RegionalOverview, summarizeRegions, exampleQuestion } from './Briefing';
@@ -199,6 +200,14 @@ export default function App() {
   const [navCollapsed, setNavCollapsed] = useState(() => window.matchMedia(navQuery).matches);
   const [chatDrawer, setChatDrawer] = useState(() => window.matchMedia(drawerQuery).matches);
   const [chatOpen, setChatOpen] = useState(false);
+  // 사용자가 끌어서 정한 보미 패널 폭(px). 없으면 화면별 기본 폭을 씁니다. 이 브라우저에만 기억합니다.
+  const [chatWidth, setChatWidthState] = useState(() => {
+    try { const saved = Number(localStorage.getItem('welfind:chat-width')); return saved > 0 ? clampChatWidth(saved) : null; } catch { return null; }
+  });
+  const setChatWidth = width => {
+    setChatWidthState(width);
+    try { width ? localStorage.setItem('welfind:chat-width', String(width)) : localStorage.removeItem('welfind:chat-width'); } catch { /* 저장하지 못해도 이번 화면에는 적용됩니다. */ }
+  };
   useEffect(() => {
     // 기준 너비를 넘나들 때만 바꿔서, 사용자가 직접 펼치거나 접은 상태는 존중합니다.
     const nav = window.matchMedia(navQuery), drawer = window.matchMedia(drawerQuery);
@@ -377,7 +386,8 @@ export default function App() {
 
   return (
     <div
-      className={`app-shell unified-shell with-chat ${navCollapsed ? 'nav-collapsed' : ''} ${chatDrawer ? 'chat-drawer' : ''} ${chatOpen ? 'chat-open' : ''} ${view === 'dashboard' ? 'briefing-shell group-shell' : view === 'chart' ? 'region-insights-shell' : ''}`}
+      className={`app-shell unified-shell with-chat ${navCollapsed ? 'nav-collapsed' : ''} ${chatDrawer ? 'chat-drawer' : ''} ${chatOpen ? 'chat-open' : ''} ${view === 'dashboard' ? 'briefing-shell group-shell' : view === 'chart' ? 'region-insights-shell' : ''} ${chatWidth ? 'chat-resized' : ''}`}
+      style={chatWidth ? { '--chat-width': chatWidth + 'px' } : undefined}
     >
       <button className="panel-handle menu-handle" onClick={() => setNavCollapsed(v => !v)} aria-label={navCollapsed ? '왼쪽 메뉴 펼치기' : '왼쪽 메뉴 접기'} aria-expanded={!navCollapsed} title={navCollapsed ? '메뉴 펼치기' : '메뉴 접기'}>{navCollapsed ? '›' : '‹'}</button>
       <nav className="sidebar" aria-label="주 메뉴">
@@ -622,6 +632,7 @@ export default function App() {
           inert={chatDrawer && !chatOpen}
           context={view === 'dashboard' && chatGroup ? {city: chatGroup.city, district: chatGroup.district, month: chatGroup.month, age:chatGroup.age} : context}
           group={view === 'dashboard' ? chatGroup : undefined}
+          resizer={!chatDrawer && <ChatResizer width={chatWidth} onChange={setChatWidth} />}
         />
 
       )}
