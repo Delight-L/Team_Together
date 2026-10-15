@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { api, query, number } from './api';
 import { Icon, Bomi, EvidenceTable, Trend } from './components';
 import BomiChat from './BomiChat';
+import AISettings from './AISettings';
 import { Records, Activity, Upload } from './Workspace';
 import { RegionalOverview, summarizeRegions, exampleQuestion } from './Briefing';
 import { DataDialog, Comparison, ReportQuality } from './Experience';
@@ -21,7 +22,7 @@ const menus = [
 ];
 // 예전 메뉴 이름으로 이동을 요청해도 합쳐진 메뉴의 해당 탭으로 연결합니다.
 const legacyViews = { compare: ['chart', 'compare'], followup: ['records'], missions: ['records'] };
-const adminMenus = [['data', '데이터 관리'], ['activity', '활동 이력']];
+const adminMenus = [['data', '데이터 관리'], ['activity', '활동 이력'], ['ai', 'AI 설정']];
 // 메뉴마다 서로 다른 아이콘을 써서 메뉴를 접었을 때도 구분되게 합니다.
 const menuIcons = { records: 'clipboard', activity: 'history' };
 const subtitles = {
@@ -32,6 +33,7 @@ const subtitles = {
   report: '분석과 사업 검토 결과를 보고서 초안으로 정리합니다.',
   data: '새 분석 자료를 검사한 뒤 반영합니다.',
   activity: '자료가 언제 어떻게 반영됐는지 확인합니다.',
+  ai: '외부 AI의 사용 범위를 설정하세요.',
   chat: '선택한 지역을 바탕으로 보미가 복지사업과 담당 기관을 안내합니다.',
 };
 const titles = {
@@ -601,6 +603,7 @@ export default function App() {
               )}
               {view === 'data' && user.admin && <div className="scroll-view"><Upload /><div className="data-source-strip"><span>분석 출처와 판단 기준은 데이터 기준에서 확인할 수 있습니다.</span><button className="text-button" onClick={() => openSupport()}>데이터 기준 보기</button></div></div>}
               {view === 'activity' && user.admin && <Activity />}
+              {view === 'ai' && user.admin && <AISettings />}
               {view === 'chat' && (
                 <div className="chat-context-view">
                   <span className="eyebrow">CONNECTED ANALYSIS</span>
