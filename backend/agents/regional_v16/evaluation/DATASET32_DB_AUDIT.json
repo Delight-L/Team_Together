@@ -1,0 +1,542 @@
+{
+  "source_db_sha256": "833fb4b6e8114aed3f048aa61ae71268680c8dff6e0b81a412219fb23cfa5d58",
+  "main_db_sha256": "196462ce577849e8ffd09afa2d45b649fac3fea6125f6327f9ec061da4e00a43",
+  "tables": {
+    "a1_change_detection": {
+      "source_rows": 0,
+      "main_rows": 0,
+      "all_rows_identical": true
+    },
+    "a1_change_feature": {
+      "source_rows": 0,
+      "main_rows": 0,
+      "all_rows_identical": true
+    },
+    "a1_context": {
+      "source_rows": 22,
+      "main_rows": 22,
+      "all_rows_identical": false,
+      "changed_columns": [
+        "model_version",
+        "feature_json"
+      ]
+    },
+    "a1_input": {
+      "source_rows": 22,
+      "main_rows": 22,
+      "all_rows_identical": false,
+      "changed_columns": [
+        "input_json"
+      ]
+    },
+    "a1_region_baseline": {
+      "source_rows": 22,
+      "main_rows": 22,
+      "all_rows_identical": false,
+      "changed_columns": [
+        "centroid_distance"
+      ]
+    },
+    "a1_region_feature": {
+      "source_rows": 286,
+      "main_rows": 286,
+      "all_rows_identical": false,
+      "changed_columns": [
+        "feature_name",
+        "feature_value",
+        "created_at"
+      ]
+    },
+    "a23_context_revision": {
+      "source_rows": 0,
+      "main_rows": 0,
+      "all_rows_identical": true
+    },
+    "a23_observation_context": {
+      "source_rows": 660,
+      "main_rows": 660,
+      "all_rows_identical": true
+    },
+    "a2_activity_followup": {
+      "source_rows": 29,
+      "main_rows": 29,
+      "all_rows_identical": true
+    },
+    "a2_activity_level": {
+      "source_rows": 660,
+      "main_rows": 660,
+      "all_rows_identical": true
+    },
+    "a2_activity_model": {
+      "source_rows": 1,
+      "main_rows": 1,
+      "all_rows_identical": true
+    },
+    "a2_age_common_change": {
+      "source_rows": 30,
+      "main_rows": 30,
+      "all_rows_identical": true
+    },
+    "a2_age_detection": {
+      "source_rows": 660,
+      "main_rows": 660,
+      "all_rows_identical": true
+    },
+    "a2_age_feature": {
+      "source_rows": 17952,
+      "main_rows": 17952,
+      "all_rows_identical": true
+    },
+    "a2_age_model": {
+      "source_rows": 1,
+      "main_rows": 1,
+      "all_rows_identical": true
+    },
+    "a2_age_month_input": {
+      "source_rows": 2244,
+      "main_rows": 2244,
+      "all_rows_identical": true
+    },
+    "a2_age_raw": {
+      "source_rows": 6336,
+      "main_rows": 6336,
+      "all_rows_identical": true
+    },
+    "a2_age_source": {
+      "source_rows": 48,
+      "main_rows": 48,
+      "all_rows_identical": true
+    },
+    "a2_detection": {
+      "source_rows": 132,
+      "main_rows": 132,
+      "all_rows_identical": true
+    },
+    "a2_evidence": {
+      "source_rows": 1,
+      "main_rows": 1,
+      "all_rows_identical": true
+    },
+    "a2_feature": {
+      "source_rows": 1056,
+      "main_rows": 1056,
+      "all_rows_identical": true
+    },
+    "a2_month_input": {
+      "source_rows": 132,
+      "main_rows": 132,
+      "all_rows_identical": true
+    },
+    "a2_observation_window": {
+      "source_rows": 6,
+      "main_rows": 6,
+      "all_rows_identical": true
+    },
+    "a3_dimension": {
+      "source_rows": 30,
+      "main_rows": 30,
+      "all_rows_identical": true
+    },
+    "a3_policy": {
+      "source_rows": 0,
+      "main_rows": 0,
+      "all_rows_identical": true
+    },
+    "a3_run": {
+      "source_rows": 22,
+      "main_rows": 22,
+      "all_rows_identical": true
+    },
+    "a3a_comparison": {
+      "source_rows": 1320,
+      "main_rows": 1320,
+      "all_rows_identical": true
+    },
+    "a3a_feature": {
+      "source_rows": 10560,
+      "main_rows": 10560,
+      "all_rows_identical": true
+    },
+    "a3a_industry": {
+      "source_rows": 0,
+      "main_rows": 0,
+      "all_rows_identical": true
+    },
+    "a3a_quarter_summary": {
+      "source_rows": 352,
+      "main_rows": 352,
+      "all_rows_identical": true
+    },
+    "a3b_feature": {
+      "source_rows": 180,
+      "main_rows": 180,
+      "all_rows_identical": true
+    },
+    "a3b_industry": {
+      "source_rows": 0,
+      "main_rows": 0,
+      "all_rows_identical": true
+    },
+    "a3b_month_summary": {
+      "source_rows": 6,
+      "main_rows": 6,
+      "all_rows_identical": true
+    },
+    "a3b_total": {
+      "source_rows": 36,
+      "main_rows": 36,
+      "all_rows_identical": true
+    },
+    "ctx_consumption_anchor": {
+      "source_rows": 22,
+      "main_rows": 22,
+      "all_rows_identical": true
+    },
+    "ctx_elder_annual": {
+      "source_rows": 88,
+      "main_rows": 88,
+      "all_rows_identical": true
+    },
+    "ctx_enrichment_state": {
+      "source_rows": 1,
+      "main_rows": 1,
+      "all_rows_identical": true
+    },
+    "ctx_evidence_guide": {
+      "source_rows": 6,
+      "main_rows": 6,
+      "all_rows_identical": true
+    },
+    "ctx_sns_index": {
+      "source_rows": 660,
+      "main_rows": 660,
+      "all_rows_identical": true
+    },
+    "ctx_survey_annual": {
+      "source_rows": 572,
+      "main_rows": 572,
+      "all_rows_identical": true
+    },
+    "ctx_weather": {
+      "source_rows": 6,
+      "main_rows": 6,
+      "all_rows_identical": true
+    },
+    "ctx_youth_reference": {
+      "source_rows": 476,
+      "main_rows": 476,
+      "all_rows_identical": true
+    },
+    "db1_run": {
+      "source_rows": 7,
+      "main_rows": 7,
+      "all_rows_identical": false,
+      "changed_columns": [
+        "fingerprint",
+        "model_version",
+        "metadata_json"
+      ]
+    },
+    "input_import": {
+      "source_rows": 14,
+      "main_rows": 14,
+      "all_rows_identical": true
+    },
+    "month_run": {
+      "source_rows": 6,
+      "main_rows": 6,
+      "all_rows_identical": false,
+      "changed_columns": [
+        "stage",
+        "updated_at"
+      ]
+    },
+    "pipeline_state": {
+      "source_rows": 1,
+      "main_rows": 1,
+      "all_rows_identical": false,
+      "changed_columns": [
+        "payload_json"
+      ]
+    }
+  },
+  "case_checks": {
+    "B01": [
+      {
+        "table": "a2_detection JOIN a1_context",
+        "method": "signal_tables_exact_match_and_context_names_exact_match"
+      }
+    ],
+    "B02": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B03": [
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "derived",
+        "method": "same_stored_log_changes_same_expm1_derivation",
+        "derivation": "변화율(%) = 100 * expm1(log_change); valid=False 또는 NULL은 확인 불가"
+      },
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "derived",
+        "method": "same_stored_log_changes_same_expm1_derivation",
+        "derivation": "변화율(%) = 100 * expm1(log_change); valid=False 또는 NULL은 확인 불가"
+      }
+    ],
+    "B04": [
+      {
+        "table": "a1_context JOIN a1_input",
+        "method": "main_db_direct_query",
+        "verified_values": {
+          "cluster_type": "고활동·청년유동·1인가구 중심형",
+          "hh_1_ratio": 0.3595630857085108,
+          "hh_2_ratio": 0.2468123943454864
+        }
+      }
+    ],
+    "B05": [
+      {
+        "table": "a3a_comparison + a3a_feature",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B06": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B07": [],
+    "B08": [],
+    "B09": [
+      {
+        "table": "a2_detection JOIN a1_context",
+        "method": "signal_tables_exact_match_and_context_names_exact_match"
+      }
+    ],
+    "B10": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B11": [
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "derived",
+        "method": "same_stored_log_changes_same_expm1_derivation",
+        "derivation": "변화율(%) = 100 * expm1(log_change); valid=False 또는 NULL은 확인 불가"
+      }
+    ],
+    "B12": [
+      {
+        "table": "a1_context JOIN a1_input",
+        "method": "main_db_direct_query",
+        "verified_values": {
+          "cluster_type": "고활동·청년유동·1인가구 중심형",
+          "hh_1_ratio": 0.4370244220595695,
+          "hh_2_ratio": 0.1853757518660772
+        }
+      }
+    ],
+    "B13": [
+      {
+        "table": "a3a_comparison + a3a_feature",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B14": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B15": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B16": [
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B17": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B18": [
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B19": [
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B20": [
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B21": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B22": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B23": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B24": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B25": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B26": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B27": [
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "derived",
+        "method": "same_stored_log_changes_same_expm1_derivation",
+        "derivation": "변화율(%) = 100 * expm1(log_change); valid=False 또는 NULL은 확인 불가"
+      },
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      },
+      {
+        "table": "derived",
+        "method": "same_stored_log_changes_same_expm1_derivation",
+        "derivation": "변화율(%) = 100 * expm1(log_change); valid=False 또는 NULL은 확인 불가"
+      }
+    ],
+    "B28": [
+      {
+        "table": "a1_context JOIN a1_input",
+        "method": "main_db_direct_query",
+        "verified_values": {
+          "cluster_type": "고활동·청년유동·1인가구 중심형",
+          "hh_1_ratio": 0.3595630857085108,
+          "hh_2_ratio": 0.2468123943454864
+        }
+      }
+    ],
+    "B29": [
+      {
+        "table": "a3a_comparison + a3a_feature",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B30": [
+      {
+        "table": "a2_age_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B31": [
+      {
+        "table": "a2_detection",
+        "method": "all_source_table_rows_exact_match"
+      }
+    ],
+    "B32": []
+  }
+}
