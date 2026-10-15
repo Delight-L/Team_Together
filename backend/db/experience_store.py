@@ -11,7 +11,9 @@ from backend.db.work_store import lock, transaction
 def scope(context):
     user = context['user']
     # 기록은 같은 지역 담당자가 함께 봅니다. 'team'은 기존 저장 기록과 같은 키를 유지하기 위한 값입니다.
-    return json.dumps(['team', context['city'], context['district'], context['month']], ensure_ascii=False)
+    parts = ['team', context['city'], context['district'], context['month']]
+    if context.get('age'): parts.append(context['age'])
+    return json.dumps(parts, ensure_ascii=False)
 
 
 def load(context):
@@ -21,12 +23,14 @@ def load(context):
 
 
 def regional_history(context):
-    namespace, city, district, _ = json.loads(scope(context))
+    namespace, city, district, _ = json.loads(scope(context))[:4]
     with transaction() as db:
         items = []
         for key, value in db.execute(text('SELECT key,value FROM work.experience')):
-            owner, saved_city, saved_district, month = json.loads(key)
-            if (owner, saved_city, saved_district) == (namespace, city, district):
+            parts = json.loads(key)
+            owner, saved_city, saved_district, month = parts[:4]
+            age = parts[4] if len(parts) > 4 else None
+            if (owner, saved_city, saved_district) == (namespace, city, district) and (age or '') == (context.get('age') or ''):
                 items.append({'month': month, 'record': json.loads(value)})
         return sorted(items, key=lambda item: item['month'], reverse=True)
 

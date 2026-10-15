@@ -88,7 +88,7 @@ def evidence_for(data, context):
         return []
     rows = []
     for row in data['assessment']:
-        if row['기준연월'] == context['month'] and row['행정동명'] == context['district']:
+        if row['기준연월'] == context['month'] and row['행정동명'] == context['district'] and (not context.get('age') or row.get('age_label') == context['age']):
             rows.append(row)
     return rows
 
@@ -117,6 +117,11 @@ def region_context(request, data, district_required=True):
         'district': request.text('district'),
         'month': request.text('month'),
     }
+    age = request.text('age')
+    if age:
+        if age not in ['20대', '30대', '40대', '50대', '60대 이상']:
+            raise ValueError('유효한 분석 연령대를 선택하세요.')
+        context['age'] = age
     check_city_access(request.user, context['city'])
     if context['month'] not in data['months']:
         raise ValueError('유효한 기준월을 선택하세요.')
@@ -141,5 +146,7 @@ def group_context(request):
         context[name] = request.text(name)
     check_city_access(request.user, context['city'])
     detail = group_repository.group_detail(context)
+    from backend.db.age_analysis_repository import detection_for
+    detail['ageDetection'] = detection_for(context)
     context['district'] = detail['current']['district']
     return context, detail

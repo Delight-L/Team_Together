@@ -142,7 +142,7 @@ def prepare_analysis2(data, source):
     }
 
 
-def load_analysis2_data():
+def load_district_analysis2_data():
     """대시보드 자료를 읽습니다.
 
     WELFIND_DATA_SOURCE (.env)
@@ -175,6 +175,19 @@ def load_analysis2_data():
     legacy = ROOT_DIR / 'pipelines/db1/Analysis2/data/reference/gangnam_analysis2_detection_2022_2025.csv'
     return deepcopy(_load_analysis2_data(str(DETECTION_FILE.resolve()), DETECTION_FILE.stat().st_mtime_ns,
                                         legacy.stat().st_mtime_ns if legacy.exists() else 0))
+
+
+def load_analysis2_data():
+    from backend.db.age_analysis_repository import load_age_analysis
+    data = load_age_analysis()
+    # Keep Analysis1 regional background; legacy district flags never replace age detections.
+    try:
+        legacy = load_district_analysis2_data()
+        data['regionalStructures'] = legacy.get('regionalStructures', [])
+    except Exception:
+        LOGGER.warning('동·연령 탐지는 연결됐으나 지역 배경 조회에 실패했습니다.', exc_info=True)
+        data['regionalStructures'] = []
+    return data
 
 
 def db_configured():

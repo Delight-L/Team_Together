@@ -163,7 +163,7 @@ export function ReliefMap({ geometry, regions, selected, onSelect }) {
               <circle r="16" fill={color} stroke="white" strokeWidth="3" /><text textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="16" fontWeight="800">{priorities.indexOf(region) + 1}</text>
               <rect x={labelX} y="-24" width="150" height="76" rx="12" fill="white" stroke="#dce4f3" />
               <text x={labelX + 12} y="-5" fill="#18334f" fontSize="13" fontWeight="700">{unit.name}</text>
-              <text x={labelX + 12} y="13" fill={color} fontSize="10">{region.status} · {region.count}개 지표</text>
+              <text x={labelX + 12} y="13" fill={color} fontSize="10">{region.status} · {region.count}개 집단</text>
               <rect x={labelX + 10} y="25" width="130" height="20" rx="7" fill="#edf3ff" />
               <text x={labelX + 75} y="39" textAnchor="middle" fill="#3168da" fontSize="10">상세 보기 →</text>
             </g>;

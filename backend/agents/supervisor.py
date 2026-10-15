@@ -212,6 +212,7 @@ def _report(question, history, context, data, use_ai, source_ids=()):
     if context.get('district'):
         workflow = mission_store.load_all().get(mission_store.identity(context), {})
         rows = region_workspace.region_status(data, context['city'], context['month'], context['district'])['rows']
+        if context.get('age'): rows = [r for r in rows if r.get('age_label') == context['age']]
     by_id = {record['id']: record for record in RESOURCES}
     sources = [by_id[source_id] for source_id in source_ids if source_id in by_id]
     return report_writer.report_reply(context, workflow, use_ai, question, rows, history, sources)
@@ -339,7 +340,7 @@ def _events(messages, context, data, group, use_ai, pii, source_ids=()):
 
     # 복지사업 담당은 답변을 글자 단위로 이어서 보냅니다.
     if agent == 'welfare':
-        public = {key: context[key] for key in ('city', 'district', 'month')}
+        public = {key: context[key] for key in ('city', 'district', 'month', 'age') if key in context}
         # 신규 사업 구상이 이 동의 분석 근거를 반영하도록 위험 신호 요약을 함께 넘깁니다(외부 AI 사용 시에만 쓰임).
         analysis = signal_summary(context, data, group) if use_ai else None
         if analysis:

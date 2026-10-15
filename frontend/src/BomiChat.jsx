@@ -8,7 +8,7 @@ import './bomi-chat.css';
 // 질문은 모두 /api/chat으로 보내고, 서버의 총괄 에이전트(backend/agents/supervisor.py)가 담당을 고릅니다.
 // 지역 분석 설명 · 복지사업 찾기 · 보고서 초안 작성 중 하나가 답하고, 답변마다 담당을 표시합니다.
 const SUGGESTIONS = {
-  group: ['이 그룹의 변화를 요약해 줘', '이 지표는 무슨 뜻인가요?', '관계 모임 지원사업을 찾아 줘'],
+  group: ['이 사례의 탐지 이유', '이후 변화는 어때?', '소비·날씨 맥락 설명'],
   district: ['이 동의 변화를 요약해 줘', '어르신 돌봄 지원사업을 찾아 줘', '보고서 초안 만들어 줘'],
   city: ['이번 달 후보 지역을 알려 줘', '후보 판정은 무슨 뜻인가요?', '혼자 사는 어르신 돌봄 지원'],
 };
@@ -159,9 +159,9 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
     if (!question || chat.busy || question.length > 2000) return;
     setInput(''); setGuided(false); chat.send(question);
   }
-  const target = group ? 'group' : context.district ? 'district' : 'city';
+  const target = group || context.age ? 'group' : context.district ? 'district' : 'city';
+  const place = group ? `${group.district} · ${group.age}${group.sex === '통합' ? '' : ` · ${group.sex}`}` : `${context.city} ${context.district || '전체'}${context.age ? ` · ${context.age}` : ''}`;
   const suggestions = group || !context.district ? SUGGESTIONS[target] : MENU_SUGGESTIONS[view] || SUGGESTIONS[target];
-  const place = group ? `${group.district} · ${group.age} · ${group.sex}` : `${context.city} ${context.district || '전체'}`;
   const month = group?.month || context.month;
   const aiAvailable = !!chat.config?.aiAvailable;
   // 대화 내보내기: 브라우저에서 바로 .txt 파일을 만듭니다(서버로 보내지 않음).
@@ -169,7 +169,7 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
     const exportedAt = new Date();
     downloadChat(chatTranscript({ messages: chat.messages, place, month, aiMode: chat.mode === 'ai', exportedAt }), chatFileName(place, exportedAt));
   }
-  return <aside className={`bomi-chat ${layout} ${layout === 'panel' ? 'chat-panel' : ''} ${expanded ? 'expanded' : ''}`} style={{ display: visible ? undefined : 'none' }} inert={inert} aria-label="보미에게 질문">
+  return <aside className={`bomi-chat ${group || context.age ? 'has-case' : ''} ${layout} ${layout === 'panel' ? 'chat-panel' : ''} ${expanded ? 'expanded' : ''}`} style={{ display: visible ? undefined : 'none' }} inert={inert} aria-label="보미에게 질문">
     <header className="bomi-chat-head">
       <img src="/brand/bomi-face.png" alt="" />
       <div><strong>보미에게 질문</strong></div>
@@ -186,8 +186,8 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
         <button className="icon-button" onClick={onExpand} aria-label={expanded ? '챗봇 패널로 돌아가기' : '챗봇 크게 보기'}><Icon name={expanded ? 'minimize' : 'expand'} size={17} /></button>
       </>}
     </header>
-    <p className="bomi-context"><span className="online-dot" aria-hidden="true" /><span>{place}</span><span>{month}</span></p>
-    <p className="bomi-scope">질문 대상: {group ? '선택 그룹의 관찰 자료' : context.district ? '선택 지역의 동별 분석' : '시·군·구 전체'}. {group ? '그룹 관찰 설명과 지원사업 탐색을 도와드려요.' : '분석 설명 · 복지사업 찾기 · 보고서 초안을 도와드려요.'}</p>
+    {(group || context.age) && <div className="bomi-selected-case" aria-label="챗봇 선택 사례"><span className="online-dot" />{place} · {month}</div>}
+    <p className="bomi-scope">{group || context.age ? place : context.district ? context.district : `${context.city} 전체`} 기준으로 분석 설명 · 복지사업 찾기 · 보고서 초안을 도와드려요.</p>
     <p className={`bomi-mode-line ${chat.mode === 'ai' ? 'ai' : ''}`} role="status">
       {chat.mode === 'ai'
         ? `AI 사용 중 · 질문과 최근 대화가 외부 AI(${chat.config?.aiProvider || '관리자 설정'})로 전송돼요`
@@ -198,8 +198,8 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
     {chat.configError && <p className="bomi-error" role="alert">{chat.configError} <button className="text-button" onClick={chat.reloadConfig}>설정 다시 불러오기</button></p>}
     <div className="bomi-messages" aria-live="polite">
       {!chat.messages.length && <div className="bomi-welcome">
-        <h3>보미에게 물어보세요</h3>
-        <p>현재 화면의 분석 근거, 관련 복지사업, 보고서 초안을 보미와 함께 확인하세요.</p>
+        <h3>{group || context.age ? '선택한 사례를 함께 살펴볼까요?' : '무엇을 도와드릴까요?'}</h3>
+        <p>분석 근거부터 관련 복지사업과 보고서 초안까지 물어보세요.</p><div className="bomi-welcome-character"><img src="/brand/bomi-face.png" alt=""/><p>궁금한 내용을 물어보시면<br/>보미가 함께 찾아드릴게요.</p></div>
       </div>}
       {chat.messages.map((m, i) => m.role === 'assistant' && !m.text && chat.busy && i === chat.messages.length - 1 ? <Typing key={i} /> : <article key={i} className={`bomi-message ${m.role}`}>
         <small>{m.role === 'user' ? '나' : m.agent ? `보미 · ${m.agent}` : '보미'}</small>

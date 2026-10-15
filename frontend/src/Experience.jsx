@@ -27,13 +27,13 @@ export function DataSummary({ data, context, rows, user, expanded = false }) {
       <dt>선택 지역 자료</dt><dd>{context.district ? `${context.district} · ${rows.length}개 지표` : `${areaUnit(context.city)}을 선택하면 제공 범위를 확인할 수 있습니다.`}</dd>
       <dt>누락·이력 부족</dt><dd>과거 이력 부족 {rows.filter(r => !r.has_enough_history).length}개 · 전월 변화값 누락 {rows.filter(r => !Number.isFinite(r.change_pct)).length}개</dd></dl>
     <h3>확인 후보는 어떻게 정하나요?</h3>
-    <p>시·군·구 전체의 공통 변화를 뺀 뒤, 과거 흐름과 얼마나 다른지(평소 대비 차이)를 살펴봅니다. 전화·문자 또는 평일·휴일 이동의 값이 모두 -2 이하일 때 후보로 표시하며, 최소 12회 과거 이력이 필요합니다.</p>
+    <p>동·연령대별 자체 이력 비교와, 같은 연령대의 지역 공통 변화를 조정한 뒤 이력을 비교하는 두 경로를 사용합니다. 같은 경로에서 전화·문자 또는 평일·휴일 이동이 함께 탐지되면 신호를 보존합니다. 경계는 기준 구간에서 연령·지표·경로별로 보정한 값이며, 유효 과거 변화량이 최소 12개 필요합니다. 성별 통합 판정입니다.</p>
     <p className="hint">지역 집계 결과이며 개인의 고립 여부를 판정하지 않습니다. 춘천시의 실제 분석 결과는 아직 연결되지 않았습니다.</p>
     <h3>지역 배경 지표는 무엇을 뜻하나요?</h3>
     <p>새 지역 유형 분석은 65세 이상 등록인구 중 독거노인 비율을 사용합니다. 2025년 독거노인 수를 2025년 4분기 65세 이상 등록인구로 나눈 값이며, 월별 변화나 개인의 고립 여부를 뜻하지 않습니다.</p>
     <p className="hint">연간 지역 배경자료의 공개 시점은 확인되지 않았습니다. 과거 월 당시 알려진 정보로 해석하지 않으며, 60세 이상 집단과 통계의 연령 범위도 다릅니다.</p>
     {user?.admin && <details className="secondary-details"><summary>분석 버전·갱신 정보 (관리자)</summary><dl>
-      <dt>분석 규칙</dt><dd>{data.runs?.[0]?.rule_version || '분석 버전 미확인'} · 공통 변화 제거 후 Robust Z</dd>
+      <dt>분석 규칙</dt><dd>{data.runs?.[0]?.rule_version || '분석 버전 미확인'} · 자체 이력 / 공통 변화 조정 후 이력 비교</dd>
       <dt>이전 분석월</dt><dd>{previous || '이전 분석월 없음'} · 신규/연속 후보 비교 기준입니다. 전월 변화율은 원자료에 계산된 값을 사용합니다.</dd>
       <dt>전체 근거 행</dt><dd>{data.assessment.length.toLocaleString()}개</dd>
       <dt>결과 버전</dt><dd>{data.runId}</dd>
@@ -62,7 +62,7 @@ export function ReviewWorkspace({ context, onView, seed, user, onSaved, compact 
     api('/experience?' + query(context)).then(r => {
       if (!active) return;
       const restored = localDraft?.record;
-      const imported = seed && seed.id !== localDraft?.seedId && ['city','district','month'].every(k => seed.context[k] === context[k]);
+      const imported = seed && seed.id !== localDraft?.seedId && ['city','district','month','age'].every(k => (seed.context[k] || '') === (context[k] || ''));
       const next = { ...blank, ...(restored || r) };
       if (imported) next.note = [next.note, seed.text].filter(Boolean).join('\n\n').slice(0, 2000);
       setRecord(next);
@@ -87,7 +87,7 @@ export function ReviewWorkspace({ context, onView, seed, user, onSaved, compact 
   }
   async function save() { setBusy(true); setError(''); try { setRecord({ ...blank, ...await api('/experience', { ...record, ...context }) }); clearLocalDraft(); onSaved?.(); setNotice(''); showToast(`${context.district} · ${context.month} · 검토·후속 조치 기록을 저장했어요.`); } catch (e) { setError(e.message); } finally { setBusy(false); } }
   return <section className={`${compact ? 'inline-review-body' : 'card info-card'} review-workspace`}>
-    <div className="workspace-heading"><div><h2>검토·후속 조치</h2><p>{context.district} · {context.month}{rounds.length > 0 && ` · ${rounds.length + 1}회차`} <span className="status-caption">{record.status}</span></p></div>
+    <div className="workspace-heading"><div><h2>검토·후속 조치</h2><p>{context.district}{context.age ? ` · ${context.age}` : ''} · {context.month}{rounds.length > 0 && ` · ${rounds.length + 1}회차`} <span className="status-caption">{record.status}</span></p></div>
       <button className="text-button" onClick={() => onView(compact ? 'records' : 'compare')}>{compact ? '업무 기록·후속 조치로 →' : '월별 변화 비교 →'}</button></div>
     <p className="hint">{storageFailed ? '브라우저 임시 보관에 실패했습니다. 새로고침 전에 기록을 저장하세요.' : '작성 중인 내용은 이 탭에 임시 보관됩니다. 로그아웃 전에 저장해 주세요.'}</p>
     {!compact && <div className="section-switch" role="group" aria-label="작성 구역">
@@ -184,7 +184,7 @@ export function Comparison({ data, context }) {
     const start = date.toISOString().slice(0, 7);
     return data.months.find(m => m >= start && m <= end) || end;
   };
-  const [metric, setMetric] = useState(metrics[0] || ''), [from, setFrom] = useState(() => context.month ? recentStart(context.month) : ''), [to, setTo] = useState(context.month);
+  const [metric, setMetric] = useState(metrics.find(m => context.age && m.startsWith(context.age + ' ')) || metrics[0] || ''), [from, setFrom] = useState(() => context.month ? recentStart(context.month) : ''), [to, setTo] = useState(context.month);
   const rows = context.city === '강남구' ? data.assessment.filter(r => r['기준연월'] >= from && r['기준연월'] <= to) : [];
   const chosenRows = rows.filter(r => selected.includes(r['행정동명']) && r.metric_label === metric);
   const period = data.months.filter(m => m >= from && m <= to);

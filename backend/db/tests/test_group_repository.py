@@ -22,6 +22,23 @@ class GroupDataTest(unittest.TestCase):
         rows = aggregate_age(clean_frame(sample(), list(AGE_COLS), {'1123065'}), {'1123065': '역삼2동'})
         self.snapshot = dict(groups=rows, activity=[], note='고유 인원 아님', mapping='test', run_id='test', source_files={})
 
+    def test_pooled_flow_sums_sexes_and_recomputes_common_grid_change(self):
+        d = group_detail(self.context | {'sex':'통합'}, self.snapshot)
+        self.assertEqual(d['current']['mean'],1008)
+        self.assertAlmostEqual(d['current']['change_pct'],-20)
+        self.assertEqual(d['current']['matched_points'],1)
+        self.assertEqual(len(d['composition']),6)
+        self.assertAlmostEqual(sum(r['share'] for r in d['composition']),100)
+        self.assertEqual(d['current']['sex'],'통합')
+        self.assertEqual(group_detail(self.context,self.snapshot)['current']['mean'],504)
+
+    def test_pooled_change_is_not_average_of_sex_percentages(self):
+        from backend.db.group_repository import pool_sexes
+        base=self.snapshot['groups'][0]
+        rows=[base | {'sex':'남성','matched_before':100,'matched_after':50},base | {'sex':'여성','matched_before':10,'matched_after':20}]
+        self.assertAlmostEqual(pool_sexes(rows)[0]['change_pct'],(70/110-1)*100)
+        self.assertEqual(pool_sexes(rows[:1]),[])
+
     def test_common_grid_comparison_does_not_follow_new_grid_spike(self):
         d = group_detail(self.context, self.snapshot)
         self.assertAlmostEqual(d['current']['change_pct'], -20)
@@ -91,14 +108,14 @@ class GroupDataTest(unittest.TestCase):
             self.assertEqual(review({'id': 'someone-else'}, self.context)['note'], '')
 
     def test_services_use_declared_need_not_assumed_demographic_eligibility(self):
-        with patch('backend.db.mission_store.service_candidates', return_value=[{'name': '상담 사업', 'service_id': 'a'}, {'name': '주거 사업', 'service_id': 'b'}]):
+        with patch('backend.db.mission_store.reference_services', return_value=[]), patch('backend.db.mission_store.service_candidates', return_value=[{'name': '상담 사업', 'service_id': 'a'}, {'name': '주거 사업', 'service_id': 'b'}]):
             result = services(self.context, '안부·상담')
             self.assertEqual(len(result['items']), 1)
             self.assertIn('원문 확인', result['items'][0]['qualification'])
             with self.assertRaises(ValueError): services(self.context, '')
 
     def test_service_purpose_does_not_match_family_relationship_requirements(self):
-        with patch('backend.db.mission_store.service_candidates', return_value=[
+        with patch('backend.db.mission_store.reference_services', return_value=[]), patch('backend.db.mission_store.service_candidates', return_value=[
             {'name': '생활용품', 'service_id': 'a', 'eligibility_text': '가족관계 확인 및 상담'},
             {'name': '사회 참여 모임', 'service_id': 'b'},
         ]):

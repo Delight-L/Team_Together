@@ -25,3 +25,13 @@ test('new and legacy common changes use the same percentage scale, preserving ze
 test('autonomous districts call sub-areas 동, cities and counties keep 읍·면·동', () => {
   assert.equal(areaUnit('강남구'), '동'); assert.equal(areaUnit('춘천시'), '읍·면·동'); assert.equal(areaUnit('양평군'), '읍·면·동'); assert.equal(areaUnit(undefined), '읍·면·동');
 });
+
+test('overview reuses common-change math for all four metrics without turning missing data into zero', () => {
+ const metrics=[['call_contacts','전화 연락'],['text_contacts','문자 연락'],['weekday_move_count','평일 이동'],['weekend_move_count','휴일 이동']];
+ const rows=comparisonRows({text_contacts_log_change:Math.log(.95),text_contacts_common_change:Math.log(.96)},metrics);
+ assert.equal(rows.length,4);
+ assert.ok(Math.abs(rows[1].local+5)<1e-9);
+ assert.ok(Math.abs(rows[1].common+4)<1e-9);
+ assert.equal(rows[3].local,null);
+ assert.equal(rows[3].common,null);
+});

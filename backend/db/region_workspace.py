@@ -28,14 +28,14 @@ def region_status(data, city, month, district):
     rows = _rows(data, city, month, district)
     previous = [m for m in data['months'] if m < month]
     earlier = _rows(data, city, previous[-1], district) if previous else []
-    count = sum(1 for r in rows if r.get('is_risk_signal'))
+    count = len({r['case_id'] for r in rows if r.get('is_risk_signal')}) if any(r.get('case_id') for r in rows) else sum(1 for r in rows if r.get('is_risk_signal'))
     if not rows:
         status = '자료 없음'
     elif count:
         comparable = any(r.get('has_enough_history') for r in rows) and any(r.get('has_enough_history') for r in earlier)
         if not comparable:
             status = '변화 후보'
-        elif any(r.get('is_risk_signal') for r in earlier):
+        elif any(r.get('is_risk_signal') and any(c.get('is_risk_signal') and (not c.get('age_band') or c.get('age_band')==r.get('age_band')) for c in rows) for r in earlier):
             status = '연속 후보'
         else:
             status = '신규 후보'
@@ -85,7 +85,7 @@ def _summary(data, context):
     metrics = ', '.join(f"{r['metric_label']} {_pct(r.get('change_pct'))}{'(후보 기준 해당)' if r.get('is_risk_signal') else ''}"
                         for r in found['rows'])
     return (f"{month} {district}의 판정은 «{found['status']}»입니다. 지난달 대비 변화는 {metrics}입니다. "
-            f"후보 기준에 해당하는 지표는 {found['count']}개입니다. 판정은 단순 감소율이 아니라 지역 전체의 공통 흐름과 과거 이력을 함께 반영한 결과입니다.")
+            f"후보 기준에 해당하는 연령집단은 {found['count']}개입니다. 판정은 자체 이력 비교와 지역 공통 변화 조정 후 이력 비교 중 하나 이상에서 확인된 결과입니다. 성별 통합 판정입니다.")
 
 
 def elderly_background(structure):
@@ -102,6 +102,8 @@ def elderly_background(structure):
 
 def explain_region(context, question, data):
     """외부 LLM 없이 조회한 동 분석 결과와 제한을 명시해 답한다."""
+    if context.get('age'):
+        data = dict(data, assessment=[r for r in data['assessment'] if r.get('age_label') == context['age']])
     question = str(question).strip()
     if not question or len(question) > 2000:
         raise ValueError('질문은 1~2,000자로 입력하세요.')
@@ -130,12 +132,14 @@ def explain_region(context, question, data):
         answer = _summary(data, context)
         if asks_next:
             answer += '\n\n' + NEXT_STEPS
-    return dict(answer=answer, context={k: context.get(k, '') for k in ['city', 'district', 'month']},
+    return dict(answer=answer, context={k: context.get(k, '') for k in ['city', 'district', 'month', 'age']},
                 mode='데이터 근거 안내 · 외부 AI 호출 없음', sources=[dict(label='동별 분석 결과', runId=str(data.get('runId', '')))])
 
 
 def ai_explain_region(context, question, data, history):
     """AI 사용 모드: 조회한 동 분석 결과를 근거로 AI가 설명합니다."""
+    if context.get('age'):
+        data = dict(data, assessment=[r for r in data['assessment'] if r.get('age_label') == context['age']])
     from backend.chatbot.explain_ai import ask_with_evidence
     grounded = explain_region(context, question, data)  # 질문 길이 검사
     district = context.get('district')
@@ -154,7 +158,7 @@ def ai_explain_region(context, question, data, history):
               '후보 판정은 추가 확인 대상이라는 뜻이며 개인의 고립 여부나 복지 자격이 아닙니다. 원인을 확정하지 마세요. '
               '실제 사업은 이 요청에서 조회하지 않았으므로 이름·연락처·신청 조건을 만들지 말고, 필요한 지원을 보미에게 따로 물어보도록 안내하세요. '
               '모르는 정보는 모른다고 말하고 추가로 확인할 사항을 제시하세요.\n'
-              + json.dumps(dict(context={k: context.get(k, '') for k in ['city', 'district', 'month']}, evidence=evidence),
+              + json.dumps(dict(context={k: context.get(k, '') for k in ['city', 'district', 'month', 'age']}, evidence=evidence),
                            ensure_ascii=False, allow_nan=False, default=str))
     answer, hidden = ask_with_evidence(prompt, question, history)
     result = grounded | {'answer': answer, 'mode': 'AI 해석 · 동별 분석 근거'}

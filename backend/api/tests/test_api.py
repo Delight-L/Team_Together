@@ -238,13 +238,13 @@ class ApiTest(unittest.TestCase):
         status, data = self.request('GET', '/api/dashboard')
         self.assertEqual(status, 200)
         import pandas as pd
-        from backend.db.analysis_repository import DETECTION_FILE
-        original = pd.read_csv(DETECTION_FILE)
+        from backend.db.age_analysis_repository import SOURCE
+        original = pd.read_csv(SOURCE)
         original['month'] = pd.to_datetime(original['date']).dt.strftime('%Y-%m')
         name, month = '삼성1동', '2025-12'
-        source = original[(original['행정동'] == name) & (original['month'] == month)].iloc[0]
+        source = original[(original['행정동'] == name) & (original['month'] == month) & (original['age_band'] == '40s')].iloc[0]
         for label, metric in [('평일 이동', 'weekday_move_count'), ('휴일 이동', 'weekend_move_count')]:
-            row = next(row for row in data['assessment'] if row['행정동명'] == name and row['기준연월'] == month and row['metric_label'] == label)
+            row = next(row for row in data['assessment'] if row['행정동명'] == name and row['기준연월'] == month and row['metric_label'] == '40대 ' + label)
             self.assertAlmostEqual(row['metric_value'], source[metric], places=8)
             self.assertEqual(row['metric_unit'], '회')
 

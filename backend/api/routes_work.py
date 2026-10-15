@@ -26,7 +26,8 @@ SERVICE_FIELDS = (
 
 def report_filename(context, revision=None):
     suffix = f"_{revision}차" if revision else ''
-    return f"사업검토보고_{context['district']}_{context['month']}{suffix}.docx"
+    age = '_' + context['age'] if context.get('age') else ''
+    return f"사업검토보고_{context['district']}{age}_{context['month']}{suffix}.docx"
 
 
 def load_workflow(context):
@@ -50,9 +51,11 @@ def missions(request):
     """GET /api/missions: 로그인한 담당자가 저장한 지역 업무 목록(업무 기록 화면)."""
     items = []
     for key, workflow in mission_store.load_all().items():
-        owner, city, district, month = json.loads(key)
+        parts = json.loads(key)
+        owner, city, district, month = parts[:4]
+        age = parts[4] if len(parts) > 4 else None
         if owner == request.user['id']:
-            items.append({'city': city, 'district': district, 'month': month, 'workflow': workflow})
+            items.append({'city': city, 'district': district, 'month': month, **({'age':age} if age else {}), 'workflow': workflow})
     return {'items': items}
 
 

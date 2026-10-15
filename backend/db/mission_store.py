@@ -38,6 +38,8 @@ def identity(request):
     if request.get("workflow_mode") == "demo":
         owner = "demo:" + owner
     fields = [owner, request["city"], request["district"], request["month"]]
+    if request.get("age"):
+        fields.append(request["age"])
     return json.dumps(fields, ensure_ascii=False, separators=(",", ":"))
 
 def load_all():

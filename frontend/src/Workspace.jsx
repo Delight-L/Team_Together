@@ -16,7 +16,7 @@ const statusOf = (workflow) => workflow.workflow_complete ? '보고서 저장 �
 export function Records({ context, user, reviewSeed, onReviewSaved, onSelect, onView }) {
   const { data, error, loading, reload } = useApiQuery('/missions');
   const items = (data?.items || []).filter(item => item.city === context.city);
-  const isCurrent = (item) => item.city === context.city && item.district === context.district && item.month === context.month;
+  const isCurrent = (item) => item.city === context.city && item.district === context.district && item.month === context.month && (item.age || '') === (context.age || '');
   const current = items.find(isCurrent);
   const [nextView, nextLabel] = nextStep(current?.workflow);
   return (
@@ -30,9 +30,9 @@ export function Records({ context, user, reviewSeed, onReviewSaved, onSelect, on
         {!loading && !items.length && !error && <p className="hint">저장된 업무가 없습니다. 지역 분석에서 분석 확인을 저장하세요.</p>}
         <ul>
           {items.map((item) => (
-            <li key={item.city + item.district + item.month}>
+            <li key={item.city + item.district + item.month + (item.age || '')}>
               <button className={isCurrent(item) ? 'selected' : ''} aria-current={isCurrent(item) || undefined} onClick={() => onSelect(item)}>
-                <span><b>{item.district}</b><small>{item.city} · {item.month}{item.workflow.previous_rounds?.length ? ` · ${item.workflow.previous_rounds.length + 1}회차` : ''}</small></span>
+                <span><b>{item.district}{item.age ? ` · ${item.age}` : ''}</b><small>{item.city} · {item.month}{item.workflow.previous_rounds?.length ? ` · ${item.workflow.previous_rounds.length + 1}회차` : ''}</small></span>
                 <span className={`record-status ${item.workflow.workflow_complete ? 'done' : ''}`}>{statusOf(item.workflow)}</span>
                 <span className="record-progress" title="근거 검토 → 사업 검토 → 보고서 중 마친 단계 수">{(item.workflow.done || []).filter((n) => n > 0).length}/3단계</span>
               </button>
@@ -43,7 +43,7 @@ export function Records({ context, user, reviewSeed, onReviewSaved, onSelect, on
       <div className="records-detail">
         {context.district ? <>
           <div className="records-next card">
-            <span>{context.district} · {context.month}{current ? ` · ${statusOf(current.workflow)}` : loading ? ' · 업무 목록 확인 중' : error ? ' · 업무 상태 조회 실패' : ' · 아직 저장된 업무 없음'}</span>
+            <span>{context.district}{context.age ? ` · ${context.age}` : ''} · {context.month}{current ? ` · ${statusOf(current.workflow)}` : loading ? ' · 업무 목록 확인 중' : error ? ' · 업무 상태 조회 실패' : ' · 아직 저장된 업무 없음'}</span>
             <button className="primary" disabled={loading || (!!error && !current)} onClick={() => onView(nextView)}>{current ? `${nextLabel} 이어서 하기` : '지역 분석에서 시작하기'} →</button>
           </div>
           <ReviewWorkspace key={user.id + JSON.stringify(context) + (reviewSeed?.id || '')} context={context} user={user} onView={onView} seed={reviewSeed} onSaved={() => { reload(); onReviewSaved?.(); }} />

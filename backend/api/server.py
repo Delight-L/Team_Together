@@ -23,6 +23,7 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from backend.api import (routes_account, routes_admin, routes_analysis, routes_chat, routes_groups, routes_v16,
                          routes_work, sessions)
+from backend.api import routes_region_insights
 from backend.api.common import ROOT, ApiError, Request, Response, StreamResponse
 # 테스트와 다른 모듈이 backend.api.server.dashboard_data로 불러 씁니다.
 from backend.api.common import dashboard_data  # noqa: F401
@@ -46,6 +47,7 @@ ROUTES = {
     ('GET', '/api/session'): routes_account.current_user,
 
     ('GET', '/api/dashboard'): routes_analysis.dashboard,
+    ('GET', '/api/region-insights'): routes_region_insights.detail,
     ('GET', '/api/activity'): routes_analysis.activity,
     ('POST', '/api/upload/validate'): routes_analysis.upload_validate,
     ('POST', '/api/upload/publish'): routes_analysis.upload_publish,
