@@ -114,3 +114,7 @@
 .app-shell.unified-shell .ri-cluster-legend span { display:inline; }
 .app-shell.unified-shell .ri-map-label { font-size:9px;padding:1px 3px;border-radius:4px; }
 @media(max-width:900px){.app-shell.unified-shell .ri-consumption-chart{height:auto}}
+/* 지도 출처(ⓘ) 버튼: 접힌 상태에서는 작고 흐리게, 마우스를 올리거나 펼치면 또렷하게 보입니다. */
+.ri-map .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib.maplibregl-compact { margin:0 4px 4px 0;min-height:20px; }
+.ri-map .maplibregl-ctrl-attrib.maplibregl-compact:not([open]) { opacity:.3;transform:scale(.75);transform-origin:bottom right;transition:opacity .15s; }
+.ri-map .maplibregl-ctrl-attrib.maplibregl-compact:not([open]):hover,.ri-map .maplibregl-ctrl-attrib.maplibregl-compact:not([open]):focus-within { opacity:1; }
