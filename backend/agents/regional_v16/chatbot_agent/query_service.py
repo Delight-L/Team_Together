@@ -99,6 +99,10 @@ def execute(repo:DataRepository,intent:QueryIntent)->Evidence:
         e=Evidence('신호가 많은 지역',f'{LABEL[intent.signal]} 신호 건수가 많은 동 {len(grouped)}곳입니다.',_records(grouped),[source],limits)
     elif kind=='signals':
         f=selected(lambda n,s,e,a:repo.signals(s,e,n,intent.signal,a),age)
+        if intent.summary_only and not f.empty:
+            counts=f.groupby('행정동').size().rename('신호 건수')
+            f=f.sort_values('date').drop_duplicates('행정동', keep='last').copy()
+            f['신호 건수']=f['행정동'].map(counts).astype(int)
         cols=['date','행정동','age_band','signal_type','assessment_status','cluster_type','a1_cluster_type']
         for metric in CORE:
             cols += [metric+'_log_change',metric+'_valid',metric+'_residual_change_expanding_rz']
@@ -111,7 +115,9 @@ def execute(repo:DataRepository,intent:QueryIntent)->Evidence:
         e=Evidence('이례적 감소 후보',f'{METRIC_LABEL.get(intent.metric,"평일 이동 횟수")}의 지역 공통변화를 제외한 Robust Z가 낮은 순입니다.',_records(f,['date','행정동','age_band',rz]),[source],limits)
     elif kind=='activity':
         f=selected(repo.activity,age)
-        e=Evidence('활동 변화',f'{len(f)}건의 지역 활동 집계값을 확인했습니다.',_records(f,['date','행정동','age_band',*CORE,'communication_signal','mobility_signal','assessment_status']),[source],limits)
+        cols=['date','행정동','age_band',*CORE,'communication_signal','mobility_signal','assessment_status']
+        cols += [metric+'_log_change' for metric in CORE]
+        e=Evidence('활동 변화',f'{len(f)}건의 지역 활동 집계값을 확인했습니다.',_records(f,cols),[source],limits)
     elif kind=='previous':
         f=selected(repo.activity,age);rows=[]
         for row in _records(f,['date','행정동','signal_type']):

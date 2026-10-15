@@ -32,6 +32,7 @@ class QueryIntent:
     # 비교할 연령 묶음은 별도 행으로 반환하며 합산하지 않는다.
     age_bands: tuple[str, ...] = ()
     include_values: bool = False
+    summary_only: bool = False
 
 @dataclass
 class Evidence:

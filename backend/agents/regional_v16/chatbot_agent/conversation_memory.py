@@ -15,6 +15,7 @@ class ConversationTurn:
     result_summary: str
     age_band: str | None = None
     age_bands: tuple[str, ...] = ()
+    metric: str | None = None
 
 class ConversationMemory:
     def __init__(self, max_turns: int = 6):
@@ -33,7 +34,7 @@ class ConversationMemory:
         names=intent.dongs or ((intent.dong,) if intent.dong else ())
         return ConversationTurn(self.pending_question or '',intent.purpose,intent.question_type,names,
                                 intent.start_month,intent.end_month,intent.signal,
-                                '추가 조건 답변 대기',intent.age_band,intent.age_bands)
+                                '추가 조건 답변 대기',intent.age_band,intent.age_bands,intent.metric)
 
     def add(self, user: str, intent: QueryIntent, evidence: Evidence) -> None:
         self.pending_intent=None;self.pending_question=None
@@ -60,7 +61,7 @@ class ConversationMemory:
                 start_month=end_month=dates.pop()
         self.turns.append(ConversationTurn(
             user, intent.purpose, intent.question_type, tuple(districts),
-            start_month, end_month, intent.signal, evidence.summary, intent.age_band, intent.age_bands
+            start_month, end_month, intent.signal, evidence.summary, intent.age_band, intent.age_bands, intent.metric
         ))
         self.turns=self.turns[-self.max_turns:]
 
@@ -71,7 +72,7 @@ class ConversationMemory:
             {"user":t.user,"purpose":t.purpose,"question_type":t.question_type,
              "districts":list(t.districts),"start_month":t.start_month,
              "end_month":t.end_month,"signal":t.signal,
-             "result_summary":t.result_summary,"age_band":t.age_band,"age_bands":list(t.age_bands)}
+             "result_summary":t.result_summary,"age_band":t.age_band,"age_bands":list(t.age_bands),"metric":t.metric}
             for t in turns
         ]
         if scope:data[-1].update(awaiting_clarification=True,needs=list(self.pending_intent.needs))
