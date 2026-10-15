@@ -1,0 +1,17 @@
+{
+  "branch": "delightL",
+  "test_moved": "tools/test_explain_signals.py -> tests/test_explain_signals.py",
+  "removed_caches": [
+    "Context\\__pycache__",
+    "tools\\__pycache__"
+  ],
+  "backup": "C:\\Users\\user\\Desktop\\Team_Together\\DB1_backups\\explanation_publish_20261007_161714",
+  "db_sha256": "87fbedfee62a5f8765842b4ad42843aeb72f014c4df04746944a23b8c8739f04",
+  "model_sha256": "ff84337f6df3a34bbe19dc33eb4e016560481f324e55097f9e87e8f01ae405e2",
+  "db_and_model_unchanged": true,
+  "evidence_summary": {
+    "self_history": 10,
+    "regional_comparison": 2,
+    "persistence": "requires_followup"
+  }
+}

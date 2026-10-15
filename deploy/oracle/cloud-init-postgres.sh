@@ -4,7 +4,7 @@
 # 사용법: 인스턴스 생성 화면 > 고급 옵션 표시 > 관리 > "Cloud-init 스크립트 붙여넣기"에
 #         이 파일 전체를 붙여 넣습니다. 붙여 넣기 전에 아래 두 비밀번호를 반드시 바꾸세요.
 #         (영문·숫자만 20자 이상 권장. 따옴표/$/\ 문자는 쓰지 마세요.)
-# 확인:   인스턴스 부팅 5~10분 후, PC에서 python -m db.connection 으로 접속을 확인합니다.
+# 확인:   인스턴스 부팅 5~10분 후, PC에서 python -m backend.db.connection 으로 접속을 확인합니다.
 # 로그:   인스턴스 안의 /var/log/cloud-init-output.log
 set -euxo pipefail
 
@@ -61,7 +61,8 @@ ALTER ROLE welfind_reader SET statement_timeout = '30s';
 SQL
 
 # Oracle 제공 Ubuntu 이미지는 iptables에 REJECT 규칙이 있어 VCN 보안 목록만 열면 접속되지 않습니다.
-iptables -I INPUT 6 -m state --state NEW -p tcp --dport 5432 -j ACCEPT
+# REJECT 위치가 이미지마다 달라(5번·6번 등) 번호를 고정하지 않고 맨 앞에 넣습니다.
+iptables -I INPUT -m state --state NEW -p tcp --dport 5432 -j ACCEPT
 netfilter-persistent save || (apt-get install -y iptables-persistent && netfilter-persistent save)
 
 echo "WELFIND PostgreSQL 설치 완료"

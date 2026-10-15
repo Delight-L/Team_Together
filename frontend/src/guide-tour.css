@@ -2,13 +2,13 @@
 .guide-tour { position: fixed; inset: 0; z-index: 1000; }
 .guide-dim { position: fixed; inset: 0; background: rgba(15, 23, 42, .55); }
 .guide-spotlight { position: fixed; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(15, 23, 42, .55); outline: 3px solid #8b5cf6; outline-offset: 0; pointer-events: none; transition: all .25s ease; }
-.guide-bubble { position: fixed; width: min(340px, calc(100vw - 24px)); background: #fff; border-radius: 14px; padding: 18px 18px 14px; box-shadow: 0 16px 40px rgba(15, 23, 42, .3); color: #1e293b; }
+.guide-bubble { position: fixed; width: min(340px, calc(100vw - 24px)); background: #fff; border-radius: 14px; padding: 18px 18px 14px; box-shadow: 0 16px 40px rgba(15, 23, 42, .3); color: var(--text-strong); }
 .guide-bubble.docked { left: 50%; top: 50%; transform: translate(-50%, -50%); }
-.guide-bubble h2 { margin: 0 0 8px; font-size: 17px; color: #0c1837; letter-spacing: -.4px; }
-.guide-bubble p { margin: 0; font-size: 13px; line-height: 1.7; color: #4b6488; }
+.guide-bubble h2 { margin: 0 0 8px; font-size: 17px; color: var(--text-strong); letter-spacing: -.4px; }
+.guide-bubble p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--text-sub); }
 .guide-bubble footer { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
-.guide-bubble footer > span { flex-shrink: 0; white-space: nowrap; margin-right: auto; font-size: 13px; color: #64748b; font-weight: 600; }
-.guide-secondary { padding: 8px 14px; border-radius: 9px; background: #f1f5f9; color: #334155; font-size: 13px; font-weight: 600; }
+.guide-bubble footer > span { margin-right: auto; font-size: 13px; color: var(--text-sub); font-weight: 600; }
+.guide-secondary { padding: 8px 14px; border-radius: 9px; background: var(--surface-tint); color: var(--text); font-size: 13px; font-weight: 600; }
 .guide-primary { padding: 8px 18px; border-radius: 9px; background: #7c3aed; color: #fff; font-size: 13px; font-weight: 700; }
 .guide-primary:focus-visible, .guide-secondary:focus-visible { outline: 3px solid #c4b5fd; outline-offset: 2px; }
 @media (max-width: 639px) {

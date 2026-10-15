@@ -1,0 +1,124 @@
+{
+  "database": "outputs/db1.sqlite",
+  "exports": "outputs/integrated",
+  "analysis1": {
+    "skt_source": "${TEAM_TOGETHER_DATA_ROOT}/공모전 원본 데이터/2026빅콘테스트_sk통신인구_데이터_레이아웃",
+    "public_root": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터",
+    "boundary": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 행정동 경계/평면좌표계 변환/서울_행정동_경계_2017_EPSG5179.geojson",
+    "public": {
+      "resident": "${TEAM_TOGETHER_DATA_ROOT}/pipelines/preprocessing/regional_types/raw_data/등록인구(연령별_동별)_20260922163622.csv",
+      "household": "${TEAM_TOGETHER_DATA_ROOT}/pipelines/preprocessing/regional_types/raw_data/세대원수별+세대수_2025Q3_Q4.csv",
+      "welfare": "${TEAM_TOGETHER_DATA_ROOT}/pipelines/preprocessing/regional_types/raw_data/국민기초생활 수급자 동별 현황(202405).xlsx"
+    },
+    "periods": {
+      "2025H2": {
+        "welfare_observation": "2024-05",
+        "elder_year": 2025
+      }
+    },
+    "baseline_model": "Analysis1/models/2025H2_elder_v2/analysis1_baseline_2025H2.joblib",
+    "elderly_living_alone": {
+      "sources": [
+        "${TEAM_TOGETHER_DATA_ROOT}/pipelines/preprocessing/regional_types/raw_data/독거노인현황_2022_2025.csv"
+      ],
+      "available_from": {},
+      "allow_non_gangnam_terminal_error": true,
+      "source_archive": "Analysis1/data/raw/elderly",
+      "population_sources": [
+        "${TEAM_TOGETHER_DATA_ROOT}/pipelines/preprocessing/regional_types/raw_data/등록인구(연령별_동별)_20260922163622.csv"
+      ],
+      "population_archive": "Analysis1/data/raw/elderly_population"
+    },
+    "model_version": "analysis1_2025H2_elder_v2"
+  },
+  "analysis2": {
+    "telecom_dir": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 시민생활 데이터/29개 통신정보 7~12월",
+    "interest_dir": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 시민생활 데이터/10개 관심집단수 7~12월",
+    "rain": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 기상 데이터/강수량+및+강수일수_20260929171721.csv",
+    "diary": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 기상 데이터/일기일수_20260929171813.csv"
+  },
+  "survey_context": {
+    "seoul_years": {
+      "2022": {
+        "path": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 도시정책지표조사/서울서베이 도시정책지표조사 정보(2022년)/data/2022 서울서베이_가구원조사.xlsx",
+        "mapping": {
+          "district": "gu",
+          "parent": "AQ26",
+          "sick": "AQ26A_1",
+          "money": "AQ26A_2",
+          "emotion": "AQ26A_3",
+          "family": "AQ39_1",
+          "outside": "AQ39_2",
+          "household": "ID",
+          "age": "DEW2",
+          "weight": "wtb1"
+        },
+        "available_from": null
+      },
+      "2023": {
+        "path": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 도시정책지표조사/서울서베이 도시정책지표조사 정보(2023년)/1. DATA/2023 서울서베이 가구원 data(240826)_코드북.xlsx",
+        "mapping": {
+          "district": "GU",
+          "parent": "Q42",
+          "sick": "Q42B1",
+          "money": "Q42B2",
+          "emotion": "Q42B3",
+          "family": "Q56A1",
+          "outside": "Q56A2",
+          "household": "일련번호",
+          "age": "DEW2",
+          "weight": "wtb1"
+        },
+        "available_from": null
+      },
+      "2024": {
+        "path": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 도시정책지표조사/서울서베이 도시정책지표조사 정보(2024년)/1. DATA/2024 서울서베이 가구원_data_코드북.xlsx",
+        "mapping": {
+          "district": "GU",
+          "parent": "Q47",
+          "sick": "Q47B1",
+          "money": "Q47B2",
+          "emotion": "Q47B3",
+          "family": "Q62A1",
+          "outside": "Q62A2",
+          "household": "일련번호",
+          "age": "DEW2",
+          "weight": "wtb1"
+        },
+        "available_from": null
+      },
+      "2025": {
+        "path": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 도시정책지표조사/서울서베이 도시정책지표조사 정보(2025년)/1. DATA/2025년 서울서베이_가구원_data_codebook.xlsx",
+        "mapping": {
+          "district": "자치구",
+          "parent": "Q47",
+          "sick": "Q47AA1",
+          "money": "Q47AA2",
+          "emotion": "Q47AA3",
+          "family": "Q62A1",
+          "outside": "Q62A2",
+          "household": "일련번호",
+          "extra_loneliness": {
+            "loneliness_companionship": "Q62A3",
+            "loneliness_left_alone": "Q62A4",
+            "loneliness_among_people": "Q62A5"
+          },
+          "age": "DEW2",
+          "weight": "wtb1"
+        },
+        "available_from": null
+      }
+    },
+    "youth_reference": {
+      "household": {
+        "path": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 고립은둔청년 실태조사/★DATA_서울시 고립은둔청년 실태조사(가구조사)_v1_230127.xlsx"
+      },
+      "youth": {
+        "path": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 고립은둔청년 실태조사/★DATA_서울시 고립은둔청년 실태조사(청년조사)_v1_230127.xlsx"
+      }
+    }
+  },
+  "evidence_publication": {
+    "records": []
+  }
+}

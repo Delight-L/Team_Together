@@ -262,3 +262,17 @@
   .group-shell .gd-evidence-content .gd-review-actions button { padding: 7px 10px; font-size: 11px; }
   .group-shell .gd-evidence-content .gd-activity .gd-line { height: 80px; }
 }
+
+/* Keep the measured file grid and population cards aligned with the new cover. */
+.group-shell .gd-files-panel .gd-file-list {
+  grid-template-columns: repeat(var(--gd-cols, 4), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--gd-rows, 3), minmax(0, 1fr));
+  grid-auto-rows: auto;
+}
+.group-shell .gd-files-panel .gd-file-list button { min-height: 0; }
+.group-shell .gd-summary .gd-population-grid .gd-senior { margin: 0; }
+.group-shell .gd-process li.current > button { background: #f0f6ff; }
+.group-shell .gd-process li:nth-child(2) .gd-step-icon { color: #762bff; }
+.group-shell .gd-process li:nth-child(3) .gd-step-icon { color: #00aaca; }
+.group-shell .gd-summary .gd-context-cards > article,
+.group-shell .gd-evidence-content > details { overflow-y: auto; scrollbar-width: thin; }

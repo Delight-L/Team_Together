@@ -1,0 +1,35 @@
+﻿date,행정동코드,행정동,age_band,assessment_status,communication_signal,mobility_signal,combined_signal,isolation_related_candidate,signal_status,evidence_level,interest_support,distance_support,review_reasons,context_period,a1_cluster_type
+2025-07-01,1123074,일원2동,20s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-07-01,1123074,일원2동,30s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-07-01,1123074,일원2동,40s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-07-01,1123074,일원2동,50s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-07-01,1123074,일원2동,60plus,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-08-01,1123064,역삼1동,40s,partially_assessed,False,,False,False,Deferred,partial_assessment,True,False,some_behavior_domains_unassessable;,2025H2,고활동·청년유동·1인가구 중심형
+2025-08-01,1123064,역삼1동,50s,partially_assessed,False,,False,False,Deferred,partial_assessment,False,False,some_behavior_domains_unassessable;,2025H2,고활동·청년유동·1인가구 중심형
+2025-08-01,1123074,일원2동,20s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-08-01,1123074,일원2동,30s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-08-01,1123074,일원2동,40s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-08-01,1123074,일원2동,50s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-08-01,1123074,일원2동,60plus,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,False,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-09-01,1123064,역삼1동,40s,partially_assessed,False,,False,False,Deferred,partial_assessment,False,False,some_behavior_domains_unassessable;,2025H2,고활동·청년유동·1인가구 중심형
+2025-09-01,1123064,역삼1동,50s,partially_assessed,False,,False,False,Deferred,partial_assessment,True,False,some_behavior_domains_unassessable;,2025H2,고활동·청년유동·1인가구 중심형
+2025-09-01,1123074,일원2동,20s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,False,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-09-01,1123074,일원2동,30s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,False,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-09-01,1123074,일원2동,40s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,False,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-09-01,1123074,일원2동,50s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,False,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-09-01,1123074,일원2동,60plus,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,False,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-10-01,1123074,일원2동,20s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,False,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-10-01,1123074,일원2동,30s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-10-01,1123074,일원2동,40s,assessed,True,False,False,False,New,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-10-01,1123074,일원2동,50s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-10-01,1123074,일원2동,60plus,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-11-01,1123074,일원2동,20s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-11-01,1123074,일원2동,30s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-11-01,1123074,일원2동,40s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-11-01,1123074,일원2동,50s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-11-01,1123074,일원2동,60plus,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-12-01,1123074,일원2동,20s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,False,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-12-01,1123074,일원2동,30s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,False,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-12-01,1123074,일원2동,40s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-12-01,1123074,일원2동,50s,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형
+2025-12-01,1123074,일원2동,60plus,assessed,False,False,False,False,No_signal,no_detected_joint_behavior_change,,True,interest_evidence_unavailable;,2025H2,고령·2인가구·구조적 복지배경 특화형

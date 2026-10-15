@@ -165,8 +165,8 @@ export function Upload() {
       <h2>데이터 검사와 DB1 반영</h2>
       <p>검사 → 미리보기 → DB1 반영 순서로 진행합니다. 기존 버전은 보관됩니다.</p>
       <p>
-        현재 화면은 저장소의 Analysis2 CSV를 읽습니다. DB1 반영만으로 화면의 CSV가 교체되지는
-        않습니다.
+        반영한 분석 결과는 DB 조회 화면에서 새로고침 후 확인할 수 있습니다. 이전 버전과
+        업로드 이력은 보관됩니다.
       </p>
       <div className="review-form">
         <label>
@@ -179,8 +179,8 @@ export function Upload() {
               setPrepared(null);
             }}
           >
-            <option value="monthly">Analysis2 탐지 결과 CSV 또는 Excel</option>
-            <option value="structure">지역 구조자료 원본 5종</option>
+            <option value="monthly">동별 통화·문자·이동 분석 결과 (CSV/Excel)</option>
+            <option value="structure">2025년 하반기 지역 배경자료 5종 · 독거노인 포함</option>
           </select>
         </label>
         <label>
@@ -201,6 +201,7 @@ export function Upload() {
           {busy ? '처리 중…' : '업로드 자료 검사 및 분석'}
         </button>
       </div>
+      {kind === 'structure' && <p className="hint">SKT 구조자료·등록인구·세대수·생계급여 수급자·독거노인 CSV/XLSX를 선택하세요. 65세 이상 등록인구 중 독거노인 비율은 2025년 독거노인 수와 2025년 4분기 인구를 기준으로 계산합니다.</p>}
       {notice && (
         <p className="notice" role="status">
           {notice}

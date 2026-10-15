@@ -5,10 +5,12 @@ import { api, query, number } from './api';
 import { Icon, Bomi, EvidenceTable, Trend } from './components';
 import BomiChat from './BomiChat';
 import { Records, Activity, Upload } from './Workspace';
-import { RegionalOverview, summarizeRegions } from './Briefing';
+import AISettings from './AISettings';
+import { RegionalOverview, summarizeRegions, exampleQuestion } from './Briefing';
 import { DataDialog, Comparison, ReportQuality } from './Experience';
 import GuideTour from './GuideTour';
 import GroupDashboard from './GroupDashboard';
+import ElderlyBackground from './ElderlyBackground';
 import { userName } from './personas.mjs';
 
 const menus = [
@@ -21,9 +23,9 @@ const menus = [
 ];
 // 예전 메뉴 이름으로 이동을 요청해도 합쳐진 메뉴의 해당 탭으로 연결합니다.
 const legacyViews = { compare: ['chart', 'compare'], followup: ['records'], missions: ['records'] };
-const adminMenus = [['data', '데이터 관리'], ['activity', '활동 이력']];
+const adminMenus = [['data', '데이터 관리'], ['activity', '활동 이력'], ['ai', 'AI 설정']];
 // 메뉴마다 서로 다른 아이콘을 써서 메뉴를 접었을 때도 구분되게 합니다.
-const menuIcons = { records: 'clipboard', activity: 'history' };
+const menuIcons = { records: 'clipboard', activity: 'history', ai: 'sparkle' };
 const subtitles = {
   map: '확인 후보 지역을 표와 지도에서 함께 찾습니다.',
   chart: '선택한 동의 지표별 근거를 확인하고, 다른 동·기간과 비교합니다.',
@@ -32,6 +34,7 @@ const subtitles = {
   report: '분석과 사업 검토 결과를 보고서 초안으로 정리합니다.',
   data: '새 분석 자료를 검사한 뒤 반영합니다.',
   activity: '자료가 언제 어떻게 반영됐는지 확인합니다.',
+  ai: '보미와 보고서에 쓸 외부 AI 사용 여부·제공사·모델을 정합니다.',
   chat: '선택한 지역을 바탕으로 보미가 복지사업과 담당 기관을 안내합니다.',
 };
 const titles = {
@@ -267,7 +270,7 @@ export default function App() {
     setSupportOpen(false);
   }
   const regions = useMemo(() => summarizeRegions(
-    data?.assessment || [], data?.geometry[city], city, month, data?.months || [],
+    data?.assessment || [], data?.geometry[city], city, month, data?.months || [], data?.regionalStructures || [],
   ), [data, city, month]);
   const dashboardAnalysis = useMemo(() => data && ({ assessment: data.assessment, geometry: data.geometry[city], months: data.months }), [data, city]);
   useEffect(() => {
@@ -297,7 +300,12 @@ export default function App() {
     selected: district,
     onSelect: select,
     onStart: start,
-    onChat: expandChat,
+    // 지역 상세의 «보미와 근거 살펴보기»: 그 동 기준으로 채팅을 맞추고 예시 질문을 입력란에 넣어 둡니다.
+    onChat: (region) => {
+      if (!region?.name) { expandChat(); return; }
+      setDistrict(region.name);
+      setChatDraft({ id: Date.now(), contextKey: JSON.stringify({ city, district: region.name, month }), question: exampleQuestion(region), guide: true });
+    },
     onInspect: (name) => { setDistrict(name); go('chart'); },
     onAsk: (name, question) => {
       setDistrict(name);
@@ -310,7 +318,7 @@ export default function App() {
 
   return (
     <div
-      className={`app-shell with-chat ${navCollapsed ? 'nav-collapsed' : ''} ${view === 'dashboard' ? 'group-shell' : ''}`}
+      className={`app-shell with-chat ${navCollapsed ? 'nav-collapsed' : ''} ${view === 'dashboard' ? 'briefing-shell group-shell' : ''}`}
     >
       <button className="panel-handle menu-handle" onClick={() => setNavCollapsed(v => !v)} aria-label={navCollapsed ? '왼쪽 메뉴 펼치기' : '왼쪽 메뉴 접기'} aria-expanded={!navCollapsed} title={navCollapsed ? '메뉴 펼치기' : '메뉴 접기'}>{navCollapsed ? '›' : '‹'}</button>
       <nav className="sidebar" aria-label="주 메뉴">
@@ -395,12 +403,16 @@ export default function App() {
               <span className="eyebrow">WELFIND · {city}</span>
               <h1>
                 {view === 'dashboard' ? (
-                  <>지역의 변화를 발견하고, <em>필요한 복지로 연결합니다</em></>
-                ) : titles[view]}
+                  <>
+                    지역의 변화를 발견하고, <em>필요한 복지로 연결합니다</em>
+                  </>
+                ) : (
+                  titles[view]
+                )}
               </h1>
               <p>{view === 'dashboard' ? '복지 담당자가 지역의 고립 위험 신호와 생활 여건을 살펴보고, 필요한 지원을 검토하도록 돕습니다.' : subtitles[view]}</p>
             </div>
-            <div className="heading-tools">
+            <div className={`heading-tools ${view === 'dashboard' ? 'case-heading-tools' : ''}`}>
             <div className="filters">
               <label>
                 지역
@@ -454,7 +466,7 @@ export default function App() {
                   </button>
                 </div>
               )}
-              {!rows.length && <div className="notice" role="status">{city} · {month}의 분석 자료가 없습니다. 지역 또는 기준월을 확인해 주세요.</div>}
+              {!rows.length && view !== 'dashboard' && <div className="notice" role="status">{city} · {month}의 분석 자료가 없습니다. 지역 또는 기준월을 확인해 주세요.</div>}
               {view === 'chart' && <div className="view-tabs" role="tablist" aria-label="지역 분석 보기">
                 {[['evidence', '상세 근거'], ['compare', '기간·지역 비교']].map(([key, label]) => <button key={key} role="tab" aria-selected={analysisTab === key} className={analysisTab === key ? 'active' : ''} onClick={() => setAnalysisTab(key)}>{label}</button>)}
               </div>}
@@ -484,12 +496,13 @@ export default function App() {
                         value={district}
                         onChange={(e) => select(e.target.value)}
                       >
-                        <option value="">행정동 선택</option>
+                        <option value="">읍·면·동 선택</option>
                         {data.geometry[city]?.units.map((u) => (
                           <option key={u.n}>{u.n}</option>
                         ))}
                       </select>
                     </header>
+                    <ElderlyBackground structure={city === '강남구' ? data.regionalStructures?.find(r => r.dong_name === district) : null} />
                     <div className="data-source-strip"><span>기준월 {month} · 동별 통화·문자·이동 분석 결과</span><button className="text-button" onClick={() => openSupport()}>데이터 기준 보기</button></div>
                     {selectedRows.length ? (
                       <>
@@ -500,7 +513,7 @@ export default function App() {
                         <EvidenceTable rows={selectedRows} />
                         <p className="hint">{selectedRows.filter(r => r.is_risk_signal).length}개 지표가 후보 기준에 해당합니다. 전월 증가한 지표도 지역 전체의 공통 흐름과 과거 이력을 반영하면 후보가 될 수 있습니다. 후보는 지표 묶음을 함께 확인한 결과입니다.</p>
                         <p className="hint">
-                          구 전체의 공통 흐름을 뺀 평소 대비 차이:{' '}
+                          시·군·구 전체의 공통 흐름을 뺀 평소 대비 차이:{' '}
                           {selectedRows
                             .map((r) => `${r.metric_label} ${number(r.relative_change_pp)}`)
                             .join(' · ')}
@@ -538,6 +551,7 @@ export default function App() {
                               ? '① 완료 · 아래 근거와 추이를 확인한 뒤 ② 근거 검토 완료를 누르세요.'
                               : '① 분석 확인 저장: 이 동을 내 업무로 등록합니다(업무 기록에 나타남). ② 근거 검토 완료: 근거를 확인했다고 기록하며, 이후 사업 매칭 검토를 할 수 있습니다.'}
                         </p>
+                        {workflow.analysis_changed && <p className="notice">이 업무는 시작할 때 저장한 분석 근거로 이어집니다. 그 뒤 분석 자료가 새로 적재되어 위 수치와 사업 검토·보고서에 쓰이는 근거가 다를 수 있습니다.</p>}
                       </>
                     ) : (
                       <div className="empty">
@@ -591,6 +605,7 @@ export default function App() {
               )}
               {view === 'data' && user.admin && <div className="scroll-view"><Upload /><div className="data-source-strip"><span>분석 출처와 판단 기준은 데이터 기준에서 확인할 수 있습니다.</span><button className="text-button" onClick={() => openSupport()}>데이터 기준 보기</button></div></div>}
               {view === 'activity' && user.admin && <Activity />}
+              {view === 'ai' && user.admin && <AISettings />}
               {view === 'chat' && (
                 <div className="chat-context-view">
                   <span className="eyebrow">CONNECTED ANALYSIS</span>
@@ -601,7 +616,7 @@ export default function App() {
                     value={district}
                     onChange={(e) => select(e.target.value)}
                   >
-                    <option value="">행정동 선택</option>
+                    <option value="">읍·면·동 선택</option>
                     {data.geometry[city]?.units.map((u) => (
                       <option key={u.n}>{u.n}</option>
                     ))}
@@ -634,8 +649,17 @@ export default function App() {
 
         <BomiChat
           key={user.id}
+          userId={user.id}
           layout="panel"
           draft={chatDraft}
+          onAction={(action) => {
+            // 보고서 작성 에이전트의 초안은 보고서 탭의 편집 칸으로 넘깁니다.
+            // 그룹 화면에서 요청한 경우 앱의 선택 동이 비어 있으므로 초안의 지역·기준월로 맞춥니다.
+            const target = action.reportDraft?.context;
+            if (target) { setCity(target.city); setMonth(target.month); setDistrict(target.district); }
+            if (action.reportDraft) setReportSeed(action.reportDraft);
+            if (action.view) go(action.view);
+          }}
           visible={true}
           context={view === 'dashboard' && chatGroup ? {city: chatGroup.city, district: chatGroup.district, month: chatGroup.month} : context}
           group={view === 'dashboard' ? chatGroup : undefined}
@@ -714,7 +738,7 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
   }
   return (
     <div className="scroll-view">
-      <section className="card info-card">
+      <section className="card info-card service-review-workspace">
         <WorkflowSteps context={context} workflow={workflow} current="services" onView={onView} />
         <span className="eyebrow">SERVICE REVIEW</span>
         <h2>{context.district || '지역 선택 필요'} · 사업 매칭 검토</h2>
@@ -861,6 +885,17 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     [draft, setDraft] = useState(null),
     [draftBusy, setDraftBusy] = useState(false),
     [error, setError] = useState('');
+  // AI 문장 다듬기: AI 연결이 있을 때만 고를 수 있고, 저장된 근거와 대조를 통과한 문장만 씁니다.
+  // 같은 업무에서 여러 번 저장한 보고서 목록(최신순). 저장할 때마다 다시 불러옵니다.
+  const [versions, setVersions] = useState([]);
+  useEffect(() => {
+    let live = true;
+    if (!workflow.workflow_complete) { setVersions([]); return; }
+    api('/report/versions?' + query(context)).then(d => live && setVersions(d.items || [])).catch(() => live && setVersions([]));
+    return () => { live = false; };
+  }, [workflow.report?.revision, workflow.workflow_complete, context.city, context.district, context.month]);
+  const [aiAvailable, setAiAvailable] = useState(false), [useAi, setUseAi] = useState(false);
+  useEffect(() => { let live = true; api('/chat/config').then(d => live && setAiAvailable(!!d.aiAvailable)).catch(() => {}); return () => { live = false; }; }, []);
   useEffect(() => {
     setDraft(null);
     setConfirmed(false);
@@ -885,7 +920,7 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     setDraftBusy(true);
     setError('');
     try {
-      setContent(await api('/report/content', context));
+      setContent(await api('/report/content', { ...context, ai: aiAvailable && useAi }));
       setStep(2);
     } catch (e) {
       setError(e.message);
@@ -925,7 +960,10 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   return <div className="scroll-view"><section className="card info-card report-workspace">
     <WorkflowSteps context={context} workflow={workflow} current="report" onView={onView} />
     <div className="workspace-heading"><div><span className="eyebrow">검토보고서</span><h2>{context.district || '지역 선택 필요'} · 복지서비스 연계 검토보고</h2><p className="hint">{context.month} · 초안을 다듬고 Word 파일을 확인한 뒤 저장하세요.</p></div></div>
-    {workflow.workflow_complete && <div className="saved-report"><span>최종 보고서가 저장되어 있습니다. 새로 작성해도 이전 저장본은 이력에 남습니다.</span><a className="text-button" href={'/api/report?' + query(context)}>저장된 Word 보고서 내려받기 →</a></div>}
+    {workflow.workflow_complete && <div className="saved-report"><span>최종 보고서가 저장되어 있습니다. 새로 작성해도 이전 저장본은 아래 목록에 남습니다.</span><a className="text-button" href={'/api/report?' + query(context)}>최신 Word 보고서 내려받기 →</a></div>}
+    {versions.length > 1 && <details className="report-versions"><summary>저장한 보고서 {versions.length}건 · 이전 차수 내려받기</summary><ul>{versions.map(v =>
+      <li key={v.revision}><span><strong>{v.revision}차</strong> {v.created_at.replace('T', ' ').slice(0, 16)} · {v.author}{v.department ? ` (${v.department})` : ''}{v.title ? ` · ${v.title}` : ''}</span>
+        <a className="text-button" href={'/api/report?' + query({ ...context, revision: v.revision })}>내려받기 →</a></li>)}</ul></details>}
     <ol className="report-steps" aria-label="보고서 작업 순서">{['초안 준비', '내용 수정', '파일 확인·저장'].map((label, i) => <li key={label} className={step === i + 1 ? 'current' : ''}><button aria-current={step === i + 1 ? 'step' : undefined} disabled={working || (i > 0 && !content) || (i === 2 && !draft)} onClick={() => setStep(i + 1)}><span>{i + 1}</span>{label}</button></li>)}</ol>
     <p className="hint draft-caption">{storageFailed ? '브라우저 임시 보관에 실패했습니다. 새로고침 전에 내용을 복사해 두세요.' : '작성 내용은 이 탭에 임시 보관됩니다. 로그아웃 전에 저장해 주세요.'}</p>
     {staleContent && <p className="notice">사업 검토 근거가 달라졌습니다. 편집한 내용은 남아 있습니다. 필요한 문장을 복사해 둔 뒤 ‘초안 준비’에서 최신 근거로 다시 만들어 주세요.</p>}
@@ -937,13 +975,16 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
         <label>작성자<input value={author} maxLength={60} disabled={working} onChange={e => setAuthor(e.target.value)} /></label>
         <label className="full">연락처 (선택)<input value={contact} maxLength={80} disabled={working} onChange={e => setContact(e.target.value)} /></label>
       </div>
+      <label className="confirmation"><input type="checkbox" disabled={working || !aiAvailable} checked={aiAvailable && useAi} onChange={e => setUseAi(e.target.checked)} />
+        AI로 문장 다듬기{aiAvailable ? ' · 전송 시 외부 AI 사용, 저장된 근거와 대조를 통과한 문장만 사용' : ' · 연결 설정 필요'}</label>
       <div className="form-actions">
         {!content ? <button className="primary" disabled={working || !workflow.done?.includes(2)} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '보고서 초안 만들기'}</button> : <button className="primary" disabled={working} onClick={() => setStep(2)}>작성 중인 초안 이어서 수정</button>}
       </div>
       {content && <div className="regenerate-section"><span className="hint">최신 근거로 다시 만들면 편집한 내용이 바뀝니다.</span><button className="text-button" disabled={working || !workflow.done?.includes(2)} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '저장된 근거로 초안 다시 만들기'}</button></div>}
     </section>}
     {step === 2 && content && <section className="report-stage" aria-label="내용 수정">
-      <h3>보고서 내용을 검토하고 다듬어 주세요.</h3><p className="hint">검토 요지 → 지역 현황 → 서비스 제안 → 향후 조치 순서입니다.</p>
+      <h3>보고서 내용을 검토하고 다듬어 주세요.</h3><p className="hint">검토 요지 → 지역 현황 → 서비스 제안 → 향후 조치 순서입니다.{content.mode ? ` · ${content.mode}` : ''}</p>
+      {content.notice && <p className="notice">{content.notice}</p>}
       <div className="report-form report-editor">{[['title', '보고서 제목', 80], ['summary', '검토 요지', 350], ['situation', '지역 현황', 900], ['proposal', '복지서비스 연계·추진 제안', 1200], ['next_steps', '향후 조치 및 담당자 의견', 600]].map(([key, label, limit]) => <label className="full" key={key}>{label}<textarea aria-label={label} rows={key === 'title' ? 2 : 4} maxLength={limit} disabled={working} value={content[key]} onChange={e => setContent(prev => ({ ...prev, [key]: e.target.value }))} /><small>{content[key].length} / {limit}자</small></label>)}</div>
       <ReportQuality content={content} workflow={workflow} />
       {!canCreateFile && !staleContent && <p className="hint">작성자·부서와 보고서의 모든 항목을 입력하면 Word 파일을 만들 수 있습니다.</p>}

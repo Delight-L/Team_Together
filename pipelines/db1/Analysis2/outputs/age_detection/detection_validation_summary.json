@@ -1,0 +1,14 @@
+{
+  "period": "2025-07~2025-12",
+  "rows": 660,
+  "fully_assessed": 656,
+  "partially_assessed": 4,
+  "fully_deferred": 0,
+  "communication_signal_rows": 10,
+  "mobility_signal_rows": 0,
+  "joint_candidates": 0,
+  "age_signal_rows_without_legacy_dong_signal": 10,
+  "gangnam_age_month_rows": 30,
+  "calibrated_thresholds": 60,
+  "model_version": "a2_age_detection_v1_bd2dbf881a54"
+}

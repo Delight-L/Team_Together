@@ -58,7 +58,7 @@ DB_SSLMODE=require
 WELFIND_DATA_SOURCE=auto
 ```
 
-관리자 DB1 반영·DB2 정기 수집을 클라우드에 직접 쓰려면 `DB_USER=welfind_admin`으로 둡니다. 확인: `.venv\Scripts\python.exe -m db.connection` → `DB 연결 성공: 1`.
+관리자 DB1 반영·DB2 정기 수집을 클라우드에 직접 쓰려면 `DB_USER=welfind_admin`으로 둡니다. 확인: `.venv\Scripts\python.exe -m backend.db.connection` → `DB 연결 성공: 1`.
 
 `WELFIND_DATA_SOURCE`: `auto`(DB 우선, 실패 시 로컬 CSV) / `db`(DB만, 클라우드 점검용) / `csv`(DB 없이 개발).
 

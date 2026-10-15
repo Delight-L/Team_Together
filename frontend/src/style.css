@@ -4,9 +4,36 @@
   color: #20304d;
   background: #f4f7fc;
   font-synthesis: none;
+  /* 디자인 규칙(docs/design-rules.md): 종합 현황의 색감을 기준으로 한 공통 값입니다. 새 색을 직접 쓰지 말고 이 값을 쓰세요. */
   --blue: #2563eb;
-  --border: #e5ebf4;
-  --muted: #7b879d;
+  --blue-strong: #1d4ed8;
+  --text-strong: #12213e;
+  --text: #20304d;
+  --text-sub: #4b6488;
+  --text-muted: #71829e;
+  --text-faint: #8798b3;
+  --line: #dce8fa;
+  --line-strong: #c8dcfa;
+  --surface: #ffffff;
+  --surface-soft: #f7fbff;
+  --surface-tint: #f0f6ff;
+  --page: #f4f7fc;
+  /* 상태 표시: 같은 뜻은 모든 화면에서 같은 색을 씁니다. */
+  --status-candidate: #e0264a;
+  --status-candidate-bg: #ffecef;
+  --status-continuing: #c96a12;
+  --status-continuing-bg: #fff2e0;
+  --status-pending: #2f6fd1;
+  --status-pending-bg: #eaf3ff;
+  --status-quiet: #71829e;
+  --status-quiet-bg: #f1f5fa;
+  --status-ai: #6d28d9;
+  --status-ai-bg: #ede9fe;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-pill: 999px;
+  --border: var(--line);
+  --muted: var(--text-muted);
   --shadow: 0 5px 24px #17346805;
 }
 * {
@@ -61,11 +88,11 @@ button {
 input,
 textarea,
 select {
-  border: 1px solid #dce4f0;
+  border: 1px solid var(--line);
   border-radius: 10px;
   background: white;
   padding: 10px 12px;
-  color: #273958;
+  color: var(--text);
 }
 textarea {
   resize: vertical;
@@ -129,12 +156,12 @@ svg {
   background: #1e54d2;
 }
 .secondary {
-  background: #f1f6ff;
+  background: var(--surface-tint);
   color: var(--blue);
-  border: 1px solid #dce8ff;
+  border: 1px solid var(--line);
 }
 .secondary:hover:not(:disabled) {
-  background: #e3edff;
+  background: var(--line);
 }
 .wide {
   width: 100%;
@@ -157,14 +184,14 @@ svg {
   height: 32px;
 }
 .icon-button:hover {
-  background: #edf3fc;
+  background: var(--surface-tint);
 }
 .eyebrow {
   display: block;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.7px;
-  color: #8795ad;
+  color: var(--text-muted);
 }
 .online-dot {
   display: inline-block;
@@ -176,7 +203,7 @@ svg {
 }
 .hint {
   font-size: 11px;
-  color: #7b879d;
+  color: var(--text-muted);
   line-height: 1.8;
 }
 .error {
@@ -190,7 +217,7 @@ svg {
   display: grid;
   place-items: center;
   height: 100vh;
-  color: #667891;
+  color: var(--text-muted);
 }
 .brand-logo {
   width: 144px;
@@ -201,19 +228,19 @@ svg {
   display: inline-flex;
   white-space: nowrap;
   align-items: center;
-  background: #f1f4f9;
+  background: var(--surface-tint);
   border-radius: 6px;
   padding: 4px 7px;
-  font-size: 9px;
-  color: #7b879d;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 .pill {
-  background: #f0f6ff;
+  background: var(--surface-tint);
   color: #4d76b5;
 }
 .badge.blue {
   color: #2563eb;
-  background: #eaf2ff;
+  background: var(--surface-tint);
 }
 .badge.amber {
   color: #b17a18;
@@ -245,18 +272,18 @@ svg {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 10px;
-  color: #62748e;
+  font-size: 11px;
+  color: var(--text-muted);
   border: 1px solid var(--border);
   border-radius: 7px;
   padding: 8px 10px;
   margin: 4px 6px 24px;
 }
 .nav-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  color: #a0aabc;
+  color: var(--text-faint);
   margin: 0 14px 12px;
 }
 .sidebar > button {
@@ -268,14 +295,14 @@ svg {
   padding: 13px 12px;
   margin-bottom: 4px;
   font-size: 12px;
-  color: #75829a;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 .sidebar > button:hover {
-  background: #f3f7ff;
+  background: var(--surface-soft);
 }
 .sidebar > button.active {
-  background: #eaf2ff;
+  background: var(--surface-tint);
   color: var(--blue);
   font-weight: 700;
 }
@@ -284,9 +311,9 @@ svg {
 }
 .new-tag {
   margin-left: auto;
-  background: #eaf2ff;
+  background: var(--surface-tint);
   color: var(--blue);
-  font-size: 8px;
+  font-size: 11px;
   border-radius: 4px;
   padding: 3px 5px;
 }
@@ -297,14 +324,14 @@ svg {
   align-items: center;
   padding-top: 20px;
   border-top: 1px solid var(--border);
-  font-size: 10px;
+  font-size: 11px;
 }
 .user-avatar {
   width: 29px;
   height: 29px;
   display: grid;
   place-items: center;
-  background: #eaf2ff;
+  background: var(--surface-tint);
   border-radius: 9px;
   font-size: 12px;
   color: #2563eb;
@@ -314,14 +341,14 @@ svg {
   display: block;
 }
 .sidebar-bottom small {
-  font-size: 9px;
-  color: #98a3b5;
+  font-size: 11px;
+  color: var(--text-faint);
   margin-top: 4px;
 }
 .sidebar-bottom button {
   margin-left: auto;
   padding: 2px;
-  color: #9ca7b9;
+  color: var(--text-faint);
 }
 .main-wrap {
   display: flex;
@@ -339,7 +366,7 @@ svg {
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
-  color: #8c98ab;
+  color: var(--text-muted);
 }
 .topbar > div {
   display: flex;
@@ -348,13 +375,13 @@ svg {
 }
 .separator {
   margin: 0 12px;
-  color: #d3dbe7;
+  color: var(--line);
 }
 .connected {
   display: flex;
   gap: 6px;
   align-items: center;
-  font-size: 10px;
+  font-size: 11px;
 }
 .main-content {
   flex: 1;
@@ -377,8 +404,8 @@ svg {
   margin-bottom: 5px;
 }
 .page-heading p {
-  font-size: 10px;
-  color: #8c98ab;
+  font-size: 11px;
+  color: var(--text-muted);
   margin-top: 5px;
 }
 .filters {
@@ -388,8 +415,8 @@ svg {
 }
 .filters label {
   gap: 5px;
-  font-size: 9px;
-  color: #8a99ad;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 .filters select {
   padding: 8px 10px;
@@ -402,16 +429,16 @@ svg {
   display: flex;
   justify-content: space-between;
   padding: 8px 26px 12px;
-  font-size: 9px;
-  color: #9ba7ba;
+  font-size: 11px;
+  color: var(--text-faint);
   flex-shrink: 0;
 }
 .notice {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #edf5ff;
-  border: 1px solid #d6e6ff;
+  background: var(--surface-tint);
+  border: 1px solid var(--line);
   border-radius: 9px;
   padding: 5px 12px;
   color: #3b6caa;
@@ -461,7 +488,7 @@ svg {
   height: 43px;
   display: grid;
   place-items: center;
-  background: #edf4ff;
+  background: var(--surface-tint);
   border-radius: 13px;
   color: #2563eb;
 }
@@ -475,7 +502,7 @@ svg {
 }
 .kpi span {
   font-size: 11px;
-  color: #7587a2;
+  color: var(--text-muted);
 }
 .kpi strong {
   display: block;
@@ -485,14 +512,14 @@ svg {
 }
 .kpi strong small {
   margin-left: 5px;
-  color: #8c99ab;
-  font-size: 10px;
+  color: var(--text-muted);
+  font-size: 11px;
   font-weight: 400;
   letter-spacing: 0;
 }
 .kpi p {
-  font-size: 9px;
-  color: #a4afbf;
+  font-size: 11px;
+  color: var(--text-faint);
 }
 /* 지도와 지역 상세를 나란히 둡니다. 600px 이하에서는 아래 미디어쿼리로 세로 배치합니다. */
 .distribution-grid {
@@ -513,7 +540,7 @@ svg {
   position: relative;
   display: grid;
   place-items: center;
-  background: radial-gradient(ellipse at center, #f5f9ff, white 72%);
+  background: radial-gradient(ellipse at center, var(--surface-soft), white 72%);
 }
 .region-map {
   width: 100%;
@@ -535,7 +562,7 @@ svg {
 }
 .map-region text {
   font-size: 11px;
-  fill: #4a628b;
+  fill: var(--text-sub);
   pointer-events: none;
   font-weight: 500;
 }
@@ -560,12 +587,12 @@ svg {
   bottom: 18px;
   font-size: 11px;
   font-weight: 600;
-  color: #7287a6;
+  color: var(--text-muted);
   pointer-events: none;
 }
 .map-caption span {
   display: block;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 400;
   margin-top: 4px;
 }
@@ -575,15 +602,15 @@ svg {
   justify-content: center;
   gap: 13px;
   padding: 14px 12px;
-  border-top: 1px solid #f0f3f8;
+  border-top: 1px solid var(--surface-tint);
   flex-shrink: 0;
 }
 .map-legend span {
-  font-size: 9px;
+  font-size: 11px;
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #8391a7;
+  color: var(--text-muted);
 }
 .dot {
   display: inline-block;
@@ -595,14 +622,14 @@ svg {
   background: #76a5ff;
 }
 .normal {
-  background: #dceaff;
+  background: var(--line);
 }
 .pending {
-  background: #e7ebf1;
+  background: var(--line);
 }
 .map-legend small {
   display: none;
-  color: #a0acc0;
+  color: var(--text-faint);
 }
 .region-detail {
   display: flex;
@@ -617,19 +644,19 @@ svg {
   justify-content: center;
   align-items: center;
   text-align: center;
-  color: #93a7c5;
+  color: var(--text-faint);
 }
 .detail-placeholder svg {
   margin-bottom: 20px;
   padding: 9px;
-  background: #eff5ff;
+  background: var(--surface-tint);
   border-radius: 13px;
   width: 60px;
   height: 60px;
 }
 .detail-placeholder h3 {
   font-size: 13px;
-  color: #607897;
+  color: var(--text-muted);
 }
 .detail-placeholder p {
   font-size: 11px;
@@ -640,8 +667,8 @@ svg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
-  color: #8c9aad;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 .table-scroll {
   min-width: 0;
@@ -653,19 +680,19 @@ svg {
   min-height: 0;
 }
 .region-detail table {
-  font-size: 9px;
+  font-size: 11px;
 }
 .region-detail th,
 .region-detail td {
   padding: 11px 5px;
 }
 .region-detail .badge {
-  font-size: 8px;
+  font-size: 11px;
   padding: 4px;
 }
 .detail-note {
   padding: 12px 20px;
-  font-size: 9px;
+  font-size: 11px;
 }
 .detail-actions {
   display: grid;
@@ -673,13 +700,13 @@ svg {
   padding: 0 20px 18px;
 }
 .detail-actions button {
-  font-size: 10px;
+  font-size: 11px;
   padding: 10px;
 }
 .detail-actions .secondary {
   background: #fff;
-  border-color: #e5ebf4;
-  color: #7f91ae;
+  border-color: var(--line);
+  color: var(--text-muted);
 }
 .highlights {
   overflow: hidden;
@@ -693,8 +720,8 @@ svg {
   font-size: 12px;
 }
 .highlights > header > span {
-  font-size: 9px;
-  color: #96a2b5;
+  font-size: 11px;
+  color: var(--text-faint);
 }
 .highlights > div {
   display: flex;
@@ -712,23 +739,23 @@ svg {
   text-align: left;
   padding: 6px 10px;
   border-right: 1px solid var(--border);
-  font-size: 9px;
+  font-size: 11px;
   min-width: 0;
 }
 .highlights > div > button:last-child {
   border: 0;
 }
 .highlights > div > button:hover {
-  background: #f5f8ff;
+  background: var(--surface-soft);
   border-radius: 8px;
 }
 .highlights > div > button span {
-  color: #778daa;
+  color: var(--text-muted);
 }
 .highlights b {
   display: block;
-  font-size: 10px;
-  color: #4e6485;
+  font-size: 11px;
+  color: var(--text-sub);
   margin-top: 4px;
 }
 .highlights strong {
@@ -739,7 +766,7 @@ svg {
 }
 .highlights .hint {
   padding: 0 10px;
-  font-size: 10px;
+  font-size: 11px;
 }
 table {
   width: 100%;
@@ -750,17 +777,17 @@ table {
 th,
 td {
   text-align: left;
-  border-bottom: 1px solid #edf1f8;
+  border-bottom: 1px solid var(--line);
   padding: 14px 10px;
 }
 th {
-  font-size: 10px;
-  color: #8b9ab0;
+  font-size: 11px;
+  color: var(--text-muted);
   font-weight: 500;
-  background: #f9fbfe;
+  background: var(--surface-soft);
 }
 td {
-  color: #596f90;
+  color: var(--text-sub);
 }
 tr:last-child td {
   border-bottom: 0;
@@ -808,14 +835,14 @@ tr:last-child td {
   padding: 8px 20px;
 }
 .trend text {
-  font-size: 10px;
-  fill: #8b9ab0;
+  font-size: 11px;
+  fill: var(--text-muted);
 }
 .empty {
   padding: 32px 20px;
   text-align: center;
   font-size: 12px;
-  color: #8c9bb0;
+  color: var(--text-muted);
 }
 .info-card {
   padding: 24px;
@@ -826,7 +853,7 @@ tr:last-child td {
 }
 .info-card p {
   font-size: 12px;
-  color: #7486a1;
+  color: var(--text-muted);
   margin-bottom: 16px;
 }
 .info-card dl {
@@ -835,12 +862,12 @@ tr:last-child td {
   font-size: 12px;
   gap: 14px;
   padding: 20px;
-  background: #f8faff;
+  background: var(--surface-soft);
   border-radius: 12px;
   margin: 18px 0 24px;
 }
 .info-card dt {
-  color: #8c9bb0;
+  color: var(--text-muted);
 }
 .info-card dd {
   margin: 0;
@@ -854,7 +881,7 @@ tr:last-child td {
 }
 .service-card.chosen {
   border-color: #2563eb;
-  background: #f8fbff;
+  background: var(--surface-soft);
 }
 .service-card h3 {
   margin-bottom: 12px;
@@ -864,7 +891,7 @@ tr:last-child td {
 }
 .service-card small {
   display: block;
-  color: #8396b4;
+  color: var(--text-muted);
   line-height: 1.8;
   margin: 12px 0;
 }
@@ -935,14 +962,14 @@ tr:last-child td {
   min-height: 72px;
 }
 .report-editor small {
-  color: #6d809d;
+  color: var(--text-muted);
   font-weight: 400;
 }
 .confirmation {
   flex-direction: row;
   align-items: center;
   margin: 20px 0;
-  color: #6d809d;
+  color: var(--text-muted);
   font-weight: 400;
 }
 .confirmation input {
@@ -966,7 +993,7 @@ tr:last-child td {
 }
 .chat-context-view p {
   font-size: 12px;
-  color: #8394ae;
+  color: var(--text-muted);
   margin: 12px 0 24px;
 }
 .chat-context-view select {
@@ -1006,7 +1033,7 @@ tr:last-child td {
   height: 5px;
 }
 .chat-heading .eyebrow {
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 1.2px;
 }
 .chat-intro {
@@ -1015,18 +1042,18 @@ tr:last-child td {
   gap: 9px;
   margin: 18px 0 12px;
   padding: 10px 4px;
-  background: linear-gradient(130deg, #edf5ff, #fbfdff);
-  border: 1px solid #e4efff;
+  background: linear-gradient(130deg, var(--surface-tint), var(--surface-soft));
+  border: 1px solid var(--line);
   border-radius: 14px;
   flex-shrink: 0;
 }
 .chat-intro b {
-  font-size: 10px;
+  font-size: 11px;
   color: #41628f;
 }
 .chat-intro p {
-  font-size: 9px;
-  color: #7f97b8;
+  font-size: 11px;
+  color: var(--text-muted);
   margin-top: 6px;
 }
 .bomi {
@@ -1049,7 +1076,7 @@ tr:last-child td {
   position: absolute;
   width: 67px;
   height: 67px;
-  background: #cee3ff;
+  background: var(--line);
   border-radius: 50%;
   filter: blur(15px);
   opacity: 0.6;
@@ -1063,16 +1090,16 @@ tr:last-child td {
   align-items: center;
   gap: 7px;
   padding: 11px 12px;
-  font-size: 10px;
-  border: 1px solid #e3ebf8;
+  font-size: 11px;
+  border: 1px solid var(--line);
   border-radius: 9px;
   color: #5d7cad;
   flex-shrink: 0;
 }
 .context-chip > span:last-child {
   margin-left: auto;
-  color: #99aac3;
-  font-size: 9px;
+  color: var(--text-faint);
+  font-size: 11px;
 }
 .chat-messages {
   flex: 1;
@@ -1080,18 +1107,18 @@ tr:last-child td {
   overflow: auto;
   padding: 22px 1px 12px;
   scrollbar-width: thin;
-  scrollbar-color: #e1e9f5 transparent;
+  scrollbar-color: var(--line) transparent;
 }
 .assistant-label {
-  font-size: 9px;
-  color: #8196b6;
+  font-size: 11px;
+  color: var(--text-muted);
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
 }
 .welcome p {
   font-size: 11px;
-  color: #6c83a3;
+  color: var(--text-muted);
   line-height: 1.9;
 }
 .suggestions {
@@ -1105,11 +1132,11 @@ tr:last-child td {
   justify-content: space-between;
   text-align: left;
   padding: 11px 12px;
-  font-size: 10px;
-  background: #f8faff;
-  border: 1px solid #e5edf9;
+  font-size: 11px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
   border-radius: 9px;
-  color: #7690b4;
+  color: var(--text-muted);
 }
 .suggestions button:hover:not(:disabled) {
   border-color: #a5c3f9;
@@ -1133,14 +1160,14 @@ tr:last-child td {
 }
 .message.assistant {
   padding: 12px;
-  background: #f7faff;
-  border: 1px solid #edf2fa;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
   border-radius: 3px 12px 12px;
 }
 .message small {
   display: block;
-  color: #97a8c1;
-  font-size: 8px;
+  color: var(--text-faint);
+  font-size: 11px;
   margin-top: 12px;
 }
 .typing {
@@ -1148,8 +1175,8 @@ tr:last-child td {
   align-items: center;
   gap: 4px;
   padding: 10px 4px;
-  font-size: 9px;
-  color: #8ea3c1;
+  font-size: 11px;
+  color: var(--text-faint);
 }
 .typing i {
   width: 4px;
@@ -1168,7 +1195,7 @@ tr:last-child td {
   margin-left: 5px;
 }
 .chat-footer {
-  border-top: 1px solid #edf1f8;
+  border-top: 1px solid var(--line);
   padding-top: 12px;
   flex-shrink: 0;
 }
@@ -1176,9 +1203,9 @@ tr:last-child td {
   flex-direction: row;
   align-items: center;
   gap: 5px;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 400;
-  color: #8295b2;
+  color: var(--text-muted);
   margin-bottom: 12px;
 }
 .agent-toggle input {
@@ -1188,15 +1215,15 @@ tr:last-child td {
 }
 .agent-toggle span {
   margin-left: auto;
-  font-size: 8px;
-  color: #a7b3c5;
+  font-size: 11px;
+  color: var(--text-faint);
 }
 .chat-input {
   display: flex;
   gap: 8px;
   align-items: center;
-  background: #f8faff;
-  border: 1px solid #dfe9f8;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
   padding: 8px;
   border-radius: 12px;
 }
@@ -1210,10 +1237,10 @@ tr:last-child td {
   height: 32px;
   flex: 1;
   min-width: 0;
-  font-size: 10px;
+  font-size: 11px;
 }
 .chat-input textarea::placeholder {
-  color: #a0b0c8;
+  color: var(--text-faint);
 }
 .chat-input button {
   display: grid;
@@ -1226,8 +1253,8 @@ tr:last-child td {
 }
 .chat-footer > small {
   display: block;
-  font-size: 8px;
-  color: #a1afc3;
+  font-size: 11px;
+  color: var(--text-faint);
   text-align: center;
   line-height: 1.8;
   margin-top: 10px;
@@ -1270,7 +1297,7 @@ tr:last-child td {
 }
 .login-hero {
   padding: 50px 70px;
-  background: radial-gradient(ellipse at 60% 70%, #d2e4ff, #eef5ff 65%);
+  background: radial-gradient(ellipse at 60% 70%, var(--line), var(--surface-tint) 65%);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1351,12 +1378,12 @@ tr:last-child td {
 }
 .login-form p {
   font-size: 12px;
-  color: #8b9bb3;
+  color: var(--text-faint);
   margin: 14px 0 32px;
 }
 .login-form label {
   margin-bottom: 18px;
-  color: #7384a0;
+  color: var(--text-muted);
 }
 .login-form input {
   padding: 14px;
@@ -1374,20 +1401,20 @@ tr:last-child td {
 }
 .demo-accounts span {
   width: 100%;
-  font-size: 10px;
-  color: #9cabc0;
+  font-size: 11px;
+  color: var(--text-faint);
   margin-bottom: 6px;
 }
 .demo-accounts button {
-  font-size: 10px;
-  background: #f3f7ff;
-  color: #718cb3;
+  font-size: 11px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
   padding: 8px 15px;
   border-radius: 7px;
 }
 .login-form small {
-  font-size: 9px;
-  color: #a5b0c1;
+  font-size: 11px;
+  color: var(--text-faint);
 }
 .login-form .error {
   margin: 14px 0;
@@ -1469,7 +1496,7 @@ tr:last-child td {
     font-size: 11px;
   }
   .chat-intro p {
-    font-size: 10px;
+    font-size: 11px;
   }
   .chat-intro .bomi {
     width: 100px;
@@ -1496,7 +1523,7 @@ tr:last-child td {
     font-size: 23px;
   }
   .kpi p {
-    font-size: 8px;
+    font-size: 11px;
   }
   .detail-status {
     padding: 4px 16px 8px;
@@ -1507,7 +1534,7 @@ tr:last-child td {
   }
   .detail-note {
     padding: 8px 16px;
-    font-size: 8px;
+    font-size: 11px;
   }
   .detail-actions {
     padding: 0 16px 12px;
@@ -1563,7 +1590,7 @@ tr:last-child td {
     width: 125px;
   }
   .workspace-tag {
-    font-size: 9px;
+    font-size: 11px;
     padding: 7px 5px;
   }
   .main-content {
@@ -1574,7 +1601,7 @@ tr:last-child td {
     padding: 0 18px;
   }
   .page-heading p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .filters select {
     min-width: 82px;
@@ -1596,10 +1623,10 @@ tr:last-child td {
     width: 19px;
   }
   .kpi span {
-    font-size: 10px;
+    font-size: 11px;
   }
   .kpi p {
-    font-size: 8px;
+    font-size: 11px;
   }
   .distribution-grid {
     gap: 12px;
@@ -1610,16 +1637,16 @@ tr:last-child td {
     padding-right: 14px;
   }
   .chat-intro b {
-    font-size: 9px;
+    font-size: 11px;
   }
   .chat-intro p {
-    font-size: 8px;
+    font-size: 11px;
   }
   .chat-heading h2 {
     font-size: 12px;
   }
   .highlights > header > span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .highlights > div > button {
     padding: 5px 8px;
@@ -1628,7 +1655,7 @@ tr:last-child td {
     font-size: 13px;
   }
   .highlights b {
-    font-size: 9px;
+    font-size: 11px;
   }
   .app-footer > span:last-child {
     display: none;
@@ -1701,28 +1728,28 @@ tr:last-child td {
     grid-template-columns: minmax(0, 1fr) minmax(230px, 1fr);
   }
   .region-detail .badge {
-    font-size: 7px;
+    font-size: 11px;
   }
   .region-detail table {
-    font-size: 8px;
+    font-size: 11px;
   }
   .kpi-icon {
     display: none;
   }
   .kpi span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .card > header h2 {
     font-size: 12px;
   }
   .card > header .eyebrow {
-    font-size: 7px;
+    font-size: 11px;
   }
   .filters label {
-    font-size: 8px;
+    font-size: 11px;
   }
   .filters select {
-    font-size: 10px;
+    font-size: 11px;
     min-width: 76px;
   }
   .main-content {
@@ -1777,7 +1804,7 @@ tr:last-child td {
   }
   .hero-note {
     gap: 8px;
-    font-size: 10px;
+    font-size: 11px;
   }
 }
 @media (max-width: 600px) {
@@ -1804,20 +1831,20 @@ tr:last-child td {
   }
   .topbar {
     padding: 0 12px;
-    font-size: 10px;
+    font-size: 11px;
     height: 44px;
   }
   .page-heading h1 {
     font-size: 15px;
   }
   .page-heading .eyebrow {
-    font-size: 7px;
+    font-size: 11px;
   }
   .filters {
     gap: 5px;
   }
   .filters select {
-    font-size: 9px;
+    font-size: 11px;
     padding: 5px 7px;
     min-width: 70px;
   }
@@ -1835,13 +1862,13 @@ tr:last-child td {
     font-size: 20px;
   }
   .kpi span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .kpi p {
     display: none;
   }
   .kpi strong small {
-    font-size: 8px;
+    font-size: 11px;
   }
   .distribution-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -1849,7 +1876,7 @@ tr:last-child td {
     gap: 9px;
   }
   .map-caption {
-    font-size: 9px;
+    font-size: 11px;
     bottom: 10px;
     left: 12px;
   }
@@ -1857,7 +1884,7 @@ tr:last-child td {
     padding: 6px;
   }
   .map-legend span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .region-detail > header {
     padding: 9px 12px 5px;
@@ -1872,7 +1899,7 @@ tr:last-child td {
     display: none;
   }
   .detail-placeholder p {
-    font-size: 9px;
+    font-size: 11px;
     margin-top: 5px;
   }
   .detail-status {
@@ -1884,7 +1911,7 @@ tr:last-child td {
   .region-detail th,
   .region-detail td {
     padding: 4px;
-    font-size: 8px;
+    font-size: 11px;
   }
   .detail-note {
     display: none;
@@ -1896,20 +1923,20 @@ tr:last-child td {
   }
   .detail-actions button {
     flex: 1;
-    font-size: 8px;
+    font-size: 11px;
     padding: 5px;
   }
   .card > header {
     padding: 9px 12px;
   }
   .card > header .eyebrow {
-    font-size: 6px;
+    font-size: 11px;
   }
   .card > header h2 {
     font-size: 11px;
   }
   .pill {
-    font-size: 7px;
+    font-size: 11px;
   }
   .highlights > header {
     padding: 8px 12px 5px;
@@ -1922,24 +1949,24 @@ tr:last-child td {
     display: none;
   }
   .highlights strong {
-    font-size: 10px;
+    font-size: 11px;
   }
   .highlights b {
-    font-size: 7px;
+    font-size: 11px;
   }
   .highlights > div > button span {
-    font-size: 7px;
+    font-size: 11px;
   }
   .app-footer {
     padding: 7px 12px;
-    font-size: 8px;
+    font-size: 11px;
   }
   .info-card {
     padding: 18px;
   }
   .info-card dl {
     grid-template-columns: 95px 1fr;
-    font-size: 10px;
+    font-size: 11px;
     padding: 14px;
   }
   .report-form {
@@ -2017,7 +2044,7 @@ tr:last-child td {
 .chat-start { flex-shrink: 0; }
 .chat-welcome { text-align: center; margin-bottom: 20px; }
 .chat-welcome h3 { margin: 0 0 8px; font-size: 18px; color: var(--text); }
-.chat-welcome p { margin: 0; font-size: 11px; line-height: 1.7; color: #6c83a3; }
+.chat-welcome p { margin: 0; font-size: 11px; line-height: 1.7; color: var(--text-muted); }
 .chat-footer .chat-topics { margin: 0 0 10px; }
 .chat-panel .chat-intro { margin: 14px 0 12px; padding: 8px; }
 .chat-panel .chat-intro .bomi { width: 68px; height: 82px; }
@@ -2038,16 +2065,16 @@ tr:last-child td {
   .chat-footer .chat-topics,
   .chat-footer .topic-buttons { animation: none; }
 }
-/* 복지이음: 기존 패널 크기와 지도 공유 상태를 유지합니다. */
-.welfare-status { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; color:#64748b; font-size:10px; }
-.welfare-status small { font-size:10px; }
+/* 보미의 복지사업 답변과 참고 자료 표시 스타일입니다. */
+.welfare-status { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; color:var(--text-sub); font-size: 11px; }
+.welfare-status small { font-size: 11px; }
 .welfare-chat .chat-messages { padding-top:12px; }
-.welfare-chat .welcome h3 { font-size:20px; color:#1e293b; }
+.welfare-chat .welcome h3 { font-size:20px; color:var(--text-strong); }
 .welfare-chat .welfare-notice { border-left:3px solid #f59e0b; padding-left:10px; margin-top:18px; }
-.welfare-sources { margin-top:12px; padding:10px; border:1px solid #dbe5f2; border-radius:8px; overflow-wrap:anywhere; }
+.welfare-sources { margin-top:12px; padding:10px; border:1px solid var(--line); border-radius:8px; overflow-wrap:anywhere; }
 .welfare-sources summary { cursor:pointer; color:#2563eb; }
-.welfare-sources > div { border-top:1px solid #dbe5f2; padding-top:10px; margin-top:10px; }
-.welfare-sources p { margin:5px 0; color:#64748b; }
+.welfare-sources > div { border-top:1px solid var(--line); padding-top:10px; margin-top:10px; }
+.welfare-sources p { margin:5px 0; color:var(--text-sub); }
 .welfare-sources small { color:#956100; }
 .welfare-chat .chat-input button { white-space:nowrap; min-width:38px; }
 
@@ -2079,3 +2106,19 @@ tr:last-child td {
     margin-top: 16px;
   }
 }
+
+/* 관리자 «AI 설정» 화면 */
+.ai-settings { max-width: 760px; }
+.ai-settings .ai-state { padding: 10px 12px; border-radius: 10px; font-weight: 600; background: var(--surface-tint); color: var(--text-sub); }
+.ai-settings .ai-state.on { background: #f5f3ff; color: #5b21b6; }
+.ai-settings .ai-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 14px 0 6px; }
+.ai-settings .ai-fields label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-strong); }
+.ai-settings .ai-fields input, .ai-settings .ai-fields select { font-weight: 400; min-width: 0; }
+.ai-settings .ai-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.ai-settings .success { color: #15803d; }
+
+/* 종합 현황은 이번 디자인 규칙 적용에서 제외했습니다(docs/design-rules.md «적용 범위»).
+   공용 규칙(eyebrow·표)이 바뀌어도 종합 현황 화면은 이전 값을 유지합니다. */
+.group-shell .eyebrow { font-size: 9px; color: #8795ad; }
+.group-shell th { font-size: 10px; color: #8b9ab0; background: #f9fbfe; }
+.group-shell td { color: #596f90; }

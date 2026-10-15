@@ -1,0 +1,3549 @@
+{
+  "source_db": "C:\\Users\\user\\Desktop\\Team_Together\\DB1\\outputs\\db1.sqlite",
+  "source_db_sha256": "e96cbbe3c584c49b6374492e7aa35172e9fd3ef9f6b52dd2a55b26a3d735dfc1",
+  "current_reference": {
+    "scenario": "current_reference",
+    "settings": {
+      "method": "a2_age_detection_v1",
+      "age_scheme": "service",
+      "baseline_start": "2022-01-01",
+      "baseline_end": "2025-06-01",
+      "detection_start": "2025-07-01",
+      "min_history": 12,
+      "min_valid_population": 200,
+      "min_coverage": 0.8,
+      "min_peer_dongs": 11,
+      "scale": 0.6745,
+      "lower_quantile": 0.025,
+      "threshold_cap": -2,
+      "min_calibration_scores": 24
+    },
+    "rows": 660,
+    "communication": 10,
+    "mobility": 0,
+    "combined": 0,
+    "communication_assessable": 660,
+    "mobility_assessable": 656,
+    "by_age": [
+      {
+        "age": "20s",
+        "rows": 132,
+        "communication": 0,
+        "mobility": 0,
+        "combined": 0,
+        "communication_assessable": 132
+      },
+      {
+        "age": "30s",
+        "rows": 132,
+        "communication": 3,
+        "mobility": 0,
+        "combined": 0,
+        "communication_assessable": 132
+      },
+      {
+        "age": "40s",
+        "rows": 132,
+        "communication": 6,
+        "mobility": 0,
+        "combined": 0,
+        "communication_assessable": 132
+      },
+      {
+        "age": "50s",
+        "rows": 132,
+        "communication": 1,
+        "mobility": 0,
+        "combined": 0,
+        "communication_assessable": 132
+      },
+      {
+        "age": "60plus",
+        "rows": 132,
+        "communication": 0,
+        "mobility": 0,
+        "combined": 0,
+        "communication_assessable": 132
+      }
+    ],
+    "months": [
+      {
+        "date": "2025-07-01",
+        "communication": 0,
+        "mobility": 0,
+        "combined": 0
+      },
+      {
+        "date": "2025-08-01",
+        "communication": 0,
+        "mobility": 0,
+        "combined": 0
+      },
+      {
+        "date": "2025-09-01",
+        "communication": 0,
+        "mobility": 0,
+        "combined": 0
+      },
+      {
+        "date": "2025-10-01",
+        "communication": 9,
+        "mobility": 0,
+        "combined": 0
+      },
+      {
+        "date": "2025-11-01",
+        "communication": 1,
+        "mobility": 0,
+        "combined": 0
+      },
+      {
+        "date": "2025-12-01",
+        "communication": 0,
+        "mobility": 0,
+        "combined": 0
+      }
+    ],
+    "common_calibration_unavailable": 0,
+    "signal_keys": [
+      [
+        "1123051",
+        "2025-10-01",
+        "30s"
+      ],
+      [
+        "1123059",
+        "2025-10-01",
+        "30s"
+      ],
+      [
+        "1123059",
+        "2025-10-01",
+        "50s"
+      ],
+      [
+        "1123064",
+        "2025-10-01",
+        "40s"
+      ],
+      [
+        "1123065",
+        "2025-10-01",
+        "40s"
+      ],
+      [
+        "1123065",
+        "2025-11-01",
+        "30s"
+      ],
+      [
+        "1123067",
+        "2025-10-01",
+        "40s"
+      ],
+      [
+        "1123072",
+        "2025-10-01",
+        "40s"
+      ],
+      [
+        "1123074",
+        "2025-10-01",
+        "40s"
+      ],
+      [
+        "1123077",
+        "2025-10-01",
+        "40s"
+      ]
+    ]
+  },
+  "historical_replays": [
+    {
+      "scenario": "replay_2024",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2023-12-01",
+        "detection_start": "2024-01-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.025,
+        "threshold_cap": -2,
+        "min_calibration_scores": 24
+      },
+      "rows": 1320,
+      "communication": 9,
+      "mobility": 22,
+      "combined": 0,
+      "communication_assessable": 1320,
+      "mobility_assessable": 1263,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 264,
+          "communication": 4,
+          "mobility": 8,
+          "combined": 0,
+          "communication_assessable": 264
+        },
+        {
+          "age": "30s",
+          "rows": 264,
+          "communication": 1,
+          "mobility": 3,
+          "combined": 0,
+          "communication_assessable": 264
+        },
+        {
+          "age": "40s",
+          "rows": 264,
+          "communication": 2,
+          "mobility": 5,
+          "combined": 0,
+          "communication_assessable": 264
+        },
+        {
+          "age": "50s",
+          "rows": 264,
+          "communication": 1,
+          "mobility": 1,
+          "combined": 0,
+          "communication_assessable": 264
+        },
+        {
+          "age": "60plus",
+          "rows": 264,
+          "communication": 1,
+          "mobility": 5,
+          "combined": 0,
+          "communication_assessable": 264
+        }
+      ],
+      "months": [
+        {
+          "date": "2024-01-01",
+          "communication": 5,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-02-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-03-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-04-01",
+          "communication": 2,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-05-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-06-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-08-01",
+          "communication": 0,
+          "mobility": 22,
+          "combined": 0
+        },
+        {
+          "date": "2024-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-10-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-11-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-12-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 20,
+      "signal_keys": [
+        [
+          "1123053",
+          "2024-03-01",
+          "40s"
+        ],
+        [
+          "1123059",
+          "2024-01-01",
+          "20s"
+        ],
+        [
+          "1123063",
+          "2024-01-01",
+          "20s"
+        ],
+        [
+          "1123065",
+          "2024-01-01",
+          "30s"
+        ],
+        [
+          "1123068",
+          "2024-04-01",
+          "40s"
+        ],
+        [
+          "1123068",
+          "2024-04-01",
+          "60plus"
+        ],
+        [
+          "1123075",
+          "2024-12-01",
+          "50s"
+        ],
+        [
+          "1123076",
+          "2024-01-01",
+          "20s"
+        ],
+        [
+          "1123078",
+          "2024-01-01",
+          "20s"
+        ]
+      ]
+    },
+    {
+      "scenario": "replay_2024H2",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2024-06-01",
+        "detection_start": "2024-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.025,
+        "threshold_cap": -2,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 3,
+      "mobility": 43,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 646,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 16,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 9,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 7,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 2,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 9,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2024-07-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-08-01",
+          "communication": 0,
+          "mobility": 43,
+          "combined": 0
+        },
+        {
+          "date": "2024-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-10-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-11-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2024-12-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 20,
+      "signal_keys": [
+        [
+          "1123053",
+          "2024-11-01",
+          "40s"
+        ],
+        [
+          "1123067",
+          "2024-07-01",
+          "30s"
+        ],
+        [
+          "1123075",
+          "2024-12-01",
+          "50s"
+        ]
+      ]
+    },
+    {
+      "scenario": "replay_2025H1",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2024-12-01",
+        "detection_start": "2025-01-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.025,
+        "threshold_cap": -2,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 21,
+      "mobility": 8,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 622,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 13,
+          "mobility": 3,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 8,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 2,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 2,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 1,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-01-01",
+          "communication": 20,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-02-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-03-01",
+          "communication": 0,
+          "mobility": 8,
+          "combined": 0
+        },
+        {
+          "date": "2025-04-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-05-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-06-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 20,
+      "signal_keys": [
+        [
+          "1123051",
+          "2025-01-01",
+          "30s"
+        ],
+        [
+          "1123052",
+          "2025-01-01",
+          "20s"
+        ],
+        [
+          "1123059",
+          "2025-01-01",
+          "20s"
+        ],
+        [
+          "1123060",
+          "2025-01-01",
+          "30s"
+        ],
+        [
+          "1123063",
+          "2025-01-01",
+          "20s"
+        ],
+        [
+          "1123063",
+          "2025-06-01",
+          "20s"
+        ],
+        [
+          "1123064",
+          "2025-01-01",
+          "20s"
+        ],
+        [
+          "1123067",
+          "2025-01-01",
+          "20s"
+        ],
+        [
+          "1123068",
+          "2025-01-01",
+          "30s"
+        ],
+        [
+          "1123072",
+          "2025-01-01",
+          "30s"
+        ],
+        [
+          "1123073",
+          "2025-01-01",
+          "20s"
+        ],
+        [
+          "1123074",
+          "2025-01-01",
+          "20s"
+        ],
+        [
+          "1123074",
+          "2025-01-01",
+          "30s"
+        ],
+        [
+          "1123075",
+          "2025-01-01",
+          "20s"
+        ],
+        [
+          "1123076",
+          "2025-01-01",
+          "20s"
+        ],
+        [
+          "1123077",
+          "2025-01-01",
+          "30s"
+        ],
+        [
+          "1123078",
+          "2025-01-01",
+          "20s"
+        ],
+        [
+          "1123078",
+          "2025-01-01",
+          "30s"
+        ],
+        [
+          "1123079",
+          "2025-01-01",
+          "20s"
+        ],
+        [
+          "1123079",
+          "2025-01-01",
+          "30s"
+        ],
+        [
+          "1123080",
+          "2025-01-01",
+          "20s"
+        ]
+      ]
+    }
+  ],
+  "threshold_variants": [
+    {
+      "scenario": "sensitivity_q0.01_cap2",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2025-06-01",
+        "detection_start": "2025-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.01,
+        "threshold_cap": -2,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 6,
+      "mobility": 0,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 656,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 5,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-08-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-10-01",
+          "communication": 5,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-11-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-12-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 0,
+      "signal_keys": [
+        [
+          "1123064",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-11-01",
+          "30s"
+        ],
+        [
+          "1123067",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123072",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123077",
+          "2025-10-01",
+          "40s"
+        ]
+      ],
+      "retained_reference_signals": 6,
+      "new_signals": 0,
+      "jaccard_with_reference": 0.6
+    },
+    {
+      "scenario": "sensitivity_q0.01_cap2.5",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2025-06-01",
+        "detection_start": "2025-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.01,
+        "threshold_cap": -2.5,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 3,
+      "mobility": 0,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 656,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 2,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-08-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-10-01",
+          "communication": 2,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-11-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-12-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 0,
+      "signal_keys": [
+        [
+          "1123064",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-11-01",
+          "30s"
+        ]
+      ],
+      "retained_reference_signals": 3,
+      "new_signals": 0,
+      "jaccard_with_reference": 0.3
+    },
+    {
+      "scenario": "sensitivity_q0.01_cap3",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2025-06-01",
+        "detection_start": "2025-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.01,
+        "threshold_cap": -3,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 0,
+      "mobility": 0,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 656,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-08-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-10-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-11-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-12-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 0,
+      "signal_keys": [],
+      "retained_reference_signals": 0,
+      "new_signals": 0,
+      "jaccard_with_reference": 0.0
+    },
+    {
+      "scenario": "sensitivity_q0.025_cap2",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2025-06-01",
+        "detection_start": "2025-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.025,
+        "threshold_cap": -2,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 10,
+      "mobility": 0,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 656,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 3,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 6,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-08-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-10-01",
+          "communication": 9,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-11-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-12-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 0,
+      "signal_keys": [
+        [
+          "1123051",
+          "2025-10-01",
+          "30s"
+        ],
+        [
+          "1123059",
+          "2025-10-01",
+          "30s"
+        ],
+        [
+          "1123059",
+          "2025-10-01",
+          "50s"
+        ],
+        [
+          "1123064",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-11-01",
+          "30s"
+        ],
+        [
+          "1123067",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123072",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123074",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123077",
+          "2025-10-01",
+          "40s"
+        ]
+      ],
+      "retained_reference_signals": 10,
+      "new_signals": 0,
+      "jaccard_with_reference": 1.0
+    },
+    {
+      "scenario": "sensitivity_q0.025_cap2.5",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2025-06-01",
+        "detection_start": "2025-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.025,
+        "threshold_cap": -2.5,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 3,
+      "mobility": 0,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 656,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 2,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-08-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-10-01",
+          "communication": 2,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-11-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-12-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 0,
+      "signal_keys": [
+        [
+          "1123064",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-11-01",
+          "30s"
+        ]
+      ],
+      "retained_reference_signals": 3,
+      "new_signals": 0,
+      "jaccard_with_reference": 0.3
+    },
+    {
+      "scenario": "sensitivity_q0.025_cap3",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2025-06-01",
+        "detection_start": "2025-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.025,
+        "threshold_cap": -3,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 0,
+      "mobility": 0,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 656,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-08-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-10-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-11-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-12-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 0,
+      "signal_keys": [],
+      "retained_reference_signals": 0,
+      "new_signals": 0,
+      "jaccard_with_reference": 0.0
+    },
+    {
+      "scenario": "sensitivity_q0.05_cap2",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2025-06-01",
+        "detection_start": "2025-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.05,
+        "threshold_cap": -2,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 11,
+      "mobility": 0,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 656,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 3,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 6,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-08-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-10-01",
+          "communication": 10,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-11-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-12-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 0,
+      "signal_keys": [
+        [
+          "1123051",
+          "2025-10-01",
+          "30s"
+        ],
+        [
+          "1123059",
+          "2025-10-01",
+          "30s"
+        ],
+        [
+          "1123059",
+          "2025-10-01",
+          "50s"
+        ],
+        [
+          "1123064",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-10-01",
+          "20s"
+        ],
+        [
+          "1123065",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-11-01",
+          "30s"
+        ],
+        [
+          "1123067",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123072",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123074",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123077",
+          "2025-10-01",
+          "40s"
+        ]
+      ],
+      "retained_reference_signals": 10,
+      "new_signals": 1,
+      "jaccard_with_reference": 0.9090909090909091
+    },
+    {
+      "scenario": "sensitivity_q0.05_cap2.5",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2025-06-01",
+        "detection_start": "2025-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.05,
+        "threshold_cap": -2.5,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 3,
+      "mobility": 0,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 656,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 2,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-08-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-10-01",
+          "communication": 2,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-11-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-12-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 0,
+      "signal_keys": [
+        [
+          "1123064",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-11-01",
+          "30s"
+        ]
+      ],
+      "retained_reference_signals": 3,
+      "new_signals": 0,
+      "jaccard_with_reference": 0.3
+    },
+    {
+      "scenario": "sensitivity_q0.05_cap3",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2025-06-01",
+        "detection_start": "2025-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.05,
+        "threshold_cap": -3,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 0,
+      "mobility": 0,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 656,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-08-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-10-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-11-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-12-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 0,
+      "signal_keys": [],
+      "retained_reference_signals": 0,
+      "new_signals": 0,
+      "jaccard_with_reference": 0.0
+    }
+  ],
+  "window_variants": [
+    {
+      "scenario": "window_2023_2025-06",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2023-01-01",
+        "baseline_end": "2025-06-01",
+        "detection_start": "2025-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.025,
+        "threshold_cap": -2,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 6,
+      "mobility": 0,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 654,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 5,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-08-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-10-01",
+          "communication": 6,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-11-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-12-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 20,
+      "signal_keys": [
+        [
+          "1123059",
+          "2025-10-01",
+          "50s"
+        ],
+        [
+          "1123065",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123067",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123072",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123074",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123077",
+          "2025-10-01",
+          "40s"
+        ]
+      ],
+      "retained_reference_signals": 6
+    },
+    {
+      "scenario": "window_2022_2024-12",
+      "settings": {
+        "method": "a2_age_detection_v1",
+        "age_scheme": "service",
+        "baseline_start": "2022-01-01",
+        "baseline_end": "2024-12-01",
+        "detection_start": "2025-07-01",
+        "min_history": 12,
+        "min_valid_population": 200,
+        "min_coverage": 0.8,
+        "min_peer_dongs": 11,
+        "scale": 0.6745,
+        "lower_quantile": 0.025,
+        "threshold_cap": -2,
+        "min_calibration_scores": 24
+      },
+      "rows": 660,
+      "communication": 11,
+      "mobility": 0,
+      "combined": 0,
+      "communication_assessable": 660,
+      "mobility_assessable": 656,
+      "by_age": [
+        {
+          "age": "20s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "30s",
+          "rows": 132,
+          "communication": 3,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "40s",
+          "rows": 132,
+          "communication": 6,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "50s",
+          "rows": 132,
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        },
+        {
+          "age": "60plus",
+          "rows": 132,
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0,
+          "communication_assessable": 132
+        }
+      ],
+      "months": [
+        {
+          "date": "2025-07-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-08-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-09-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-10-01",
+          "communication": 10,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-11-01",
+          "communication": 1,
+          "mobility": 0,
+          "combined": 0
+        },
+        {
+          "date": "2025-12-01",
+          "communication": 0,
+          "mobility": 0,
+          "combined": 0
+        }
+      ],
+      "common_calibration_unavailable": 20,
+      "signal_keys": [
+        [
+          "1123051",
+          "2025-10-01",
+          "30s"
+        ],
+        [
+          "1123059",
+          "2025-10-01",
+          "30s"
+        ],
+        [
+          "1123059",
+          "2025-10-01",
+          "50s"
+        ],
+        [
+          "1123064",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-10-01",
+          "20s"
+        ],
+        [
+          "1123065",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123065",
+          "2025-11-01",
+          "30s"
+        ],
+        [
+          "1123067",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123072",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123074",
+          "2025-10-01",
+          "40s"
+        ],
+        [
+          "1123077",
+          "2025-10-01",
+          "40s"
+        ]
+      ],
+      "retained_reference_signals": 10
+    }
+  ],
+  "case_sensitivity": [
+    {
+      "adm_cd": "1123051",
+      "date": "2025-10-01",
+      "age_band": "30s",
+      "dong": "신사동",
+      "retained_in_threshold_variants": 2,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 1,
+      "window_variants": 2
+    },
+    {
+      "adm_cd": "1123059",
+      "date": "2025-10-01",
+      "age_band": "30s",
+      "dong": "삼성2동",
+      "retained_in_threshold_variants": 2,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 1,
+      "window_variants": 2
+    },
+    {
+      "adm_cd": "1123059",
+      "date": "2025-10-01",
+      "age_band": "50s",
+      "dong": "삼성2동",
+      "retained_in_threshold_variants": 2,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2
+    },
+    {
+      "adm_cd": "1123064",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "역삼1동",
+      "retained_in_threshold_variants": 6,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 1,
+      "window_variants": 2
+    },
+    {
+      "adm_cd": "1123065",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "역삼2동",
+      "retained_in_threshold_variants": 6,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2
+    },
+    {
+      "adm_cd": "1123067",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "도곡2동",
+      "retained_in_threshold_variants": 3,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2
+    },
+    {
+      "adm_cd": "1123072",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "일원본동",
+      "retained_in_threshold_variants": 3,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2
+    },
+    {
+      "adm_cd": "1123074",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "일원2동",
+      "retained_in_threshold_variants": 2,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2
+    },
+    {
+      "adm_cd": "1123077",
+      "date": "2025-10-01",
+      "age_band": "40s",
+      "dong": "압구정동",
+      "retained_in_threshold_variants": 3,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 2,
+      "window_variants": 2
+    },
+    {
+      "adm_cd": "1123065",
+      "date": "2025-11-01",
+      "age_band": "30s",
+      "dong": "역삼2동",
+      "retained_in_threshold_variants": 6,
+      "threshold_variants": 9,
+      "retained_in_window_variants": 1,
+      "window_variants": 2
+    }
+  ],
+  "level_method_comparisons": [
+    {
+      "method": "median_all_baseline",
+      "baseline_start": "2022-01-01",
+      "minimum_same_month_years": 3,
+      "latest": [
+        {
+          "adm_cd": "1123051",
+          "adm_nm": "신사동",
+          "age_band": "30s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.4489588908127913,
+            "text_contacts": -11.051921240108975
+          },
+          "seasonal_change_pct": {
+            "call_contacts": 1.7809753038477982,
+            "text_contacts": -12.53135225715728
+          },
+          "common_change_pct": {
+            "call_contacts": -0.5886892646801867,
+            "text_contacts": -12.013764591975807
+          },
+          "local_change_pct": {
+            "call_contacts": 2.3836971376799854,
+            "text_contacts": -0.5882598144826057
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "mixed_recovery",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 0,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123059",
+          "adm_nm": "삼성2동",
+          "age_band": "30s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -3.6907658945622757,
+            "text_contacts": -13.566932874151972
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -3.3489814153908504,
+            "text_contacts": -14.224102160531205
+          },
+          "common_change_pct": {
+            "call_contacts": -0.5886892646801867,
+            "text_contacts": -12.013764591975807
+          },
+          "local_change_pct": {
+            "call_contacts": -2.776637920065128,
+            "text_contacts": -2.5121401754550132
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123059",
+          "adm_nm": "삼성2동",
+          "age_band": "50s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -4.152184879565846,
+            "text_contacts": -11.612353842512512
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -2.194798860424052,
+            "text_contacts": -12.177606408162756
+          },
+          "common_change_pct": {
+            "call_contacts": -2.444897032547999,
+            "text_contacts": -9.809814918115467
+          },
+          "local_change_pct": {
+            "call_contacts": 0.25636605827517034,
+            "text_contacts": -2.6253316676282945
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123064",
+          "adm_nm": "역삼1동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.555599131208608,
+            "text_contacts": -8.749491972947322
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -3.3029688861446305,
+            "text_contacts": -10.679898354438544
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": -0.7998140898551998,
+            "text_contacts": 0.6704659156021808
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123065",
+          "adm_nm": "역삼2동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.9860631192986986,
+            "text_contacts": -8.982488803916233
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -3.311768992332431,
+            "text_contacts": -10.500339802689652
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": -0.8088420006380104,
+            "text_contacts": 0.872841895148424
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123067",
+          "adm_nm": "도곡2동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.4967397772440836,
+            "text_contacts": -9.913463459970817
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -3.020803145799267,
+            "text_contacts": -13.111151980520198
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": -0.5103440453532615,
+            "text_contacts": -2.0697396012687275
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123072",
+          "adm_nm": "일원본동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.2648103740974257,
+            "text_contacts": -8.40352901183138
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -2.1586377041998728,
+            "text_contacts": -11.734865288939611
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": 0.37413990525798635,
+            "text_contacts": -0.518561088007985
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123074",
+          "adm_nm": "일원2동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -5.175943429047036,
+            "text_contacts": -9.532065711326199
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -5.63501497967045,
+            "text_contacts": -11.996680240236069
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": -3.1922288658207565,
+            "text_contacts": -0.8136462104508024
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123077",
+          "adm_nm": "압구정동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -3.43297177914198,
+            "text_contacts": -10.367483674161448
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -3.496474104264391,
+            "text_contacts": -12.850212444839027
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": -0.9983284950127014,
+            "text_contacts": -1.7756411380015935
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123065",
+          "adm_nm": "역삼2동",
+          "age_band": "30s",
+          "signal_date": "2025-11-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-10-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -0.3462160170208284,
+            "text_contacts": -6.9434102382061935
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -0.7386565791749233,
+            "text_contacts": -6.210802034284269
+          },
+          "common_change_pct": {
+            "call_contacts": 0.3632669920596632,
+            "text_contacts": -7.789837829011015
+          },
+          "local_change_pct": {
+            "call_contacts": -1.0979351352938371,
+            "text_contacts": 1.7124314257236373
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 2,
+          "months_since_signal": 1
+        }
+      ]
+    },
+    {
+      "method": "mean_all_baseline",
+      "baseline_start": "2022-01-01",
+      "minimum_same_month_years": 3,
+      "latest": [
+        {
+          "adm_cd": "1123051",
+          "adm_nm": "신사동",
+          "age_band": "30s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.4489588908127913,
+            "text_contacts": -11.051921240108975
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -1.5807170110901936,
+            "text_contacts": -12.878478630721258
+          },
+          "common_change_pct": {
+            "call_contacts": -0.5886892646801867,
+            "text_contacts": -12.013764591975807
+          },
+          "local_change_pct": {
+            "call_contacts": -0.7606567590312974,
+            "text_contacts": -1.1082399908081908
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 0,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123059",
+          "adm_nm": "삼성2동",
+          "age_band": "30s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -3.6907658945622757,
+            "text_contacts": -13.566932874151972
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -0.8038760252504162,
+            "text_contacts": -14.352012127047754
+          },
+          "common_change_pct": {
+            "call_contacts": -0.5886892646801867,
+            "text_contacts": -12.013764591975807
+          },
+          "local_change_pct": {
+            "call_contacts": 0.02265710890343442,
+            "text_contacts": -2.7808499107677576
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123059",
+          "adm_nm": "삼성2동",
+          "age_band": "50s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -4.152184879565846,
+            "text_contacts": -11.612353842512512
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -2.551859005200463,
+            "text_contacts": -11.45290298216689
+          },
+          "common_change_pct": {
+            "call_contacts": -2.444897032547999,
+            "text_contacts": -9.809814918115467
+          },
+          "local_change_pct": {
+            "call_contacts": -0.7543030697311215,
+            "text_contacts": -1.393593796646786
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123064",
+          "adm_nm": "역삼1동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.555599131208608,
+            "text_contacts": -8.749491972947322
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -2.427805276732853,
+            "text_contacts": -10.479321647282935
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": -0.0463556385938646,
+            "text_contacts": 1.0418870497735044
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123065",
+          "adm_nm": "역삼2동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.9860631192986986,
+            "text_contacts": -8.982488803916233
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -2.846015815818914,
+            "text_contacts": -11.050383711626688
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": -0.4747734640876633,
+            "text_contacts": 0.3973299522894491
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123067",
+          "adm_nm": "도곡2동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.4967397772440836,
+            "text_contacts": -9.913463459970817
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -2.6806978170674456,
+            "text_contacts": -12.789150577484087
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": -0.30542054033096955,
+            "text_contacts": -1.5652142162615235
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123072",
+          "adm_nm": "일원본동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.2648103740974257,
+            "text_contacts": -8.40352901183138
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -2.7541003272336217,
+            "text_contacts": -10.892440424894168
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": -0.3806145893855417,
+            "text_contacts": 0.5756003589927783
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123074",
+          "adm_nm": "일원2동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -5.175943429047036,
+            "text_contacts": -9.532065711326199
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -5.63144063847123,
+            "text_contacts": -11.82381865484986
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": -3.328182295450477,
+            "text_contacts": -0.4756451816297913
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123077",
+          "adm_nm": "압구정동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -3.43297177914198,
+            "text_contacts": -10.367483674161448
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -3.799655575557681,
+            "text_contacts": -12.623106728298128
+          },
+          "common_change_pct": {
+            "call_contacts": -2.523336799546705,
+            "text_contacts": -11.274770774932518
+          },
+          "local_change_pct": {
+            "call_contacts": -1.4516887591076277,
+            "text_contacts": -1.377800714001709
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123065",
+          "adm_nm": "역삼2동",
+          "age_band": "30s",
+          "signal_date": "2025-11-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-10-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -0.3462160170208284,
+            "text_contacts": -6.9434102382061935
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -0.7633944835037321,
+            "text_contacts": -8.095363938598055
+          },
+          "common_change_pct": {
+            "call_contacts": 0.3632669920596632,
+            "text_contacts": -7.789837829011015
+          },
+          "local_change_pct": {
+            "call_contacts": -0.9170677218412582,
+            "text_contacts": -0.07670649786151174
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 2,
+          "months_since_signal": 1
+        }
+      ]
+    },
+    {
+      "method": "median_recent_two_years",
+      "baseline_start": "2023-01-01",
+      "minimum_same_month_years": 2,
+      "latest": [
+        {
+          "adm_cd": "1123051",
+          "adm_nm": "신사동",
+          "age_band": "30s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.4489588908127913,
+            "text_contacts": -11.051921240108975
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -0.8768949206651389,
+            "text_contacts": -12.456269345892046
+          },
+          "common_change_pct": {
+            "call_contacts": -1.543304619267949,
+            "text_contacts": -12.08972928740295
+          },
+          "local_change_pct": {
+            "call_contacts": 0.6768556430071238,
+            "text_contacts": -0.41694793511376504
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123059",
+          "adm_nm": "삼성2동",
+          "age_band": "30s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -3.6907658945622757,
+            "text_contacts": -13.566932874151972
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -1.9547811554148642,
+            "text_contacts": -14.621713796923308
+          },
+          "common_change_pct": {
+            "call_contacts": -1.543304619267949,
+            "text_contacts": -12.08972928740295
+          },
+          "local_change_pct": {
+            "call_contacts": -0.4179264137961769,
+            "text_contacts": -2.8801919150017286
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123059",
+          "adm_nm": "삼성2동",
+          "age_band": "50s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -4.152184879565846,
+            "text_contacts": -11.612353842512512
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -2.985856741633597,
+            "text_contacts": -11.864904301451318
+          },
+          "common_change_pct": {
+            "call_contacts": -2.2774211754152285,
+            "text_contacts": -10.502767441516902
+          },
+          "local_change_pct": {
+            "call_contacts": -0.7249456315413405,
+            "text_contacts": -1.5219876872106686
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123064",
+          "adm_nm": "역삼1동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.555599131208608,
+            "text_contacts": -8.749491972947322
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -3.1802340063648904,
+            "text_contacts": -10.631898259189965
+          },
+          "common_change_pct": {
+            "call_contacts": -2.738715097270872,
+            "text_contacts": -11.616876085438966
+          },
+          "local_change_pct": {
+            "call_contacts": -0.45395134306068785,
+            "text_contacts": 1.114441063659588
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123065",
+          "adm_nm": "역삼2동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.9860631192986986,
+            "text_contacts": -8.982488803916233
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -3.2829925013945105,
+            "text_contacts": -10.98051218770072
+          },
+          "common_change_pct": {
+            "call_contacts": -2.738715097270872,
+            "text_contacts": -11.616876085438966
+          },
+          "local_change_pct": {
+            "call_contacts": -0.55960334542976,
+            "text_contacts": 0.7200061160470117
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123067",
+          "adm_nm": "도곡2동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.4967397772440836,
+            "text_contacts": -9.913463459970817
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -3.046910855848939,
+            "text_contacts": -13.361166838250371
+          },
+          "common_change_pct": {
+            "call_contacts": -2.738715097270872,
+            "text_contacts": -11.616876085438966
+          },
+          "local_change_pct": {
+            "call_contacts": -0.3168740356312316,
+            "text_contacts": -1.973556348265748
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123072",
+          "adm_nm": "일원본동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -2.2648103740974257,
+            "text_contacts": -8.40352901183138
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -2.272801998366103,
+            "text_contacts": -11.05560560873603
+          },
+          "common_change_pct": {
+            "call_contacts": -2.738715097270872,
+            "text_contacts": -11.616876085438966
+          },
+          "local_change_pct": {
+            "call_contacts": 0.47903243245319693,
+            "text_contacts": 0.6350425871408438
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "recovered_to_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123074",
+          "adm_nm": "일원2동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -5.175943429047036,
+            "text_contacts": -9.532065711326199
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -5.797424342500312,
+            "text_contacts": -12.200313126938712
+          },
+          "common_change_pct": {
+            "call_contacts": -2.738715097270872,
+            "text_contacts": -11.616876085438966
+          },
+          "local_change_pct": {
+            "call_contacts": -3.144837381377852,
+            "text_contacts": -0.6601226746225319
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123077",
+          "adm_nm": "압구정동",
+          "age_band": "40s",
+          "signal_date": "2025-10-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-09-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -3.43297177914198,
+            "text_contacts": -10.367483674161448
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -4.946295059226758,
+            "text_contacts": -14.11962438129476
+          },
+          "common_change_pct": {
+            "call_contacts": -2.738715097270872,
+            "text_contacts": -11.616876085438966
+          },
+          "local_change_pct": {
+            "call_contacts": -2.269741721141849,
+            "text_contacts": -2.831703819696585
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "both_below_reference",
+          "consecutive_both_below_months": 3,
+          "months_since_signal": 2
+        },
+        {
+          "adm_cd": "1123065",
+          "adm_nm": "역삼2동",
+          "age_band": "30s",
+          "signal_date": "2025-11-01",
+          "date": "2025-12-01",
+          "detection_model_version": "diagnostic",
+          "reference_date": "2025-10-01",
+          "trigger_domains": [
+            "communication"
+          ],
+          "raw_change_pct": {
+            "call_contacts": -0.3462160170208284,
+            "text_contacts": -6.9434102382061935
+          },
+          "seasonal_change_pct": {
+            "call_contacts": -0.8411178878939385,
+            "text_contacts": -7.22978027590333
+          },
+          "common_change_pct": {
+            "call_contacts": -0.4188664954587029,
+            "text_contacts": -7.645408875312265
+          },
+          "local_change_pct": {
+            "call_contacts": -0.424027501570845,
+            "text_contacts": 0.45003566617256574
+          },
+          "peer_n": {
+            "call_contacts": 22,
+            "text_contacts": 22
+          },
+          "quality": {
+            "call_contacts": "ready",
+            "text_contacts": "ready"
+          },
+          "comparison_note": "same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent",
+          "raw_state": "both_below_reference",
+          "seasonal_state": "both_below_reference",
+          "local_state": "mixed_recovery",
+          "consecutive_both_below_months": 2,
+          "months_since_signal": 1
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "operational_flags_exactly_reproduced": true,
+    "prefix_scores_future_invariant": true,
+    "database_unchanged": true,
+    "no_ground_truth_labels": true,
+    "retrospective_publication_dates_not_verified": true
+  }
+}

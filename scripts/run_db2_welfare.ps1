@@ -16,7 +16,7 @@ $outFile = Join-Path $logDir ($logStamp + '.out.log')
 Set-Location -LiteralPath $projectRoot
 # UTF-8 로그. 원천 API 예외/URL은 Python에서 출력하지 않는다.
 $env:PYTHONIOENCODING = 'utf-8'
-$collectorArgs = "-m db.collect_welfare collect --rows $Rows"
+$collectorArgs = "-m pipelines.welfare.collect collect --rows $Rows"
 if ($MaxPages) { $collectorArgs += " --max-pages $MaxPages" }
 if ($MaxDetails) { $collectorArgs += " --max-details $MaxDetails" }
 $process = Start-Process -FilePath $PythonPath -ArgumentList $collectorArgs -WorkingDirectory $projectRoot -WindowStyle Hidden -Wait -PassThru -RedirectStandardError $logFile -RedirectStandardOutput $outFile

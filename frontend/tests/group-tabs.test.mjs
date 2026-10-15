@@ -52,3 +52,10 @@ test('candidate districts come first and the largest decline opens first', () =>
   assert.equal(pickInitialGroup(groups, () => undefined).district, '신사동');
   assert.equal(pickInitialGroup([], statusOf), null);
 });
+
+test('Chuncheon tabs survive restoration and reject Gangnam codes', () => {
+  const group = { ...a, city: '춘천시', code: '3201052', district: '조운동' };
+  const state = restoreWorkspace({ tabs: [group, { ...a, city: '춘천시' }], active: groupKey(group) }, '춘천시');
+  assert.deepEqual(state.tabs, [group]);
+  assert.equal(state.active, groupKey(group));
+});

@@ -1,46 +1,64 @@
 /* 보미 챗봇: 종합 현황(그룹 칸)과 다른 메뉴(오른쪽 패널)에서 같은 모양을 씁니다. */
-.bomi-chat { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: #fff; color: #1e293b; padding: 18px; gap: 10px; }
+.bomi-chat { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: #fff; color: var(--text-strong); padding: 18px; gap: 10px; }
 .bomi-chat.embedded { height: max(600px, calc(100dvh - 170px)); }
-.bomi-chat.panel { height: 100dvh; border-left: 1px solid #dce8fa; }
+.bomi-chat.panel { height: 100dvh; border-left: 1px solid var(--line); }
 .bomi-chat.panel.expanded { padding: 24px 28px; }
 .bomi-chat-head { display: flex; align-items: center; gap: 10px; }
 .bomi-chat-head img { width: 44px; height: 44px; object-fit: contain; flex-shrink: 0; }
 .bomi-chat-head > div { flex: 1; min-width: 0; }
-.bomi-chat-head strong { display: block; font-size: 15px; color: #12213e; }
-.bomi-chat-head small { display: flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 11px; color: #6f85a4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bomi-chat-head strong { display: block; font-size: 15px; color: var(--text-strong); }
+.bomi-chat-head small { display: flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bomi-chat-head .online-dot { flex-shrink: 0; }
-.bomi-new { font-size: 11px; padding: 6px 9px; border: 1px solid #d6e4f8; border-radius: 8px; color: #2563eb; background: #fff; flex-shrink: 0; }
+.bomi-new { font-size: 11px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; color: #2563eb; background: #fff; flex-shrink: 0; }
 .bomi-chat-head .icon-button { flex-shrink: 0; }
-.bomi-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: #eef4fd; border-radius: 10px; }
-.bomi-tabs button { padding: 8px 6px; border-radius: 7px; font-size: 13px; font-weight: 600; color: #5b7193; }
-.bomi-tabs button.active { background: #fff; color: #1d4ed8; box-shadow: 0 1px 3px rgba(15, 23, 42, .1); }
-.bomi-scope { margin: 0; font-size: 12px; color: #4b6488; }
-.bomi-mode { margin: 0; font-size: 11px; color: #7086a4; }
-.bomi-mode summary { cursor: pointer; }
-.bomi-mode select { margin-top: 6px; width: 100%; font-size: 12px; padding: 7px; }
+.bomi-scope { margin: 0; font-size: 12px; color: var(--text-sub); }
+/* AI 사용 스위치(기본 꺼짐)와 현재 답변 방식 안내 */
+.bomi-ai-switch { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; font-size: 11px; font-weight: 600; padding: 5px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--text-sub); background: #fff; cursor: pointer; }
+.bomi-ai-switch .track { position: relative; width: 26px; height: 14px; border-radius: 999px; background: var(--line-strong); transition: background .15s; }
+.bomi-ai-switch .thumb { position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.bomi-ai-switch.on { color: #6d28d9; border-color: #c4b5fd; background: #f5f3ff; }
+.bomi-ai-switch.on .track { background: #7c3aed; }
+.bomi-ai-switch.on .thumb { transform: translateX(12px); }
+.bomi-ai-switch:disabled { cursor: not-allowed; opacity: .55; }
+.bomi-ai-switch:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.bomi-mode-line { margin: 0; font-size: 11px; color: var(--text-sub); padding: 6px 9px; border-radius: 8px; background: var(--surface-tint); }
+.bomi-mode-line.ai { color: #5b21b6; background: #f5f3ff; }
+.bomi-badge { display: inline-block; margin-right: 6px; padding: 1px 6px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; }
+.bomi-badge.ai { color: var(--status-ai); background: var(--status-ai-bg); }
+.bomi-badge.data { color: var(--status-pending); background: var(--status-pending-bg); }
+@media (prefers-reduced-motion: reduce) { .bomi-ai-switch .track, .bomi-ai-switch .thumb { transition: none; } }
 .bomi-messages { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
-.bomi-welcome { border: 1px solid #d6e9fc; background: #f8fbfe; border-radius: 12px; padding: 14px; }
-.bomi-welcome h3 { margin: 0 0 6px; font-size: 15px; color: #10264e; }
-.bomi-welcome p { margin: 0; font-size: 13px; line-height: 1.7; color: #4b6488; }
+.bomi-welcome { border: 1px solid var(--line); background: var(--surface-soft); border-radius: 12px; padding: 14px; }
+.bomi-welcome h3 { margin: 0 0 6px; font-size: 15px; color: var(--text-strong); }
+.bomi-welcome p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--text-sub); }
 .bomi-message { max-width: 92%; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.7; }
-.bomi-message small { display: block; font-size: 11px; font-weight: 700; color: #6f85a4; margin-bottom: 2px; }
+.bomi-message small { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 2px; }
 .bomi-message p { margin: 0; white-space: pre-wrap; }
-.bomi-message.user { align-self: flex-end; background: #e5f4ff; border-radius: 12px 12px 0 12px; }
-.bomi-message.assistant { align-self: flex-start; background: #f6f8fb; border: 1px solid #e3ebf6; border-radius: 12px 12px 12px 0; }
-.bomi-meta { display: block; margin-top: 6px; font-size: 10px; color: #8193ad; }
+.bomi-message.user { align-self: flex-end; background: var(--line); border-radius: 12px 12px 0 12px; }
+.bomi-message.assistant { align-self: flex-start; background: var(--surface-tint); border: 1px solid var(--line); border-radius: 12px 12px 12px 0; }
+.bomi-meta { display: block; margin-top: 6px; font-size: 11px; color: var(--text-muted); }
 .bomi-sources { margin-top: 6px; font-size: 11px; }
 .bomi-sources summary { cursor: pointer; color: #2563eb; }
-.bomi-sources div { margin-top: 6px; padding-top: 6px; border-top: 1px solid #e3ebf6; }
-.bomi-sources p { margin: 2px 0; color: #4b6488; }
-.bomi-pending { font-size: 12px; color: #6f85a4; margin: 0; }
+.bomi-sources div { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+.bomi-sources p { margin: 2px 0; color: var(--text-sub); }
+.bomi-pending { font-size: 12px; color: var(--text-muted); margin: 0; }
 .bomi-error { background: #fff3ef; border-radius: 8px; padding: 10px; color: #ad3a2b; font-size: 12px; margin: 0; }
 .bomi-suggestions { display: flex; flex-wrap: wrap; gap: 6px; }
-.bomi-suggestions button { font-size: 12px; padding: 6px 10px; border: 1px solid #d6e4f8; border-radius: 16px; background: #fff; color: #1d4ed8; }
-.bomi-suggestions .bomi-action { background: #eef5ff; }
+.bomi-suggestions button { font-size: 12px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 16px; background: #fff; color: #1d4ed8; }
+.bomi-suggestions .bomi-action { background: var(--surface-tint); }
+.bomi-message .bomi-action { display: block; margin-top: 8px; font-size: 12px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-tint); color: #1d4ed8; }
 .bomi-input { display: flex; gap: 8px; align-items: stretch; }
+/* 가드레일 안내: 개인정보·자료에 없는 정보를 가렸을 때 답변 아래에 표시합니다. */
+.bomi-notice { margin: 6px 0 0; padding: 6px 8px; border-radius: 6px; background: #fff8e6; color: #8a5a00; font-size: 11px; line-height: 1.5; }
+/* 다른 화면에서 예시 질문을 넣어 준 경우: 입력란을 잠깐 강조하고 보내는 방법을 안내합니다. */
+.bomi-draft-guide { margin: 0; padding: 7px 10px; border-radius: 8px; background: var(--surface-tint); color: #1d4ed8; font-size: 12px; line-height: 1.5; }
+.bomi-draft-guide kbd { font: inherit; font-size: 11px; padding: 0 5px; border: 1px solid #b9cff5; border-radius: 4px; background: #fff; }
+.bomi-input.guided textarea { border-color: #2563eb; box-shadow: 0 0 0 3px #2563eb33; animation: bomi-guide-pulse 1.2s ease-out 2; }
+@keyframes bomi-guide-pulse { 0% { box-shadow: 0 0 0 0 #2563eb66; } 100% { box-shadow: 0 0 0 8px #2563eb00; } }
+@media (prefers-reduced-motion: reduce) { .bomi-input.guided textarea { animation: none; } }
 .bomi-input textarea { flex: 1; min-width: 0; resize: none; font-size: 13px; padding: 9px 11px; border-radius: 10px; }
 .bomi-input button { flex-shrink: 0; padding: 8px 12px; border-radius: 10px; }
-.bomi-footnote { margin: 0; font-size: 11px; color: #758dab; }
+.bomi-footnote { margin: 0; font-size: 11px; color: var(--text-muted); }
 @media (max-width: 760px) {
   .bomi-chat.embedded { height: 620px; }
   .bomi-chat { padding: 14px; }
@@ -49,7 +67,7 @@
 /* 답변 작성 중 표시 */
 .bomi-typing { display: flex; align-items: center; gap: 10px; }
 .bomi-typing img { width: 40px; height: 40px; object-fit: contain; flex-shrink: 0; }
-.bomi-typing p { color: #4b6488; }
+.bomi-typing p { color: var(--text-sub); }
 .bomi-dots { display: inline-block; width: 1.4em; text-align: left; }
 .bomi-dots::after { content: '.'; animation: bomi-dots 1.2s steps(1, end) infinite; }
 .bomi-dots.still::after { content: '…'; animation: none; }

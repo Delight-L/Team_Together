@@ -122,7 +122,7 @@ export function EvidenceTable({ rows }) {
               <td>{number(r.risk_robust_z, 2)}</td>
               <td>
                 <span
-                  className={`badge ${r.is_risk_signal ? 'blue' : !r.has_enough_history ? 'amber' : ''}`}
+                  className={`status-tag ${!r.has_enough_history ? 'sky' : r.is_risk_signal ? 'rose' : ''}`}
                 >
                   {!r.has_enough_history
                     ? '이력 부족'
