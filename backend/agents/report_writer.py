@@ -339,7 +339,13 @@ def report_reply(context, workflow, use_ai=False, request='', evidence_rows=(), 
             'actions': [{'label': '초안을 보고서 탭에서 수정', 'view': 'report', 'reportDraft': draft}]}
 
 
+# '보고서 작성 방법', '보고서 쓸 때 주의할 점'처럼 쓰는 법을 묻는 질문은 초안 요청이 아닙니다.
+HOW_TO_WORDS = ('방법', '주의', '유의', '단정', '어떻게', '알려')
+
+
 def is_draft_request(question):
     """'보고서 초안 만들어 줘'처럼 보고서를 쓰거나 다듬어 달라는 요청인지 봅니다."""
     text = question.replace(' ', '')
+    if any(word in text for word in HOW_TO_WORDS):
+        return False
     return '보고서' in text and any(word in text for word in ('작성', '만들', '생성', '초안', '써', '다듬', '정리'))

@@ -15,12 +15,13 @@ import asyncio
 import json
 import logging
 import math
+import re
 
 
 from backend.agents import report_writer, v16_service
 from backend.chatbot.guardrails import blocked_words, mask_messages
 from backend.chatbot.welfare import service as welfare_service
-from backend.chatbot.welfare.app.dialogue.resources import RESOURCES, search
+from backend.chatbot.welfare.app.dialogue.resources import COVERED_CITIES, RESOURCES, SYNONYM_GROUPS
 from backend.chatbot.welfare.app.llm.client import LLM_ERRORS, ai_ready
 from backend.db import group_workspace, mission_store, region_workspace
 
@@ -55,6 +56,37 @@ BLOCKED = ('이 질문에는 답할 수 없어요. 보미는 복지 업무(지�
            '업무와 관련된 내용으로 다시 물어봐 주세요.')
 GROUP_REPORT_NOTICE = ('그룹 화면에서 요청했지만 보고서 초안은 {district} 동 전체 기준으로 만들었어요. '
                       '선택한 그룹({age} · {sex})만의 분석은 초안에 들어가지 않습니다.')
+# 대시보드 화면의 판정·수치 용어. v16은 이 용어를 모르므로 화면 기준을 아는 기존 지역 분석 담당이 설명합니다.
+SCREEN_TERMS = ('판정', '신규 후보', '연속 후보', '변화 후보', '판단 보류', '기준 미해당', '자료 부족', '자료 없음',
+                '이력 부족', '평소 대비', '전월 변화율')
+MEANING_WORDS = ('뜻', '의미', '차이', '다른', '다르', '무엇', '뭐', '뭔', '설명')
+# 이 말이 있으면 v16의 탐지 기준·공식 질문입니다(예: "이상신호 판정 기준은?").
+V16_METHOD_WORDS = ('이상신호', '탐지', 'robust', '공식')
+# 업무 방법 질문: (질문에 하나라도 있으면 해당하는 말, 함께 있어야 하는 말, 정해진 답)
+WORK_GUIDES = (
+    (('검토 의견', '의견에', '의견을', '기록해야', '기록할', '메모'), (), (
+        '검토 의견에는 판단과 그 근거를 남겨 다음 담당자가 이어받을 수 있게 적어 주세요.\n'
+        '· 확인한 근거: 어떤 지표가 후보 기준에 해당했는지, 월별 추이에서 변화가 이어지는지\n'
+        '· 현장·기관 확인 결과: 주민센터·복지관 등에서 확인한 내용과 날짜\n'
+        '· 판단: 연계 가능성 검토 / 운영 조건 확인 후 재검토 / 연계 제안에서 제외 중 무엇인지와 이유\n'
+        '· 후속 조치: 담당자·인계 대상, 확인 기한, 진행 상태\n'
+        '개인을 특정할 수 있는 이름·연락처·주소는 적지 말고, 지역 집계 변화를 개인의 고립 판정이나 원인으로 단정하지 마세요.')),
+    (('현장에서', '현장 확인', '추가로 확인', '추가 확인'), (), (
+        '지역 집계 신호는 «더 살펴볼 곳»을 알려 줄 뿐이라, 연계 전에 아래를 확인해 주세요.\n'
+        '· 자료: 지역 분석에서 지표별 근거와 월별 추이(한 달만의 변화인지, 이어지는지), 지역 배경(1인 가구·고령 인구 등)\n'
+        '· 현장: 주민센터·복지관·통반장이 체감하는 변화, 최근 공사·행사·이사철 같은 일시적 요인\n'
+        '· 기관: 관련 사업의 현재 운영 여부, 대상·거주 조건, 접수 기간\n'
+        '확인한 내용은 업무 기록의 검토 의견에 남기고, 사업 매칭 검토에서 판단을 저장하세요.')),
+    (('보고서',), ('단정', '주의', '유의', '쓰면 안', '설명해야', '어떻게 설명', '어떻게 써', '방법'), (
+        '보고서는 «보고서 작성» 메뉴에서 저장된 분석 근거와 사업 매칭 검토 판단으로 초안을 만든 뒤 고쳐 쓰는 방식이에요. '
+        '보미에게 "보고서 초안 만들어 줘"라고 해도 같은 초안을 받을 수 있어요.\n'
+        '작성할 때 지켜 주세요.\n'
+        '· 지역 집계자료는 «동 단위 통화·문자·이동 지표가 평소 흐름과 다르게 나타나 추가 확인이 필요함»처럼 쓰고, '
+        '개인의 고립 여부나 변화 원인을 확정하지 마세요.\n'
+        '· 수치는 화면에 나온 값(전월 변화율·후보 지표 수 등)만 쓰고, 추정한 숫자·금액·일정을 넣지 마세요.\n'
+        '· 사업의 이용 자격·신청 가능 여부·모집 기간은 담당 기관 확인 전에는 «확인 필요»로 적으세요.\n'
+        '· 판단 문구(연계 가능성 검토 제안 / 운영 조건 확인 후 재검토 / 현재 연계 제안에서 제외)는 업무 기록과 같게 유지하세요.')),
+)
 GUIDE = ('저는 복지탐정의 업무 도우미 보미예요. 이런 일을 도와드릴 수 있어요.\n'
          '· 지금 보는 동·그룹의 분석 근거 설명 — 예: "이 동은 왜 후보인가요?"\n'
          '· 관련 복지사업과 담당 기관 찾기 — 예: "혼자 사는 어르신 돌봄 지원이 있나요?"\n'
@@ -62,10 +94,52 @@ GUIDE = ('저는 복지탐정의 업무 도우미 보미예요. 이런 일을 �
          '복지 업무와 관련된 질문으로 다시 물어봐 주세요.')
 
 
-def rule_route(question, context, group=None):
-    """AI 없이 쓰는 담당 선택 규칙입니다. 동 분석은 regional_v16으로 고르고, v16 자료가 없으면 _events가 analysis로 바꿉니다."""
+def work_guide(question):
+    """업무 방법 질문이면 정해진 답을, 아니면 None을 돌려줍니다."""
+    for words, required, answer in WORK_GUIDES:
+        if any(word in question for word in words) and (not required or any(word in question for word in required)):
+            return answer
+    return None
+
+
+def screen_term_question(question):
+    """«자료 부족과 기준 미해당은 어떻게 다른가요?»처럼 화면 판정·수치 용어의 뜻을 묻는 질문인지."""
+    if any(word in question.lower() for word in V16_METHOD_WORDS):
+        return False
+    return any(term in question for term in SCREEN_TERMS) and any(word in question for word in MEANING_WORDS)
+
+
+def fixed_route(question):
+    """AI 사용 여부와 관계없이 규칙으로 정하는 담당. 해당하지 않으면 None입니다."""
     if report_writer.is_draft_request(question):
         return 'report'
+    if work_guide(question):
+        return 'guide'
+    if screen_term_question(question):
+        return 'analysis'
+    return None
+
+
+def program_name_hit(question, context):
+    """질문의 낱말(동의어 포함)이 팀 자료의 사업 이름에 들어 있는지. 설명문에만 있는 흔한 말(자료·확인 등)은 보지 않습니다."""
+    if context.get('city') and context['city'] not in COVERED_CITIES:
+        return False
+    terms = set(re.findall(r'[가-힣a-zA-Z0-9]{2,}', question))
+    for group in SYNONYM_GROUPS:
+        if any(word in question for word in group):
+            terms.update(group)
+    return any(term in record['name'] for record in RESOURCES for term in terms)
+
+
+# "삼성1동은?", "역삼동 어때"처럼 동 이름만 넣은 질문(뒤에 조사·끝). "세곡동행"처럼 낱말 중간의 '동'은 제외합니다.
+DISTRICT_NAME = re.compile(r'[가-힣]\d?동(?=$|[\s?!.,]|[은는이가의에도과와랑만](?![가-힣]))')
+
+
+def rule_route(question, context, group=None):
+    """AI 없이 쓰는 담당 선택 규칙입니다. 동 분석은 regional_v16으로 고르고, v16 자료가 없으면 _events가 analysis로 바꿉니다."""
+    fixed = fixed_route(question)
+    if fixed:
+        return fixed
     if any(word in question for word in WELFARE_WORDS):
         return 'welfare'
     if group:
@@ -75,10 +149,13 @@ def rule_route(question, context, group=None):
             return 'analysis'
     if any(word in question for word in ANALYSIS_WORDS):
         return 'regional_v16'
-    # 사업 이름만 입력한 경우(예: "세곡동행")처럼 팀 자료에서 바로 찾히면 복지사업으로 봅니다.
-    if search(question, city=context['city'], district=context.get('district', '')):
+    # 사업 이름(예: "세곡동행", "청년은?")을 물으면 복지사업으로 봅니다.
+    if program_name_hit(question, context):
         return 'welfare'
-    return 'regional_v16'
+    if DISTRICT_NAME.search(question):
+        return 'regional_v16'
+    # 어느 업무에도 해당하지 않는 질문(날씨·잡담·코드 등)은 보미 안내로 답합니다.
+    return 'guide'
 
 
 async def _ai_route(question, history, context=None, group=None):
@@ -107,8 +184,9 @@ async def _try_ai_route(question, history, context=None, group=None):
 
 def route(question, history, context, use_ai, group=None):
     """(담당 에이전트, 선택 방식)을 돌려줍니다."""
-    if report_writer.is_draft_request(question):
-        return 'report', '규칙'
+    fixed = fixed_route(question)
+    if fixed:
+        return fixed, '규칙'
     if use_ai:
         agent = asyncio.run(_try_ai_route(question, history, context, group))
         if agent:
@@ -151,7 +229,7 @@ def _answer(agent, question, history, context, data, group, use_ai, source_ids=(
                                                           sex=group_ctx.get('sex', ''))
         return result, None
     if agent == 'guide':
-        return {'answer': GUIDE, 'mode': '보미 안내 · 외부 AI 호출 없음'}, None
+        return {'answer': work_guide(question) or GUIDE, 'mode': '보미 안내 · 외부 AI 호출 없음'}, None
     try:
         return _analysis(question, history, context, data, group, use_ai), None
     except (*LLM_ERRORS, ValueError) as exc:
@@ -175,7 +253,7 @@ async def _moderate(question):
 
 async def _moderate_and_route(question, history, context, group):
     """유해 검사와 AI 담당 선택을 동시에 실행해 기다리는 시간을 줄입니다. (걸린 분류, AI가 고른 담당 또는 None)"""
-    if report_writer.is_draft_request(question):
+    if fixed_route(question):
         return await _moderate(question), None
     return await asyncio.gather(_moderate(question), _try_ai_route(question, history, context, group))
 
@@ -193,8 +271,9 @@ def check_and_route(question, history, context, use_ai, group=None):
     flagged, agent = asyncio.run(_moderate_and_route(question, history, context, group))
     if flagged:
         return flagged, 'guide', '안전 검사'
-    if report_writer.is_draft_request(question):
-        return [], 'report', '규칙'
+    fixed = fixed_route(question)
+    if fixed:
+        return [], fixed, '규칙'
     if agent:
         return [], agent, 'AI'
     return [], rule_route(question, context, group), '규칙'
@@ -246,8 +325,8 @@ def _events(messages, context, data, group, use_ai, pii, source_ids=()):
                          'question': question}
 
     flagged, agent, how = check_and_route(question, history, context, use_ai, group)
-    if agent == 'analysis' and not group:
-        # 동 단위 지역 분석은 v16이 담당합니다(옛 분류 응답 호환).
+    if agent == 'analysis' and not group and how == 'AI':
+        # AI가 동 단위 분석으로 고르면 v16이 담당합니다(화면 용어 질문은 규칙으로 기존 지역 분석이 답함).
         agent = 'regional_v16'
     if agent == 'regional_v16' and not v16_service.data_ready():
         # v16 근거 자료(DB1 SQLite)가 없는 서버에서는 기존 지역 분석 담당이 답합니다.
