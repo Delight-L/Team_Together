@@ -113,8 +113,9 @@ class WelfareTest(unittest.TestCase):
                 patch('backend.chatbot.welfare.app.llm.openai_client.AsyncOpenAI', side_effect=factory):
             first = reply('병원 동행', self.context)
             second = reply('청년 월세 지원', self.context)
-        self.assertEqual(first['answer'], '첫 안내')
-        self.assertEqual(second['answer'], '다음 안내')
+        # AI 답 뒤에는 검색된 사업의 출처·확인 상태가 붙습니다(source_footer).
+        self.assertTrue(first['answer'].startswith('첫 안내\n\n검토 자료와 확인 상태:'))
+        self.assertTrue(second['answer'].startswith('다음 안내\n\n검토 자료와 확인 상태:'))
         self.assertEqual(len(clients), 2)
         for stream, client in zip(streams, clients):
             self.assertTrue(stream.closed)
