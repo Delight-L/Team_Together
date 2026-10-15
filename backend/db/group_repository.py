@@ -220,8 +220,8 @@ def regional_context(context):
         return dict(scope='district', structure=None, detection=None)
     from backend.db.analysis_repository import get_engine
     with get_engine().connect() as conn:
-        structure = conn.execute(text('''SELECT cluster_type, payload, source_file FROM db1.analysis1_region_typology
-            WHERE adm_cd=:code ORDER BY created_at DESC LIMIT 1'''), {'code': context['code']}).mappings().first()
+        structure = conn.execute(text('''SELECT cluster_type, payload, source_file FROM db1.latest_region_typology
+            WHERE adm_cd=:code'''), {'code': context['code']}).mappings().first()
         detection = conn.execute(text('''SELECT communication_signal, mobility_signal, payload, source_file
             FROM db1.analysis2_detections WHERE admin_dong_code=:code
             AND CAST(reference_month AS text) LIKE :month ORDER BY created_at DESC LIMIT 1'''),

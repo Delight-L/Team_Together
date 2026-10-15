@@ -89,10 +89,12 @@ def services(request):
         raise ValueError('먼저 분석 근거를 확인하세요.')
     try:
         matches = service_matching.match_services(context['city'], current['analysis_evidence'])
+        references = service_matching.reference_matches(context['city'], current['analysis_evidence'])
     except Exception:
         logging.exception('DB2 service lookup failed')
         raise ApiError(503, 'DB2 사업 조회에 실패했습니다. .env 연결 및 DB 권한을 확인하세요.')
-    return {'matches': matches}
+    # references: 다른 지역 참고 사례(기획 참고용). 검토 저장 대상이 아닙니다.
+    return {'matches': matches, 'references': references}
 
 
 def saved_report(request):
@@ -141,7 +143,9 @@ def report_content(request):
     use_ai = request.params.get('ai') is True
     if use_ai:
         limits.check_chat(request.user)  # AI 문장 다듬기도 보미 사용량에 포함합니다.
-    return report_writer.write_draft(context, load_workflow(context), use_ai=use_ai)
+    selection = request.params.get('selection')
+    experience = experience_store.load(context) if isinstance(selection, dict) and (selection.get('include_note') or selection.get('include_followup')) else None
+    return report_writer.write_draft(context, load_workflow(context), use_ai=use_ai, selection=selection, experience=experience)
 
 
 def report_preview(request):
@@ -165,6 +169,16 @@ def report_preview(request):
         content = report_writer.validate_content(request.params['content'])
     if content:
         fields['opinion'] = content['next_steps']
+        selection = request.params['content'].get('selection')
+        from backend.agents.report_material import select_material
+        select_material(current, selection)
+        if selection and (selection.get('include_note') or selection.get('include_followup')):
+            version = experience_store.load(context).get('version', 0)
+            if request.params['content'].get('experience_version') != version:
+                raise ValueError('업무 기록이 변경되었습니다. 저장한 최신 기록으로 초안을 갱신하세요.')
+            content['experience_version'] = version
+        if selection is not None:
+            content['selection'] = selection
     contact = request.text('contact')
 
     for value in fields.values():
@@ -213,17 +227,36 @@ def workflow_start(request):
         return with_analysis_note(load_workflow(context), data)
 
 
+def workflow_restart(request):
+    """POST /api/workflow/restart: 분석이 새로 적재된 업무를 최신 분석으로 다시 시작합니다.
+
+    이전 진행 기록은 previous_rounds에 남고, 저장한 보고서는 차수 목록에 그대로 남습니다.
+    """
+    context, data, evidence = work_context(request)
+    if request.params.get('confirmed') is not True:
+        raise ValueError('다시 시작을 확인하세요.')
+    with sessions.write_lock:
+        mission_store.restart(context, {'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']})
+        return with_analysis_note(load_workflow(context), data)
+
+
 def workflow_confirm(request):
     """POST /api/workflow/confirm: ② 근거 검토 완료."""
     context, data, evidence = work_context(request)
     with sessions.write_lock:
         mission_store.save_event(context, 1, {'confirmed': True})
-        return load_workflow(context)
+        return with_analysis_note(load_workflow(context), data)
 
 
 def workflow_review(request):
     """POST /api/workflow/review: 조회한 복지사업 하나에 대한 검토 결과를 저장합니다."""
     context, data, evidence = work_context(request)
+    checks = request.params.get('checks', {})
+    if not isinstance(checks, dict) or any(key not in {'residency', 'eligibility', 'application'} or type(value) is not bool for key, value in checks.items()):
+        raise ValueError('사업 이용 조건 확인 항목이 올바르지 않습니다.')
+    need = request.params.get('need', '')
+    if need not in ['', '관계·사회참여', '안부·돌봄', '생활·경제']:
+        raise ValueError('지원 목적을 목록에서 선택하세요.')
     with sessions.write_lock:
         current = load_workflow(context)
         chosen = None
@@ -238,11 +271,13 @@ def workflow_review(request):
             'name': chosen['service']['name'],
             'decision': request.params.get('decision'),
             'note': request.text('note'),
+            'checks': checks,
+            'need': need,
             'reasons': chosen['reasons'],
             'source_url': chosen['service'].get('source_url'),
             'service_snapshot': service_snapshot(chosen['service']),
         })
-        return load_workflow(context)
+        return with_analysis_note(load_workflow(context), data)
 
 
 def report_save(request):
@@ -259,4 +294,4 @@ def report_save(request):
         record['confirmed'] = True
         mission_store.save_event(context, 3, record)
         sessions.remove_preview(token)
-        return load_workflow(context)
+        return with_analysis_note(load_workflow(context), data)

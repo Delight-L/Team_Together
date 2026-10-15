@@ -64,32 +64,34 @@ def _fit_blocks(blocks, limit):
     return '\n'.join(result)
 
 
-def generate_draft(context, workflow):
+def generate_draft(context, workflow, selection=None, experience=None):
     """외부 AI 없이 저장된 기록을 구성합니다. 첨부 예시는 업무 사실로 쓰지 않습니다."""
     if not context.get('district'):
         raise ValueError('보고서를 작성할 행정동을 먼저 선택하세요.')
     if 2 not in workflow.get('done', []) or not workflow.get('analysis_evidence'):
         raise ValueError('분석 근거 확인과 사업 매칭 검토 기록 저장을 먼저 완료하세요.')
     region = f"{context['city']} {context['district']}"
-    signals = [r for r in workflow['analysis_evidence'] if r.get('is_risk_signal')]
+    from backend.agents.report_material import select_material, record_sections
+    selected_rows, reviews, options = select_material(workflow, selection)
+    signals = [r for r in selected_rows if r.get('is_risk_signal')]
     situation = [f"대상 지역: {region} / 기준월: {context['month']}"]
     for row in signals[:3]:
         situation.append(evidence_sentence(row))
     if len(signals) > 3:
         situation.append(f'변화 후보 {len(signals)}건 중 3건 요약. 전체 근거는 지역 분석 화면에서 확인')
-    if not signals:
+    if not signals and selection is not None:
+        situation.append('이번 초안에 포함한 후보 지표 상세 없음. 전체 분석은 지역 분석 화면에서 확인')
+    elif not signals:
         situation.append('저장된 분석에서 변화 후보가 확인되지 않음. 자료 충분 여부와 현장 상황은 별도 확인 필요')
     situation.append('지역 집계자료의 변화로 ' + LIMIT_NOTE)
     saved_reviews = workflow.get('reviews', [])
-    # 같은 사업을 재검토했다면 마지막 판단을 사용합니다.
-    latest = {}
-    for index, review in enumerate(saved_reviews):
-        latest[review.get('service_key') or ('record', index)] = review
-    reviews = list(latest.values())
     proposals = []
     for review in reviews[:4]:
         status = DECISION_TEXT.get(review.get('decision'), '담당자 판단 확인 필요')
         proposal = f"{review.get('name', '사업명 확인 필요')}: {status}\n- 검토 근거: {review.get('note', '확인 필요')}"
+        if review.get('checks') is not None:
+            checks = review['checks']
+            proposal += '\n- 이용 조건: ' + ' / '.join(f"{label} {'확인' if checks.get(key) else '미확인'}" for key, label in [('residency', '거주'), ('eligibility', '대상'), ('application', '접수·신청')])
         snapshot = review.get('service_snapshot', {})
         if snapshot.get('detail_pending'):
             proposal += '\n- 상세정보 수집·재확인 대기. 이용 조건은 원문 및 운영기관 확인 필요'
@@ -99,7 +101,11 @@ def generate_draft(context, workflow):
     if len(reviews) > 4:
         proposals.append(f'전체 {len(reviews)}건 중 4건 요약. 나머지는 사업 검토 기록에서 확인')
     if not proposals:
-        proposals.append('저장된 사업 검토 내용 확인 필요')
+        proposals.append('이번 초안에 사업 상세를 포함하지 않음. 저장된 사업 검토 기록에서 확인 필요' if selection is not None else '저장된 사업 검토 내용 확인 필요')
+    record_note, record_followup = record_sections(experience or {}, options)
+    if record_note:
+        situation.append('담당자 검토 의견: ' + record_note)
+    next_steps = record_followup or '운영기관에 지원 대상·거주·연령·소득·신청 기간 및 모집 여부 확인\n현장 수요와 담당 기관 의견을 확인한 후 연계·추진 여부 검토'
     viable = any(r.get('decision') == '적합' for r in reviews)
     summary = (f'{region}의 지역 분석 및 사업 검토 결과를 바탕으로 '
                + ('관련 복지서비스 연계 가능성을 검토하고자 함' if viable else
@@ -108,7 +114,9 @@ def generate_draft(context, workflow):
     return {'title': f"{context['district']} 복지서비스 연계 검토보고",
             'summary': summary, 'situation': _fit_blocks(situation, LIMITS['situation']),
             'proposal': _fit_blocks(proposals, LIMITS['proposal']),
-            'next_steps': '운영기관에 지원 대상·거주·연령·소득·신청 기간 및 모집 여부 확인\n현장 수요와 담당 기관 의견을 확인한 후 연계·추진 여부 검토',
+            'next_steps': _fit_blocks(next_steps.split('\n'), LIMITS['next_steps']),
+            'selection': options if selection is not None else None,
+            'experience_version': (experience or {}).get('version') if options.get('include_note') or options.get('include_followup') else None,
             'context': {k: context[k] for k in ('city', 'district', 'month')},
             'review_id': review_revision(workflow),
             'review_snapshot': saved_reviews,
@@ -294,9 +302,9 @@ def polish(draft, use_ai=False, request=''):
     return result
 
 
-def write_draft(context, workflow, use_ai=False, request=''):
+def write_draft(context, workflow, use_ai=False, request='', selection=None, experience=None):
     """업무 기록으로 기초 초안을 만들고, use_ai이면 AI로 문장을 다듬습니다(보고서 탭)."""
-    return polish(generate_draft(context, workflow), use_ai, request)
+    return polish(generate_draft(context, workflow, selection, experience), use_ai, request)
 
 
 def report_reply(context, workflow, use_ai=False, request='', evidence_rows=(), history=(), sources=()):
@@ -331,7 +339,13 @@ def report_reply(context, workflow, use_ai=False, request='', evidence_rows=(), 
             'actions': [{'label': '초안을 보고서 탭에서 수정', 'view': 'report', 'reportDraft': draft}]}
 
 
+# '보고서 작성 방법', '보고서 쓸 때 주의할 점'처럼 쓰는 법을 묻는 질문은 초안 요청이 아닙니다.
+HOW_TO_WORDS = ('방법', '주의', '유의', '단정', '어떻게', '알려')
+
+
 def is_draft_request(question):
     """'보고서 초안 만들어 줘'처럼 보고서를 쓰거나 다듬어 달라는 요청인지 봅니다."""
     text = question.replace(' ', '')
+    if any(word in text for word in HOW_TO_WORDS):
+        return False
     return '보고서' in text and any(word in text for word in ('작성', '만들', '생성', '초안', '써', '다듬', '정리'))

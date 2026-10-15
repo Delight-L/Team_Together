@@ -31,6 +31,27 @@ def regional_history(context):
         return sorted(items, key=lambda item: item['month'], reverse=True)
 
 
+def start_new_round(db, context, run_id):
+    """업무를 새 분석으로 다시 시작할 때 호출합니다(mission_store.restart와 같은 트랜잭션).
+
+    지금 회차의 기록을 previous_rounds에 보관하고 빈 기록으로 새 회차를 엽니다.
+    version은 이어서 올려 다시 시작 전에 열어 둔 화면이 옛 기록을 덮어쓰지 못하게 합니다.
+    """
+    key = scope(context)
+    lock(db, key)
+    row = db.execute(text('SELECT value FROM work.experience WHERE key=:key'), {'key': key}).fetchone()
+    if not row:
+        return
+    old = json.loads(row[0])
+    previous = old.pop('previous_rounds', [])
+    if not old.get('history'):
+        return  # 저장한 적이 없는 회차는 보관할 내용이 없습니다.
+    archived = old | {'round': len(previous) + 1, 'analysis_run_id': run_id, 'ended_at': timestamp()}
+    result = {'version': old.get('version', 0) + 1, 'checks': {}, 'history': [], 'previous_rounds': previous + [archived]}
+    db.execute(text('UPDATE work.experience SET value=:value WHERE key=:key'),
+               {'key': key, 'value': json.dumps(result, ensure_ascii=False)})
+
+
 def save(context, body):
     fields = {}
     for name, limit in [('assignee', 80), ('note', 2000), ('followup', 2000), ('due', 10)]:
@@ -55,7 +76,8 @@ def save(context, body):
         if body.get('version') != old['version']:
             raise ValueError('다른 담당자가 기록을 변경했습니다. 최신 기록을 불러온 뒤 다시 저장하세요.')
         event = fields | {'actor': context['user']['id'], 'at': timestamp()}
-        result = fields | {'version': old['version'] + 1, 'history': old['history'] + [event]}
+        result = fields | {'version': old['version'] + 1, 'history': old['history'] + [event],
+                           'previous_rounds': old.get('previous_rounds', [])}
         db.execute(text('INSERT INTO work.experience (key,value) VALUES (:key,:value) '
                         'ON CONFLICT (key) DO UPDATE SET value=excluded.value'),
                    {'key': key, 'value': json.dumps(result, ensure_ascii=False)})

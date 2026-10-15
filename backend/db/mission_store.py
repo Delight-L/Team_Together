@@ -111,6 +111,7 @@ def save_event(request, step, record=None):
                 db.execute(insert_version, dict(key=key, revision=revision, document=bytes(previous[0]),
                                                 record=json.dumps(item.get('report', {}), ensure_ascii=False)))
             record['revision'] = revision + 1
+            record['analysis_run_id'] = item.get('analysis_run_id')
             db.execute(insert_version, dict(key=key, revision=record['revision'], document=document,
                                             record=json.dumps(record, ensure_ascii=False)))
             db.execute(text("""INSERT INTO work.report_files (key,document) VALUES (:key,:document)
@@ -125,14 +126,56 @@ def save_event(request, step, record=None):
     return item
 
 
+def restart(request, record):
+    """저장된 근거가 지금 분석과 다를 때 업무를 최신 분석으로 다시 시작합니다(① 분석 확인까지 저장).
+
+    이전 회차의 진행 기록은 previous_rounds에 보관합니다. 보고서 파일은 report_versions에 남아
+    다음 저장 때 차수가 이어집니다.
+    """
+    if not record.get("run_id") or not record.get("evidence"):
+        raise ValueError("실제 DB1 분석 결과가 있어야 업무를 시작할 수 있습니다.")
+    if not request.get("district"):
+        raise ValueError("행정동을 먼저 선택하세요.")
+    key = identity(request)
+    with transaction() as db:
+        lock(db, key)
+        row = db.execute(text("SELECT value FROM work.missions WHERE key=:key"), {"key": key}).fetchone()
+        item = normalize(json.loads(row[0]) if row else {})
+        if 0 not in item.get("done", []):
+            raise ValueError("아직 시작하지 않은 업무입니다. 상세 분석·업무 시작을 누르세요.")
+        if item.get("analysis_run_id") == record["run_id"]:
+            raise ValueError("이미 최신 분석으로 진행 중인 업무입니다.")
+        previous = item.pop("previous_rounds", [])
+        item["ended_at"] = timestamp()
+        restarted = {
+            "workflow_version": WORKFLOW_VERSION, "done": [0], "reviews": [], "questions": [],
+            "is_demo": request.get("workflow_mode") == "demo",
+            "card_earned": False, "workflow_complete": False,
+            "analysis_run_id": record["run_id"], "analysis_evidence": record["evidence"],
+            "analysis_source": record.get("source_note", "저장된 DB1 분석"),
+            "previous_rounds": previous + [item],
+        }
+        db.execute(text("""INSERT INTO work.missions (key,value) VALUES (:key,:value)
+            ON CONFLICT (key) DO UPDATE SET value=excluded.value"""),
+                   {"key": key, "value": json.dumps(restarted, ensure_ascii=False)})
+        # 검토·후속 조치 기록도 같은 트랜잭션에서 회차를 나눕니다(순환 import를 피해 여기서 불러옵니다).
+        from backend.db import experience_store
+        experience_store.start_new_round(db, request, item.get("analysis_run_id"))
+    return restarted
+
+
+# 시·군·구 → (시·도, 옛 시·도 표기). 연계 후보는 이 시·도 자료에서만 고릅니다.
+LOCAL_PROVINCES = {"강남구": ("서울특별시", "서울특별시"),
+                   "춘천시": ("강원특별자치도", "강원도")}
+
+
 def service_candidates(city):
     """주기 수집된 지자체 사업을 검토 후보로 조회합니다. 게시 지역은 자격이 아닙니다."""
     from sqlalchemy import text
     from backend.db.analysis_repository import get_engine
     from datetime import datetime
     from zoneinfo import ZoneInfo
-    provinces = {"강남구": ("서울특별시", "서울특별시"),
-                 "춘천시": ("강원특별자치도", "강원도")}.get(city)
+    provinces = LOCAL_PROVINCES.get(city)
     if not provinces:
         return []
     query = text("""SELECT s.*,
@@ -152,6 +195,56 @@ def service_candidates(city):
         return [dict(row) for row in db.execute(query, {
             "province": provinces[0], "province_alias": provinces[1], "city": city,
             "today": datetime.now(ZoneInfo('Asia/Seoul')).date()}).mappings()]
+
+
+REFERENCE_FIELDS = ["name", "summary", "benefit_text"]
+
+
+def reference_services(city, terms, limit=20):
+    """다른 지역 사업을 새 사업 기획의 참고 사례로 찾습니다. 선택 지역 주민의 연계 후보가 아닙니다.
+
+    사업 내용(이름·요약·지원 내용)에 관련어가 많이 들어 있는 순서로 limit건까지 돌려줍니다.
+    service_candidates가 고르는 자료(같은 시·군·구와 같은 시·도의 지역 미지정 자료)는 제외합니다.
+    """
+    from sqlalchemy import text
+    from backend.db.analysis_repository import get_engine
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    terms = list(dict.fromkeys(term for term in terms if term))
+    if not terms:
+        return []
+    params = {"today": datetime.now(ZoneInfo('Asia/Seoul')).date()}
+    corpus = " || ' ' || ".join(f"COALESCE(s.{field}, '')" for field in REFERENCE_FIELDS)
+    like = []
+    for index, term in enumerate(terms):
+        params[f"t{index}"] = f"%{term}%"
+        like.append(f"({corpus}) LIKE :t{index}")
+    local = "FALSE"
+    provinces = LOCAL_PROVINCES.get(city)
+    if provinces:
+        params.update(province=provinces[0], province_alias=provinces[1], city=city)
+        # NULL이 섞여도 NOT(...)이 참·거짓으로만 나오도록 COALESCE로 감쌉니다.
+        local = """COALESCE(s.province, '') IN (:province, :province_alias)
+            AND (s.district = :city OR COALESCE(TRIM(s.district), '') IN ('', '-'))"""
+    # 원문 JSON(list_payload·detail_payload)은 크므로 화면에 쓰는 열만 읽습니다.
+    query = text(f"""SELECT s.service_id, s.name, s.province, s.district, s.summary,
+            s.target_text, s.eligibility_text, s.benefit_text, s.application_text,
+            s.effective_start, s.effective_end, s.source_url, s.detail_pending,
+            s.detail_checked_at, s.benefit_text AS support_text,
+            'local_welfare_api' AS source_id
+        FROM db2.local_welfare_services s
+        WHERE ({' OR '.join(like)})
+          AND NOT ({local})
+          AND (s.effective_start IS NULL OR s.effective_start <= :today)
+          AND (s.effective_end IS NULL OR s.effective_end >= :today)""")
+    with get_engine().connect() as db:
+        rows = [dict(row) for row in db.execute(query, params).mappings()]
+    for row in rows:
+        content = " ".join(str(row.get(field) or "") for field in REFERENCE_FIELDS)
+        row["matched_terms"] = [term for term in terms if term in content]
+    rows.sort(key=lambda row: (-len(row["matched_terms"]), row["name"], row["service_id"]))
+    return rows[:limit]
+
 
 def service_key(service):
     if service.get('source_id') == 'local_welfare_api':
@@ -181,5 +274,6 @@ def report_versions(request):
         record = json.loads(record or "{}")
         items.append({"revision": revision, "created_at": record.get("created_at", ""),
                       "author": record.get("author", ""), "department": record.get("department", ""),
-                      "title": (record.get("content") or {}).get("title", "")})
+                      "title": (record.get("content") or {}).get("title", ""),
+                      "analysis_run_id": record.get("analysis_run_id", "")})
     return items

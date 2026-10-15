@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { householdParts, ratioPercent, logPercent, comparisonRows, signedBar } from '../src/regionalPresentation.mjs';
+import { householdParts, ratioPercent, logPercent, comparisonRows, signedBar, areaUnit } from '../src/regionalPresentation.mjs';
 test('missing, invalid and zero values stay distinct', () => {
   assert.equal(ratioPercent(null), null); assert.equal(ratioPercent(-.1), null); assert.equal(ratioPercent(0), 0);
   assert.equal(logPercent(null), null); assert.equal(logPercent(9999), null); assert.equal(logPercent(0), 0);
@@ -21,4 +21,7 @@ test('shared scale puts decreases left and increases right of zero', () => {
 test('new and legacy common changes use the same percentage scale, preserving zero', () => {
   assert.ok(Math.abs(comparisonRows({call_contacts_common_change:Math.log(.9)})[0].common + 10) < 1e-10);
   assert.equal(comparisonRows({call_contacts_gangnam_median_change:0,call_contacts_common_change:.2})[0].common, 0);
+});
+test('autonomous districts call sub-areas 동, cities and counties keep 읍·면·동', () => {
+  assert.equal(areaUnit('강남구'), '동'); assert.equal(areaUnit('춘천시'), '읍·면·동'); assert.equal(areaUnit('양평군'), '읍·면·동'); assert.equal(areaUnit(undefined), '읍·면·동');
 });

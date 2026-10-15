@@ -15,12 +15,14 @@ import json
 import logging
 import mimetypes
 import os
+import socket
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
-from backend.api import routes_account, routes_admin, routes_analysis, routes_chat, routes_groups, routes_work, sessions
+from backend.api import (routes_account, routes_admin, routes_analysis, routes_chat, routes_groups, routes_v16,
+                         routes_work, sessions)
 from backend.api.common import ROOT, ApiError, Request, Response, StreamResponse
 # 테스트와 다른 모듈이 backend.api.server.dashboard_data로 불러 씁니다.
 from backend.api.common import dashboard_data  # noqa: F401
@@ -60,6 +62,7 @@ ROUTES = {
 
     ('GET', '/api/chat/config'): routes_chat.config,
     ('POST', '/api/chat'): routes_chat.chat,
+    ('POST', '/api/chat/v16'): routes_v16.chat,
 
     ('GET', '/api/missions'): routes_work.missions,
     ('GET', '/api/workflow'): routes_work.workflow,
@@ -73,6 +76,7 @@ ROUTES = {
     ('POST', '/api/report/content'): routes_work.report_content,
     ('POST', '/api/report/preview'): routes_work.report_preview,
     ('POST', '/api/workflow/start'): routes_work.workflow_start,
+    ('POST', '/api/workflow/restart'): routes_work.workflow_restart,
     ('POST', '/api/workflow/confirm'): routes_work.workflow_confirm,
     ('POST', '/api/workflow/review'): routes_work.workflow_review,
     ('POST', '/api/report'): routes_work.report_save,
@@ -252,12 +256,28 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(500, {'error': SERVER_ERROR['GET']})
 
 
+class DashboardHTTPServer(ThreadingHTTPServer):
+    """Windows에서 같은 주소에 서버가 두 번 바인딩되는 것을 막습니다."""
+
+    allow_reuse_address = not hasattr(socket, 'SO_EXCLUSIVEADDRUSE')
+
+    def server_bind(self):
+        if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description='WELFIND 화면 서버')
     parser.add_argument('--host', default=os.getenv('HOST', '127.0.0.1'))
     parser.add_argument('--port', type=int, default=int(os.getenv('PORT', '8503')))
     args = parser.parse_args(argv)
-    server = ThreadingHTTPServer((args.host, args.port), Handler)
+    try:
+        server = DashboardHTTPServer((args.host, args.port), Handler)
+    except OSError as error:
+        if error.errno in {48, 98, 10013, 10048} or getattr(error, 'winerror', None) in {10013, 10048}:
+            raise SystemExit(f'{args.port} 포트를 사용하는 서버가 이미 실행 중입니다. 기존 서버를 종료한 뒤 실행하세요.') from error
+        raise
     print(f'WELFIND React: http://{args.host}:{args.port}', flush=True)
     try:
         server.serve_forever()

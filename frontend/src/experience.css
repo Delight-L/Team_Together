@@ -53,6 +53,8 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .report-workspace .draft-caption { font-size: 12px; }
 .report-workspace .regenerate-section { margin-top: 28px; padding-top: 20px; border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .saved-report { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 20px; margin-top: 20px; background: var(--line); border-radius: 12px; font-size: 13px; line-height: 1.6; }
+.analysis-changed { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.analysis-changed p { margin: 0; flex: 1 1 280px; }
 .report-versions { margin-top: 8px; padding: 12px 20px; border: 1px solid var(--line); border-radius: 12px; font-size: 13px; line-height: 1.6; }
 .report-versions summary { cursor: pointer; font-weight: 600; }
 .report-versions ul { list-style: none; margin: 8px 0 0; padding: 0; }
@@ -208,3 +210,12 @@ abbr[title] { text-decoration: underline dotted; cursor: help; }
 .service-review-workspace > p { margin: 0 0 12px; line-height: 1.6; }
 .service-review-workspace > .primary { margin: 0 0 12px; }
 .service-review-workspace > p:last-child { margin-bottom: 0; }
+/* 기존 카드와 입력 형식을 유지하는 메뉴 고도화 보조 영역 */
+.analysis-summary { margin: 12px 0; padding: 12px 14px; background: var(--surface-tint); border-radius: var(--radius-sm); }
+.analysis-summary p { margin: 6px 0; }
+.analysis-inline-review > summary { color: var(--text-strong); cursor: pointer; }
+.inline-review-body { padding-top: 16px; }
+.service-need-filter { display: grid; gap: 6px; max-width: 320px; margin: 16px 0 8px; font-size: 13px; }
+.service-inline-review fieldset, .report-materials fieldset { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px; margin: 12px 0; min-width: 0; }
+.service-inline-review legend, .report-materials legend { font-size: 12px; color: var(--text-sub); }
+.report-materials .confirmation { font-size: 13px; overflow-wrap: anywhere; }

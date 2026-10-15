@@ -1,0 +1,16 @@
+{
+  "version": 16,
+  "database": "outputs/db1.sqlite",
+  "exports": "outputs/integrated",
+  "baseline_end": "2025-06-01",
+  "auto_scan_on_startup": true,
+  "analysis1": {
+    "baseline_model": "Analysis1/models/2025H2_elder_v2/analysis1_baseline_2025H2.joblib"
+  },
+  "analysis2": {
+    "telecom_dir": "raw_data/telecom",
+    "interest_dir": "raw_data/interest",
+    "rain": "raw_data/weather/rain.csv",
+    "diary": "raw_data/weather/weather_days.csv"
+  }
+}
