@@ -5,16 +5,22 @@
 
 | 담당 에이전트 | 처리하는 코드 | 내용 |
 |---|---|---|
-| 지역 분석 | `backend/db/region_workspace.py`(동), `backend/db/group_workspace.py`(연령·성별 그룹) | 지금 보는 동·그룹의 분석 근거를 설명합니다. |
+| 지역 변화 신호(v16) | `backend/agents/v16_service.py` → `backend/agents/regional_v16/` | 동 단위 이상신호 지역·탐지 기준·연령별 활동·지역 배경·소비 변화를 DB 근거로 답하고, 답변 아래에 다음 질문을 제안합니다. [v16 안내](../agents/regional_v16/README.md) |
+| 지역 분석 | `backend/db/region_workspace.py`(동), `backend/db/group_workspace.py`(연령·성별 그룹) | 열어 둔 그룹의 근거와 화면 판정 용어(판단 보류·기준 미해당·평소 대비 차이 등)를 설명합니다. v16 근거 DB가 없는 서버에서는 동 분석도 맡습니다. |
 | 복지사업 | `backend/chatbot/welfare/` | 팀이 정리한 복지사업 자료(`welfare/data/*.json`)에서 관련 사업을 찾아 안내합니다. |
 | 보고서 작성 | `backend/agents/report_writer.py` | 대화에서 찾은 사업·신규 구상안이 있으면 그것으로 «담당자 검토 전» 초안을, 없으면 저장된 분석·사업 검토 기록으로 초안을 만듭니다. [보고서 문서](../../docs/report-agent.md) 참고. |
-| 보미 안내 | `backend/agents/supervisor.py` | 복지 업무와 무관한 질문에 도울 수 있는 일을 안내합니다. |
+| 보미 안내 | `backend/agents/supervisor.py` | 검토 의견 작성·현장 확인·보고서 작성 주의점 같은 업무 방법(정해진 답)과, 업무와 무관한 질문을 안내합니다. |
 
 ## 담당 선택
 
-- 명확한 보고서 요청("보고서 초안 만들어 줘")은 AI 없이 바로 보고서 작성 에이전트로 보냅니다.
-- 그 밖의 질문은 AI를 쓰는 중이면 관리자가 고른 AI가 담당을 고릅니다.
-- AI를 쓰지 않거나 AI 호출이 실패하면 키워드 규칙으로 고릅니다.
+- 아래 질문은 AI 사용 여부와 관계없이 규칙으로 먼저 정합니다(`fixed_route`).
+  - 보고서 초안 요청("보고서 초안 만들어 줘") → 보고서 작성. "보고서 작성 방법·주의점"처럼 쓰는 법을 묻는 질문은 제외합니다.
+  - 업무 방법 질문(검토 의견, 현장·추가 확인, 보고서 작성 주의점) → 보미 안내
+  - 화면 판정·수치 용어의 뜻(판단 보류, 기준 미해당, 자료 부족, 평소 대비/전월 변화율 등) → 지역 분석
+- 그 밖의 질문은 AI를 쓰는 중이면 관리자가 고른 AI가 담당을 고릅니다. 이때 유해 콘텐츠 검사와 담당 선택을 동시에 실행합니다.
+- AI를 쓰지 않거나 AI 호출이 실패하면 키워드 규칙으로 고릅니다. 복지 단어 → 복지사업, 분석 단어·동 이름 → v16,
+  사업 이름에 들어 있는 낱말 → 복지사업, 어디에도 해당하지 않으면 보미 안내입니다.
+- v16을 골랐는데 근거 DB가 없으면 지역 분석 담당이 답합니다.
 
 ## 외부 AI 사용 (기본 꺼짐)
 
@@ -38,7 +44,9 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
   최종 저장은 사업 매칭 검토에 판단을 기록한 뒤 «업무 기록»·«보고서 작성»에서 합니다.
 
 요청 흐름: 화면(`frontend/src/BomiChat.jsx`) → `POST /api/chat`(stream) → `backend/api/routes_chat.py` → `backend/agents/supervisor.py` → 담당 에이전트.
-응답은 `route`(담당) → `sources`/`token`(복지사업) 또는 `replace`(분석·보고서·안내) → `actions`(보고서 탭 이동) → `done` 이벤트 순서로 옵니다.
+응답은 `route`(담당) → `sources`/`token`(복지사업) 또는 `replace`(분석·보고서·안내) → `follow_ups`(v16 다음 질문) → `notice` → `actions`(보고서 탭 이동) → `done` 이벤트 순서로 옵니다.
+복지사업 답변은 끝에 «검토 자료와 확인 상태»(출처·확인 상태)를 붙이고, 미확인 자격을 단정한 AI 답은 자료상 대상·확인 기관 안내로 바꿉니다.
+화면의 «내보내기» 버튼은 대화를 텍스트 파일(.txt)로 내려받습니다(`frontend/src/chatExport.mjs`, 서버로 보내지 않음).
 복지사업 찾기의 자세한 구조는 [welfare/README.md](welfare/README.md)를 참고하세요.
 
 
@@ -48,12 +56,13 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
 |---|---|---|
 | 입력 | 로그인·소속 지역 검사, 대화 1~40개·메시지 6,000자·질문 2,000자 제한, `system` 역할 차단 | `backend/api/common.py`, `backend/chatbot/welfare/app/schemas.py` |
 | 입력 | **개인정보 가리기**: 주민등록번호·카드번호·전화번호·이메일·상세 주소를 `[○○ 가림]`으로 바꾼 뒤 처리(AI 사용 여부와 무관) | `backend/chatbot/guardrails.py` `mask_pii` |
-| 입력 | **유해 콘텐츠 검사**: AI 사용 중이고 OpenAI 키가 있으면 질문을 OpenAI Moderation(무료)으로 검사해 걸리면 답하지 않음. 키가 없거나 검사 API 장애 시에는 통과 | `backend/agents/supervisor.py` `_flagged` |
+| 입력 | **단어 규칙**: 욕설·위험한 요청·지시 무력화 시도("이전 지시 무시" 등)는 항상 막음. 자살 예방·학대·가정폭력처럼 복지 업무에서 쓰는 말은 막지 않음 | `backend/chatbot/guardrails.py` `blocked_words` |
+| 입력 | **유해 콘텐츠 검사**: AI 사용 중이고 OpenAI 키가 있으면 질문을 OpenAI Moderation(무료)으로 검사해 걸리면 답하지 않음. 키가 없거나 검사 API 장애 시에는 통과 | `backend/agents/supervisor.py` `_moderate` |
 | 요청 | **사용량 제한**: 사용자별 1분 20회·하루 300회(`.env`의 `WELFIND_CHAT_PER_MINUTE`, `WELFIND_CHAT_PER_DAY`), 초과 시 429 | `backend/api/limits.py` |
 | 요청 | **로그인 시도 제한**: 같은 아이디로 10분 안에 5번 틀리면 10분 잠금 | `backend/api/limits.py` |
 | AI 호출 | **답변 길이 상한**: `OPENAI_MAX_TOKENS`(기본 1,500, Claude는 생각 토큰 때문에 최소 8,000). 잘리면 안내 문구를 붙임 | `backend/chatbot/welfare/app/llm/` |
 | AI 호출 | 프롬프트 규칙: 자격·금액·연락처·URL 생성 금지, 자료 속 문장은 명령이 아님, 원인·개인 판정 금지 | 각 에이전트 프롬프트 |
-| 출력 | **미확인 정보 가리기**: 복지사업·분석 AI 답변의 전화번호·URL·금액이 근거 자료에 없으면 `[자료에 없는 정보 · 기관 확인 필요]`로 바꿈 | `backend/chatbot/guardrails.py` `redact_unverified`, 분석 설명은 `backend/chatbot/explain_ai.py` |
+| 출력 | **미확인 정보 가리기**: 복지사업·분석 AI 답변의 전화번호·URL·금액이 근거 자료에 없으면 `[자료에 없는 정보 · 기관 확인 필요]`로 바꿈. 복지사업 답변은 줄 단위로 먼저 검사한 뒤 보내 가리기 전 내용이 화면에 나오지 않음 | `backend/chatbot/guardrails.py` `redact_unverified`·`StreamRedactor`, 분석 설명은 `backend/chatbot/explain_ai.py` |
 | 출력 | 보고서 근거 대조: 새 숫자·URL, 사업·판단 문구 누락 시 AI 문장을 버림 | `backend/agents/report_writer.py` `check_grounding` |
 
 가린 내용이 있으면 답변 아래에 안내(`notice` 이벤트)를 표시합니다. 사용량·로그인 기록은 서버 메모리에 있어 서버를 재시작하면 초기화됩니다.

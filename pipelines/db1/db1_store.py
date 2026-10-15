@@ -1,4 +1,5 @@
 """Transactional, period-aware storage shared by the two analysis workers."""
+from contextlib import contextmanager
 from pathlib import Path
 import hashlib
 import json
@@ -47,12 +48,18 @@ CREATE VIEW IF NOT EXISTS v_db1_integrated AS
 """
 
 
+@contextmanager
 def connect(path):
+    """with 블록이 끝나면 커밋(오류 시 롤백)하고 연결도 닫습니다. Windows에서 DB 파일이 잠겨 남지 않게 합니다."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(path, timeout=60)
     con.execute("PRAGMA foreign_keys=ON")
-    return con
+    try:
+        with con:
+            yield con
+    finally:
+        con.close()
 
 
 def initialize(path):
@@ -199,6 +206,11 @@ def export_csv(path, directory, analysis2_directory=None):
         write(pd.read_sql_query('SELECT * FROM v_db1_integrated ORDER BY date,adm_cd',con),directory/'db1_integrated.csv')
         detections=pd.DataFrame([json.loads(r[0]) for r in con.execute('SELECT result_json FROM a2_detection ORDER BY date,adm_cd')])
         evidence=pd.DataFrame([json.loads(r[0]) for r in con.execute('SELECT evidence_json FROM a2_evidence ORDER BY date,adm_cd')])
+        # 아직 탐지 결과가 없는 DB도 빈 CSV를 열 이름과 함께 내보냅니다.
+        if detections.empty:
+            detections=pd.DataFrame(columns=['date','행정동코드','행정동','any_signal','communication_signal','mobility_signal','combined_signal','signal_status'])
+        if evidence.empty:
+            evidence=pd.DataFrame(columns=['date','행정동코드','행정동','signal_type','signal_status','consecutive_signal'])
         write(detections,a2_directory/'detection.csv')
         write(evidence,a2_directory/'evidence.csv')
         if not detections.empty:

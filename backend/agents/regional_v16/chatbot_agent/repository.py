@@ -119,7 +119,8 @@ class DataRepository:
 
     def supplements(self,names,dates,age_band=None):
         """Align local quarters to observation windows; deduplicate shared district data."""
-        from DB1.Context.source_semantics import window
+        # 관측 기간 계산은 공식 DB1 파이프라인의 함수를 씁니다.
+        from pipelines.db1.Context.source_semantics import window
         local={};shared={};weather={};regions=[];sns=[];unmatched=[];elder=[];survey=[];youth=[];tracking=[]
         names=list(dict.fromkeys(names));dates=sorted(set(str(d)[:7]+'-01' for d in dates))
         with self.connection() as c:

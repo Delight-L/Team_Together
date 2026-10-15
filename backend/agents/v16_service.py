@@ -1,6 +1,6 @@
 """Request-scoped v16 specialist used by the main supervisor.
 
-v16 지역 변화 신호 에이전트(pipelines/regional_analysis/chatbot_v16)를 보미 총괄 에이전트에 연결합니다.
+v16 지역 변화 신호 에이전트(backend/agents/regional_v16)를 보미 총괄 에이전트에 연결합니다.
 - AI 사용 여부·제공사·키는 관리자 «AI 설정»(chatbot/ai_settings.py)을 따릅니다. v16 전용 .env 키는 쓰지 않습니다.
   Gemini면 v16 원래 방식(JSON 스키마 지정)으로, 다른 제공사면 공용 llm 창구로 질문 의도를 분류합니다.
 - 근거 자료는 DB1 SQLite(outputs/db1.sqlite, 또는 DB1_DATABASE_PATH)입니다. 저장소에 올리지 않으므로
@@ -20,7 +20,7 @@ from pathlib import Path
 
 from backend.chatbot import ai_settings
 
-V16_ROOT = Path(__file__).resolve().parents[2] / "pipelines" / "regional_analysis" / "chatbot_v16"
+V16_ROOT = Path(__file__).resolve().parent / "regional_v16"
 if str(V16_ROOT) not in sys.path:
     sys.path.insert(0, str(V16_ROOT))
 

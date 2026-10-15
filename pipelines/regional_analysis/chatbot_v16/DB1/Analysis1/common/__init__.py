@@ -1,1 +1,0 @@
-"""Shared configuration and schemas."""

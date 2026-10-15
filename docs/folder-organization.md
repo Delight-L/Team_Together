@@ -11,13 +11,14 @@ Team_Together/
 │  ├─ chatbot/               보미 대화·가드레일·AI 연결
 │  │  └─ welfare/app/dialogue/  복지사업 검색과 대화 처리
 │  ├─ agents/                총괄·보고서 작성·사업 매칭
+│  │  └─ regional_v16/       v16 지역 변화 신호 에이전트(근거 DB는 git 제외)
 │  ├─ db/                    공유 DB 연결·조회·저장
 │  ├─ services/              계정·Word 보고서 생성
 │  └─ resources/             지도 자료·보고서 서식
 ├─ pipelines/
 │  ├─ db1/                   Analysis1·2·3·맥락 분석·검증·모델
 │  ├─ preprocessing/         공통 전처리·재현 코드
-│  ├─ regional_analysis/     DB1 실행·서비스 반영 연결과 기존 Analysis2 자료
+│  ├─ regional_analysis/     --analysis 실행점과 --preprocess가 쓰는 예전 Analysis2 실행기
 │  ├─ risk_analysis/         별도 위험변화 분석 도구
 │  └─ welfare/               DB2 복지사업 수집
 ├─ data/                     공통 원자료·가공 자료
@@ -39,6 +40,7 @@ Team_Together/
 | `chatbot/welfare/app/agent/` | `backend/chatbot/welfare/app/dialogue/` |
 | `agents/supervisor.py`, `report_writer.py`, `service_matching.py` | `backend/agents/` |
 | `agents/regional_analysis/` | `pipelines/regional_analysis/` |
+| `agents/regional_analysis/chatbot_v16/` (shinwon 브랜치) | `backend/agents/regional_v16/` (DB1 복사본·단독 서버는 정리하고 `pipelines/db1` 사용) |
 | `agents/risk_analysis/` | `pipelines/risk_analysis/` |
 | `db/` | `backend/db/` |
 | `db/collect_welfare.py` | `pipelines/welfare/collect.py` |
@@ -58,8 +60,13 @@ PostgreSQL의 `db1`, `db2`, `work` 스키마 이름과 테이블은 폴더 이�
 
 이번 정리는 파일 이동과 경로 수정입니다. 기존 분석 코드·모델·입력·검증 결과는 삭제하지 않습니다.
 분석 내부의 `data`, `models`, `outputs`는 실행·재현 경로를 유지하기 위해 해당 파이프라인에 보관합니다.
-기존 Analysis2 구현은 `pipelines/regional_analysis/Analysis2`에 보존하며,
-현재 통합 실행기는 `pipelines/db1`을 호출합니다. 두 구현의 통합·삭제는 별도 검증 후 결정합니다.
+기존 Analysis2 구현은 `pipelines/regional_analysis/Analysis2`에 남아 있으며, `python main.py --preprocess` 증분 갱신이 아직 이 실행기를 호출합니다.
+현재 통합 실행기(`--analysis`)는 `pipelines/db1`을 호출합니다. 예전 Analysis2의 과거 결과 CSV는 `pipelines/db1/Analysis2/data/reference/`에 같은 파일이 있어 정리했습니다.
+`--preprocess`를 새 Analysis2로 바꾸는 일은 분석 결과가 달라질 수 있어 분석 담당자 검증 후 진행합니다.
+
+v16 지역 변화 신호 에이전트(`backend/agents/regional_v16`)는 답변 근거로 `outputs/db1.sqlite`(약 100MB, git 제외)를 읽습니다.
+다른 위치에 둘 때는 `DB1_DATABASE_PATH`로 지정하고, 파일이 없으면 보미가 기존 지역 분석 담당으로 답합니다.
+이 DB를 새로 만드는 작업기도 `pipelines/db1`의 분석 코드를 그대로 씁니다.
 
 루트 `.env`, 가상환경 `.venv`, `frontend/node_modules`는 계속 같은 위치를 사용합니다.
 관리자 AI 설정은 공유 PostgreSQL `work.app_settings`에 보관합니다(배포 서버 재시작 후에도 유지).

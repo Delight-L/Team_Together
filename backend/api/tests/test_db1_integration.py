@@ -23,7 +23,7 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual(len(structure['context']), 22)
         self.assertTrue(structure['context'].elderly_living_alone_rate_65plus.between(0, 1).all())
         self.assertTrue(structure['context'].elder_available_from.isna().all())
-        legacy = pd.read_csv(ROOT / 'pipelines/regional_analysis/Analysis2/reference/gangnam_analysis1_final_region_typology_2025H2.csv', dtype={'adm_cd': str})
+        legacy = pd.read_csv(ROOT / 'pipelines/db1/Analysis2/data/reference/gangnam_analysis1_final_region_typology_2025H2.csv', dtype={'adm_cd': str})
         actual = structure['context'].set_index('adm_cd').cluster.sort_index()
         pd.testing.assert_series_equal(actual, legacy.set_index('adm_cd').cluster.sort_index(), check_names=False)
         self.assertNotIn('disability_ratio', structure['context'])
