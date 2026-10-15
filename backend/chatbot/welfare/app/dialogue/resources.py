@@ -1,9 +1,15 @@
-"""팀 자료의 복지사업 검색. 외부 서비스나 DB 연결 없이 실행할 수 있습니다."""
+"""공유 DB2의 복지사업 검색. JSON은 명시한 오프라인 검증 모드에서만 읽습니다."""
 import json
+import os
 import re
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+from backend.db.welfare_chatbot_repository import load_dataset_rows
+
 DATA = Path(__file__).resolve().parents[2] / "data"
+load_dotenv(Path(__file__).resolve().parents[5] / ".env")
 UNCHECKED = "계획·검토 자료 / 현재 운영 및 자격 미확인"
 # 질문에 한 단어라도 있으면 같은 묶음의 다른 단어로도 찾습니다(예: '외로워' → 고립·관계·모임).
 SYNONYM_GROUPS = [
@@ -48,19 +54,27 @@ def plan_record(index, row):
     }
 
 
+def resource_source():
+    source = (os.getenv("WELFIND_WELFARE_SOURCE") or "db").strip().lower()
+    if source not in {"db", "json"}:
+        raise ValueError("WELFIND_WELFARE_SOURCE는 db 또는 json이어야 합니다.")
+    return source
+
+
 def load_resources():
-    candidates = json.loads((DATA / "policy_candidates.json").read_text(encoding="utf-8"))["records"]
-    plans = json.loads((DATA / "gangnam_policy_plans_2025.json").read_text(encoding="utf-8"))
+    """요청할 때 DB를 조회하므로 DB 자료 수정은 서버 재시작 없이 반영됩니다."""
+    if resource_source() == "json":
+        candidates = json.loads((DATA / "policy_candidates.json").read_text(encoding="utf-8"))["records"]
+        plans = list(enumerate(json.loads((DATA / "gangnam_policy_plans_2025.json").read_text(encoding="utf-8"))))
+    else:
+        candidates, plans = load_dataset_rows()
     records = [candidate_record(row) for row in candidates]
-    records += [plan_record(index, row) for index, row in enumerate(plans)]
+    records += [plan_record(index, row) for index, row in plans]
     # 같은 이름의 사업이 두 자료에 있으면, 대상·기관이 자세한 계획 자료(나중 것)를 씁니다.
     by_name = {}
     for record in records:
         by_name[record["name"]] = record
     return list(by_name.values())
-
-
-RESOURCES = load_resources()
 
 
 def compact(text):
@@ -86,13 +100,13 @@ def search(query, limit=5, *, city="", district=""):
         return []
     # 사업명 자체를 문장에서 찾습니다. 조사('세곡동행의/에')와 띄어쓰기를 허용합니다.
     # 사업을 콕 집어 물으면 일반 동의어로 찾은 다른 사업을 섞지 않습니다.
-    named = [r for r in RESOURCES if len(compact(r["name"])) >= 3 and compact(r["name"]) in compact(query)]
+    resources = load_resources()
+    named = [r for r in resources if len(compact(r["name"])) >= 3 and compact(r["name"]) in compact(query)]
     if named:
         named.sort(key=lambda r: (r["record_kind"] == "사업계획", len(compact(r["name"]))), reverse=True)
         return named[:limit]
     # 지원 분야는 실제 사업명·지원 내용으로 확인합니다. '청년/자립' 관련성만으로
     # 경제 지원을 주거 지원으로 추천하지 않습니다.
-    resources = RESOURCES
     if any(term in query for term in HOUSING_TERMS):
         resources = [r for r in resources if any(term in r["name"] + " " + r["description"] for term in HOUSING_TERMS)]
     if "자립준비청년" in compact(query):

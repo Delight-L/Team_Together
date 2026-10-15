@@ -40,7 +40,7 @@ python -m pytest backend/api/tests backend/db/tests backend/chatbot/tests -q
 |---|---|---|
 | 지역 변화 신호(v16) | `backend/agents/v16_service.py` → `backend/agents/regional_v16/` | 동 단위 이상신호 지역·탐지 기준·연령별 활동·지역 배경·소비 변화를 DB 근거로 답하고, 답변 아래에 다음 질문을 제안합니다. [v16 안내](README.md#regional-v16) |
 | 지역 분석 | `backend/db/region_workspace.py`(동), `backend/db/group_workspace.py`(연령·성별 그룹) | 열어 둔 그룹의 근거와 화면 판정 용어(판단 보류·기준 미해당·평소 대비 차이 등)를 설명합니다. v16 근거 DB가 없는 서버에서는 동 분석도 맡습니다. |
-| 복지사업 | `backend/chatbot/welfare/` | 팀이 정리한 복지사업 자료(`welfare/data/*.json`)에서 관련 사업을 찾아 안내합니다. |
+| 복지사업 | `backend/chatbot/welfare/` | 공유 DB2의 복지사업 자료에서 관련 사업을 찾아 안내합니다. JSON은 적재 원본과 오프라인 검증용입니다. |
 | 보고서 작성 | `backend/agents/report_writer.py` | 대화에서 찾은 사업·신규 구상안이 있으면 그것으로 «담당자 검토 전» 초안을, 없으면 저장된 분석·사업 검토 기록으로 초안을 만듭니다. [보고서 문서](../docs/report-agent.md) 참고. |
 | 보미 안내 | `backend/agents/supervisor.py` | 검토 의견 작성·현장 확인·보고서 작성 주의점 같은 업무 방법(정해진 답)과, 업무와 무관한 질문을 안내합니다. |
 
@@ -182,3 +182,34 @@ DB를 새로 만드는 작업기(`analysis1_worker.py`, `monthly_worker.py`)는 
 v16은 관리자 «AI 설정»을 따릅니다. Gemini면 JSON 스키마를 지정해 질문 의도를 분류하고,
 다른 제공사면 공용 AI 창구(`backend/chatbot/welfare/app/llm/client.py`)를 씁니다.
 AI를 쓰지 않으면 규칙으로 의도를 해석하고, 답변 문장은 항상 DB 근거로 만듭니다.
+
+## 공유 DB2 복지자료
+
+기존 `.env`의 `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` 연결을 그대로 사용합니다.
+현재 팀 공용 DB는 Oracle Cloud의 PostgreSQL이며 Oracle Database용 별도 드라이버는 사용하지 않습니다.
+
+| 테이블 | 주요 컬럼과 보존 내용 |
+|---|---|
+| `db2.chatbot_policy_candidates` | JSON 후보 18개 필드와 `position`. ID, 사업명, 설명, 지역, 출처·페이지, 연도, 확인 상태, 주의사항 등 |
+| `db2.chatbot_policy_plans` | `plan_index`, `name`, `target`, `agency`, `description`, `procedure`, `source_file`, `source_pages`, `plan_period`, `status` |
+| `db2.chatbot_policy_datasets` | 파일명, SHA-256, 적재 행 수·시각, 원본 문서 메타정보. 과거 사업 37개와 표 해석 주의사항도 메타정보 안에 보존 |
+
+프로젝트 루트에서 최초 한 번 적재합니다. 테이블 생성 권한이 있는 계정으로 실행하세요.
+
+```powershell
+python -m backend.db.welfare_chatbot_repository import-json
+python -m backend.db.welfare_chatbot_repository check
+```
+
+적재는 하나의 트랜잭션으로 처리하며, 같은 ID는 갱신하므로 반복 실행해도 중복되지 않습니다.
+JSON에 없는 기존 DB 행은 지우지 않습니다. 신규 테이블에는 `welfind_reader`의 SELECT 권한도 설정합니다.
+원문은 검토용 후보·과거 계획이며, DB에 저장해도 현재 운영·신청 자격이 확인된 것으로 바뀌지 않습니다.
+
+서버의 기본 자료 위치는 `WELFIND_WELFARE_SOURCE=db`입니다. 설정을 생략해도 DB를 읽습니다.
+총괄 에이전트의 사업명 판별, 복지사업 검색, 대화에서 찾은 사업의 보고서 연결, `/api/chat/config`가 같은 DB 자료를 사용합니다.
+요청마다 조회하므로 DB 수정은 서버 재시작 없이 반영됩니다. 서버는 조회만 하며 기동 시 자동 적재하지 않습니다.
+DB 오류나 빈 테이블은 명시적으로 알리고 JSON으로 자동 대체하지 않습니다.
+
+`GET /api/chat/config`의 `resourceSource`는 `db` 또는 `json`이며 `resourceCount`는 기존 사업명 중복 처리 후 자료 수입니다.
+
+분석 근거 설명·보고서 초안 등 다른 담당은 [보미 챗봇 안내](README.md#bomi)를 참고하세요.
