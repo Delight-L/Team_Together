@@ -21,9 +21,10 @@ import re
 from backend.agents import report_writer, v16_service
 from backend.chatbot.guardrails import blocked_words, mask_messages
 from backend.chatbot.welfare import service as welfare_service
-from backend.chatbot.welfare.app.dialogue.resources import COVERED_CITIES, RESOURCES, SYNONYM_GROUPS
+from backend.chatbot.welfare.app.dialogue.resources import COVERED_CITIES, SYNONYM_GROUPS, load_resources
 from backend.chatbot.welfare.app.llm.client import LLM_ERRORS, ai_ready
 from backend.db import group_workspace, mission_store, region_workspace
+from backend.db.welfare_chatbot_repository import WelfareDataError
 
 LOGGER = logging.getLogger(__name__)
 HISTORY_SIZE = 6  # 기억하는 이전 대화: 질문·답 3쌍
@@ -128,7 +129,7 @@ def program_name_hit(question, context):
     for group in SYNONYM_GROUPS:
         if any(word in question for word in group):
             terms.update(group)
-    return any(term in record['name'] for record in RESOURCES for term in terms)
+    return any(term in record['name'] for record in load_resources() for term in terms)
 
 
 # "삼성1동은?", "역삼동 어때"처럼 동 이름만 넣은 질문(뒤에 조사·끝). "세곡동행"처럼 낱말 중간의 '동'은 제외합니다.
@@ -212,7 +213,7 @@ def _report(question, history, context, data, use_ai, source_ids=()):
     if context.get('district'):
         workflow = mission_store.load_all().get(mission_store.identity(context), {})
         rows = region_workspace.region_status(data, context['city'], context['month'], context['district'])['rows']
-    by_id = {record['id']: record for record in RESOURCES}
+    by_id = {record['id']: record for record in load_resources()}
     sources = [by_id[source_id] for source_id in source_ids if source_id in by_id]
     return report_writer.report_reply(context, workflow, use_ai, question, rows, history, sources)
 
@@ -324,7 +325,12 @@ def _events(messages, context, data, group, use_ai, pii, source_ids=()):
         yield 'notice', {'message': '개인정보로 보이는 내용(' + '·'.join(pii) + ')을 가리고 처리했어요. 개인정보는 입력하지 마세요.',
                          'question': question}
 
-    flagged, agent, how = check_and_route(question, history, context, use_ai, group)
+    try:
+        flagged, agent, how = check_and_route(question, history, context, use_ai, group)
+    except WelfareDataError:
+        yield 'error', {'message': '복지자료 DB를 조회하지 못했습니다. 관리자에게 DB 연결과 자료 적재 상태 확인을 요청해 주세요.'}
+        yield 'done', {}
+        return
     if agent == 'analysis' and not group and how == 'AI':
         # AI가 동 단위 분석으로 고르면 v16이 담당합니다(화면 용어 질문은 규칙으로 기존 지역 분석이 답함).
         agent = 'regional_v16'
@@ -344,7 +350,11 @@ def _events(messages, context, data, group, use_ai, pii, source_ids=()):
         analysis = signal_summary(context, data, group) if use_ai else None
         if analysis:
             public['analysis'] = analysis
-        yield from welfare_service.stream_reply(messages, public, use_ai=use_ai)
+        try:
+            yield from welfare_service.stream_reply(messages, public, use_ai=use_ai)
+        except WelfareDataError:
+            yield 'error', {'message': '복지자료 DB를 조회하지 못했습니다. 관리자에게 DB 연결과 자료 적재 상태 확인을 요청해 주세요.'}
+            yield 'done', {}
         return
 
     try:
