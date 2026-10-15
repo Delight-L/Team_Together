@@ -4,6 +4,7 @@ import { areaUnit } from './regionalPresentation.mjs';
 import { number } from './api';
 import { MissionMap } from './MissionMap';
 import ElderlyBackground from './ElderlyBackground';
+import { candidateFirst } from './regionDirectory.mjs';
 export { MissionMap } from './MissionMap';
 
 // 종합 현황과 지역 현황은 같은 원자료를 사용하지만 다른 업무를 돕습니다.
@@ -56,7 +57,7 @@ const tone = (status) =>
           : 'quiet';
 const STATUS_HELP = {
   '신규 후보': '이번 달 처음 후보 기준에 해당한 동입니다.',
-  '연속 후보': '지난달에 이어 이번 달에도 후보 기준에 해당한 동입니다.',
+  '연속 후보': '이전 분석월과 이번 달 모두 후보 지표가 있는 지역입니다. 두 달의 후보 지표는 다를 수 있습니다.',
   '변화 후보': '비교 이력은 부족하지만 이번 달 기준에 해당한 동입니다.',
   '판단 보류': '과거 자료가 부족해 판단하지 않은 동입니다.',
   '기준 미해당': '후보 기준에 해당하지 않은 동입니다.',
@@ -150,18 +151,20 @@ export function RegionalOverview({
         .filter(
           (r) =>
             (filter === '전체' || (filter === '확인 후보' ? r.count > 0 : r.status === filter)) &&
-            r.name.includes(search),
+            r.name.includes(search.trim()),
         )
         .sort((a, b) =>
           sort === '이름순'
             ? a.name.localeCompare(b.name, 'ko')
-            : b.count - a.count || (a.minZ ?? Infinity) - (b.minZ ?? Infinity),
+            : candidateFirst(a, b),
         ),
     [regions, filter, search, sort],
   );
   const region = regions.find((r) => r.name === selected);
   const unitLabel = areaUnit(city);
   const analyzedCount = regions.filter(r => r.rows.length > 0).length;
+  const candidateCount = regions.filter(r => r.count > 0).length;
+  const pendingCount = regions.filter(r => r.pending).length;
   return (
     <div className="regional-overview">
       {/* 동을 고르면 표 자리에 상세가 열립니다. 지도는 가리지 않고 모든 동을 계속 보여 줍니다. */}
@@ -181,6 +184,12 @@ export function RegionalOverview({
           </div>
         </header>
         <p className="hint">전체 {regions.length}개 {unitLabel} 중 분석 자료가 있는 지역 {analyzedCount}개 · {month}</p>
+        <div className="directory-summary" aria-label="지역 분석 요약">
+          <span>확인 후보 <b>{candidateCount}개</b></span>
+          <span>이력 부족 포함 <b>{pendingCount}개</b></span>
+          <span>자료 없음 <b>{regions.length - analyzedCount}개</b></span>
+        </div>
+        {!analyzedCount && <p className="hint">선택한 지역·기준월의 동별 분석은 제공되지 않습니다. 지도 경계 조회와 그룹 관찰 자료의 제공 범위는 별개입니다.</p>}
         <StatusLegend />
         <div className="directory-filters">
           <input
@@ -211,6 +220,7 @@ export function RegionalOverview({
             <option>후보 우선</option>
             <option>이름순</option>
           </select>
+          {(search || filter !== '전체' || sort !== '후보 우선') && <button className="text-button" onClick={() => { setSearch(''); setFilter('전체'); setSort('후보 우선'); }}>조건 초기화</button>}
         </div>
         <div className="directory-table">
           <table>

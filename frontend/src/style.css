@@ -898,6 +898,47 @@ tr:last-child td {
 .service-card button {
   margin-top: 8px;
 }
+/* 다른 지역 참고 사례: 연계 후보와 구분되도록 검토 버튼 없이 지역명을 앞세웁니다. */
+.reference-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  gap: 12px;
+}
+.reference-list li {
+  padding: 14px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.reference-list b {
+  display: block;
+  margin: 6px 0;
+}
+.reference-list p {
+  margin: 6px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.reference-list small {
+  display: block;
+  color: var(--text-muted);
+  margin: 6px 0;
+}
+.reference-region {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.reference-more {
+  margin-top: 12px;
+}
 .review-form {
   display: grid;
   gap: 16px;

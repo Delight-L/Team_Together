@@ -1478,3 +1478,11 @@
 .region-directory > .hint { margin: 0 20px 12px; }
 .region-directory > .status-legend { margin: 0 20px 12px; }
 .region-directory > .directory-filters { padding: 0 20px 20px; }
+.directory-summary { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 20px 12px; color: var(--text-sub); font-size: 12px; }
+.directory-summary b { color: var(--text-strong); margin-left: 4px; }
+.directory-filters { flex-wrap: wrap; }
+@media (max-width: 1100px) {
+  .regional-overview { grid-template-columns: minmax(0, 1fr); overflow-y: auto; align-content: start; }
+  .regional-overview > .region-directory { min-height: 480px; }
+  .regional-overview > .directory-map { min-height: 400px; }
+}

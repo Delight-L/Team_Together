@@ -11,6 +11,13 @@ const SUGGESTIONS = {
   district: ['이 동의 변화를 요약해 줘', '어르신 돌봄 지원사업을 찾아 줘', '보고서 초안 만들어 줘'],
   city: ['이번 달 후보 지역을 알려 줘', '후보 판정은 무슨 뜻인가요?', '혼자 사는 어르신 돌봄 지원'],
 };
+const MENU_SUGGESTIONS = {
+  map: ['이번 달 후보 지역을 알려 줘', '자료 부족과 기준 미해당은 어떻게 다른가요?', '후보 지역에서 다음에 확인할 일을 알려 줘'],
+  chart: ['이 동의 지표 변화를 설명해 줘', '평소 대비 차이와 전월 변화율은 어떻게 다른가요?', '추가로 확인할 자료를 알려 줘'],
+  services: ['이 지역의 지원사업 후보를 찾아 줘', '사업 이용 조건에서 무엇을 확인해야 하나요?', '어르신 돌봄 지원사업을 찾아 줘'],
+  records: ['검토 의견에 어떤 내용을 기록해야 하나요?', '현장에서 추가로 확인할 사항을 알려 줘', '사업 연계 전에 확인할 일을 알려 줘'],
+  report: ['보고서 초안 만들어 줘', '지역 집계자료를 보고서에 어떻게 설명해야 하나요?', '보고서에 단정하면 안 되는 내용을 알려 줘'],
+};
 // 답변을 기다리는 동안 보이는 말풍선: 움직이는 보미와 «. → .. → ...» 점.
 // 운영체제의 움직임 줄이기 설정을 켠 사용자에게는 멈춘 그림과 고정된 «…»을 보여 줍니다.
 function useReducedMotion() {
@@ -48,21 +55,28 @@ function useChat(context, group, userId) {
   const contextKey = JSON.stringify([context, group || null]);
   const [messages, setMessages] = useState([]), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [config, setConfig] = useState(null);
+  const [configError, setConfigError] = useState(''), [configRevision, setConfigRevision] = useState(0);
+  const [retryQuestion, setRetryQuestion] = useState('');
   // AI 사용 스위치: 기본 꺼짐. 관리자가 AI를 허용했고 사용자가 켰을 때만 외부 AI를 씁니다.
   const [aiOn, setAiOn] = useState(() => loadAiSwitch(userId));
   const request = useRef(null);
   useEffect(() => {
     let active = true;
-    const load = () => api('/chat/config').then(d => active && setConfig(d)).catch(() => active && setConfig({ aiAvailable: false, resourceCount: 0 }));
+    let generation = 0;
+    const load = () => {
+      const current = ++generation; setConfigError('');
+      api('/chat/config').then(d => { if (active && current === generation) setConfig(d); })
+        .catch(() => { if (active && current === generation) { setConfig(null); setConfigError('보미 설정을 불러오지 못했습니다.'); } });
+    };
     load();
     // 관리자가 AI 설정을 저장하면 다시 불러옵니다.
     window.addEventListener('welfind-ai-settings', load);
     return () => { active = false; window.removeEventListener('welfind-ai-settings', load); };
-  }, []);
+  }, [configRevision]);
   const mode = aiOn && config?.aiAvailable ? 'ai' : 'data';
   function setAi(on) { setAiOn(on); saveAiSwitch(userId, on); }
   useEffect(() => {
-    request.current?.abort(); request.current = null; setMessages([]); setError(''); setBusy(false);
+    request.current?.abort(); request.current = null; setMessages([]); setError(''); setRetryQuestion(''); setBusy(false);
     return () => { request.current?.abort(); request.current = null; };
   }, [contextKey]);
   function stop() {
@@ -70,16 +84,18 @@ function useChat(context, group, userId) {
     setMessages(previous => previous.map((m, i) => i === previous.length - 1 && m.role === 'assistant'
       ? { ...m, text: m.text || '응답이 중지되었습니다.', interrupted: true } : m));
   }
-  async function send(question) {
+  async function send(question, retry = false) {
     if (request.current) return;
     const controller = new AbortController(); request.current = controller;
     // 화면에는 대화 전체를 남기고, 서버에는 최근 3쌍과 이번 질문만 보냅니다.
-    const kept = messages.filter(m => m.text && !m.interrupted);
+    const base = retry ? messages.slice(0, Math.max(0, messages.length - 2)) : messages;
+    const kept = base.filter(m => m.text && !m.interrupted);
     const recent = kept.slice(-HISTORY_SIZE);
-    const next = [...messages, { role: 'user', text: question }];
+    const next = [...base, { role: 'user', text: question }];
     const index = next.length;
     setMessages([...next, { role: 'assistant', text: '', sources: [] }]);
-    setError(''); setBusy(true);
+    setError(''); setRetryQuestion(''); setBusy(true);
+    let safeQuestion = question;
     const update = fn => { if (request.current === controller) setMessages(previous => previous.map((m, i) => i === index ? fn(m) : m)); };
     // 최근 답에서 찾은 복지사업 id: «보고서 작성해줘»를 하면 이 사업들로 초안을 만듭니다.
     const sources = [...new Set(recent.flatMap(m => (m.sources || []).map(r => r.id)))].slice(0, 10);
@@ -100,31 +116,32 @@ function useChat(context, group, userId) {
           // 가드레일 안내(개인정보 가림, 자료에 없는 정보 가림)는 해당 답변 아래에 표시합니다.
           update(m => ({ ...m, notices: [...(m.notices || []), payload.message] }));
           // 서버가 가린 질문으로 내 말풍선을 바꿔, 다음 질문 때 개인정보가 다시 전송되지 않게 합니다.
-          if (payload.question) setMessages(previous => previous.map((m, i) => i === index - 1 ? { ...m, text: payload.question } : m));
+          if (payload.question) { safeQuestion = payload.question; setMessages(previous => previous.map((m, i) => i === index - 1 ? { ...m, text: payload.question } : m)); }
         }
-        else if (event === 'error') setError(payload.message);
+        else if (event === 'error') { setError(payload.message); setRetryQuestion(safeQuestion); update(m => ({ ...m, interrupted: true, actions: [] })); }
       }, controller.signal);
     } catch (e) {
-      if (request.current === controller && e.name !== 'AbortError') { setError(e.message); update(m => ({ ...m, interrupted: true })); }
+      if (request.current === controller && e.name !== 'AbortError') { setError(e.message); setRetryQuestion(safeQuestion); update(m => ({ ...m, interrupted: true, actions: [] })); }
     } finally {
       if (request.current === controller) { request.current = null; setBusy(false); }
     }
   }
-  const reset = () => { request.current?.abort(); request.current = null; setMessages([]); setError(''); setBusy(false); };
-  return { messages, busy, error, send, reset, stop, config, mode, aiOn, setAi };
+  const reset = () => { request.current?.abort(); request.current = null; setMessages([]); setError(''); setRetryQuestion(''); setBusy(false); };
+  return { messages, busy, error, send, reset, stop, config, configError, reloadConfig: () => setConfigRevision(value => value + 1), retryQuestion, mode, aiOn, setAi };
 }
 
 // inert: 좁은 화면에서 서랍이 닫혀 있을 때 키보드 초점이 숨은 대화창으로 들어가지 않게 합니다.
-export default function BomiChat({ context, group, userId, layout = 'embedded', expanded = false, onExpand, draft, actions = [], onAction, visible = true, inert }) {
+export default function BomiChat({ context, group, userId, view, layout = 'embedded', expanded = false, onExpand, draft, actions = [], onAction, visible = true, inert }) {
   const [input, setInput] = useState('');
   // guided: 다른 화면에서 예시 질문을 넣어 준 상태. 입력란을 강조하고 보내는 방법을 안내합니다.
   const [guided, setGuided] = useState(false);
   const chat = useChat(context, group, userId);
   const end = useRef(null), field = useRef(null), appliedDraft = useRef(null);
   const contextKey = JSON.stringify(context);
+  const targetKey = JSON.stringify([context, group || null]);
   useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }); }, [chat.messages, chat.busy]);
   // 지역이 바뀌면 안내를 지웁니다. 아래 예시 질문 효과보다 먼저 실행되어야 같은 순간에 넣은 안내가 남습니다.
-  useEffect(() => { setGuided(false); }, [contextKey]);
+  useEffect(() => { setGuided(false); setInput(''); }, [targetKey]);
   useEffect(() => {
     if (draft?.contextKey === contextKey && appliedDraft.current !== draft.id) {
       appliedDraft.current = draft.id;
@@ -141,6 +158,7 @@ export default function BomiChat({ context, group, userId, layout = 'embedded', 
     setInput(''); setGuided(false); chat.send(question);
   }
   const target = group ? 'group' : context.district ? 'district' : 'city';
+  const suggestions = group || !context.district ? SUGGESTIONS[target] : MENU_SUGGESTIONS[view] || SUGGESTIONS[target];
   const place = group ? `${group.district} · ${group.age} · ${group.sex}` : `${context.city} ${context.district || '전체'}`;
   const month = group?.month || context.month;
   const aiAvailable = !!chat.config?.aiAvailable;
@@ -161,14 +179,15 @@ export default function BomiChat({ context, group, userId, layout = 'embedded', 
       </>}
     </header>
     <p className="bomi-context"><span className="online-dot" aria-hidden="true" /><span>{place}</span><span>{month}</span></p>
-    <p className="bomi-scope">{group ? '열어 둔 그룹' : context.district ? context.district : `${context.city} 전체`} 기준으로 분석 설명 · 복지사업 찾기 · 보고서 초안을 도와드려요.</p>
+    <p className="bomi-scope">질문 대상: {group ? '선택 그룹의 관찰 자료' : context.district ? '선택 지역의 동별 분석' : '시·군·구 전체'}. {group ? '그룹 관찰 설명과 지원사업 탐색을 도와드려요.' : '분석 설명 · 복지사업 찾기 · 보고서 초안을 도와드려요.'}</p>
     <p className={`bomi-mode-line ${chat.mode === 'ai' ? 'ai' : ''}`} role="status">
       {chat.mode === 'ai'
         ? `AI 사용 중 · 질문과 최근 대화가 외부 AI(${chat.config?.aiProvider || '관리자 설정'})로 전송돼요`
         : aiAvailable ? '자료 기반 답변 · 외부로 전송하지 않아요. 위 스위치로 AI를 켤 수 있어요'
           : '자료 기반 답변 · 외부 AI는 관리자에게 연결을 요청하세요'}
-      {` · 최근 대화 3개를 기억해요`}
+      {` · 최근 질문·답변 3쌍을 함께 참고해요`}
     </p>
+    {chat.configError && <p className="bomi-error" role="alert">{chat.configError} <button className="text-button" onClick={chat.reloadConfig}>설정 다시 불러오기</button></p>}
     <div className="bomi-messages" aria-live="polite">
       {!chat.messages.length && <div className="bomi-welcome">
         <h3>보미에게 물어보세요</h3>
@@ -177,6 +196,7 @@ export default function BomiChat({ context, group, userId, layout = 'embedded', 
       {chat.messages.map((m, i) => m.role === 'assistant' && !m.text && chat.busy && i === chat.messages.length - 1 ? <Typing key={i} /> : <article key={i} className={`bomi-message ${m.role}`}>
         <small>{m.role === 'user' ? '나' : m.agent ? `보미 · ${m.agent}` : '보미'}</small>
         <p>{m.text || '답변을 완료하지 못했습니다.'}</p>
+        {m.interrupted && <span className="bomi-notice">완료되지 않은 응답입니다.</span>}
         {m.role === 'assistant' && m.mode && <span className="bomi-meta">
           <span className={`bomi-badge ${usedAi(m.mode) ? 'ai' : 'data'}`}>{usedAi(m.mode) ? 'AI 답변' : '자료 기반'}</span>
           {[m.mode.split(' · ')[0], m.source].filter(Boolean).join(' · ')}
@@ -187,11 +207,11 @@ export default function BomiChat({ context, group, userId, layout = 'embedded', 
         </details>}
         {onAction && m.actions?.map(a => <button key={a.label} className="bomi-action" onClick={() => onAction(a)}>{a.label} →</button>)}
       </article>)}
-      {chat.error && <p role="alert" className="bomi-error">{chat.error}</p>}
+      {chat.error && <div role="alert" className="bomi-error">{chat.error}{chat.retryQuestion && <button className="text-button" disabled={chat.busy} onClick={() => chat.send(chat.retryQuestion, true)}>실패한 질문 다시 보내기</button>}</div>}
       <div ref={end} />
     </div>
     <div className="bomi-suggestions">
-      {SUGGESTIONS[target].map(q => <button key={q} disabled={chat.busy} onClick={() => submit(q)}>{q}</button>)}
+      {suggestions.map(q => <button key={q} disabled={chat.busy} onClick={() => { setInput(q); setGuided(true); field.current?.focus(); }}>{q}</button>)}
       {actions.map(a => <button key={a.label} className="bomi-action" onClick={a.onClick}>{a.label} →</button>)}
     </div>
     {guided && <p className="bomi-draft-guide" role="status">예시 질문을 넣어 두었어요. 그대로 보내거나 고쳐서 물어보세요. <kbd>Enter</kbd> 보내기</p>}

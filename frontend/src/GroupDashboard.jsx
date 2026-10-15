@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { api, query } from './api';
 import { Icon } from './components';
 import { useDraft } from './useDraft';
+import { useTransientMessage } from './useTransientMessage';
 import { draftKey } from './draftStore.mjs';
 import { groupKey, groupLabel, openGroup, closeGroup, restoreWorkspace, availableWorkspace, rankGroups, pickInitialGroup, CANDIDATE_ORDER } from './groupTabs.mjs';
 import { summarizeRegions } from './Briefing';
@@ -12,6 +13,7 @@ import { areaUnit } from './regionalPresentation.mjs';
 import { showToast } from './toast';
 import { tabPage, tabPageForSelected } from './tabPaging.mjs';
 import { fitDomain } from './chartScale.mjs';
+import { ReferenceServiceList } from './ReferenceServices';
 
 const fmt = (n, digits = 1) => Number.isFinite(n) ? n.toLocaleString('ko-KR', { maximumFractionDigits: digits }) : '—';
 const pct = n => Number.isFinite(n) ? `${n > 0 ? '+' : ''}${fmt(n, 2)}%` : '비교 불가';
@@ -64,9 +66,19 @@ function ServiceResults({ matches }) {
   return <article className="gd-service-result"><h3>{service.name}</h3><PageButtons page={current} pages={matches.items.length} onPage={value => {setPage(value);setTextPage(0);}} label="사업 이동"/><p style={{whiteSpace:'pre-wrap'}}>{text.slice(part * 400, part * 400 + 400)}</p>{pages > 1 && <PageButtons page={part} pages={pages} onPage={setTextPage} label="사업 상세 내용 이동"/>}{/^https?:\/\//i.test(service.source_url || '') && <a href={service.source_url} target="_blank" rel="noreferrer">공식 안내 확인 ↗</a>}</article>;
 }
 
+// 말풍선 글자 폭 어림값(한글은 넓게). 그린 뒤에는 실제 글자 폭으로 다시 맞춥니다.
+const tipWidth = text => [...text].reduce((w, c) => w + (c.charCodeAt(0) > 0x1100 ? 14 : 8), 0);
+
 // unit: 눈금 단위(예: '%'), lastColor: 이번 달 점을 강조할 색(없으면 강조하지 않음)
-function LineChart({ points, field = 'mean', label, unit = '', lastColor }) {
+// detail(p, i): 마우스를 올린 달의 말풍선 둘째 줄(예: 전월 대비 변화). 없으면 값만 보여 줍니다.
+function LineChart({ points, field = 'mean', label, unit = '', lastColor, detail }) {
   const fillId = useId();
+  const [hover, setHover] = useState(null), [tipText, setTipText] = useState(0), tipRef = useRef(null);
+  useLayoutEffect(() => {
+    const texts = tipRef.current ? [...tipRef.current.querySelectorAll('text')] : [];
+    const width = texts.length ? Math.ceil(Math.max(...texts.map(t => t.getComputedTextLength()))) : 0;
+    setTipText(old => old === width ? old : width);
+  }, [hover]);
   // 그래프 칸의 실제 높이에 맞춰 viewBox 높이를 정합니다. 칸이 커지면 글자는 그대로, 선만 세로로 넓어집니다.
   const svgRef = useRef(null), [height, setHeight] = useState(148);
   useEffect(() => {
@@ -99,7 +111,15 @@ function LineChart({ points, field = 'mean', label, unit = '', lastColor }) {
     {segments.map((seg, i) => <polygon key={i} points={[...seg, [seg.at(-1)[0], base], [seg[0][0], base]].map(p => p.join(",")).join(" ")} fill={`url(#${fillId})`} />)}
     {ticks.map((v, i) => <g key={i}><line x1={left} x2="405" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x={left - 6} y={y(v) + 4} textAnchor="end">{fmt(v, digits)}{unit}</text></g>)}
     {segments.map((s, i) => <polyline key={i} points={s.map(p => p.join(',')).join(' ')} fill="none" stroke="#2563eb" strokeWidth="3" />)}
-    {points.map((p, i) => <g key={p.month || p.label}>{Number.isFinite(p[field]) && <circle cx={x(i)} cy={y(p[field])} r={lastColor && i === lastIndex ? 6 : 4} fill={lastColor && i === lastIndex ? lastColor : '#2563eb'} stroke={lastColor && i === lastIndex ? '#fff' : undefined} strokeWidth="2"><title>{p.month || p.label}: {fmt(p[field], 2)}{unit}</title></circle>}{(points.length < 9 || i % 6 === 0 || i === points.length - 1) && <text x={x(i)} y={height - 10} textAnchor="middle">{p.month ? Number(p.month.slice(5)) + '월' : p.label}</text>}</g>)}
+    {points.map((p, i) => <g key={p.month || p.label}>{Number.isFinite(p[field]) && <circle cx={x(i)} cy={y(p[field])} r={hover === i ? 6 : lastColor && i === lastIndex ? 6 : 4} fill={lastColor && i === lastIndex ? lastColor : '#2563eb'} stroke={lastColor && i === lastIndex || hover === i ? '#fff' : undefined} strokeWidth="2" />}{(points.length < 9 || i % 6 === 0 || i === points.length - 1) && <text x={x(i)} y={height - 10} textAnchor="middle">{p.month ? Number(p.month.slice(5)) + '월' : p.label}</text>}</g>)}
+    {hover !== null && Number.isFinite(points[hover]?.[field]) && (() => {
+      const p = points[hover], lines = [`${p.month ? `${p.month.slice(0, 4)}년 ${Number(p.month.slice(5))}월` : p.label} · ${fmt(p[field], 2)}${unit}`, detail?.(p, hover)].filter(Boolean);
+      const w = (tipText || Math.max(...lines.map(tipWidth))) + 18, h = lines.length * 18 + 10;
+      const tx = Math.min(Math.max(x(hover) - w / 2, 2), 428 - w), py = y(p[field]);
+      const ty = py - h - 10 >= 2 ? py - h - 10 : Math.min(py + 10, base - h);
+      return <g className="gd-tip" pointerEvents="none" ref={tipRef}><line x1={x(hover)} x2={x(hover)} y1={8} y2={base} stroke="#94a3b8" strokeDasharray="3 3" /><rect x={tx} y={ty} width={w} height={h} rx="6" />{lines.map((t, k) => <text key={k} x={tx + 9} y={ty + 19 + k * 18} className={k ? 'sub' : ''}>{t}</text>)}</g>;
+    })()}
+    {points.map((p, i) => Number.isFinite(p[field]) && <rect key={'hit' + i} x={i ? (x(i - 1) + x(i)) / 2 : 0} width={(i ? (x(i) - x(i - 1)) / 2 : x(0)) + (i < points.length - 1 ? (x(i + 1) - x(i)) / 2 : 430 - x(i))} y="0" height={base} fill="transparent" onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(h => h === i ? null : h)} onClick={() => setHover(i)} />)}
   </svg>{!fromZero && <small className="gd-axis-note">세로축은 {fmt(low, digits)}{unit}부터 시작합니다.</small>}</>;
 }
 
@@ -113,15 +133,15 @@ function GroupFacts({ group, row, data }) {
   const facts = [
     // 전월 값은 전체 구역 평균이라, 공통 구역끼리 비교한 아래 변화율과 직접 나눠 맞지 않습니다.
     Number.isFinite(row.mean) && ['월 평균 유동량', fmt(row.mean, 1), Number.isFinite(previous) ? `전월 ${fmt(previous, 1)} · 전체 구역 평균` : '전월 자료 없음'],
-    shareRank > 0 && ['동 안 비중 순서', `${shareRank}번째`, `${group.district} ${shares.length}개 그룹 중`],
+    shareRank > 0 && ['동 안 비율 순서', `${shareRank}번째`, `${group.district} ${shares.length}개 그룹 중`],
     mid !== null && [`비교: ${group.city} 중앙값`, `${mid > 0 ? '+' : ''}${fmt(mid, 2)}%`, `같은 ${group.age} ${group.sex} · ${changes.length}개 동의 전월 대비`],
   ].filter(Boolean);
   if (!facts.length) return null;
   return <dl className="gd-facts">{facts.map(([label, value, note]) => <div key={label}><dt>{label}</dt><dd><b>{value}</b><small>{note}</small></dd></div>)}</dl>;
 }
 
-// 읍·면·동 전체 유동량 중 비중: 이번 달 값, 전월 대비 %p, 월별 추이를 함께 보여 줍니다.
-function ShareTrend({ row, series, label, unit }) {
+// 동 유동량 중 이 그룹의 비율: 이번 달 값, 전월 대비 %p, 월별 추이를 함께 보여 줍니다.
+function ShareTrend({ row, series, label, title }) {
   const shares = series.filter(p => Number.isFinite(p.share));
   const previous = series.length > 1 ? series.at(-2)?.share : undefined;
   const delta = Number.isFinite(row.share) && Number.isFinite(previous) ? row.share - previous : null;
@@ -130,13 +150,13 @@ function ShareTrend({ row, series, label, unit }) {
   let insight = '';
   if (shares.length >= 3 && Number.isFinite(row.share)) {
     const values = shares.map(p => p.share);
-    if (row.share <= Math.min(...values)) insight = `최근 ${shares.length}개월 중 가장 낮은 비중입니다.`;
-    else if (row.share >= Math.max(...values)) insight = `최근 ${shares.length}개월 중 가장 높은 비중입니다.`;
+    if (row.share <= Math.min(...values)) insight = `최근 ${shares.length}개월 중 가장 낮은 비율입니다.`;
+    else if (row.share >= Math.max(...values)) insight = `최근 ${shares.length}개월 중 가장 높은 비율입니다.`;
   }
-  return <article className="gd-mini-share"><h4>{unit} 전체 유동량 중 비중</h4>
+  return <article className="gd-mini-share"><h4>{title}</h4>
     <div className="gd-share-head"><strong>{fmt(row.share, 2)}<small>%</small></strong>
       {delta !== null && <span className={`gd-share-delta ${down ? 'down' : 'up'}`}>전월 대비 {delta > 0 ? '+' : delta < 0 ? '−' : '±'}{fmt(Math.abs(delta), 2)}%p</span>}</div>
-    {shares.length >= 2 ? <LineChart points={series} field="share" unit="%" label={label} lastColor={down ? '#e0264a' : '#2563eb'} /> : null}
+    {shares.length >= 2 ? <LineChart points={series} field="share" unit="%" label={label} lastColor={down ? '#e0264a' : '#2563eb'} detail={(p, i) => { const before = series[i - 1]?.share; return Number.isFinite(before) ? `전월 대비 ${p.share - before > 0 ? '+' : p.share - before < 0 ? '−' : '±'}${fmt(Math.abs(p.share - before), 2)}%p` : '전월 비교 불가'; }} /> : null}
     {insight && <p className="gd-share-insight">{insight}</p>}
     <p>유동량은 실제 사람 수와 다릅니다.</p></article>;
 }
@@ -163,9 +183,10 @@ function useCardGrid(list) {
       const style = getComputedStyle(list);
       const columnGap = parseFloat(style.columnGap) || 0, rowGap = parseFloat(style.rowGap) || 0;
       const cols = Math.max(1, Math.min(4, Math.floor((list.clientWidth + columnGap) / (CARD_MIN_WIDTH + columnGap))));
-      // 높이가 모자라도 한 페이지 개수를 줄이지 않습니다. 넘치는 카드는 목록 안에서 위아래로 스크롤합니다.
-      const rows = Math.ceil(PAGE_SIZE / cols);
-      list.style.setProperty('--gd-card-h', cardHeight(list) + 'px');
+      // 실제 높이에 들어가는 줄만 표시하고 나머지는 다음 페이지로 넘깁니다.
+      const height = cardHeight(list);
+      const rows = Math.max(1, Math.min(Math.ceil(PAGE_SIZE / cols), Math.floor((list.clientHeight + rowGap) / (height + rowGap))));
+      list.style.setProperty('--gd-card-h', height + 'px');
       setGrid(old => old.cols === cols && old.rows === rows ? old : { cols, rows });
     };
     measure();
@@ -200,22 +221,42 @@ function Directory({ catalog, loading, error, retry, city, month, onOpen, state,
   </div>;
 }
 
+function FittedBriefing({ hidden, children }) {
+  const frameRef = useRef(null), bodyRef = useRef(null);
+  useLayoutEffect(() => {
+    const frame = frameRef.current, body = bodyRef.current;
+    const fit = () => {
+      if (!frame.clientWidth || !frame.clientHeight) return;
+      const style = getComputedStyle(frame);
+      const width = frame.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const height = frame.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      // 축소한 뒤에도 실제 가로폭을 채우도록 원본 폭을 함께 늘립니다.
+      // 높이에 맞는 가장 큰 배율을 찾으므로 오른쪽에 빈 공간이 남지 않습니다.
+      let low = 0.1, high = Math.min(1, width / 1050);
+      for (let i = 0; i < 12; i += 1) {
+        const scale = (low + high) / 2;
+        body.style.width = width / scale + 'px';
+        if (body.offsetHeight * scale <= height) low = scale;
+        else high = scale;
+      }
+      body.style.width = width / low + 'px';
+      body.style.zoom = low;
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(frame); observer.observe(body);
+    fit();
+    return () => observer.disconnect();
+  }, [hidden]);
+  return <div hidden={hidden} className="gd-summary" ref={frameRef}><div className="gd-summary-content" ref={bodyRef}>{children}</div></div>;
+}
+
 function GroupCase({ group, active, shown, evidenceShown, summaryStep, user, onRegion, onEvidence, candidate }) {
   const unit = areaUnit(group.city);
-  const [summaryPage, setSummaryPage] = useState(0);
-  useEffect(() => { setSummaryPage(summaryStep === 2 ? 1 : 0); }, [summaryStep]);
-  // 좁거나 낮은 화면에서는 요약 전체를 한 열로 쌓아 스크롤하므로, 페이지 버튼은 그 구역으로 스크롤합니다.
-  const summaryRef = useRef(null);
-  useEffect(() => {
-    const el = summaryRef.current;
-    if (!el || el.scrollHeight <= el.clientHeight + 2) return;
-    const target = summaryPage === 0 ? el.querySelector('.gd-overview') : el.querySelectorAll('.gd-context-cards > article')[summaryPage - 1];
-    if (target) el.scrollTo({ top: Math.max(0, target.offsetTop - 52), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-  }, [summaryPage]);
   const [reviewRequest, setReviewRequest] = useState(0);
   const [data, setData] = useState(null), [error, setError] = useState(''), [retry, setRetry] = useState(0);
   const [draft, setDraft, clearDraft, storageFailed] = useDraft(draftKey(user, group, `group-review:${group.code}:${group.age}:${group.sex}`), { note: '', need: '' });
-  const [saved, setSaved] = useState(null), [status, setStatus] = useState(''), [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(null), [saving, setSaving] = useState(false);
+  const [status, setStatus] = useTransientMessage();
   const [matches, setMatches] = useState(null), [serviceError, setServiceError] = useState(''), [searching, setSearching] = useState(false);
   const servicesRef = useRef(null), moreRef = useRef(null), contentRef = useRef(null), serviceRequest = useRef(null);
   useEffect(() => {
@@ -251,14 +292,14 @@ function GroupCase({ group, active, shown, evidenceShown, summaryStep, user, onR
   }
   return <><section hidden={!shown && !evidenceShown} className={`gd-case ${evidenceShown ? 'gd-evidence-panel' : ''}`} role="tabpanel" id={'panel-' + groupKey(group)} aria-label={groupLabel(group)} ref={contentRef}>
     {error ? <div role="alert" className="gd-error">{error}<button onClick={() => { setError(''); setRetry(r => r + 1); }}>다시 연결</button></div> : !row ? <p role="status">집단별 근거를 읽고 있습니다…</p> : <>
-      <div hidden={evidenceShown} ref={summaryRef} className="gd-summary" data-summary-page={summaryPage}><nav className="gd-summary-pages" aria-label="브리핑 내용 이동">{['변화 요약', '지역 배경', `${unit} 전체 변화`].map((label, index) => <button key={label} aria-current={summaryPage === index ? 'page' : undefined} onClick={() => setSummaryPage(index)}>{label}</button>)}</nav><div className="gd-overview"><div className="gd-overview-copy"><header className="gd-case-heading"><div><span className="gd-eyebrow">{group.month} · 집단 브리핑</span><h2>{groupLabel(group)}</h2></div>{candidate ? <span className="gd-badge gd-candidate-badge" title={`${unit} 전체 판정입니다. 이 그룹 자체의 판정이 아닙니다.`}>{group.district} {candidate.status}</span> : <span className="gd-badge">선택한 집단</span>}</header>
+      <FittedBriefing hidden={evidenceShown}><div className="gd-overview"><div className="gd-overview-copy"><header className="gd-case-heading"><div><span className="gd-eyebrow">{group.month} · 집단 브리핑</span><h2>{groupLabel(group)}</h2></div>{candidate ? <span className="gd-badge gd-candidate-badge" title={`${unit} 전체 판정입니다. 이 그룹 자체의 판정이 아닙니다.`}>{group.district} {candidate.status}</span> : <span className="gd-badge">선택한 집단</span>}</header>
       {candidate && <p className="gd-candidate-note">{withJosa(group.district, '은', '는')} {group.month} {unit} 전체 분석에서 <b>{candidate.status}</b>입니다({candidate.metrics?.length ? candidate.metrics.join('·') : `후보 지표 ${candidate.count}개`}). {group.age} {group.sex} 그룹 자체의 판정은 아니며, 후보 {unit === '동' ? '동' : '지역'}의 그룹이라 먼저 보여 드려요.</p>}
       <GroupFacts group={group} row={row} data={data} /><div className="gd-headline-row"><div><h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `${fmt(Math.abs(row.change_pct), 2)}% ${row.change_pct > 0 ? '증가' : row.change_pct < 0 ? '감소' : '변화 없음'}` : '비교 자료 부족'}</h3><p className="gd-metric-label">이 그룹의 전월 대비 유동량 · 두 달 모두 관측된 구역 기준</p></div><button className="primary gd-support-link" onClick={openServices}>지원사업 후보 확인 <Icon name="arrow" size={22}/></button></div>
       <p className="gd-caption"><abbr title="그 지역에서 관측된 활동 규모입니다. 실제 사람 수와는 다릅니다.">유동량</abbr>은 그 지역에서 관측된 활동 규모(실제 사람 수 아님)이며, 지난달과 이번 달 모두 자료가 있는 구역끼리 비교했습니다.</p></div>
-      <article className="gd-mini-trend"><h4>월별 유동량 추이</h4><LineChart points={data.series} label={`${groupLabel(group)} 월별 구역별 평균 유동량`} /><small>각 월 전체 구역의 평균</small></article>
-      <ShareTrend row={row} series={data.series} label={`${groupLabel(group)} 월별 ${unit} 유동량 중 비중`} unit={unit} /></div>
+      <article className="gd-mini-trend"><h4>월별 유동량 추이</h4><div className="gd-share-head"><strong>{fmt(row.mean, 1)}</strong><span className="gd-trend-value-label">월 평균 유동량</span></div><LineChart points={data.series} label={`${groupLabel(group)} 월별 구역별 평균 유동량`} detail={p => Number.isFinite(p.change_pct) ? `전월 대비 ${pct(p.change_pct)} · 공통 구역 기준` : '전월 비교 불가'} /><small>각 월 전체 구역의 평균</small></article>
+      <ShareTrend row={row} series={data.series} label={`${groupLabel(group)} 월별 ${group.district} 유동량 중 비율`} title={`${group.district} 유동량 중 ${group.age} ${group.sex} 비율`} /></div>
       <RegionContextCards structure={structure} detection={detection} group={group}/>
-      </div><section hidden={!evidenceShown} ref={moreRef} className="gd-more" aria-label="전체 근거와 지원 검토"><header className="gd-evidence-heading"><h2>전체 근거와 지원 검토</h2><p>{groupLabel(group)} · {group.month}</p></header>
+      </FittedBriefing><section hidden={!evidenceShown} ref={moreRef} className="gd-more" aria-label="전체 근거와 지원 검토"><header className="gd-evidence-heading"><h2>전체 근거와 지원 검토</h2><p>{groupLabel(group)} · {group.month}</p></header>
       <EvidencePages requestedPage={reviewRequest || (summaryStep === 3 ? 1 : 0)}>
 <details open><summary>월별 유동량·구성비 값</summary><PagedTable><thead><tr><th>기준월</th><th>구역별 평균 유동량</th><th>구성비</th></tr></thead><tbody>{data.series.map(p => <tr key={p.month}><th>{p.month}</th><td>{fmt(p.mean, 2)}</td><td>{fmt(p.share, 2)}%</td></tr>)}</tbody></PagedTable></details>
 <details open><summary><Icon name="services" size={21}/>요일·시간대 활동 · 지역 전체 별도 집계</summary><p className="gd-caution">이 집단의 요일·시간대가 아닙니다. 지역 전체의 활동으로 서비스 운영 접점을 검토합니다.</p><div className="gd-activity"><div><h4>요일별 활동 <small>요일 평균=100</small></h4>{data.activity.weekdays?.map(d => <div className="gd-day" key={d.label}><span>{d.label}</span><i style={{ width: `${Math.min((d.index || 0) / 2, 100)}%` }} /><b>{fmt(d.index)}</b></div>) || <p>요일 자료 없음</p>}</div><div><h4>시간대 활동 <small>최대 시간대=100</small></h4>{data.activity.hours ? <LineChart points={data.activity.hours} field="index" label="지역 전체 시간대 활동 지수" /> : <p>시간대 자료 없음</p>}</div></div></details>
@@ -270,6 +311,7 @@ function GroupCase({ group, active, shown, evidenceShown, summaryStep, user, onR
 <details open><summary>같은 연령·성별의 지역별 변화 비교</summary><p>각 동의 전월 공통 구역 기준 변화율입니다. 위험 순위나 개인 이동 경로가 아닙니다.</p><PagedTable><thead><tr><th>행정동</th><th>유동량 변화</th><th>공통 구역</th></tr></thead><tbody>{data.peers.map(p => <tr key={p.code}><th>{p.district}{p.code === group.code ? ' · 선택' : ''}</th><td>{pct(p.change_pct)}</td><td>{fmt(p.matched_points, 0)}개</td></tr>)}</tbody></PagedTable></details>
 <details open><summary>시간대 활동 값 · {unit} 전체</summary><p>{unit} 전체 집계이며 선택한 연령·성별 집단의 결과가 아닙니다.</p><PagedTable><thead><tr><th>시간대</th><th>활동 지수 (최대 시간대=100)</th></tr></thead><tbody>{(data.activity.hours || []).map(point => <tr key={point.label}><th>{point.label}</th><td>{fmt(point.index,2)}</td></tr>)}</tbody></PagedTable></details>
 {matches && <details open><summary>관련 사업 검색 결과</summary><ServiceResults matches={matches}/></details>}
+{matches && <details open className="gd-reference"><summary>다른 지역 참고 사례</summary><p className="gd-caution">같은 지원 목적과 관련된 다른 지역의 사업입니다. 이 집단의 연계 후보가 아니며, 새 사업을 기획할 때 참고용으로 보세요.</p>{matches.references?.length ? <ReferenceServiceList items={matches.references.map(r => ({ service: r.service, terms: r.matchedTerms }))}/> : <p>관련된 다른 지역 사업이 없습니다.</p>}</details>}
 </EvidencePages>
       </section>
 

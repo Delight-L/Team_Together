@@ -164,14 +164,18 @@ def restart(request, record):
     return restarted
 
 
+# 시·군·구 → (시·도, 옛 시·도 표기). 연계 후보는 이 시·도 자료에서만 고릅니다.
+LOCAL_PROVINCES = {"강남구": ("서울특별시", "서울특별시"),
+                   "춘천시": ("강원특별자치도", "강원도")}
+
+
 def service_candidates(city):
     """주기 수집된 지자체 사업을 검토 후보로 조회합니다. 게시 지역은 자격이 아닙니다."""
     from sqlalchemy import text
     from backend.db.analysis_repository import get_engine
     from datetime import datetime
     from zoneinfo import ZoneInfo
-    provinces = {"강남구": ("서울특별시", "서울특별시"),
-                 "춘천시": ("강원특별자치도", "강원도")}.get(city)
+    provinces = LOCAL_PROVINCES.get(city)
     if not provinces:
         return []
     query = text("""SELECT s.*,
@@ -191,6 +195,56 @@ def service_candidates(city):
         return [dict(row) for row in db.execute(query, {
             "province": provinces[0], "province_alias": provinces[1], "city": city,
             "today": datetime.now(ZoneInfo('Asia/Seoul')).date()}).mappings()]
+
+
+REFERENCE_FIELDS = ["name", "summary", "benefit_text"]
+
+
+def reference_services(city, terms, limit=20):
+    """다른 지역 사업을 새 사업 기획의 참고 사례로 찾습니다. 선택 지역 주민의 연계 후보가 아닙니다.
+
+    사업 내용(이름·요약·지원 내용)에 관련어가 많이 들어 있는 순서로 limit건까지 돌려줍니다.
+    service_candidates가 고르는 자료(같은 시·군·구와 같은 시·도의 지역 미지정 자료)는 제외합니다.
+    """
+    from sqlalchemy import text
+    from backend.db.analysis_repository import get_engine
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    terms = list(dict.fromkeys(term for term in terms if term))
+    if not terms:
+        return []
+    params = {"today": datetime.now(ZoneInfo('Asia/Seoul')).date()}
+    corpus = " || ' ' || ".join(f"COALESCE(s.{field}, '')" for field in REFERENCE_FIELDS)
+    like = []
+    for index, term in enumerate(terms):
+        params[f"t{index}"] = f"%{term}%"
+        like.append(f"({corpus}) LIKE :t{index}")
+    local = "FALSE"
+    provinces = LOCAL_PROVINCES.get(city)
+    if provinces:
+        params.update(province=provinces[0], province_alias=provinces[1], city=city)
+        # NULL이 섞여도 NOT(...)이 참·거짓으로만 나오도록 COALESCE로 감쌉니다.
+        local = """COALESCE(s.province, '') IN (:province, :province_alias)
+            AND (s.district = :city OR COALESCE(TRIM(s.district), '') IN ('', '-'))"""
+    # 원문 JSON(list_payload·detail_payload)은 크므로 화면에 쓰는 열만 읽습니다.
+    query = text(f"""SELECT s.service_id, s.name, s.province, s.district, s.summary,
+            s.target_text, s.eligibility_text, s.benefit_text, s.application_text,
+            s.effective_start, s.effective_end, s.source_url, s.detail_pending,
+            s.detail_checked_at, s.benefit_text AS support_text,
+            'local_welfare_api' AS source_id
+        FROM db2.local_welfare_services s
+        WHERE ({' OR '.join(like)})
+          AND NOT ({local})
+          AND (s.effective_start IS NULL OR s.effective_start <= :today)
+          AND (s.effective_end IS NULL OR s.effective_end >= :today)""")
+    with get_engine().connect() as db:
+        rows = [dict(row) for row in db.execute(query, params).mappings()]
+    for row in rows:
+        content = " ".join(str(row.get(field) or "") for field in REFERENCE_FIELDS)
+        row["matched_terms"] = [term for term in terms if term in content]
+    rows.sort(key=lambda row: (-len(row["matched_terms"]), row["name"], row["service_id"]))
+    return rows[:limit]
+
 
 def service_key(service):
     if service.get('source_id') == 'local_welfare_api':

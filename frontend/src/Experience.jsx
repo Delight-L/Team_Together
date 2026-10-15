@@ -6,6 +6,7 @@ import { reportChecks } from './experienceLogic.mjs';
 import { personName } from './personas.mjs';
 import { showToast } from './toast';
 import { areaUnit } from './regionalPresentation.mjs';
+import { useTransientMessage } from './useTransientMessage';
 
 // 데이터 기준 창: 지역 분석·데이터 관리의 «데이터 기준 보기»에서 엽니다.
 export function DataDialog({ onClose, data, context, rows, user }) {
@@ -43,9 +44,10 @@ export function DataSummary({ data, context, rows, user, expanded = false }) {
 }
 
 const blank = { version: 0, checks: {}, assignee: '', due: '', note: '', followup: '', status: '확인 예정', history: [] };
-export function ReviewWorkspace({ context, onView, seed, user, onSaved }) {
+export function ReviewWorkspace({ context, onView, seed, user, onSaved, compact = false }) {
   const [localDraft, setLocalDraft, clearLocalDraft, storageFailed] = useDraft(draftKey(user, context, 'review'), null);
-  const [record, setRecord] = useState(blank), [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(true);
+  const [record, setRecord] = useState(blank), [error, setError] = useState(''), [busy, setBusy] = useState(true);
+  const [notice, setNotice] = useTransientMessage();
   const [timeline, setTimeline] = useState([]), [timelineLoaded, setTimelineLoaded] = useState(false), [section, setSection] = useState('review');
   async function loadTimeline() { try { setTimeline((await api('/experience/history?' + query(context))).items); setTimelineLoaded(true); } catch (e) { setError(e.message); } }
   const update = (key, value) => { const next = { ...record, [key]: value }; setRecord(next); setLocalDraft({ record: next, seedId: localDraft?.seedId }); setNotice('작성 내용을 임시 보관했습니다.'); };
@@ -84,27 +86,27 @@ export function ReviewWorkspace({ context, onView, seed, user, onSaved }) {
     setNotice(`${round.round}회차 내용을 가져왔습니다. 지금 근거에 맞게 고친 뒤 저장하세요.`);
   }
   async function save() { setBusy(true); setError(''); try { setRecord({ ...blank, ...await api('/experience', { ...record, ...context }) }); clearLocalDraft(); onSaved?.(); setNotice(''); showToast(`${context.district} · ${context.month} · 검토·후속 조치 기록을 저장했어요.`); } catch (e) { setError(e.message); } finally { setBusy(false); } }
-  return <section className="card info-card review-workspace">
+  return <section className={`${compact ? 'inline-review-body' : 'card info-card'} review-workspace`}>
     <div className="workspace-heading"><div><h2>검토·후속 조치</h2><p>{context.district} · {context.month}{rounds.length > 0 && ` · ${rounds.length + 1}회차`} <span className="status-caption">{record.status}</span></p></div>
-      <button className="text-button" onClick={() => onView('compare')}>월별 변화 비교 →</button></div>
+      <button className="text-button" onClick={() => onView(compact ? 'records' : 'compare')}>{compact ? '업무 기록·후속 조치로 →' : '월별 변화 비교 →'}</button></div>
     <p className="hint">{storageFailed ? '브라우저 임시 보관에 실패했습니다. 새로고침 전에 기록을 저장하세요.' : '작성 중인 내용은 이 탭에 임시 보관됩니다. 로그아웃 전에 저장해 주세요.'}</p>
-    <div className="section-switch" role="group" aria-label="작성 구역">
+    {!compact && <div className="section-switch" role="group" aria-label="작성 구역">
       <button aria-pressed={section === 'review'} onClick={() => setSection('review')}>검토 기록</button>
       <button aria-pressed={section === 'followup'} onClick={() => setSection('followup')}>후속 조치</button>
-    </div>
+    </div>}
     <div className="review-section" hidden={section !== 'review'}>
       <h3>변화의 근거를 확인하고 의견을 남겨 주세요.</h3>
       <fieldset disabled={busy}><legend>확인한 사항만 체크하세요</legend>{[['season', '계절에 따른 변화 확인'], ['event', '지역 행사·휴일 영향 확인'], ['definition', '집계 기준 변경 확인'], ['source', '분석 출처·기간 확인']].map(([key, label]) => <label className="confirmation" key={key}><input type="checkbox" checked={!!record.checks[key]} onChange={e => update('checks', { ...record.checks, [key]: e.target.checked })} />{label}</label>)}</fieldset>
       <label>검토 의견·인계 내용<textarea rows={5} maxLength={2000} disabled={busy} value={record.note} onChange={e => update('note', e.target.value)} placeholder="변화의 원인으로 살펴본 내용과 추가로 확인할 사항을 적어 주세요." /></label>
     </div>
-    <div className="review-section" hidden={section !== 'followup'}>
+    <div className="review-section" hidden={compact || section !== 'followup'}>
       <h3>누가, 언제, 무엇을 확인할지 정리해 주세요.</h3>
       <div className="report-form"><label>담당자·인계 대상<input maxLength={80} disabled={busy} value={record.assignee} onChange={e => update('assignee', e.target.value)} /></label><label>확인 기한<input type="date" disabled={busy} value={record.due} onChange={e => update('due', e.target.value)} /></label>
         <label className="full">후속 조치 상태<select disabled={busy} value={record.status} onChange={e => update('status', e.target.value)}>{['확인 예정', '기관 문의 중', '조치 진행', '후속 확인 완료'].map(s => <option key={s}>{s}</option>)}</select></label>
         <label className="full">실제 조치·다음 확인 내용<textarea rows={5} maxLength={2000} disabled={busy} value={record.followup} onChange={e => update('followup', e.target.value)} placeholder="기관 문의 결과와 다음에 확인할 내용을 적어 주세요." /></label></div>
     </div>
     {error && <p className="error" role="alert">{error}</p>}{notice && <p className="hint" role="status">{notice}</p>}
-    <div className="form-actions"><button className="primary" disabled={busy} onClick={save}>{busy ? '처리 중…' : '검토·후속 조치 저장'}</button><span className="hint">두 구역의 내용을 함께 저장합니다.</span></div>
+    <div className="form-actions"><button className="primary" disabled={busy} onClick={save}>{busy ? '처리 중…' : compact ? '검토 의견 저장' : '검토·후속 조치 저장'}</button><span className="hint">{compact ? '업무 기록의 검토 의견과 같은 저장본입니다. 기존 후속 조치는 유지합니다.' : '두 구역의 내용을 함께 저장합니다.'}</span></div>
     {rounds.length > 0 && <details className="secondary-details"><summary>이전 회차 기록 {rounds.length}건</summary>
       <p className="hint">업무를 새 분석으로 다시 시작하기 전의 기록입니다. 고칠 수 없으며, 필요하면 지금 회차로 가져와 고친 뒤 저장하세요.</p>
       {[...rounds].reverse().map(r => <article className="service-card" key={r.round}>
@@ -192,7 +194,7 @@ export function Comparison({ data, context }) {
     <div className="comparison-filters"><label>지표<select aria-label="지표" value={metric} onChange={e => setMetric(e.target.value)}>{metrics.map(m => <option key={m}>{m}</option>)}</select></label><label>시작월<select aria-label="시작월" value={from} onChange={e => setFrom(e.target.value)}>{data.months.map(m => <option key={m}>{m}</option>)}</select></label><label>종료월<select aria-label="종료월" value={to} onChange={e => setTo(e.target.value)}>{data.months.map(m => <option key={m}>{m}</option>)}</select></label>
       <button className="secondary" disabled={!to} onClick={() => setFrom(recentStart(to))}>최근 6개월</button></div>
     <div className="comparison-selection" aria-label="비교할 지역">{selected.map(n => <button className="region-chip" key={n} aria-label={`${n} 비교에서 제외`} onClick={() => setSelected(s => s.filter(v => v !== n))}><i className="legend-swatch" style={{ background: colorOf.current[n] }} aria-hidden="true" />{n}<span aria-hidden="true">×</span></button>)}
-      <select className="region-add" aria-label={`비교할 ${unit} 추가`} value="" disabled={selected.length >= 4} onChange={e => e.target.value && setSelected(s => [...s, e.target.value])}><option value="">{selected.length >= 4 ? '최대 4개 {unit}' : '＋ {unit} 추가'}</option>{addable.map(u => <option key={u.n}>{u.n}</option>)}</select>
+      <select className="region-add" aria-label={`비교할 ${unit} 추가`} value="" disabled={selected.length >= 4} onChange={e => e.target.value && setSelected(s => [...s, e.target.value])}><option value="">{selected.length >= 4 ? `최대 4개 ${unit}` : `＋ ${unit} 추가`}</option>{addable.map(u => <option key={u.n}>{u.n}</option>)}</select>
       <span className="hint">{selected.length}/4개 {unit}</span></div>
     {from > to ? <p className="error" role="alert">시작월은 종료월보다 늦을 수 없습니다.</p> : !selected.length ? <p className="empty">＋ {unit} 추가에서 비교할 지역을 선택하세요.</p> : <>
       <article className="comparison-chart"><h3>{metric} · 전월 변화율</h3><p className="hint">{from} ~ {to} · 0% 선 위는 증가, 아래는 감소입니다.</p><CompareChart period={period} series={series} metric={metric} /></article>

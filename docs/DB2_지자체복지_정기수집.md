@@ -96,6 +96,10 @@ Unregister-ScheduledTask -TaskName TeamTogether-DB2-Welfare -Confirm:$false
 보고서에는 저장된 검토 의견과 원문 링크, 상세 확인 대기 여부가 반영됩니다.
 조회는 DB 읽기만 수행하며, 수집 API를 즉석에서 호출하지 않습니다.
 
+두 화면(사업 매칭 검토, 집단 대시보드의 사업 검토)은 연계 후보와 별도로 **다른 지역 참고 사례**를 보여 줍니다
+(`mission_store.reference_services`). 위 연계 후보 범위를 제외한 전국 자료에서 사업 이름·요약·지원 내용에
+관련어가 많은 순서로 최대 20건을 고릅니다. 새 사업 기획용 참고 자료이며, 검토 저장·보고서 대상이 아닙니다.
+
 ```sql
 SELECT service_id, name, province, district, target_text, eligibility_text,
        benefit_text, application_text, effective_start, effective_end,

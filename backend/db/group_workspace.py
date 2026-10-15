@@ -40,7 +40,7 @@ def review(user, context, body=None):
 
 
 def services(context, need):
-    from backend.db.mission_store import service_candidates
+    from backend.db.mission_store import reference_services, service_candidates
     if need not in NEEDS:
         raise ValueError('먼저 검토할 지원 목적을 선택하세요.')
     candidates = []
@@ -53,7 +53,11 @@ def services(context, need):
         candidates.append(dict(service=service, matchedTerms=terms,
                                reason=f'선택한 지원 목적 «{need}»과 사업 설명의 관련어가 일치합니다.',
                                qualification='연령·성별·거주지·소득 등 이용 자격은 원문 확인 필요'))
+    # 다른 지역 사업은 새 사업 기획의 참고 사례로만 따로 돌려줍니다(이 집단의 연계 후보 아님).
+    references = [dict(service=service, matchedTerms=service.pop('matched_terms'))
+                  for service in reference_services(context['city'], NEEDS[need])]
     return dict(items=sorted(candidates, key=lambda x: (-len(x['matchedTerms']), x['service']['name'])),
+                references=references,
                 source='DB2 · 지자체 복지서비스', need=need,
                 note='집단의 유동인구 변화로 개인의 수급 자격을 판정하지 않습니다. 운영정보는 기관 확인이 필요할 수 있습니다.')
 

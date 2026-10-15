@@ -1,5 +1,5 @@
 """저장된 분석 신호와 복지사업 설명을 비교해 연계 후보를 고릅니다(사업 매칭 검토 화면)."""
-from backend.db.mission_store import service_candidates, service_key
+from backend.db.mission_store import reference_services, service_candidates, service_key
 
 # (분류, 분석 지표에 있으면 관련 있다고 볼 말, 사업 설명에 있으면 관련 있다고 볼 말)
 MATCH_RULES = [
@@ -46,3 +46,18 @@ def match_services(city, evidence, services=None):
 
     matched.sort(key=lambda item: (-item["score"], item["service"]["name"]))
     return matched
+
+
+def reference_matches(city, evidence, services=None):
+    """다른 지역의 참고 사례입니다. 위험 신호와 관련된 분류의 사업 관련어로 전국 자료를 찾습니다.
+
+    선택 지역 주민의 연계 후보가 아니므로 검토 저장(workflow_review)에는 쓰지 않습니다.
+    """
+    signals = [row for row in evidence if row.get("is_risk_signal")]
+    terms = []
+    for _, signal_words, service_words in MATCH_RULES:
+        if any(word in joined_text(row, EVIDENCE_FIELDS) for row in signals for word in signal_words):
+            terms += service_words
+    if services is None:
+        services = reference_services(city, terms)
+    return [match for match in match_services(city, evidence, services) if match["score"]]

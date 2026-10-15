@@ -147,6 +147,8 @@ export function EvidenceTable({ rows }) {
 
 // 실제 분석값만 그립니다. null은 0으로 바꾸지 않고 선을 끊어 누락을 표시합니다.
 export function Trend({ assessment, district, metric = '전화 연락', maxRows = 12, extent, compact = false }) {
+  const [hover, setHover] = useState(null);
+  useEffect(() => setHover(null), [assessment, district, metric, maxRows]);
   const allRows = assessment
     .filter((r) => r['행정동명'] === district && r.metric_label === metric)
     .sort((a, b) => a['기준연월'].localeCompare(b['기준연월']));
@@ -175,6 +177,7 @@ export function Trend({ assessment, district, metric = '전화 연락', maxRows 
       viewBox={`0 0 ${chartWidth} 195`}
       role="img"
       aria-label={`${district} ${metric} ${maxRows ? '최근 분석월' : '선택 기간'} 전월 변화율`}
+      onPointerLeave={() => setHover(null)}
     >
       {[low, (low + high) / 2, high].map((v, i) => (
         <g key={i}>
@@ -202,6 +205,32 @@ export function Trend({ assessment, district, metric = '전화 연락', maxRows 
             )}
           </g>
         ) : null,
+      )}
+      {rows.map((r, i) => {
+        const left = i === 0 ? 40 : (x(i - 1) + x(i)) / 2;
+        const right = i === rows.length - 1 ? chartWidth - 40 : (x(i) + x(i + 1)) / 2;
+        return (
+          <rect key={`hover-${r['기준연월']}`} x={left} y="20" width={right - left} height="170"
+            fill="transparent" tabIndex="0" role="button"
+            aria-label={`${r['기준연월']} ${metric} 전월 변화율 ${Number.isFinite(r.change_pct) ? `${number(r.change_pct)}%` : '자료 없음'}`}
+            onPointerEnter={() => setHover(i)} onPointerMove={() => setHover(i)}
+            onFocus={() => setHover(i)} onBlur={() => setHover(null)} />
+        );
+      })}
+      {hover !== null && rows[hover] && (
+        <g pointerEvents="none">
+          <line x1={x(hover)} x2={x(hover)} y1="20" y2="155" stroke="#94a3b8" strokeDasharray="4 4" />
+          {Number.isFinite(rows[hover].change_pct) && (
+            <circle cx={x(hover)} cy={y(rows[hover].change_pct)} r="6" fill="#2563eb" stroke="white" strokeWidth="2" />
+          )}
+          <g transform={`translate(${Math.max(40, Math.min(chartWidth - 210, x(hover) - 85))}, 1)`} role="tooltip">
+            <rect width="170" height="48" rx="6" fill="white" stroke="#cbd5e1" />
+            <text x="10" y="18" style={{ fill: '#334155', fontSize: 12 }}>{rows[hover]['기준연월']} · {metric}</text>
+            <text x="10" y="36" style={{ fill: '#2563eb', fontSize: 13, fontWeight: 700 }}>
+              전월 대비 {Number.isFinite(rows[hover].change_pct) ? `${number(rows[hover].change_pct)}%` : '자료 없음'}
+            </text>
+          </g>
+        </g>
       )}
     </svg>
   );
