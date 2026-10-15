@@ -26,3 +26,12 @@ test('selecting the first file or widening the panel restores both fixed tabs', 
   assert.ok(wide.end >= 3);
   assert.equal(tabPageForSelected(widths, 1, 1057).start, 0);
 });
+
+test('a selected later tab is shown with as many earlier tabs as fit', () => {
+  const widths = [184, 124, 252, 252];
+  const page = tabPageForSelected(widths, 3, 753);
+  assert.equal(page.start, 1);
+  assert.equal(page.end, 4);
+  // 영역 절반 이하 너비면 선택한 탭과 바로 앞 탭이 함께 보입니다.
+  assert.ok(tabPageForSelected([150, 120, 150, 150, 150], 4, 300).end - tabPageForSelected([150, 120, 150, 150, 150], 4, 300).start >= 2);
+});

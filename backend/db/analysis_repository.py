@@ -193,7 +193,7 @@ def _latest_detection_run():
         return _RUN_CHECK["run_id"]
     with get_engine().connect() as connection:
         run_id = connection.execute(text(
-            f"SELECT run_id FROM {SCHEMA}.analysis2_detections GROUP BY run_id ORDER BY max(created_at) DESC LIMIT 1"
+            f"SELECT run_id FROM {SCHEMA}.latest_detection_run"
         )).scalar()
     _RUN_CHECK.update(at=now, run_id=run_id)
     return run_id
@@ -209,9 +209,9 @@ def _load_analysis2_from_db(run_id):
                 FROM {SCHEMA}.analysis2_detections WHERE run_id = :run_id
                 ORDER BY reference_month, admin_dong_code"""
         ), {"run_id": run_id}).mappings().all()
-        structures = connection.execute(text('''SELECT adm_cd, dong_name, cluster_type, payload, source_file FROM (
-            SELECT *, ROW_NUMBER() OVER (PARTITION BY adm_cd ORDER BY created_at DESC) AS position
-            FROM db1.analysis1_region_typology) latest WHERE position=1 ORDER BY adm_cd''')).mappings().all()
+        structures = connection.execute(text(
+            'SELECT * FROM db1.latest_region_typology ORDER BY adm_cd'
+        )).mappings().all()
     structures = [dict(r, payload=json.loads(r["payload"]) if isinstance(r["payload"], str) else r["payload"]) for r in structures]
     if not rows:
         raise LookupError("run_id " + str(run_id) + "의 분석 결과가 없습니다.")

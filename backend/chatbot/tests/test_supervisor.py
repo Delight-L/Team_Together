@@ -45,13 +45,68 @@ class RouteTest(unittest.TestCase):
         moderate = patch.object(llm, 'moderate', AsyncMock(return_value=[]))
         moderate.start()
         self.addCleanup(moderate.stop)
+        # v16 근거 자료(DB1 SQLite)가 없는 서버 기준: 동 분석은 기존 지역 분석 담당이 답합니다(v16 연결은 test_supervisor_v16).
+        v16_data = patch.object(supervisor.v16_service, 'data_ready', return_value=False)
+        v16_data.start()
+        self.addCleanup(v16_data.stop)
 
     def test_rules_pick_agent_without_ai(self):
         cases = {'보고서 초안 만들어 줘': 'report', '보고서 써줘': 'report',
                  '병원에 함께 가줄 지원이 있나요?': 'welfare', '세곡동행': 'welfare',
-                 '이 동의 변화를 요약해 줘': 'analysis', '후보 판정은 무슨 뜻인가요?': 'analysis'}
+                 '이 동의 변화를 요약해 줘': 'regional_v16', '후보 판정은 무슨 뜻인가요?': 'analysis'}
         for question, agent in cases.items():
             self.assertEqual(supervisor.rule_route(question, CONTEXT), agent, question)
+
+    def test_screen_suggestions_reach_the_right_agent(self):
+        # 화면 메뉴마다 보여 주는 예시 질문(frontend/src/BomiChat.jsx)이 맞는 담당으로 가는지 확인합니다.
+        cases = {
+            '이번 달 후보 지역을 알려 줘': 'regional_v16', '이 동의 변화를 요약해 줘': 'regional_v16',
+            '이 동의 지표 변화를 설명해 줘': 'regional_v16', '후보 지역에서 다음에 확인할 일을 알려 줘': 'regional_v16',
+            '이상신호 판정 기준은?': 'regional_v16', '삼성1동은?': 'regional_v16',
+            '후보 판정은 무슨 뜻인가요?': 'analysis', '자료 부족과 기준 미해당은 어떻게 다른가요?': 'analysis',
+            '평소 대비 차이와 전월 변화율은 어떻게 다른가요?': 'analysis',
+            '혼자 사는 어르신 돌봄 지원': 'welfare', '이 지역의 지원사업 후보를 찾아 줘': 'welfare',
+            '사업 이용 조건에서 무엇을 확인해야 하나요?': 'welfare', '사업 연계 전에 확인할 일을 알려 줘': 'welfare',
+            '세곡동행': 'welfare', '청년은?': 'welfare', '외로워요': 'welfare',
+            '보고서 초안 만들어 줘': 'report',
+            '검토 의견에 어떤 내용을 기록해야 하나요?': 'guide', '현장에서 추가로 확인할 사항을 알려 줘': 'guide',
+            '추가로 확인할 자료를 알려 줘': 'guide', '지역 집계자료를 보고서에 어떻게 설명해야 하나요?': 'guide',
+            '보고서에 단정하면 안 되는 내용을 알려 줘': 'guide', '보고서 작성 방법을 알려줘': 'guide',
+            '오늘 날씨 어때?': 'guide', '파이썬 코드 짜줘': 'guide',
+        }
+        for question, agent in cases.items():
+            self.assertEqual(supervisor.rule_route(question, CONTEXT), agent, question)
+
+    def test_how_to_report_question_is_not_a_draft_request(self):
+        for question in ('보고서 작성 방법을 알려줘', '보고서 쓸 때 주의할 점은?', '보고서에 어떻게 써야 해?'):
+            self.assertFalse(report_writer.is_draft_request(question), question)
+        for question in ('보고서 초안 만들어 줘', '보고서 써줘', '보고서 작성해줘'):
+            self.assertTrue(report_writer.is_draft_request(question), question)
+
+    def test_work_guides_and_screen_terms_answer_without_v16(self):
+        with patch.object(supervisor.v16_service, 'data_ready', return_value=True), \
+                patch.object(supervisor.v16_service, 'reply') as reply:
+            note = dict(events('검토 의견에 어떤 내용을 기록해야 하나요?'))
+            report = dict(events('보고서에 단정하면 안 되는 내용을 알려 줘'))
+            terms = dict(events('자료 부족과 기준 미해당은 어떻게 다른가요?'))
+            score = dict(events('평소 대비 차이와 전월 변화율은 어떻게 다른가요?'))
+        reply.assert_not_called()
+        self.assertEqual(note['route']['agent'], 'guide')
+        self.assertIn('후속 조치', note['replace']['text'])
+        self.assertIn('원인을 확정하지 마세요', report['replace']['text'])
+        self.assertEqual(terms['route']['agent'], 'analysis')
+        self.assertIn('«판단 보류»(이력 부족)', terms['replace']['text'])
+        self.assertIn('후보 판정은 전월 변화율이 아니라 평소 대비 차이로 합니다', score['replace']['text'])
+
+    def test_fixed_rules_skip_ai_routing(self):
+        complete = AsyncMock(return_value='{"agent": "regional_v16"}')
+        with ai_key('test'), patch.object(llm, 'complete', complete), \
+                patch.object(supervisor.v16_service, 'data_ready', return_value=True):
+            self.assertEqual(supervisor.route('후보 판정은 무슨 뜻인가요?', [], CONTEXT, True), ('analysis', '규칙'))
+            self.assertEqual(supervisor.route('보고서 작성 방법을 알려줘', [], CONTEXT, True), ('guide', '규칙'))
+            result = dict(events('자료 부족과 기준 미해당은 어떻게 다른가요?', ai=True))
+        complete.assert_not_awaited()
+        self.assertEqual(result['route'], {'agent': 'analysis', 'label': '지역 분석 에이전트', 'by': '규칙'})
 
     def test_welfare_route_streams_sources(self):
         result = events('병원 동행')
@@ -79,6 +134,32 @@ class RouteTest(unittest.TestCase):
         self.assertEqual(draft['context']['district'], '삼성1동')
         self.assertIn('교류 지원', result['replace']['text'])
 
+    def test_welfare_ai_gets_risk_signal_summary(self):
+        seen = {}
+        async def tokens(messages):
+            seen['system'] = messages[0]['content']
+            yield '기획안'
+        with ai_key('test'), patch.object(llm, 'complete', fake_complete('{"agent": "welfare"}')), \
+                patch.object(llm, 'stream', tokens):
+            events('신규 사업 구상해 줘', ai=True)
+        self.assertIn('후보_지표', seen['system'])
+        self.assertIn('전화 연락', seen['system'])
+        self.assertIn('-12.3%', seen['system'])
+        summary = supervisor.signal_summary(CONTEXT, DATA, ({'age': '70대', 'sex': '여성'}, {}))
+        self.assertEqual(summary['후보_지표_수'], 1)
+        self.assertIn('동 전체 값', summary['선택_그룹'])
+        self.assertIsNone(supervisor.signal_summary(CONTEXT | {'district': ''}, DATA))
+
+    def test_group_report_says_district_basis(self):
+        group = ({'age': '70대', 'sex': '여성', 'district': '삼성1동'}, {})
+        with patch('backend.db.mission_store.load_all', return_value={}):
+            result = dict(supervisor.stream([{'role': 'user', 'content': '보고서 초안 만들어 줘'}],
+                                            CONTEXT, DATA, group, use_ai=False))
+            without_group = dict(events('보고서 초안 만들어 줘'))
+        self.assertIn('삼성1동 동 전체 기준', result['notice']['message'])
+        self.assertIn('70대 · 여성', result['notice']['message'])
+        self.assertNotIn('notice', without_group)
+
     def test_long_question_rejected_before_stream(self):
         with self.assertRaises(ValueError):
             supervisor.stream([{'role': 'user', 'content': 'x' * 2001}], CONTEXT, DATA)
@@ -91,10 +172,22 @@ class RouteTest(unittest.TestCase):
         self.assertIn('보고서 초안', result['replace']['text'])
         with ai_key('test'), \
                 patch.object(llm, 'complete', fake_complete(OpenAIError('secret'))):
-            self.assertEqual(supervisor.route('후보 판정은 무슨 뜻', [], CONTEXT, True), ('analysis', '규칙'))
+            self.assertEqual(supervisor.route('이 동의 변화 추이는?', [], CONTEXT, True), ('regional_v16', '규칙'))
         with ai_key('test'), \
                 patch.object(llm, 'complete', fake_complete('{"agent": "unknown"}')):
             self.assertEqual(supervisor.route('세곡동행', [], CONTEXT, True), ('welfare', '규칙'))
+
+    def test_v16_dispatch_does_not_use_legacy_analysis_generation(self):
+        with ai_key('test'), patch.object(supervisor.v16_service, 'data_ready', return_value=True), \
+                patch.object(llm, 'complete', fake_complete('{"agent": "regional_v16"}')), \
+                patch.object(llm, 'stream') as legacy_stream, \
+                patch.object(supervisor.v16_service, 'reply', return_value={
+                    'answer': '삼성1동의 이동 변화입니다.', 'mode': 'v16 · AI 의도 판단 · DB1 근거'}) as reply:
+            result = events('이 동의 변화를 요약해 줘', ai=True)
+        self.assertEqual(dict(result)['route']['agent'], 'regional_v16')
+        self.assertIn('AI 의도 판단', dict(result)['replace']['mode'])
+        self.assertTrue(reply.call_args.kwargs['use_ai'])
+        legacy_stream.assert_not_called()
 
     def test_ai_analysis_failure_falls_back_to_data(self):
         async def broken(messages):

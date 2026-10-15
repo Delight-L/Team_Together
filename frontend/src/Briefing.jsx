@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Icon, EvidenceTable } from './components';
+import { areaUnit } from './regionalPresentation.mjs';
 import { number } from './api';
 import { MissionMap } from './MissionMap';
 import ElderlyBackground from './ElderlyBackground';
+import { candidateFirst } from './regionDirectory.mjs';
 export { MissionMap } from './MissionMap';
 
 // 종합 현황과 지역 현황은 같은 원자료를 사용하지만 다른 업무를 돕습니다.
@@ -55,7 +57,7 @@ const tone = (status) =>
           : 'quiet';
 const STATUS_HELP = {
   '신규 후보': '이번 달 처음 후보 기준에 해당한 동입니다.',
-  '연속 후보': '지난달에 이어 이번 달에도 후보 기준에 해당한 동입니다.',
+  '연속 후보': '이전 분석월과 이번 달 모두 후보 지표가 있는 지역입니다. 두 달의 후보 지표는 다를 수 있습니다.',
   '변화 후보': '비교 이력은 부족하지만 이번 달 기준에 해당한 동입니다.',
   '판단 보류': '과거 자료가 부족해 판단하지 않은 동입니다.',
   '기준 미해당': '후보 기준에 해당하지 않은 동입니다.',
@@ -113,7 +115,7 @@ export function RegionInsight({ region, city, month, onClose, onStart, onChat, b
       )}
       <p className="hint">{region.count > 0 ? `과거 흐름과 비교하여 ${region.count}개 지표가 후보 기준에 해당합니다. 아래 지표를 함께 검토하세요.` : region.status === '자료 없음' ? '분석 자료가 없어 판단할 수 없습니다.' : region.pending ? '과거 이력이 부족한 지표가 있어 추가 자료 확인이 필요합니다.' : '현재 후보 기준에 해당하는 지표가 없습니다.'}</p>
       <p className="hint">개인의 고립 판정이 아니며, 계절·행사 영향은 추가 확인이 필요합니다.</p>
-      <ElderlyBackground structure={region.structure} />
+      <ElderlyBackground structure={region.structure} city={city} />
       <div className="insight-actions">
         <button className="primary" disabled={busy || !region.rows.length} onClick={onStart}>
           상세 분석·업무 시작
@@ -149,24 +151,26 @@ export function RegionalOverview({
         .filter(
           (r) =>
             (filter === '전체' || (filter === '확인 후보' ? r.count > 0 : r.status === filter)) &&
-            r.name.includes(search),
+            r.name.includes(search.trim()),
         )
         .sort((a, b) =>
           sort === '이름순'
             ? a.name.localeCompare(b.name, 'ko')
-            : b.count - a.count || (a.minZ ?? Infinity) - (b.minZ ?? Infinity),
+            : candidateFirst(a, b),
         ),
     [regions, filter, search, sort],
   );
   const region = regions.find((r) => r.name === selected);
-  const unitLabel = regions.length && regions.every(r => r.name.endsWith('동')) ? '동' : '읍·면·동';
+  const unitLabel = areaUnit(city);
   const analyzedCount = regions.filter(r => r.rows.length > 0).length;
+  const candidateCount = regions.filter(r => r.count > 0).length;
+  const pendingCount = regions.filter(r => r.pending).length;
   return (
     <div className="regional-overview">
       {/* 동을 고르면 표 자리에 상세가 열립니다. 지도는 가리지 않고 모든 동을 계속 보여 줍니다. */}
       {region ? (
         <section className="card region-directory region-detail">
-          <button className="text-button back-to-list" onClick={() => onSelect('')}>← 전체 읍·면·동 목록</button>
+          <button className="text-button back-to-list" onClick={() => onSelect('')}>← 전체 {unitLabel} 목록</button>
           <RegionInsight region={region} city={city} month={month} onClose={() => onSelect('')} onStart={onStart} onChat={onChat} busy={busy} />
         </section>
       ) : (
@@ -175,18 +179,24 @@ export function RegionalOverview({
           <div>
             <span className="eyebrow">COMPARE ALL DISTRICTS</span>
             <h2>
-              읍·면·동별 분석 현황 <span>{shown.length}개 {unitLabel}</span>
+              {unitLabel}별 분석 현황 <span>{shown.length}개 {unitLabel}</span>
             </h2>
           </div>
         </header>
         <p className="hint">전체 {regions.length}개 {unitLabel} 중 분석 자료가 있는 지역 {analyzedCount}개 · {month}</p>
+        <div className="directory-summary" aria-label="지역 분석 요약">
+          <span>확인 후보 <b>{candidateCount}개</b></span>
+          <span>이력 부족 포함 <b>{pendingCount}개</b></span>
+          <span>자료 없음 <b>{regions.length - analyzedCount}개</b></span>
+        </div>
+        {!analyzedCount && <p className="hint">선택한 지역·기준월의 동별 분석은 제공되지 않습니다. 지도 경계 조회와 그룹 관찰 자료의 제공 범위는 별개입니다.</p>}
         <StatusLegend />
         <div className="directory-filters">
           <input
-            aria-label="읍·면·동 검색"
+            aria-label={`${unitLabel} 검색`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="읍·면·동 검색"
+            placeholder={`${unitLabel} 검색`}
           />
           <select
             aria-label="지역 상태 필터"
@@ -210,15 +220,16 @@ export function RegionalOverview({
             <option>후보 우선</option>
             <option>이름순</option>
           </select>
+          {(search || filter !== '전체' || sort !== '후보 우선') && <button className="text-button" onClick={() => { setSearch(''); setFilter('전체'); setSort('후보 우선'); }}>조건 초기화</button>}
         </div>
         <div className="directory-table">
           <table>
             <thead>
               <tr>
-                <th>읍·면·동</th>
+                <th>{unitLabel}</th>
                 <th>분석 상태</th>
                 <th>후보 지표</th>
-                <th title="과거 흐름에서 얼마나 벗어났는지 나타내는 값입니다. 0에서 멀수록 평소와 다릅니다.">평소 대비 차이</th>
+                <th title="과거 흐름에서 얼마나 벗어났는지 나타내는 값입니다. 0에서 멀수록 평소와 다릅니다.">평소 대비 차이(점수)</th>
                 <th>근거</th>
               </tr>
             </thead>
@@ -250,7 +261,7 @@ export function RegionalOverview({
           </table>
           {!shown.length && <p className="empty">검색 조건에 맞는 지역이 없습니다.</p>}
         </div>
-        <footer>‘후보 우선’은 후보 지표가 많은 지역, 그다음 평소와 차이가 큰 지역 순서입니다.</footer>
+        <footer>‘후보 우선’은 후보 지표가 많은 지역, 그다음 평소와 차이가 큰 지역 순서입니다. 평소 대비 차이는 시·군·구 공통 흐름을 뺀 변화가 과거 변동 폭보다 얼마나 큰지 나타낸 단위 없는 점수로, 동의 지표 중 가장 낮은 값을 보여 줍니다. 음수는 평소보다 줄어든 방향이며 약 -2 이하이면 후보 기준에 가깝습니다.</footer>
       </section>
       )}
       <section className="card directory-map">
@@ -268,7 +279,7 @@ export function RegionalOverview({
           />
         </div>
         <footer className="hint">
-          표나 지도에서 읍·면·동을 선택하면 왼쪽에 근거가 열립니다. 이름에 마우스를 올리면 판정이 보입니다.
+          표나 지도에서 {unitLabel}을 선택하면 왼쪽에 근거가 열립니다. 이름에 마우스를 올리면 판정이 보입니다.
         </footer>
       </section>
     </div>

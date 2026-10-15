@@ -14,3 +14,5 @@ export function signedBar(value, extent) {
   const width = Number.isFinite(value) && extent > 0 ? Math.min(Math.abs(value) / extent, 1) * 50 : 0;
   return { left: `${value < 0 ? 50 - width : 50}%`, width: `${width}%` };
 }
+// 자치구(~구)는 하위 행정구역이 모두 동이라 '동'으로, 시·군은 읍·면이 섞이므로 '읍·면·동'으로 부릅니다.
+export const areaUnit = city => /구$/.test(city || '') ? '동' : '읍·면·동';

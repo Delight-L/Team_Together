@@ -3,7 +3,7 @@
 화면의 채팅은 모두 /api/chat으로 보냅니다.
 총괄 에이전트(agents/supervisor.py)가 질문마다 담당 에이전트를 골라 답변을 글자 단위로 이어서 보냅니다.
 """
-from backend.agents import supervisor
+from backend.agents import supervisor, v16_service
 from backend.chatbot.welfare import service as welfare_service
 from backend.chatbot.welfare.app.dialogue.resources import RESOURCES
 from backend.chatbot import ai_settings
@@ -12,10 +12,11 @@ from backend.api.common import Request, StreamResponse, dashboard_data, group_co
 
 
 def config(request):
-    """GET /api/chat/config: 관리자가 외부 AI를 허용했는지, 어느 제공사인지, 검색할 복지사업 자료 수입니다."""
+    """GET /api/chat/config: 관리자가 외부 AI를 허용했는지, 어느 제공사인지, 검색할 복지사업 자료 수, v16 자료가 있는지입니다."""
     ai = ai_settings.current()
     provider = ai_settings.PROVIDERS[ai.provider]['label'] if ai.ready else ''
-    return {'aiAvailable': ai.ready, 'aiProvider': provider, 'resourceCount': len(RESOURCES)}
+    return {'aiAvailable': ai.ready, 'aiProvider': provider, 'resourceCount': len(RESOURCES),
+            'v16Available': v16_service.data_ready()}
 
 
 def chat(request):

@@ -91,6 +91,9 @@ class PublicationTests(unittest.TestCase):
         monthly, structure = prepare_snapshot()
         first = repository.publish(monthly, 'test-admin')
         repository.publish(structure, 'test-admin')
+        from backend.db.analysis_views import install_views
+        with self.engine.begin() as connection:
+            install_views(connection)
         # Explicitly synthetic next-month fixture, not observed 2026 data.
         next_month = monthly['data'][monthly['data'].date.eq(pd.Timestamp('2025-12-01'))].copy()
         next_month['date'] = pd.Timestamp('2026-01-01')

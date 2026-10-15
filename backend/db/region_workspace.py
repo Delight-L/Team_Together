@@ -43,6 +43,20 @@ def region_status(data, city, month, district):
         status = '판단 보류' if any(not r.get('has_enough_history') for r in rows) else '기준 미해당'
     return dict(status=status, count=count, rows=rows)
 
+# 화면(지역 현황·지역 분석)과 같은 기준의 용어 설명입니다.
+STATUS_TERMS = ('세 가지는 판단할 수 있었는지가 다릅니다.\n'
+                '· «자료 없음»(자료 부족): 이번 달 이 동의 분석 자료가 없어 판단할 수 없는 상태입니다.\n'
+                '· «판단 보류»(이력 부족): 자료는 있지만 비교할 과거 이력(최소 12회)이 부족해 판정하지 않은 상태입니다.\n'
+                '· «기준 미해당»: 자료와 이력이 충분하고, 평소 흐름과 비교한 결과 후보 기준에 해당하지 않은 상태입니다.\n'
+                '자료 없음·판단 보류는 «변화가 없다»는 뜻이 아니므로 다른 자료나 현장 확인이 필요하고, '
+                '기준 미해당은 이번 달 기준으로는 추가 확인 우선순위가 낮다는 뜻입니다.')
+SCORE_TERMS = ('두 값은 비교하는 기준이 다릅니다.\n'
+               '· 전월 변화율(%): 지난달과 비교해 늘거나 줄어든 정도입니다. 계절·공휴일처럼 구 전체가 함께 움직인 변화도 포함됩니다.\n'
+               '· 평소 대비 차이(점수): 시·군·구 전체의 공통 흐름을 뺀 뒤, 이 동의 과거 변동 폭과 비교해 얼마나 벗어났는지 나타낸 '
+               '단위 없는 점수입니다. 백분율이 아니며, 음수는 평소보다 줄어든 방향입니다.\n'
+               '후보 판정은 전월 변화율이 아니라 평소 대비 차이로 합니다. 전화·문자 또는 평일·휴일 이동의 점수가 모두 약 -2 이하이면 '
+               '후보로 표시합니다. 그래서 전월 변화율이 작아도 후보일 수 있고, 크게 줄어도 후보가 아닐 수 있습니다.')
+
 
 def _finite(value):
     return None if isinstance(value, float) and not math.isfinite(value) else value
@@ -94,7 +108,12 @@ def explain_region(context, question, data):
     # 근거·이유·변화를 물으면 용어 설명보다 이 동의 실제 수치를 먼저 답합니다.
     wants_evidence = any(word in question for word in ['요약', '어디', '근거', '이유', '왜', '변화'])
     asks_next = any(word in question for word in ['다음', '무엇을', '어떻게'])
-    if any(word in question for word in ['독거', '지역 배경', '장애인']):
+    if any(term in question for term in ['자료 부족', '자료 없음', '이력 부족', '판단 보류', '기준 미해당']) \
+            and any(word in question for word in ['뜻', '의미', '차이', '다른', '다르', '무엇', '뭐']):
+        answer = STATUS_TERMS
+    elif any(term in question for term in ['평소 대비', '전월 변화율']):
+        answer = SCORE_TERMS
+    elif any(word in question for word in ['독거', '지역 배경', '장애인']):
         structure = next((r for r in data.get('regionalStructures', []) if r.get('dong_name') == context.get('district')), None) if context.get('city') == '강남구' else None
         answer = elderly_background(structure)
     elif any(word in question for word in ['뜻', '의미', '판정', '후보']) and not wants_evidence:

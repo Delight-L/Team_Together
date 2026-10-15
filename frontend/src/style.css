@@ -202,7 +202,7 @@ svg {
   flex-shrink: 0;
 }
 .hint {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   line-height: 1.8;
 }
@@ -897,6 +897,47 @@ tr:last-child td {
 }
 .service-card button {
   margin-top: 8px;
+}
+/* 다른 지역 참고 사례: 연계 후보와 구분되도록 검토 버튼 없이 지역명을 앞세웁니다. */
+.reference-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  gap: 12px;
+}
+.reference-list li {
+  padding: 14px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.reference-list b {
+  display: block;
+  margin: 6px 0;
+}
+.reference-list p {
+  margin: 6px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.reference-list small {
+  display: block;
+  color: var(--text-muted);
+  margin: 6px 0;
+}
+.reference-region {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.reference-more {
+  margin-top: 12px;
 }
 .review-form {
   display: grid;
@@ -2122,3 +2163,9 @@ tr:last-child td {
 .group-shell .eyebrow { font-size: 9px; color: #8795ad; }
 .group-shell th { font-size: 10px; color: #8b9ab0; background: #f9fbfe; }
 .group-shell td { color: #596f90; }
+
+/* 저장 성공 알림(toast.jsx): 화면 아래 가운데에 잠시 보였다가 사라집니다. */
+.toast-stack { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; width: max-content; max-width: calc(100vw - 32px); }
+.toast { margin: 0; padding: 12px 20px; border-radius: var(--radius-pill); background: var(--text-strong); color: var(--surface); font-size: 14px; font-weight: 500; line-height: 1.5; box-shadow: 0 8px 24px #12213e33; animation: toast-in .2s ease-out; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }

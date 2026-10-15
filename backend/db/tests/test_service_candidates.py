@@ -5,8 +5,8 @@ from zoneinfo import ZoneInfo
 from unittest.mock import patch
 from sqlalchemy import create_engine, text
 
-from backend.db.mission_store import service_candidates, service_key
-from backend.agents.service_matching import match_services
+from backend.db.mission_store import reference_services, service_candidates, service_key
+from backend.agents.service_matching import match_services, reference_matches
 
 
 class ServiceCandidatesTests(unittest.TestCase):
@@ -16,7 +16,7 @@ class ServiceCandidatesTests(unittest.TestCase):
             conn.exec_driver_sql("ATTACH DATABASE ':memory:' AS db2")
             conn.exec_driver_sql('''CREATE TABLE db2.local_welfare_services (
                 service_id TEXT PRIMARY KEY, name TEXT, province TEXT, district TEXT,
-                target_text TEXT, eligibility_text TEXT, summary TEXT, benefit_text TEXT,
+                target_text TEXT, eligibility_text TEXT, summary TEXT, benefit_text TEXT, application_text TEXT,
                 effective_start DATE, effective_end DATE, detail_pending BOOLEAN,
                 detail_checked_at TEXT, source_url TEXT)''')
             today = datetime.now(ZoneInfo('Asia/Seoul')).date()
@@ -55,6 +55,27 @@ class ServiceCandidatesTests(unittest.TestCase):
             self.assertEqual(row['external_id'], row['service_id'])
             self.assertEqual(row['support_text'], row['benefit_text'])
             self.assertEqual(row['coverage_scope'], 'unknown')
+
+    def test_reference_services_exclude_local_candidates(self):
+        # 다른 시·군·구, 다른 시·도, 같은 이름의 다른 시·도 구는 참고 사례이고, 연계 후보와 기간 밖 사업은 빠집니다.
+        rows = reference_services('강남구', ['교류', '사회참여'])
+        self.assertEqual({row['service_id'] for row in rows}, {'other', 'chuncheon', 'old_province', 'same_name'})
+        self.assertTrue(all(row['matched_terms'] == ['교류', '사회참여'] for row in rows))
+        self.assertNotIn('list_payload', rows[0])
+        self.assertEqual(len(reference_services('강남구', ['교류'], limit=2)), 2)
+        self.assertEqual(reference_services('강남구', ['없는말']), [])
+        self.assertEqual(reference_services('강남구', []), [])
+        # 연결되지 않은 지역은 제외할 연계 후보가 없으므로 기간 안의 모든 사업이 참고 사례입니다.
+        self.assertEqual(len(reference_services('알수없는지역', ['교류'])), 8)
+
+    def test_reference_matches_follow_risk_signals(self):
+        evidence = [{'is_risk_signal': True, 'metric_label': '외출 활동'}]
+        matches = reference_matches('강남구', evidence)
+        self.assertEqual({m['service']['service_id'] for m in matches}, {'other', 'chuncheon', 'old_province', 'same_name'})
+        self.assertTrue(all(m['score'] > 0 for m in matches))
+        local_keys = {m['key'] for m in match_services('강남구', evidence)}
+        self.assertFalse(local_keys & {m['key'] for m in matches})
+        self.assertEqual(reference_matches('강남구', [dict(evidence[0], is_risk_signal=False)]), [])
 
     def test_api_id_is_stable_after_name_or_region_updates(self):
         row = service_candidates('강남구')[0]

@@ -17,13 +17,14 @@ export function tabPage(widths, requestedStart, availableWidth) {
   return { start, end, previous };
 }
 
-// Selection always uses pages counted from the first fixed tab, so a temporary
-// narrow/loading layout cannot leave the first fixed tab hidden after resizing.
+// If the selected tab fits on the first page, show the first page so the fixed tabs
+// come back after resizing. Otherwise end the page at the selected tab and include
+// as many earlier tabs as fit, so the selected tab never sits alone at a page start.
 export function tabPageForSelected(widths, selectedIndex, availableWidth) {
   const selected = Math.max(0, Math.min(selectedIndex, widths.length - 1));
-  let page = tabPage(widths, 0, availableWidth);
-  while (page.end <= selected && page.end < widths.length) {
-    page = tabPage(widths, page.end, availableWidth);
-  }
-  return page;
+  const first = tabPage(widths, 0, availableWidth);
+  if (selected < first.end) return first;
+  let start = selected, used = widths[selected] || 0;
+  while (start > 0 && used + widths[start - 1] <= availableWidth) used += widths[--start];
+  return tabPage(widths, start, availableWidth);
 }
