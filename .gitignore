@@ -42,11 +42,6 @@ pipelines/preprocessing/**/outputs/validation_report.json
 !pipelines/risk_analysis/data/gangnam_db1_dong_month_behavior_mart_2025_07_12(1).csv
 !pipelines/risk_analysis/data/gangnam_db1_final_k2_cluster_result_2025(1).csv
 !pipelines/regional_analysis/Analysis2/gangnam_analysis2_feature_table_2022_2025.csv
-!pipelines/regional_analysis/Analysis2/outputs/gangnam_analysis2_detection_2022_2025.csv
-!pipelines/regional_analysis/Analysis2/outputs/gangnam_analysis2_evidence_card_2022_2025.csv
-!pipelines/regional_analysis/Analysis2/reference/gangnam_analysis1_final_region_typology_2025H2.csv
-!pipelines/regional_analysis/Analysis2/reference/gangnam_analysis2_detection_2022_2025.csv
-!pipelines/regional_analysis/Analysis2/reference/gangnam_analysis2_evidence_card_2022_2025.csv
 !pipelines/preprocessing/regional_types/outputs/analysis1_preprocessed/analysis1_input.csv
 !pipelines/preprocessing/regional_types/raw_data/1인가구(거처종류별)_20260922163814.csv
 !pipelines/preprocessing/regional_types/raw_data/1인가구(연령별)_20260923095001.csv
@@ -61,12 +56,7 @@ pipelines/preprocessing/**/outputs/validation_report.json
 !pipelines/preprocessing/regional_types/raw_data/장애인+현황(등급별_연령별)_20260923095357.csv
 !pipelines/preprocessing/regional_features/reference/weather_monthly.csv
 
-# Regenerable execution reports; CSV/reference baselines remain versioned.
-data/processed/group_dashboard.json
-pipelines/regional_analysis/analysis2_execution_report.json
-pipelines/preprocessing/**/outputs/*manifest.json
-pipelines/preprocessing/**/outputs/**/preprocessing_manifest.json
-pipelines/preprocessing/**/outputs/validation_report.json
+# 예외: 이 실행 보고서는 과거 전처리 기록으로 남깁니다.
 !pipelines/preprocessing/regional_types/outputs/previous_preprocessing_agent/analysis1_preprocessed/preprocessing_manifest.json
 
 !requirements.txt
@@ -81,6 +71,6 @@ output/
 
 # v16 지역 분석 에이전트의 DB1 SQLite(약 100MB)는 저장소에 올리지 않고 따로 전달합니다.
 # 위치를 바꾸려면 DB1_DATABASE_PATH 환경 변수로 지정합니다.
-pipelines/regional_analysis/chatbot_v16/outputs/*.sqlite
-pipelines/regional_analysis/chatbot_v16/outputs/*.sqlite-*
-pipelines/regional_analysis/chatbot_v16/outputs/runtime/
+backend/agents/regional_v16/outputs/*.sqlite
+backend/agents/regional_v16/outputs/*.sqlite-*
+backend/agents/regional_v16/outputs/runtime/

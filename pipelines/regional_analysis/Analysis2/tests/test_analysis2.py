@@ -18,26 +18,25 @@ from common.config import (
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
+# 과거 결과 CSV는 공식 DB1 파이프라인에 보존된 같은 파일을 씁니다.
+REFERENCE_DIR = Path(__file__).resolve().parents[3] / "db1" / "Analysis2" / "data" / "reference"
 
 INPUT_PATH = (
     BASE_DIR / "gangnam_analysis2_feature_table_2022_2025.csv"
 )
 
 CONTEXT_PATH = (
-    BASE_DIR
-    / "reference"
+    REFERENCE_DIR
     / "gangnam_analysis1_final_region_typology_2025H2.csv"
 )
 
 DETECTION_REFERENCE_PATH = (
-    BASE_DIR
-    / "reference"
+    REFERENCE_DIR
     / "gangnam_analysis2_detection_2022_2025.csv"
 )
 
 EVIDENCE_REFERENCE_PATH = (
-    BASE_DIR
-    / "reference"
+    REFERENCE_DIR
     / "gangnam_analysis2_evidence_card_2022_2025.csv"
 )
 

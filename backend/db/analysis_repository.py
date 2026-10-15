@@ -17,7 +17,6 @@ import pandas as pd
 from sqlalchemy import inspect, text
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-ANALYSIS_DIR = ROOT_DIR / "pipelines" / "regional_analysis"
 DETECTION_FILE = ROOT_DIR / "pipelines/db1/Analysis2/outputs/detection.csv"
 
 from dotenv import load_dotenv

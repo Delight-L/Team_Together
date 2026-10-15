@@ -163,17 +163,18 @@ LLM에게 수치 계산이나 위험점수 산출을 맡기지 않고, Python �
     ↓
 총괄 에이전트: 담당 선택 (외부 AI 사용 시 AI, 아니면 키워드 규칙)
     ↓
-지역 분석 │ 복지사업 │ 보고서 작성 │ 안내
+지역 변화 신호(v16) │ 지역 분석 │ 복지사업 │ 보고서 작성 │ 안내
     ↓
 DB1 근거·DB2/팀 자료를 출처와 함께 답변
 ```
 
 | 담당 에이전트 | 하는 일 |
 |---|---|
-| 지역 분석 | 지금 보는 동·연령/성별 그룹의 판정·지표·변화 근거를 설명합니다. |
+| 지역 변화 신호(v16) | 동 단위 이상신호 지역·탐지 기준·연령별 활동·지역 배경·소비 변화를 DB 근거로 답합니다. |
+| 지역 분석 | 열어 둔 연령/성별 그룹의 근거와 화면 판정 용어(판단 보류·기준 미해당 등)를 설명합니다. v16 자료가 없는 서버에서는 동 분석도 맡습니다. |
 | 복지사업 | 팀 정리 복지사업 자료에서 관련 사업과 담당 기관을 찾습니다. |
 | 보고서 작성 | 대화·업무 기록으로 «담당자 검토 전» 보고서 초안을 만듭니다. |
-| 보미 안내 | 업무와 무관한 질문에 도울 수 있는 일을 안내합니다. |
+| 보미 안내 | 검토 의견 작성·현장 확인·보고서 작성 주의점 같은 업무 방법과, 업무와 무관한 질문을 안내합니다. |
 
 외부 AI(OpenAI·Anthropic Claude·Google Gemini)는 기본 꺼짐입니다. 끄면 데이터 근거 안내와 자료 검색 결과로만 답합니다. 자세한 내용은 [챗봇 안내](backend/chatbot/README.md)를 참고하세요.
 
@@ -369,7 +370,7 @@ cd ..
 
 | 화면 | 자료 | 위치 |
 |---|---|---|
-| 지역 현황·지역 분석·보미 분석 설명 | 동별 통화·문자·이동 분석 결과 | DB `db1.analysis2_detections` (없으면 `pipelines/regional_analysis/Analysis2/outputs/`의 CSV) |
+| 지역 현황·지역 분석·보미 분석 설명 | 동별 통화·문자·이동 분석 결과 | DB `db1.analysis2_detections` (없으면 `pipelines/db1/Analysis2/outputs/detection.csv`) |
 | 종합 현황 관찰 그룹 | 연령·성별 유동인구 집계 | DB `db1.group_flow_snapshots` (`python -m db.group_repository --build --publish`로 생성) |
 | 사업 매칭 검토 | 지자체 복지사업 목록 | DB `db2` (`python -m pipelines.welfare.collect`로 수집) |
 | 보미 복지사업 안내 | 팀 정리 복지사업 자료 | `backend/chatbot/welfare/data/*.json` |
@@ -404,13 +405,14 @@ backend/
   chatbot/                  보미 대화·가드레일·AI 연결
     welfare/app/dialogue/   복지사업 검색·대화 처리
   agents/                   총괄·보고서 작성·사업 매칭
+    regional_v16/           v16 지역 변화 신호 에이전트(근거 DB는 git 제외)
   db/                       공유 DB 연결·조회·업무 기록 저장
   services/                 계정·Word 보고서 생성
   resources/                지도 자료·보고서 서식
 pipelines/
   db1/                      Analysis1·2·3·맥락 분석·검증·모델
   preprocessing/            원자료 전처리·재현 코드
-  regional_analysis/        DB1 실행 연결·기존 Analysis2 자료
+  regional_analysis/        --analysis 실행점·--preprocess가 쓰는 예전 Analysis2 실행기
   risk_analysis/            별도 위험변화 분석
   welfare/                  DB2 복지사업 수집
 data/                       공통 원자료·가공 자료

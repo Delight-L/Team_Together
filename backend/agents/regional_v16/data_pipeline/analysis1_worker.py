@@ -2,8 +2,10 @@
 import argparse,hashlib,json,re,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'DB1'))
-sys.path.insert(0,str(ROOT/'DB1/Analysis1'))
+# 분석 코드·모델·참조자료는 공식 DB1 파이프라인(pipelines/db1)을 그대로 씁니다.
+DB1=ROOT.parents[2]/'pipelines'/'db1'
+sys.path.insert(0,str(DB1))
+sys.path.insert(0,str(DB1/'Analysis1'))
 import joblib,numpy as np,pandas as pd
 import db1_store as store
 from analysis.change_detector import detect_changes
@@ -13,9 +15,9 @@ def process(cfg, bootstrap, input_path=None, period=None):
     period='2025H2' if bootstrap else period
     if not period or not re.fullmatch(r'20\d{2}H[12]',period): raise ValueError('Use YYYYH1 or YYYYH2')
     if not bootstrap and period<='2025H2': raise ValueError('The approved 2025H2 baseline is immutable')
-    source=ROOT/'DB1/Analysis1/data/reference/reference_pca_input_2025H2.csv' if bootstrap else Path(input_path)
+    source=DB1/'Analysis1/data/reference/reference_pca_input_2025H2.csv' if bootstrap else Path(input_path)
     frame=pd.read_csv(source,dtype={'adm_cd':str})
-    model_path=ROOT/'DB1'/cfg['analysis1']['baseline_model']
+    model_path=DB1/cfg['analysis1']['baseline_model']
     model=joblib.load(model_path)
     model_sha=hashlib.sha256(model_path.read_bytes()).hexdigest()
     store.initialize(cfg['database'])

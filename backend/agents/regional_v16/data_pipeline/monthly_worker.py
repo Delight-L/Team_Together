@@ -3,7 +3,9 @@ from __future__ import annotations
 import argparse,hashlib,json,re,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-sys.path[:0]=[str(ROOT/'DB1/Analysis2'),str(ROOT/'DB1'),str(ROOT/'DB1/Context')]
+# 분석 코드는 공식 DB1 파이프라인(pipelines/db1)을 그대로 씁니다.
+DB1=ROOT.parents[2]/'pipelines'/'db1'
+sys.path[:0]=[str(DB1/'Analysis2'),str(DB1),str(DB1/'Context')]
 import pandas as pd
 import db1_store as store
 import age_features as ages
@@ -92,7 +94,7 @@ def initialize(cfg):
     db=cfg['database'];store.initialize(db)
     with store.connect(db) as con:
         con.executescript(ages.SCHEMA+detect_age.SCHEMA+activity_level.SCHEMA+source_semantics.SCHEMA+EXTRA_SCHEMA)
-        con.executescript((ROOT/'DB1/Analysis3/db/schema.sql').read_text(encoding='utf-8'))
+        con.executescript((DB1/'Analysis3/db/schema.sql').read_text(encoding='utf-8'))
         con.executescript((ROOT/'data_pipeline/integrated.sql').read_text(encoding='utf-8'))
     initial_path=ROOT/'data/reference/analysis2_initial_history_202201_202506.csv'
     initial=pd.read_csv(initial_path);initial['date']=pd.to_datetime(initial.date);validate_history(initial)
