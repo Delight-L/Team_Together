@@ -544,7 +544,7 @@ export default function App() {
                 setDistrict(available?.n || group.district); setMonth(group.month); setAge(group.age); setAnalysisTab('evidence'); go('chart');
               }} />}
               {view === 'map' && <RegionalOverview key={city} {...briefingProps} />}
-              {view === 'chart' && <div className="scroll-view"><RegionAnalysis city={city} district={district} onSelect={setDistrict} age={age} onAgeChange={setAge}/></div>}
+              {view === 'chart' && <div className="scroll-view"><RegionAnalysis city={city} district={district} onSelect={setDistrict} age={age} onAgeChange={setAge} onServices={() => go('services')}/></div>}
               {view === 'services' && (
                 <Services
                   key={user.id + JSON.stringify(context)}
@@ -657,7 +657,7 @@ export function WorkflowSteps({ context, workflow, current, onView }) {
     { key: 'report', label: '보고서 저장', done: !!workflow.workflow_complete },
   ];
   const index = steps.findIndex(s => s.key === current);
-  const blocker = !context.district ? { key: 'map', label: '지역 선택' } : steps.slice(0, index).find(s => !s.done);
+  const blocker = !context.district ? { key: 'map', label: '지역 선택' } : current === 'services' ? null : steps.slice(0, index).find(s => !s.done);
   // 보고서 화면에는 자체 작성 단계가 있으므로, 앞 단계가 막혔을 때만 업무 단계를 보여 줍니다.
   if (current === 'report' && !blocker) return null;
   return <div className={`workflow-steps ${blocker ? 'blocked' : ''}`}>
@@ -730,6 +730,15 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
           정기 수집된 지자체 복지사업에서 선택 지역과 같은 시·도의 지역 미지정 자료를 검토 후보로 조회합니다.
           게시 지역이 이용 자격을 뜻하지는 않습니다. 지원 대상과 접수 가능 여부는 운영기관에 확인하세요.
         </p>
+        <p className="hint">{context.city} {context.district} · {context.age || '전체 연령'} · 분석 기준월 {context.month}</p>
+        {!workflow.done?.includes(1) && <section className="service-analysis-confirm">
+          <p>사업 후보는 먼저 조회할 수 있습니다. 검토 결과를 저장하려면 지역 분석을 확인한 뒤 아래 버튼으로 분석 근거 확인을 저장하세요.</p>
+          <div className="form-actions"><button className="secondary" onClick={() => onView('chart')}>지역 분석 다시 보기</button>
+          <button className="primary" disabled={busy || !context.district} onClick={async () => {
+            if (!workflow.done?.includes(0) && !await mutate('/workflow/start')) return;
+            await mutate('/workflow/confirm');
+          }}>분석 근거를 확인했습니다 · 저장</button></div>
+        </section>}
         <label className="service-need-filter">검토할 지원 목적
           <select aria-label="검토할 지원 목적" value={need} onChange={e => { setNeed(e.target.value); changePage(1); }}>
             <option value="">전체 사업</option>{Object.keys(NEED_TERMS).map(value => <option key={value}>{value}</option>)}
@@ -739,7 +748,7 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
         <button
           className="primary"
           onClick={load}
-          disabled={busy || loading || !workflow.done?.includes(1)}
+          disabled={busy || loading || !context.district}
         >
           {loading ? '사업을 찾는 중…' : '관련 사업 조회'}
         </button>
@@ -804,6 +813,7 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
             {selected === m.key && (
               <div className="review-form service-inline-review" id="service-review-form" role="group" aria-label={`${m.service.name} 검토 입력`}>
                 <b>{m.service.name} · 검토 기록</b>
+                {!workflow.done?.includes(1) && <p role="status">화면 위에서 분석 근거 확인을 저장하면 검토 결과를 저장할 수 있습니다.</p>}
                 <fieldset disabled={busy}><legend>확인한 이용 조건만 체크하세요</legend>{SERVICE_CHECKS.map(([key, label]) => <label className="confirmation" key={key}><input type="checkbox" checked={!!review.checks?.[key]} onChange={e => updateReview(m.key, 'checks', { ...review.checks, [key]: e.target.checked })} />{label}</label>)}</fieldset>
                 <p className="hint">{SERVICE_CHECKS.filter(([key]) => review.checks?.[key]).length}/3개 조건 확인 · 미확인 항목은 검토 근거에 남겨 주세요.</p>
                 <label>
@@ -817,7 +827,7 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
                   <textarea value={review.note} disabled={busy} onChange={(e) => updateReview(m.key, 'note', e.target.value)}
                     placeholder="사업 조건과 지역 근거를 함께 기록하세요." />
                 </label>
-                <button className="primary" disabled={busy || !review.note.trim() || workflow.workflow_complete}
+                <button className="primary" disabled={busy || !review.note.trim() || !workflow.done?.includes(1) || workflow.workflow_complete}
                   onClick={async () => {
                     const result = await mutate('/workflow/review', { serviceKey: m.key, ...review, need });
                     if (result) {
