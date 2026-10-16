@@ -493,7 +493,8 @@ def template_answer(intent:QueryIntent,evidence:Evidence,knowledge:str,explanati
     if evidence.rows:
         lines+=['']+[ '- '+_format_row(r) for r in evidence.rows[:10]]
         if len(evidence.rows)>10:lines.append(f'총 {len(evidence.rows)}건 중 10건을 표시했습니다.')
-    lines+=_context_lines(evidence,skip_regions=intent.question_type=='context',skip_local=intent.question_type=='consumption')
+    # 보조자료(지역 배경·소비·날씨·조사)는 사용자가 해당 맥락을 요청했을 때만
+    # 전용 답변에서 보여준다. 일반 신호/지역 조회에 자동으로 덧붙이지 않는다.
     if knowledge:lines+=['',knowledge]
     if evidence.limitations:lines+=['','확인 범위: '+' / '.join(evidence.limitations)]
     return '\n'.join(lines)
