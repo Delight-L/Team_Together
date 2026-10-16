@@ -420,7 +420,7 @@ backend/
 pipelines/
   db1/                      Analysis1·2·3·맥락 분석·검증·모델
   preprocessing/            원자료 전처리·재현 코드
-  regional_analysis/        --analysis 실행점·--preprocess가 쓰는 예전 Analysis2 실행기
+  regional_analysis/        --analysis 실행점(DB1 파이프라인 호출)
   risk_analysis/            별도 위험변화 분석
   welfare/                  DB2 복지사업 수집
 data/                       공통 원자료·가공 자료

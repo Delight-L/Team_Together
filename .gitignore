@@ -65,7 +65,6 @@ pipelines/preprocessing/**/outputs/validation_report.json
 !pipelines/db1/requirements.txt
 
 # 예외: 분석·위험도 자료
-!pipelines/regional_analysis/Analysis2/gangnam_analysis2_feature_table_2022_2025.csv
 !pipelines/risk_analysis/data/gangnam_analysis1_cluster_profile_2025H2(1).csv
 !pipelines/risk_analysis/data/gangnam_db1_dong_month_behavior_mart_2025_07_12(1).csv
 !pipelines/risk_analysis/data/gangnam_db1_final_k2_cluster_result_2025(1).csv

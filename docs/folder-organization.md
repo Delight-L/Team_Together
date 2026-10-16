@@ -18,7 +18,7 @@ Team_Together/
 ├─ pipelines/
 │  ├─ db1/                   Analysis1·2·3·맥락 분석·검증·모델
 │  ├─ preprocessing/         공통 전처리·재현 코드
-│  ├─ regional_analysis/     --analysis 실행점과 --preprocess가 쓰는 예전 Analysis2 실행기
+│  ├─ regional_analysis/     --analysis 실행점(DB1 파이프라인 호출)
 │  ├─ risk_analysis/         별도 위험변화 분석 도구
 │  └─ welfare/               DB2 복지사업 수집
 ├─ data/                     공통 원자료·가공 자료
@@ -60,9 +60,9 @@ PostgreSQL의 `db1`, `db2`, `work` 스키마 이름과 테이블은 폴더 이�
 
 이번 정리는 파일 이동과 경로 수정입니다. 기존 분석 코드·모델·입력·검증 결과는 삭제하지 않습니다.
 분석 내부의 `data`, `models`, `outputs`는 실행·재현 경로를 유지하기 위해 해당 파이프라인에 보관합니다.
-기존 Analysis2 구현은 `pipelines/regional_analysis/Analysis2`에 남아 있으며, `python main.py --preprocess` 증분 갱신이 아직 이 실행기를 호출합니다.
-현재 통합 실행기(`--analysis`)는 `pipelines/db1`을 호출합니다. 예전 Analysis2의 과거 결과 CSV는 `pipelines/db1/Analysis2/data/reference/`에 같은 파일이 있어 정리했습니다.
-`--preprocess`를 새 Analysis2로 바꾸는 일은 분석 결과가 달라질 수 있어 분석 담당자 검증 후 진행합니다.
+Analysis2 구현은 `pipelines/db1/Analysis2` 하나입니다. `python main.py --preprocess` 증분 갱신도 이 폴더의 `run_analysis2.py`(전체 기간 일괄 실행)를 호출합니다.
+예전 복사본(`pipelines/regional_analysis/Analysis2`)은 2026-10-16에 정리했습니다. 같은 feature table로 실행한 탐지 결과·근거 카드가 바이트 단위로 같음을 확인했습니다.
+다만 통합본은 입력 검증이 더 엄격해(이력 검증, Analysis1 지역 유형 누락 검사) 앞으로 들어올 자료에 문제가 있으면 예전보다 일찍 멈출 수 있습니다.
 
 v16 지역 변화 신호 에이전트(`backend/agents/regional_v16`)는 답변 근거로 `outputs/db1.sqlite`(약 100MB, git 제외)를 읽습니다.
 다른 위치에 둘 때는 `DB1_DATABASE_PATH`로 지정하고, 파일이 없으면 보미가 기존 지역 분석 담당으로 답합니다.

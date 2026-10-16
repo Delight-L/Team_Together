@@ -5,7 +5,7 @@
 | 폴더 | 역할·안내 |
 |---|---|
 | `db1/` | Analysis1·2·3, 조사 맥락, 모델·검증. [DB1 실행과 분석 기준](db1/README.md) |
-| `regional_analysis/` | 통합 분석 진입점과 기존 Analysis2 실행기 |
+| `regional_analysis/` | 통합 분석 진입점(DB1 파이프라인 호출) |
 | `preprocessing/regional_types/` | Analysis1 원본 전처리 |
 | `preprocessing/regional_features/` | 기존 Analysis2의 월별 원본 전처리 |
 | `risk_analysis/` | 별도 위험변화 탐지 도구 |
@@ -130,7 +130,7 @@ python -m pip install -r requirements.txt
 python main.py --preprocess
 ```
 
-기본 실행은 `최신 파일 확인/다운로드 → 새 월 전처리 → 기존 feature table에 추가 → Analysis2 실행`입니다. Analysis2는 `pipelines/regional_analysis/Analysis2/run_analysis2.py`에 있어야 하며, 결과 CSV는 이 폴더의 `outputs`에 복사됩니다. 새 월에 필요한 날씨 행이 `reference/weather_monthly.csv`에 없으면 안전하게 중단하므로 날씨 자료를 먼저 추가해야 합니다. 전체 재생성이 필요할 때만 `python main.py --preprocess --full`을 사용합니다.
+기본 실행은 `최신 파일 확인/다운로드 → 새 월 전처리 → 기존 feature table에 추가 → Analysis2 실행`입니다. Analysis2는 `pipelines/db1/Analysis2/run_analysis2.py`를 `--input`(갱신된 feature table)과 `--output-dir`(이 폴더의 `outputs`)로 실행합니다. 새 월에 필요한 날씨 행이 `reference/weather_monthly.csv`에 없으면 안전하게 중단하므로 날씨 자료를 먼저 추가해야 합니다. 전체 재생성이 필요할 때만 `python main.py --preprocess --full`을 사용합니다.
 
 `raw_data`에 2022~2025년 통신정보와 관심집단 원본 ZIP을 넣습니다. ZIP 안의 ZIP도 해제합니다. 원본을 복사하지 않고 사용할 수 있습니다.
 

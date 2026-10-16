@@ -374,7 +374,7 @@ pip install -r requirements.txt  # 프로젝트 루트에서 실행
 ### 전체 분석 실행
 
 ```bash
-python run_analysis2.py
+python run_analysis2.py --output-dir <결과 폴더>  # --input 생략 시 data/reference의 feature table
 ```
 
 ### 회귀 테스트

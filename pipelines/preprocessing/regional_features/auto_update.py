@@ -139,17 +139,12 @@ def run_incremental(base: Path, config: dict, no_download: bool = False) -> dict
 
 
 def _run_analysis2(base: Path, config: dict, feature: Path, out: Path) -> None:
-    analysis_dir = Path(config.get("analysis2_dir", "../Analysis2"))
+    analysis_dir = Path(config.get("analysis2_dir", "../../db1/Analysis2"))
     if not analysis_dir.is_absolute():
         analysis_dir = (base / analysis_dir).resolve()
     runner = analysis_dir / "run_analysis2.py"
     if not runner.exists():
         raise FileNotFoundError(f"Analysis2 실행 파일을 찾을 수 없습니다: {runner}")
-    # 기존 runner는 입력 파일을 Analysis2 루트에서 읽으므로 실행 전 동기화한다.
-    target = analysis_dir / "gangnam_analysis2_feature_table_2022_2025.csv"
-    shutil.copy2(feature, target)
-    subprocess.run([sys.executable, str(runner)], cwd=analysis_dir, check=True)
-    for name in ("gangnam_analysis2_detection_2022_2025.csv", "gangnam_analysis2_evidence_card_2022_2025.csv"):
-        src = analysis_dir / "outputs" / name
-        if src.exists():
-            shutil.copy2(src, out / name)
+    # 입력 feature table과 결과 폴더를 직접 넘겨, Analysis2 폴더에 파일을 복사하지 않습니다.
+    subprocess.run([sys.executable, str(runner), "--input", str(feature.resolve()), "--output-dir", str(out.resolve())],
+                   cwd=analysis_dir, check=True)

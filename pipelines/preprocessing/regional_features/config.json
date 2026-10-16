@@ -4,7 +4,7 @@
   "start_month": "2022-01",
   "end_month": "2025-12",
   "weather": "reference/weather_monthly.csv",
-  "analysis2_dir": "../../regional_analysis/Analysis2",
+  "analysis2_dir": "../../db1/Analysis2",
   "sources": {
     "telecom": "https://data.seoul.go.kr/dataList/OA-22267/F/1/datasetView.do",
     "interest": "https://data.seoul.go.kr/dataList/OA-22266/F/1/datasetView.do"
