@@ -43,6 +43,9 @@ SCREEN_SUMMARY = re.compile(
     r"(?:대시보드|현재|지금|선택한|이)\s*(?:화면|자료|정보|내용)?.*(?:요약|정리|설명)"
     r"|(?:요약|정리|설명).*(?:대시보드|화면|자료|정보|내용)"
 )
+SCREEN_REFERENCE = re.compile(
+    r"대시보드|현재\s*(?:화면|선택)|지금\s*(?:화면|선택)|선택된\s*(?:화면|지역|동|연령)"
+)
 
 
 DEFAULT_MODEL = "gemini-2.5-flash-lite"
@@ -59,6 +62,11 @@ def _age_band(value: object) -> str | None:
 def _is_dashboard_summary(question: str) -> bool:
     """현재 선택 카드의 핵심 수치를 요약해 달라는 화면 문맥 요청인지 판별한다."""
     return bool(SCREEN_SUMMARY.search(question))
+
+
+def _references_dashboard(question: str) -> bool:
+    """질문이 직전 대화가 아니라 현재 화면 선택을 명시적으로 가리키는지 확인한다."""
+    return bool(SCREEN_REFERENCE.search(question))
 
 
 def _configuration():
@@ -245,9 +253,14 @@ class _ScopedResolver(IntentResolver):
             return self.resolved_intent
         if _is_dashboard_summary(question):
             age = _age_band(self.context.get("age"))
+            district = self.context.get("district") if self.context.get("district") in districts else None
+            month = self.context.get("month") if MONTH.fullmatch(self.context.get("month", "")) else None
             intent = replace(parsed, purpose="track_change", question_type="reason",
-                             signal="any", needs=(), use_previous_scope=True,
-                             age_band=age, age_scope_explicit=age is not None)
+                             signal="any", needs=(),
+                             dong=district, dongs=(district,) if district else (),
+                             start_month=month, end_month=month,
+                             age_band=age, age_scope_explicit=age is not None,
+                             use_previous_scope=False)
             self.last_source = "rule_dashboard_summary"
             self.resolved_intent = self._defaults(intent, districts, memory, names)
             return self.resolved_intent
@@ -291,6 +304,24 @@ class _ScopedResolver(IntentResolver):
                                  use_previous_scope=scoped, needs=())
             elif re.search(r"요약", question) and re.search(r"이\s*동|그\s*동", question):
                 intent = replace(intent, purpose="track_change", question_type="reason", use_previous_scope=True)
+        # 현재 화면을 명시한 질문은 직전 대화보다 대시보드 선택을 우선한다.
+        # 질문에 직접 쓴 동·기간·연령은 다시 그보다 우선한다.
+        if _references_dashboard(question) and intent.question_type in CONTEXTUAL_TYPES:
+            district = self.context.get("district") if self.context.get("district") in districts else None
+            month = self.context.get("month") if MONTH.fullmatch(self.context.get("month", "")) else None
+            screen_age = _age_band(self.context.get("age"))
+            selected_names = names or ((district,) if district else ())
+            intent = replace(
+                intent,
+                dong=selected_names[0] if len(selected_names) == 1 else None,
+                dongs=tuple(selected_names),
+                start_month=parsed.start_month or month,
+                end_month=parsed.end_month or month,
+                age_band=parsed.age_band if parsed.age_scope_explicit else screen_age,
+                age_scope_explicit=parsed.age_scope_explicit or screen_age is not None,
+                use_previous_scope=False,
+                needs=tuple(item for item in intent.needs if item not in {"행정동", "기간"}),
+            )
         self.resolved_intent = self._defaults(intent, districts, memory, names)
         return self.resolved_intent
 
