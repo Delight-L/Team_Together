@@ -103,6 +103,10 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
         purpose, kind = "track_change", "methodology"
     elif age_words and re.search(r'볼\s*수|가능|지원|제공',q):
         purpose, kind = 'track_change', 'capabilities'
+    elif age_words and metric and not any(word in q for word in ('신호','탐지','판정 기준','이유')):
+        # "선택한 동의 30대 통화 상대 수"처럼 변화라는 단어 없이
+        # 특정 연령·활동지표의 현재값만 묻는 질문도 연령별 활동으로 분류한다.
+        purpose, kind = 'track_change', 'age_activity'
     elif age_words and any(word in q for word in ('변화','달라','차이','추이','비교','지표','활동','어떻게')) and not any(word in q for word in ('신호','탐지','판정 기준','이유')):
         purpose, kind = 'track_change', 'age_activity'
     elif any(word in q for word in ('데이터 상태','처리 상태','업데이트 상태','초기 이력','초기이력')):
