@@ -41,6 +41,13 @@ pipelines/db1/config/db1_config.local.json
 output/
 artifacts/
 
+# ── 테스트 코드 ─────────────────────────────────────────
+# 테스트·검사 스크립트와 테스트 자료는 각자 로컬에서만 관리하고 저장소·배포에는 올리지 않습니다.
+tests/
+test_*.py
+*.test.mjs
+pipelines/db1/run_tests.ps1
+
 # ── 다시 만들 수 있는 실행 보고서 ───────────────────────
 data/processed/group_dashboard.json
 pipelines/regional_analysis/analysis2_execution_report.json
