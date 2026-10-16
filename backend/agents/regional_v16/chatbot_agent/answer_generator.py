@@ -251,6 +251,31 @@ def _query_story_period(intent):
         if start==end:return observation_period_text(start)+' 자료에서는'
     return '조회한 자료에서는'
 
+def _group_signal_rows_by_dong(rows):
+    """답변에 표시할 신호 행을 행정동별로 입력 순서대로 묶는다."""
+    groups={}
+    for row in rows:
+        dong=row.get('행정동') or '해당 지역'
+        groups.setdefault(dong,[]).append(row)
+    return list(groups.items())
+
+def _numbered_signal_groups(rows,evidence):
+    """여러 지역의 긴 설명을 동별 번호가 붙은 블록으로 만든다."""
+    blocks=[]
+    for index,(dong,dong_rows) in enumerate(_group_signal_rows_by_dong(rows),start=1):
+        details=[]
+        for row in dong_rows:
+            if row.get('신호 건수') is not None:
+                details.append(f"선택한 기간에 변화 신호가 {row['신호 건수']}건 확인됐어요.")
+                continue
+            details+=_signal_story(row)
+            ages=_age_changes_story(row,evidence)
+            if ages:details.append(ages)
+        cluster=_cluster_story(dong_rows[0],evidence)
+        if cluster:details.append(cluster)
+        blocks.append(f"{index}. {dong}\n"+'\n\n'.join(details))
+    return blocks
+
 def _concise_signal_list(intent,evidence):
     rows=evidence.rows
     if not rows:return evidence.summary+' 추가로 확인할 변화 신호는 나오지 않았어요.'
@@ -260,15 +285,19 @@ def _concise_signal_list(intent,evidence):
         paragraphs=[f"{prefix} {names[0]}을 한 번 더 살펴볼 필요가 있어요."]
     else:
         paragraphs=[f"{prefix} 확인이 필요한 지역이 {len(names)}곳 나왔어요."]
-    for row in rows[:10]:
-        if row.get('신호 건수') is not None:
-            paragraphs.append(f"{row.get('행정동')}에서는 선택한 기간에 변화 신호가 {row['신호 건수']}건 확인됐어요.")
-            continue
-        paragraphs+=_signal_story(row)
-        cluster=_cluster_story(row,evidence)
-        if cluster:paragraphs.append(cluster)
-        ages=_age_changes_story(row,evidence)
-        if ages:paragraphs.append(ages)
+    displayed=rows[:10]
+    if len(names)>1:
+        paragraphs+=_numbered_signal_groups(displayed,evidence)
+    else:
+        for row in displayed:
+            if row.get('신호 건수') is not None:
+                paragraphs.append(f"{row.get('행정동')}에서는 선택한 기간에 변화 신호가 {row['신호 건수']}건 확인됐어요.")
+                continue
+            paragraphs+=_signal_story(row)
+            cluster=_cluster_story(row,evidence)
+            if cluster:paragraphs.append(cluster)
+            ages=_age_changes_story(row,evidence)
+            if ages:paragraphs.append(ages)
     if len(rows)>10:paragraphs.append(f"전체 {len(rows)}건 중 먼저 10건을 보여드렸어요.")
     if intent.limit and len(names)<intent.limit:
         paragraphs.append(f"요청하신 {intent.limit}곳보다 적은 이유는, 이번 조건에서 신호가 확인된 지역이 {len(names)}곳이기 때문이에요.")
