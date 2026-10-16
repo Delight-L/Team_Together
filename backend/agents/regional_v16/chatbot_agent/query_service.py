@@ -114,6 +114,27 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
                 row[m+'_change_pct']=_metric_change(row,m)
         return Evidence('연령별 활동 변화',f'{"·".join(names)}의 연령별 주요 지표 변화입니다.',rows,
                         ['DB1: a2_age_detection'],['각 결과는 기준월 직전 3개월 관측이며 변화율은 바로 앞 관측기간 대비입니다. 연령별 값을 합산하지 않습니다.'])
+    elif kind=='age_data_coverage':
+        # Compare each previously displayed district signal with the age table
+        # at that exact label month. A district having age rows in some other
+        # month must not be described as having data for this case.
+        frames=[repo.signals(start,end,name,intent.signal,None) for name in names] if names else [repo.signals(start,end,None,intent.signal,None)]
+        signals=pd.concat(frames,ignore_index=True) if frames else pd.DataFrame()
+        if not signals.empty:
+            signals=signals.sort_values(['date','행정동'])
+        age_all=repo.activity(None,None,None,next(iter(AGE_LABEL)))
+        age_months=age_all.get('date',pd.Series(dtype=object)).astype(str).str[:7]
+        coverage_start=age_months.min() if not age_months.empty else None
+        coverage_end=age_months.max() if not age_months.empty else None
+        rows=[]
+        for item in _records(signals,['date','행정동']):
+            month=item.get('date')
+            available=any(not repo.activity(item.get('행정동'),month,month,band).empty for band in AGE_LABEL)
+            rows.append({'date':month,'행정동':item.get('행정동'),'age_data_available':available,
+                         'age_data_start':coverage_start,'age_data_end':coverage_end})
+        return Evidence('연령별 자료 제공기간 비교','신호 사례별 동일 기준월의 연령별 자료 유무를 확인했습니다.',rows,
+                        ['DB1: a2_detection','DB1: a2_age_detection'],
+                        ['동 단위 신호 자료와 연령별 자료의 제공기간이 다를 수 있습니다.'])
     elif kind=='rank_regions':
         signal_reader = repo.age_signal_cases if intent.age_scope_explicit else repo.signals
         f=signal_reader(start,end,None,intent.signal,age)

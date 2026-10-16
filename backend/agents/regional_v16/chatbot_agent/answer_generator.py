@@ -480,6 +480,27 @@ def _context_lines(evidence,skip_regions=False,skip_local=False):
 
 def template_answer(intent:QueryIntent,evidence:Evidence,knowledge:str,explanation:str='')->str:
     if intent.question_type=='age_activity':return _age_activity_answer(intent,evidence)
+    if intent.question_type=='age_data_coverage':
+        if not evidence.rows:return '직전 신호 사례와 같은 기준월의 연령별 자료를 찾지 못했습니다.'
+        start=next((r.get('age_data_start') for r in evidence.rows if r.get('age_data_start')),None)
+        end=next((r.get('age_data_end') for r in evidence.rows if r.get('age_data_end')),None)
+        month_label=lambda value: f'{value[:4]}년 {int(value[5:7])}월' if value else '기준월 확인 불가'
+        lines=[]
+        if start and end:
+            lines.append(f'연령별 자료는 {month_label(start)}~{month_label(end)} 기준월에만 제공되기 때문이에요.')
+        for index,row in enumerate(evidence.rows,start=1):
+            dong=row.get('행정동','해당 지역');month=row.get('date')
+            if row.get('age_data_available'):
+                detail='동일 기준월의 20대·30대·40대·50대·60세 이상 자료가 있어 함께 보여드릴 수 있어요.'
+            elif start and month and month < start:
+                detail=f'해당 기준월이 연령별 자료 시작 시점인 {month_label(start)}보다 앞서 동일 기준월 자료가 없어요.'
+            elif end and month and month > end:
+                detail=f'해당 기준월이 연령별 자료 마지막 시점인 {month_label(end)}보다 뒤라 동일 기준월 자료가 없어요.'
+            else:
+                detail='동일 기준월의 연령별 자료가 없어 함께 비교할 수 없어요.'
+            lines.append(f'{index}. {dong} · {month_label(month)} 기준\n{detail}')
+        lines.append('다른 두 동도 연령별 자료 자체가 전혀 없는 것은 아니며, 이상신호가 나온 기준월과 같은 달의 자료가 없는 것입니다.')
+        return '\n\n'.join(lines)
     if intent.question_type=='consumption':return _consumption_answer(intent,evidence)
     if intent.question_type=='activity' and intent.metric:return _metric_value_answer(intent,evidence)
     if intent.question_type=='context':return _context_answer(evidence)

@@ -105,7 +105,14 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
     limit = _limit(question)
     age_words=bool(re.search(r'연령|나이|세대|[2-6]0\s*대|60\s*세',q))
     incremental_follow_up = bool(re.search(r'같은\s*기준월|그럼\s*[2-6]0대|지금\s*선택한|현재\s*선택한', q))
-    if any(word in q for word in ('소비','상권','거래')) and any(word in q for word in ('기준','급증 판단','급증 판정')):
+    age_coverage_followup = bool(
+        '자료' in q and any(word in q for word in ('다른 동', '다른 지역', '나머지 동', '나머지 지역'))
+        and any(word in q for word in ('없', '왜', '차이'))
+    )
+    if age_coverage_followup:
+        purpose, kind = 'track_change', 'age_data_coverage'
+        dong = None
+    elif any(word in q for word in ('소비','상권','거래')) and any(word in q for word in ('기준','급증 판단','급증 판정')):
         purpose, kind = 'plan_review', 'consumption_criteria'
     elif is_methodology_question(question):
         purpose, kind = "track_change", "methodology"
@@ -152,7 +159,7 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
     global_signal_scope = bool(re.search(
         r"강남구\s*전체|전체\s*지역|모든\s*동|변화\s*신호가\s*나온\s*동|신호가\s*나온\s*동", question
     )) and kind in {"signals", "rank_regions"}
-    follow_up = incremental_follow_up or (not dong and (kind in {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"} or signal_period_follow_up))
+    follow_up = incremental_follow_up or age_coverage_followup or (not dong and (kind in {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"} or signal_period_follow_up))
     if global_signal_scope:
         dong = None
         follow_up = False

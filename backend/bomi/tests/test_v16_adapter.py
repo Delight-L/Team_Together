@@ -14,7 +14,7 @@ class Repository:
         pass
 
     def districts(self):
-        return {"삼성1동", "역삼1동", "논현1동"}
+        return {"삼성1동", "역삼1동", "논현1동", "개포4동", "세곡동"}
 
     def available_period(self):
         return "2025-07", "2025-12"
@@ -96,6 +96,22 @@ class V16ServiceTest(unittest.TestCase):
         with patch("chatbot_agent.orchestrator.execute", return_value=Evidence("신호", "범위 확인")) as execute:
             service.reply("2023년도 자료는 빼고 2025년도 이상신호만 알려줘", [], CONTEXT, use_ai=False)
         intent = execute.call_args.args[1]
+        self.assertEqual((intent.start_month, intent.end_month), ("2025-07", "2025-12"))
+
+    def test_age_coverage_followup_restores_all_previously_listed_districts(self):
+        previous = [
+            {"role": "user", "content": "2025년도에 관측된 이상신호 케이스를 모두 알려줘"},
+            {"role": "assistant", "content": (
+                "1. 개포4동\n2025년 2월 기준 자료\n"
+                "2. 세곡동\n2025년 5월 기준 자료\n"
+                "3. 삼성1동\n2025년 12월 기준 자료"
+            )},
+        ]
+        with patch("chatbot_agent.orchestrator.execute", return_value=Evidence("자료 범위", "확인")) as execute:
+            service.reply("삼성1동은 자료가 있고, 왜 다른 동은 자료가 없어?", previous, CONTEXT, use_ai=False)
+        intent = execute.call_args.args[1]
+        self.assertEqual(intent.question_type, "age_data_coverage")
+        self.assertEqual(set(intent.dongs), {"개포4동", "세곡동", "삼성1동"})
         self.assertEqual((intent.start_month, intent.end_month), ("2025-07", "2025-12"))
 
     def test_selected_month_and_dong_default_only_missing_contextual_slots(self):

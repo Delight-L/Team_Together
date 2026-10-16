@@ -8,13 +8,14 @@ from .conversation_memory import ConversationMemory
 from .schemas import QueryIntent
 
 _MONTH = re.compile(r"^20\d{2}-(0[1-9]|1[0-2])$")
-_CONTEXTUAL_TYPES = {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"}
+_CONTEXTUAL_TYPES = {"reason", "previous", "activity", "age_activity", "age_data_coverage", "context", "support", "consumption"}
 _REQUIRED_SLOTS = {
     "signals": ("기간",),
     "rank_regions": ("기간",),
     "anomaly": ("기간", "지표"),
     "activity": ("기간",),
     "age_activity": ("행정동", "기간"),
+    "age_data_coverage": ("기간",),
     "capabilities": (),
     "reason": ("행정동", "기간"),
     "previous": ("행정동", "기간"),

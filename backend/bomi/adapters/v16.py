@@ -36,7 +36,7 @@ from chatbot_agent.orchestrator import Chatbot
 from chatbot_agent.schemas import GuardResult
 
 LOGGER = logging.getLogger(__name__)
-CONTEXTUAL_TYPES = {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"}
+CONTEXTUAL_TYPES = {"reason", "previous", "activity", "age_activity", "age_data_coverage", "context", "support", "consumption"}
 LIST_TYPES = {"signals", "rank_regions", "anomaly"}
 MONTH = re.compile(r"^20\d{2}-(0[1-9]|1[0-2])$")
 SCREEN_SUMMARY = re.compile(
@@ -202,6 +202,7 @@ question_type:
 - methodology: 이상신호 기준/Robust Z/수학적 탐지 공식. 소비 문맥을 임의로 만들지 마세요.
 - consumption_criteria: 소비 급증 판정 기준 자체. capabilities: 연령별 조회 지원 여부.
 - previous: 전월 탐지 여부. anomaly: 특정 활동 지표의 이례적인 변화 순위. data_status: 자료 갱신 상태.
+- age_data_coverage: 직전 신호 목록에서 어떤 사례만 연령별 자료가 보이는 이유와 자료 제공기간 비교.
 - greeting/thanks/feedback/insult/off_topic: 일반 대화, 질문 수정 요청/불만은 feedback.
 methodology/capabilities/consumption_criteria/일반 대화는 지역이나 기간을 요구하지 않습니다.
 연령은 20s/30s/40s/50s/60plus(60세 이상)이며 전체 연령은 null입니다. 지원하지 않는 나이는 needs=['연령'].
@@ -210,6 +211,8 @@ age_activity에 특정 연령이 없으면 age_bands=[]로 다섯 연령을 각�
 소비자료의 metric은 null. 소비의 양/품목 질문도 consumption이며 품목 대신 소비 분야 자료를 찾습니다.
 예: '2025년에 이상신호가 뜬 곳'은 signals, '이상신호 기준은?'은 methodology,
 '그 동 연령대 변화는?'은 age_activity + use_previous_scope=true.
+'삼성1동은 자료가 있는데 왜 다른 동은 없어?'처럼 직전 목록의 연령별 자료 유무 차이를 묻는 질문은
+age_data_coverage + use_previous_scope=true이며, 직전 목록의 모든 동과 기준월을 비교하세요.
 use_previous_scope는 현재 질문이 실제 직전 조회를 이어갈 때만 true. 새로운 광역 목록에 과거 동을 넣지 마세요.
 대시보드 선택은 생략 조건의 보조입니다. 전체 지역 찾기는 선택한 동/성별/연령 그룹으로 좁히지 않습니다.
 명시한 지역/기간은 대시보드보다 우선합니다. 날짜는 YYYY-MM이며 2025년 하반기는 2025-07~2025-12입니다.
@@ -245,6 +248,14 @@ class _ScopedResolver(IntentResolver):
     def resolve(self, question, districts, memory):
         names = explicit_districts(question, districts)
         parsed = self._apply_explicit_districts(parse_intent(question, districts), names)
+        # In a comparison such as "삼성1동은 있고 왜 다른 동은 없어?",
+        # the named dong is the example being contrasted, not a request to
+        # discard the other districts from the preceding result list.
+        if parsed.question_type == "age_data_coverage":
+            intent = replace(parsed, dong=None, dongs=(), use_previous_scope=True, needs=())
+            self.last_source = "rule_age_data_coverage"
+            self.resolved_intent = self._defaults(intent, districts, memory, ())
+            return self.resolved_intent
         # 탐지 기준을 묻는 질문과 현재 카드 요약은 화면의 응답 계약이
         # 분명하다. 외부 모델의 임의 분류(예: 소비 기준)로 바꾸지 않는다.
         if parsed.question_type == "methodology":
