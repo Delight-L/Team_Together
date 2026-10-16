@@ -194,7 +194,7 @@ JSON만 반환하세요:
             finally:
                 client.close()
             raw=_json_object(getattr(response,"text","") or "")
-            intent=self._apply_local_constraints(self._validate(raw,districts), rule_intent, explicit_names)
+            intent=self._apply_local_constraints(self._validate(raw,districts), rule_intent, explicit_names, question)
             if (re.search(r"이상\s*신호", question)
                     and re.search(r"발생한\s*지역|탐지된\s*지역", question)
                     and re.search(r"요약|상태", question)):
@@ -279,7 +279,7 @@ JSON만 반환하세요:
 
     @classmethod
     def _apply_local_constraints(cls, intent: QueryIntent, rule_intent: QueryIntent,
-                                 names: tuple[str, ...]) -> QueryIntent:
+                                 names: tuple[str, ...], question: str = "") -> QueryIntent:
         """Keep explicit facts from the question without replacing LLM intent.
 
         For example, the model decides whether a question asks for methodology
@@ -287,6 +287,20 @@ JSON만 반환하세요:
         range; a partial local parse must never overwrite semantic dates.
         """
         intent = cls._apply_explicit_districts(intent, names)
+        # A global signal request must never inherit the dashboard's selected
+        # dong/age (or the previous conversation scope).  Phrases such as
+        # "강남구 전체", "모든 동", and "변화 신호가 나온 동" explicitly
+        # ask for the whole DB1 result set; use the age-level case table so the
+        # answer can report month, age band, and signal type.
+        global_signal = (
+            rule_intent.question_type in {"signals", "rank_regions"}
+            and re.search(r"강남구\s*전체|전체\s*지역|모든\s*동|변화\s*신호가\s*나온\s*동|신호가\s*나온\s*동", question)
+        )
+        if global_signal:
+            intent = replace(intent, dong=None, dongs=(), age_band=None,
+                             age_scope_explicit=True, use_previous_scope=False,
+                             start_month=rule_intent.start_month or intent.start_month,
+                             end_month=rule_intent.end_month or intent.end_month)
         # These are explicit response contracts in the current question, not
         # a best-effort semantic guess.  Preserve them even when Gemini calls
         # the same short Korean phrasing a generic signal query.

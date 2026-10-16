@@ -141,8 +141,14 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
         kind == "signals" and signal != "any"
         and any(word in q for word in ("구간", "언제", "시기", "기간"))
     )
+    global_signal_scope = bool(re.search(
+        r"강남구\s*전체|전체\s*지역|모든\s*동|변화\s*신호가\s*나온\s*동|신호가\s*나온\s*동", question
+    )) and kind in {"signals", "rank_regions"}
     follow_up = incremental_follow_up or (not dong and (kind in {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"} or signal_period_follow_up))
+    if global_signal_scope:
+        dong = None
+        follow_up = False
     return QueryIntent(purpose, kind, dong, start, end, signal, metric, tuple(needs), limit,
                        (), follow_up, all_period, age_band=age,
-                       age_scope_explicit=bool(age or bands or ambiguous or re.search(r'전\s*연령|전체\s*연령',question)),age_bands=bands,
+                       age_scope_explicit=bool(age or bands or ambiguous or global_signal_scope or re.search(r'전\s*연령|전체\s*연령',question)),age_bands=bands,
                        include_values=bool(re.search(r'원값|실제\s*값|월별\s*값|원수치',question)))
