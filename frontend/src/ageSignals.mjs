@@ -43,7 +43,3 @@ export function observationWindow(month) {
   const end = new Date(Date.UTC(year,m-2,1)).toISOString().slice(0,7).replace('-','.');
   return start.slice(0,4) === end.slice(0,4) ? `${start}–${end.slice(5)}` : `${start}–${end}`;
 }
-
-export function detectionBadge(value, name) {
-  return `${name} ${value === true ? '변화 탐지' : value === false ? '미탐지' : '판단 보류'}`;
-}

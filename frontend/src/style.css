@@ -631,12 +631,7 @@ svg {
   display: none;
   color: var(--text-faint);
 }
-.region-detail {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
+
 .detail-placeholder {
   flex: 1;
   display: flex;
@@ -674,22 +669,10 @@ svg {
   min-width: 0;
   overflow: auto;
 }
-.region-detail .table-scroll {
-  padding: 0 16px;
-  flex: 1;
-  min-height: 0;
-}
-.region-detail table {
-  font-size: 11px;
-}
-.region-detail th,
-.region-detail td {
-  padding: 11px 5px;
-}
-.region-detail .badge {
-  font-size: 11px;
-  padding: 4px;
-}
+
+
+
+
 .detail-note {
   padding: 12px 20px;
   font-size: 11px;
@@ -1513,13 +1496,8 @@ tr:last-child td {
   .kpi strong {
     font-size: 32px;
   }
-  .region-detail table {
-    font-size: 11px;
-  }
-  .region-detail th,
-  .region-detail td {
-    padding: 15px 8px;
-  }
+
+
   .map-legend small {
     display: inline;
   }
@@ -1569,10 +1547,7 @@ tr:last-child td {
   .detail-status {
     padding: 4px 16px 8px;
   }
-  .region-detail th,
-  .region-detail td {
-    padding: 8px 4px;
-  }
+
   .detail-note {
     padding: 8px 16px;
     font-size: 11px;
@@ -1768,12 +1743,8 @@ tr:last-child td {
   .distribution-grid {
     grid-template-columns: minmax(0, 1fr) minmax(230px, 1fr);
   }
-  .region-detail .badge {
-    font-size: 11px;
-  }
-  .region-detail table {
-    font-size: 11px;
-  }
+
+
   .kpi-icon {
     display: none;
   }
@@ -1927,12 +1898,8 @@ tr:last-child td {
   .map-legend span {
     font-size: 11px;
   }
-  .region-detail > header {
-    padding: 9px 12px 5px;
-  }
-  .region-detail > header .eyebrow {
-    display: none;
-  }
+
+
   .detail-placeholder {
     padding: 10px;
   }
@@ -1946,14 +1913,8 @@ tr:last-child td {
   .detail-status {
     padding: 0 12px 5px;
   }
-  .region-detail .table-scroll {
-    padding: 0 10px;
-  }
-  .region-detail th,
-  .region-detail td {
-    padding: 4px;
-    font-size: 11px;
-  }
+
+
   .detail-note {
     display: none;
   }

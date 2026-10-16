@@ -10,6 +10,8 @@ import { RegionalOverview, summarizeRegions, exampleQuestion } from './Briefing'
 import { DataDialog, Comparison, ReportQuality } from './Experience';
 import GuideTour from './GuideTour';
 import GroupDashboard from './GroupDashboard';
+import RegionAnalysis from './RegionAnalysis';
+import { normalizeAgeNames } from './ageSignals.mjs';
 import { userName } from './personas.mjs';
 
 const menus = [
@@ -26,8 +28,8 @@ const adminMenus = [['data', '데이터 관리'], ['activity', '활동 이력'],
 // 메뉴마다 서로 다른 아이콘을 써서 메뉴를 접었을 때도 구분되게 합니다.
 const menuIcons = { records: 'clipboard', activity: 'history' };
 const subtitles = {
-  map: '확인 후보 지역을 표와 지도에서 함께 찾습니다.',
-  chart: '선택한 동의 지표별 근거를 확인하고, 다른 동·기간과 비교합니다.',
+  map: '지도에서 지역을 고르고, 탐지 이후 변화를 추적합니다.',
+  chart: '지역 유형과 소비 변화, 주민들의 사회적 연결을 함께 살펴봅니다.',
   records: '진행 중인 지역 업무를 고르고, 검토 의견과 후속 조치를 기록합니다.',
   services: '확인한 필요에 맞는 복지사업을 찾아 조건을 검토합니다.',
   report: '분석과 사업 검토 결과를 보고서 초안으로 정리합니다.',
@@ -39,7 +41,7 @@ const subtitles = {
 const titles = {
   dashboard: '우리 지역의 작은 변화를 발견하세요',
   map: '지역별 변화 한눈에 살펴보기',
-  chart: '변화의 근거를 자세히 살펴봐요',
+  chart: '지역별 생활 특성 살펴보기',
   services: '필요한 지원으로 연결하는 첫걸음',
   report: '검토 결과를 보고서로 정리하세요',
   data: '자료를 검사하고 반영하세요',
@@ -169,7 +171,7 @@ export default function App() {
     [view, setView] = useState('dashboard'),
     [city, setCity] = useState('강남구'),
     [month, setMonth] = useState(''),
-    [district, setDistrict] = useState('');
+    [district, setDistrict] = useState(''), [age, setAge] = useState('');
   // 메뉴 접힘 상태도 React가 관리합니다. 화면 내용/선택 지역은 그대로 유지됩니다.
   const [navCollapsed, setNavCollapsed] = useState(() => window.innerWidth <= 1100);
   const [analysisTab, setAnalysisTab] = useState('evidence');
@@ -205,7 +207,7 @@ export default function App() {
       .then((d) => {
         if (active) {
           // 관리자는 강남구, 담당자는 소속 지역의 가장 최근 기준월로 시작합니다.
-          setData(d);
+          setData(normalizeAgeNames(d));
           setCity(user.admin ? '강남구' : user.org);
           setMonth(d.months.at(-1) || '');
           setDistrict('');
@@ -217,7 +219,7 @@ export default function App() {
     };
   }, [user]);
   // 지역/월을 단일 context로 관리해 지도와 챗봇이 같은 지역을 보도록 합니다.
-  const context = useMemo(() => ({ city, district, month }), [city, district, month]);
+  const context = useMemo(() => ({ city, district, month, ...(age ? {age} : {}) }), [city, district, month, age]);
   const latestContext = useRef(context);
   latestContext.current = context;
   const rows = useMemo(
@@ -272,7 +274,7 @@ export default function App() {
   const regions = useMemo(() => summarizeRegions(
     data?.assessment || [], data?.geometry[city], city, month, data?.months || [],
   ), [data, city, month]);
-  const dashboardAnalysis = useMemo(() => data && ({ assessment: data.assessment, geometry: data.geometry[city], months: data.months }), [data, city]);
+  const dashboardAnalysis = useMemo(() => data && ({ assessment: data.assessment, geometry: data.geometry[city], months: data.months, analysisScope:data.analysisScope, ageDetections:data.ageDetections }), [data, city]);
   useEffect(() => {
     if (!data || !tourKey || view !== 'dashboard') return;
     let seen = false;
@@ -294,6 +296,7 @@ export default function App() {
   const briefingProps = {
     regions,
     assessment: data?.assessment || [],
+    age, onAgeChange:setAge, onMonthChange:setMonth,
     city,
     month,
     geometry: data?.geometry[city],
@@ -318,7 +321,7 @@ export default function App() {
 
   return (
     <div
-      className={`app-shell with-chat ${navCollapsed ? 'nav-collapsed' : ''} ${view === 'dashboard' ? 'briefing-shell group-shell' : ''}`}
+      className={`app-shell unified-shell with-chat ${navCollapsed ? 'nav-collapsed' : ''} ${view === 'dashboard' ? 'briefing-shell group-shell' : view === 'chart' ? 'region-insights-shell' : view === 'map' ? 'followup-shell' : ''}`}
     >
       <button className="panel-handle menu-handle" onClick={() => setNavCollapsed(v => !v)} aria-label={navCollapsed ? '왼쪽 메뉴 펼치기' : '왼쪽 메뉴 접기'} aria-expanded={!navCollapsed} title={navCollapsed ? '메뉴 펼치기' : '메뉴 접기'}>{navCollapsed ? '›' : '‹'}</button>
       <nav className="sidebar" aria-label="주 메뉴">
@@ -410,7 +413,7 @@ export default function App() {
                   titles[view]
                 )}
               </h1>
-              <p>{view === 'dashboard' ? '복지 담당자가 지역의 고립 위험 신호와 생활 여건을 살펴보고, 필요한 지원을 검토하도록 돕습니다.' : subtitles[view]}</p>
+              <p>{view === 'dashboard' ? '복지 담당자가 지역의 사회적 고립 위험 신호와 생활 여건을 살펴보고, 필요한 지원을 검토하도록 돕습니다.' : subtitles[view]}</p>
             </div>
             <div className={`heading-tools ${view === 'dashboard' ? 'case-heading-tools' : ''}`}>
             <div className="filters">
@@ -429,7 +432,7 @@ export default function App() {
                 </select>
               </label>
               {view === 'dashboard' && <div id="group-period-slot" />}
-              {view !== 'dashboard' && <label>
+              {view === 'chart' && <div id="region-period-slot" />}{view === 'map' && <div id="followup-period-slot" />}{view !== 'dashboard' && view !== 'chart' && view !== 'map' && <label>
                 기준월
                 <select value={month} onChange={(e) => setMonth(e.target.value)}>
                   {data?.months
@@ -467,10 +470,6 @@ export default function App() {
                 </div>
               )}
               {!rows.length && view !== 'dashboard' && <div className="notice" role="status">{city} · {month}의 분석 자료가 없습니다. 지역 또는 기준월을 확인해 주세요.</div>}
-              {view === 'chart' && <div className="view-tabs" role="tablist" aria-label="지역 분석 보기">
-                {[['evidence', '상세 근거'], ['compare', '기간·지역 비교']].map(([key, label]) => <button key={key} role="tab" aria-selected={analysisTab === key} className={analysisTab === key ? 'active' : ''} onClick={() => setAnalysisTab(key)}>{label}</button>)}
-              </div>}
-              {view === 'chart' && analysisTab === 'compare' && <div className="scroll-view"><Comparison key={city + month + district} data={data} context={context} onChatScope={setChatScreenScope} /></div>}
               {view === 'records' && <Records
                 key={user.id + city}
                 context={context}
@@ -480,103 +479,9 @@ export default function App() {
                 onSelect={(item) => { setCity(item.city); setDistrict(item.district); setMonth(item.month); }}
                 onView={go}
               />}
-              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onActiveGroup={setChatGroup} onRegion={group => {
-                const name = group.code === '1123074' ? '일원2동' : group.district;
-                const available = data.geometry[city]?.units.find(u => u.n === group.district || u.n === name);
-                setDistrict(available?.n || group.district); setMonth(group.month); go('chart');
-              }} />}
+              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onActiveGroup={setChatGroup} onMonthChange={setMonth} />}
               {view === 'map' && <RegionalOverview {...briefingProps} />}
-              {view === 'chart' && analysisTab === 'evidence' && (
-                <div className="scroll-view">
-                  <section className="card analysis-card">
-                    <header>
-                      <h2>지역 분석 근거</h2>
-                      <select
-                        aria-label="분석 지역 선택"
-                        value={district}
-                        onChange={(e) => select(e.target.value)}
-                      >
-                        <option value="">읍·면·동 선택</option>
-                        {data.geometry[city]?.units.map((u) => (
-                          <option key={u.n}>{u.n}</option>
-                        ))}
-                      </select>
-                    </header>
-                    <div className="data-source-strip"><span>기준월 {month} · 동별 통화·문자·이동 분석 결과</span><button className="text-button" onClick={() => openSupport()}>데이터 기준 보기</button></div>
-                    {selectedRows.length ? (
-                      <>
-                        <div className="analysis-title">
-                          <h2>{district}</h2>
-                          <span className="pill">{month} · 분석 결과</span>
-                        </div>
-                        <EvidenceTable rows={selectedRows} />
-                        <p className="hint">{selectedRows.filter(r => r.is_risk_signal).length}개 지표가 후보 기준에 해당합니다. 전월 증가한 지표도 지역 전체의 공통 흐름과 과거 이력을 반영하면 후보가 될 수 있습니다. 후보는 지표 묶음을 함께 확인한 결과입니다.</p>
-                        <p className="hint">
-                          시·군·구 전체의 공통 흐름을 뺀 평소 대비 차이:{' '}
-                          {selectedRows
-                            .map((r) => `${r.metric_label} ${number(r.relative_change_pp)}`)
-                            .join(' · ')}
-                        </p>
-                        <div className="workflow-actions">
-                          <button
-                            className="primary"
-                            disabled={busy || workflow.workflow_complete}
-                            onClick={() => mutate('/workflow/start')}
-                          >
-                            ① 분석 확인 저장
-                          </button>
-                          <button
-                            className="secondary"
-                            disabled={
-                              busy || !workflow.done?.includes(0) || workflow.workflow_complete
-                            }
-                            onClick={() => mutate('/workflow/confirm')}
-                          >
-                            ② 근거 검토 완료
-                          </button>
-                          <button
-                            className="text-button"
-                            disabled={!workflow.done?.includes(1)}
-                            onClick={() => go('services')}
-                          >
-                            사업 매칭 검토
-                            <Icon name="arrow" size={17} />
-                          </button>
-                        </div>
-                        <p className="hint">
-                          {workflow.done?.includes(1)
-                            ? '두 단계를 모두 마쳤습니다 · 사업 매칭 검토로 이동하세요.'
-                            : workflow.done?.includes(0)
-                              ? '① 완료 · 아래 근거와 추이를 확인한 뒤 ② 근거 검토 완료를 누르세요.'
-                              : '① 분석 확인 저장: 이 동을 내 업무로 등록합니다(업무 기록에 나타남). ② 근거 검토 완료: 근거를 확인했다고 기록하며, 이후 사업 매칭 검토를 할 수 있습니다.'}
-                        </p>
-                      </>
-                    ) : (
-                      <div className="empty">
-                        분석할 지역을 선택하세요. 실제 자료가 없는 지역은 분석하지 않습니다.
-                      </div>
-                    )}
-                  </section>
-                  {selectedRows.length > 0 && <div className="trend-grid">{
-                    selectedRows.map((r) => (
-                      <section className="card trend-card" key={r.metric_label}>
-                        <header>
-                          <h2>{r.metric_label} · 최근 분석월 추이</h2>
-                          <span>전월 변화율 (%)</span>
-                        </header>
-                        <Trend
-                          assessment={data.assessment.filter(r => r['기준연월'] <= month)}
-                          district={district}
-                          metric={r.metric_label}
-                        />
-                      </section>
-                    ))}</div>}
-                  <p className="hint">
-                    지역 집계자료의 변화이며 개인의 고립 여부를 판정하지 않습니다. 계절·행사·집계
-                    정의 변화는 추가 확인이 필요합니다.
-                  </p>
-                </div>
-              )}
+              {view === 'chart' && <div className="scroll-view"><RegionAnalysis city={city} district={district} onSelect={setDistrict} age={age} onAgeChange={setAge}/></div>}
               {view === 'services' && (
                 <Services
                   key={user.id + JSON.stringify(context)}

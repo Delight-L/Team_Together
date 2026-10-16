@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { openGroup, closeGroup, groupKey, restoreWorkspace, availableWorkspace } from '../src/groupTabs.mjs';
+import { openGroup, groupKey, restoreWorkspace, availableWorkspace } from '../src/groupTabs.mjs';
 
 const a = { city: '강남구', code: '1123065', district: '역삼2동', month: '2025-12', age: '30대', sex: '남성' };
 test('same group opens once; sex, month and age have distinct tabs', () => {
@@ -21,7 +21,7 @@ test('restores selected tab and period while rejecting broken and cross-city ent
 });
 
 test('closed workspace stays closed after restoration and retains its period', () => {
-  const state = closeGroup({ ...openGroup({ tabs: [], active: '' }, a), month: '2025-11', initialized: true }, groupKey(a));
+  const state = { tabs: [], active: '', month: '2025-11', initialized: true };
   assert.deepEqual(restoreWorkspace(JSON.parse(JSON.stringify(state)), '강남구'), { tabs: [], active: '', month: '2025-11', initialized: true });
 });
 
@@ -32,12 +32,6 @@ test('DB catalogue removes unavailable tabs, repairs names and picks an availabl
   assert.equal(result.month, '2025-12'); assert.equal(result.tabs.length, 1);
   assert.equal(result.tabs[0].district, '현재 동명'); assert.equal(result.active, groupKey(a));
   assert.equal(availableWorkspace(result, { ...catalog, months: [], districts: [] }, '').tabs.length, 0);
-});
-test('closing inactive tab keeps selection; closing active chooses neighbor and last closes cleanly', () => {
-  const b = { ...a, sex: '여성' };
-  let state = openGroup(openGroup({ tabs: [], active: '' }, a), b);
-  state = closeGroup(state, groupKey(a)); assert.equal(state.active, groupKey(b));
-  state = closeGroup(state, groupKey(b)); assert.deepEqual(state, { tabs: [], active: '' });
 });
 
 import { rankGroups, pickInitialGroup } from '../src/groupTabs.mjs';

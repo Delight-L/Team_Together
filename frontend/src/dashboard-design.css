@@ -18,20 +18,14 @@
 
 /* Warm file cover and raised tabs, with CSS-only paper and clip details. */
 .group-shell .gd-tabbar { align-self: end; display: flex; height: 50px; padding: 0 12px 0 56px; gap: 8px; background: url('./assets/dossier-cover.svg') center bottom / 100% 50px no-repeat; border-radius: 0; overflow: hidden; }
-.group-shell .gd-tabs-window { flex: 1; min-width: 0; height: 50px; overflow: hidden; display: flex; align-items: center; }
+.group-shell .gd-tabs-window { flex: 1; min-width: 0; height: 50px; overflow: hidden; }
 .group-shell .gd-tabs-window::-webkit-scrollbar { display: none; }
 .group-shell .gd-tabs-track { position: relative; display: flex; align-items: stretch; width: max-content; height: 50px; }
 .group-shell .gd-tab-controls { display: flex; align-items: center; gap: 3px; flex-shrink: 0; margin-left: auto; padding-bottom: 4px; }
 .group-shell .gd-tab-controls .gd-tab-arrow { display: grid; place-items: center; width: 28px; height: 32px; padding: 0; border: 1px solid #dec8a8; border-radius: 7px; background: #fffaf2; color: #2563eb; }
 .group-shell .gd-tab-controls .gd-tab-arrow:disabled { opacity: .35; cursor: default; }
 .group-shell .gd-tab-arrow.previous svg { transform: rotate(180deg); }
-.group-shell .gd-tabbar .gd-add { flex-shrink: 0; margin-left: 6px; height: 32px; min-width: 32px; }
-.group-shell .gd-tabs-label { display: none; }
 .group-shell .gd-tabbar .gd-tab { position: relative; flex-shrink: 0; margin: 3px 0 0; height: 47px; border: 0; border-radius: 0; transform: none; background: url('./assets/dossier-tab-inactive.svg') center bottom / 100% 100% no-repeat; box-shadow: none; padding: 0 18px; }
-.group-shell .gd-tabbar .gd-group-tab { width: 272px; }
-.group-shell .gd-tabbar .gd-group-tab > button:first-child { min-width: 0; overflow: hidden; }
-.group-shell .gd-tabbar .gd-group-tab > button:first-child > span { min-width: 0; }
-.group-shell .gd-tabbar .gd-group-tab b { overflow: hidden; text-overflow: ellipsis; }
 .group-shell .gd-tabbar .gd-tab > button { transform: none; }
 .group-shell .gd-tabbar .gd-tab > button:first-child { height: 44px; padding: 8px 6px; color: #2a2b2d; }
 .group-shell .gd-tabbar .gd-tab b { font-size: 13px; }
@@ -42,32 +36,23 @@
 .group-shell .gd-tabbar .gd-tab small { color: inherit; font-size: 13px; }
 .group-shell .gd-tabbar .gd-tab > button + button { display: grid; place-items: center; flex-shrink: 0; align-self: center; width: 28px; height: 44px; padding: 0; color: #a8bee5; line-height: 1; }
 .group-shell .gd-tabbar .gd-tab > button + button svg { width: 18px; height: 18px; }
-.group-shell .gd-tabbar .gd-evidence-tab { width: 196px; min-width: 0; }
-.group-shell .gd-tabbar .gd-files-tab { width: 140px; min-width: 0; }
-.group-shell .gd-add { color: #2563eb; margin-left: 8px; }
 .group-shell .gd-case { position: relative; background: #fff; border: 7px solid #f2dfc4; border-top: 0; border-radius: 0 0 18px 18px; box-shadow: 0 3px 5px #8c6a2521; padding: 18px 18px 10px; overflow: hidden; container-type: size; }
 .group-shell .gd-case:not(.gd-evidence-panel):not(.gd-files-panel) { align-self: stretch; height: auto; max-height: none; }
-.group-shell .gd-summary { position: relative; height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(auto, 1fr) auto; border: 1px solid #edf0f6; border-radius: 8px; padding: 12px 10px 10px 30px; background: linear-gradient(140deg, #fff, #fefefe); gap: 10px; }
+.group-shell .gd-summary { position: relative; height: 100%; min-height: 0; grid-template-rows: minmax(140px, .55fr) minmax(0, 1fr); border: 1px solid #edf0f6; border-radius: 8px; padding: 12px 10px 10px 30px; background: linear-gradient(140deg, #fff, #fefefe); gap: 10px; }
 .group-shell .gd-case:has(.gd-summary:not([hidden]))::before { content: ''; position: absolute; z-index: 2; top: 4px; left: 10px; width: 14px; height: 42px; border: 3px solid #b6b9be; border-right-color: #f0f0f0; border-radius: 12px; transform: rotate(-13deg); box-shadow: 2px 2px 2px #73737322, inset 2px 0 0 #eee; pointer-events: none; }
 .group-shell .gd-case:has(.gd-summary:not([hidden]))::after { content: ''; position: absolute; z-index: 3; top: 8px; left: 14px; width: 7px; height: 34px; border: 2px solid #c9c9ca; border-top: 0; border-left-color: #f6f6f6; border-radius: 0 0 8px 8px; transform: rotate(-13deg); pointer-events: none; }
 
 /* Top row: primary change, trend, share. Values still come from the API. */
-.group-shell .gd-summary .gd-overview { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); padding: 0; gap: 12px; align-items: stretch; }
-.group-shell .gd-overview-copy { grid-column: auto; min-width: 0; }
+.group-shell .gd-summary .gd-overview { padding: 0; align-items: stretch; }
 .group-shell .gd-case-heading { flex-wrap: nowrap; margin: 0 0 8px; }
 .group-shell .gd-case-heading h2 { color: #0c1837; font-size: clamp(21px, 1.7vw, 30px); line-height: 1.2; }
-.group-shell .gd-badge { background: #e4f8fc; color: #009fcc; }
-.group-shell .gd-candidate-badge { background: #ffecec; color: #f02b2b; }
-.group-shell .gd-candidate-note { background: #fff0ef; color: #d62d2d; padding: 7px 10px; font-size: 11px; line-height: 1.5; margin: 0 0 10px; }
-.group-shell .gd-headline-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .group-shell .gd-root h3.gd-narrative { font-size: clamp(26px, 2.4vw, 44px); letter-spacing: -1.5px; line-height: 1.15; color: #0c1837; margin: 0; }
-.group-shell .gd-metric-label { color: #71829e; font-size: 14px; font-weight: 600; margin: 4px 0 0; line-height: 1.3; }
+
 .group-shell .gd-support-link { display: flex; justify-content: center; align-items: center; gap: 20px; flex-shrink: 0; padding: 11px 18px; font-size: 16px; background: var(--blue); box-shadow: 0 4px 12px #0876ff24; }
 .group-shell .gd-support-link:hover { filter: brightness(1.08); }
-.group-shell .gd-caption { color: #71829e; font-size: 10px; line-height: 1.6; margin: 5px 0 0; }
 .group-shell .gd-summary .gd-mini-trend, .group-shell .gd-summary .gd-mini-share { border: 1px solid #edf0f5; border-radius: 8px; padding: 12px; background: linear-gradient(140deg, #fff, #fbfcfe); }
 .group-shell .gd-overview h4 { color: #12213e; font-size: 13px; margin-bottom: 10px; }
-.group-shell .gd-summary .gd-mini-trend .gd-line { width: 100%; height: 104px; }
+.group-shell .gd-summary .gd-mini-trend .gd-line { width: 100%; }
 .group-shell .gd-summary .gd-line text { font-size: 15px; font-weight: 600; fill: #71829e; }
 .group-shell .gd-mini-trend small, .group-shell .gd-mini-share p { color: #71829e; font-size: 11px; }
 .group-shell .gd-mini-share strong { color: #0c1837; font-size: 32px; margin: 14px 0 12px; }
@@ -75,12 +60,12 @@
 .group-shell .gd-share-track i { background: linear-gradient(90deg, #0989ff, #00adff); border-radius: inherit; }
 
 /* Household context and district comparison share an aligned lower row. */
-.group-shell .gd-summary .gd-context-cards { grid-template-columns: 1.07fr 1fr; gap: 12px; flex: 0 0 auto; }
-.group-shell .gd-summary .gd-context-cards > article { padding: 14px 15px; border: 1px solid #ebeff5; border-radius: 8px; background: linear-gradient(145deg, #fff, #fcfdff); }
-.group-shell .gd-summary .gd-context-cards h3 { color: #12213e; font-size: 19px; }
+.group-shell .gd-summary .gd-context-cards { grid-template-columns: 1.07fr 1fr; gap: 12px; }
+.group-shell .gd-summary .gd-context-cards > article { border: 1px solid #ebeff5; border-radius: 8px; background: linear-gradient(145deg, #fff, #fcfdff); }
+.group-shell .gd-summary .gd-context-cards h3 { color: #12213e; }
 .group-shell .gd-context-cards header { gap: 9px; }
 .group-shell .gd-context-cards p { color: #71829e; font-size: 14px; margin: 7px 0; }
-.group-shell .gd-summary .gd-context-cards h4 { color: #12213e; margin: 10px 0 8px; }
+.group-shell .gd-summary .gd-context-cards h4 { color: #12213e; }
 .group-shell .gd-households { height: 40px; border-radius: 8px; overflow: hidden; }
 .group-shell .gd-households span:nth-child(1) { background: #073dff !important; }
 .group-shell .gd-households span:nth-child(2) { background: #61aaff !important; }
@@ -88,19 +73,9 @@
 .group-shell .gd-households span:nth-child(4) { background: #00c4cf !important; }
 .group-shell .gd-households span:not(:first-child) { color: #082954; }
 .group-shell .gd-household-legend { color: #4b6488; font-size: 12px; gap: 10px; }
-.group-shell .gd-summary .gd-senior { background: linear-gradient(115deg, #f1f8ff, #eaf5ff); border: 1px solid #d7e9ff; border-radius: 8px; padding: 12px 14px; margin: 17px 0 10px; color: #617fa6; }
-.group-shell .gd-summary .gd-senior strong { color: #0c1837; font-size: 31px; margin: 7px 0 4px; }
-.group-shell .gd-summary .gd-compare { border: 1px solid #edf0f5; border-radius: 8px; padding: 7px 12px; margin: 7px 0; }
-.group-shell .gd-summary .gd-context-cards .gd-compare h4 { margin: 0 0 5px; line-height: 1.3; }
-.group-shell .gd-compare-legend, .group-shell .gd-household-legend { margin: 7px 0; }
-.group-shell .gd-summary .gd-compare-row { margin: 4px 0; line-height: 1.3; }
-
-.group-shell .gd-compare-row { grid-template-columns: 48px minmax(0, 1fr) 66px; font-size: 12px; color: #6f85a4; }
-.group-shell .gd-compare-row b { color: #20304d; font-size: 12px; }
-.group-shell .gd-signed-track { height: 12px; border-radius: 0; background: #f0f5fc; }
-.group-shell .gd-signed-track::before { border-color: #6d7e96; z-index: 1; }
-.group-shell .gd-signed-track i { background: #1769ff; border: 1px solid #0757ff; border-radius: 2px; }
-.group-shell .common .gd-signed-track i { background: #aabbd3; border-color: #8ea5c7; }
+.group-shell .gd-summary .gd-senior { background: linear-gradient(115deg, #f1f8ff, #eaf5ff); border: 1px solid #d7e9ff; border-radius: 8px; color: #617fa6; }
+.group-shell .gd-summary .gd-senior strong { color: #0c1837; }
+.group-shell .gd-household-legend { margin: 7px 0; }
 .group-shell .gd-context-cards .gd-context-note { font-size: 12px; line-height: 1.5; margin-bottom: 0; }
 
 /* Assistant stays visually separate from the paper workspace. */
@@ -108,7 +83,7 @@
 .group-shell .bomi-chat-head > svg { flex-shrink: 0; color: #2563eb; }
 
 .bomi-welcome-character { display: none; }
-.group-shell .bomi-welcome { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 14px; background: #f8fbfe; border-radius: 10px; }
+.group-shell .bomi-welcome { display: grid; grid-template-columns: 100px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 125px; padding: 14px; background: #f8fbfe; border-radius: 10px; }
 .group-shell .bomi-welcome-character { display: block; width: 100px; height: 100px; object-fit: contain; }
 
 .group-shell button:focus-visible { outline: 2px solid #075dff; outline-offset: 3px; }
@@ -119,7 +94,6 @@
   .group-shell .gd-summary .gd-senior strong { line-height: 1.15; margin: 5px 0 4px; }
   .group-shell .gd-context-cards p { margin: 5px 0; line-height: 1.5; }
   .group-shell .gd-summary .gd-context-cards h4 { margin-top: 7px; }
-  .group-shell .gd-summary .gd-context-cards .gd-compare h4 { margin-top: 0; }
   .group-shell .gd-summary .gd-mini-trend .gd-line { height: 90px; }
   .group-shell .gd-case { padding-bottom: 10px; }
 }
@@ -132,16 +106,14 @@
   .group-shell .gd-process .gd-step-icon svg { width: 26px; }
   .group-shell .gd-process span:not(.gd-step-icon) { font-size: 10px; }
   .group-shell .gd-case { padding: 20px 16px; }
-  .group-shell .gd-headline-row { align-items: flex-start; flex-direction: column; gap: 8px; }
   .group-shell .gd-support-link { font-size: 12px; padding: 8px 12px; }
   .group-shell .gd-summary .gd-context-cards h3 { font-size: 16px; }
+  .group-shell .bomi-welcome { grid-template-columns: 72px minmax(0, 1fr); }
   .group-shell .bomi-welcome-character { width: 72px; }
 }
 @media (max-width: 1150px) {
 
   .group-shell .gd-summary .gd-overview { grid-template-columns: 1fr 1fr; }
-  .group-shell .gd-overview-copy { grid-column: 1 / -1; }
-  .group-shell .gd-headline-row { flex-direction: row; align-items: center; }
   .group-shell .gd-summary .gd-context-cards { grid-template-columns: 1fr; }
   .group-shell .gd-process .gd-step-icon { display: none; }
   .group-shell .gd-process span:not(.gd-step-icon) { display: block; font-size: 0; }
@@ -159,39 +131,42 @@
   .group-shell .gd-summary { padding: 17px 10px 10px; }
   .group-shell .gd-case-heading { flex-wrap: wrap; }
   .group-shell .gd-files-panel .gd-file-list { grid-template-columns: 1fr 1fr; }
+  .group-shell .bomi-welcome { grid-template-columns: 92px minmax(0, 1fr); }
   .group-shell .bomi-welcome-character { width: 92px; }
 }
 @media (max-width: 480px) {
-  .group-shell .gd-headline-row { flex-direction: column; align-items: stretch; }
   .group-shell .gd-summary .gd-overview { grid-template-columns: 1fr; }
   .group-shell .gd-files-panel .gd-file-list { grid-template-columns: 1fr; }
   .group-shell .gd-process li > button { flex-direction: row; }
 }
 
 /* Fit the file to the available panel; smaller panels show one section per page. */
-.group-shell .gd-summary-pages { display: none; }
-.group-shell .gd-summary .gd-context-cards { min-height: 0; margin: 0; }
+.group-shell .gd-summary .gd-context-cards { margin: 0; }
 .group-shell .gd-summary .gd-context-cards > article { padding: 10px 12px; }
 .group-shell .gd-summary .gd-context-cards h3 { font-size: 17px; }
 .group-shell .gd-summary .gd-context-cards p { font-size: 11px; margin: 4px 0; line-height: 1.4; }
 .group-shell .gd-summary .gd-context-cards h4 { margin: 6px 0; font-size: 12px; }
 .group-shell .gd-summary .gd-households { height: 30px; }
-.group-shell .gd-summary .gd-household-legend, .group-shell .gd-summary .gd-compare-legend { margin: 5px 0; font-size: 10px; }
+.group-shell .gd-summary .gd-household-legend { margin: 5px 0; font-size: 10px; }
 .group-shell .gd-summary .gd-senior { padding: 6px 10px; margin: 6px 0; }
 .group-shell .gd-summary .gd-senior strong { font-size: 26px; margin: 4px 0; line-height: 1.15; }
-.group-shell .gd-summary .gd-compare { padding: 5px 10px; margin: 5px 0; }
-.group-shell .gd-summary .gd-compare-row { margin: 3px 0; }
-.group-shell .gd-summary .gd-mini-trend .gd-line { height: 100px; }
-.group-shell .gd-axis-note { display: block; color: #71829e; font-size: 11px; }
-.group-shell .gd-summary .gd-mini-share strong { margin: 8px 0; font-size: 28px; }
+.group-shell .gd-summary .gd-mini-share strong { font-size: 28px; }
 .group-shell .gd-summary .gd-case-heading h2 { font-size: 24px; }
 .group-shell .gd-summary .gd-narrative { font-size: 34px; }
-.group-shell .gd-summary .gd-candidate-note { padding: 5px 8px; margin-bottom: 6px; font-size: 10px; }
-.group-shell .gd-summary .gd-metric-label { font-size: 12px; }
-.group-shell .gd-summary .gd-support-link { font-size: 13px; padding: 9px 12px; gap: 10px; }
-.group-shell .gd-summary .gd-caption { font-size: 9px; line-height: 1.4; }
 .group-shell .gd-tabbar { scrollbar-width: none; }
 .group-shell .gd-tabbar::-webkit-scrollbar { display: none; }
+
+@container (max-width: 850px) or (max-height: 420px) {
+  .group-shell .gd-summary { display: flex; padding: 12px; gap: 8px; }
+  .group-shell .gd-summary[data-summary-page='0'] .gd-context-cards,
+  .group-shell .gd-summary:not([data-summary-page='0']) .gd-overview { display: none; }
+  .group-shell .gd-summary .gd-context-cards { display: block; flex: 1; }
+  .group-shell .gd-summary .gd-context-cards > article { height: 100%; }
+  .group-shell .gd-summary .gd-overview { flex: 1; min-height: 0; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; }
+  .group-shell .gd-summary .gd-context-cards p { font-size: 12px; }
+  .group-shell .gd-summary .gd-households { height: 36px; }
+  .group-shell .gd-summary .gd-senior { padding: 10px; margin: 12px 0; }
+}
 
 @container (max-height: 370px) {
   .group-shell .gd-summary .gd-case-heading h2 { font-size: 20px; }
@@ -207,8 +182,8 @@
 .group-shell .gd-files-panel .gd-directory > p { font-size: 11px; line-height: 1.4; }
 .group-shell .gd-files-panel .gd-directory input,
 .group-shell .gd-files-panel .gd-directory select { padding: 7px 9px; }
-.group-shell .gd-files-panel .gd-file-list { max-height: none; overflow: hidden; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); grid-auto-rows: minmax(62px, 1fr); }
-.group-shell .gd-files-panel .gd-file-list button { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 5px; min-height: 62px; padding: 8px; }
+.group-shell .gd-files-panel .gd-file-list { max-height: none; overflow: hidden; gap: 8px; }
+.group-shell .gd-files-panel .gd-file-list button { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 5px; padding: 8px; }
 .group-shell .gd-files-panel .gd-file-list button > svg { grid-column: 1; grid-row: 1 / 3; width: 18px; }
 .group-shell .gd-files-panel .gd-file-list button > span:nth-child(2) { grid-column: 2; grid-row: 1 / 3; min-width: 0; }
 .group-shell .gd-files-panel .gd-file-list button > .gd-candidate { grid-column: 3; grid-row: 1; }
@@ -216,227 +191,64 @@
 .group-shell .gd-files-panel .gd-file-list button strong { font-size: 12px; }
 .group-shell .gd-files-panel .gd-file-list button small { font-size: 10px; }
 .group-shell .gd-files-panel .gd-source { padding-top: 5px; font-size: 9px; }
-.group-shell .gd-evidence-panel .gd-more { gap: 8px; }
 .group-shell .gd-evidence-heading { padding: 8px 12px; }
 .group-shell .gd-evidence-heading h2 { font-size: 17px; }
 .group-shell .gd-evidence-heading p { font-size: 11px; }
-.group-shell .gd-evidence-navigation { padding: 0; }
-.group-shell .gd-evidence-content > details { height: 100%; min-height: 0; padding: 12px; font-size: 12px; }
-.group-shell .gd-evidence-content > details[open] > summary { font-size: 14px; margin-bottom: 6px; }
-.group-shell .gd-evidence-content p { margin: 5px 0; line-height: 1.5; }
-.group-shell .gd-evidence-content th, .group-shell .gd-evidence-content td { padding: 4px 6px; font-size: 12px; }
-.group-shell .gd-evidence-content .gd-review label { margin: 6px 0; }
-.group-shell .gd-evidence-content .gd-review textarea { height: clamp(50px, 18cqh, 100px); }
-.group-shell .gd-evidence-content .gd-activity h4 { margin: 6px 0; font-size: 12px; }
-.group-shell .gd-evidence-content .gd-day { margin: 5px 0; line-height: 15px; }
-.group-shell .gd-evidence-content .gd-activity .gd-line { height: 100px; }
-.group-shell .gd-evidence-content .gd-composition { gap: 6px 14px; }
+
+
+
+
+
+
+
+
+
+
+
 
 @container (max-height: 400px) {
   .group-shell .gd-evidence-heading { padding: 5px 10px; }
   .group-shell .gd-evidence-heading h2 { font-size: 15px; }
-  .group-shell .gd-evidence-content > details { padding: 8px; font-size: 11px; }
-  .group-shell .gd-evidence-content p { margin: 3px 0; line-height: 1.4; }
-  .group-shell .gd-evidence-content .gd-review label { margin: 4px 0; }
-  .group-shell .gd-evidence-content .gd-review textarea { height: 40px; min-height: 0; }
-  .group-shell .gd-evidence-content .gd-review-actions button { padding: 7px 10px; font-size: 11px; }
-  .group-shell .gd-evidence-content .gd-activity .gd-line { height: 80px; }
+
+
+
+
+
+
 }
 
 /* Keep the measured file grid and population cards aligned with the new cover. */
 .group-shell .gd-files-panel .gd-file-list {
   grid-template-columns: repeat(var(--gd-cols, 4), minmax(0, 1fr));
-  /* 화면에 들어가는 카드만 페이지로 표시합니다. */
   grid-template-rows: repeat(var(--gd-rows, 3), minmax(0, 1fr));
-  grid-auto-rows: auto; overflow: hidden; min-height: 0;
+  grid-auto-rows: auto;
 }
-.group-shell .gd-files-panel .gd-directory { overflow: hidden; }
 .group-shell .gd-files-panel .gd-file-list button { min-height: 0; }
 .group-shell .gd-summary .gd-population-grid .gd-senior { margin: 0; }
 .group-shell .gd-process li.current > button { background: #f0f6ff; }
 .group-shell .gd-process li:nth-child(2) .gd-step-icon { color: #762bff; }
 .group-shell .gd-process li:nth-child(3) .gd-step-icon { color: #00aaca; }
-/* 아래 두 카드는 내용 높이만큼 커지므로 카드 안 스크롤을 두지 않습니다(배율에 따라 1px 넘쳐 스크롤바가 생기던 문제). */
-.group-shell .gd-evidence-content > details { overflow-y: auto; scrollbar-width: thin; }
-
-/* 비중 카드(B안): 값과 전월 대비 %p, 월별 추이선 */
-.group-shell .gd-share-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.group-shell .gd-summary .gd-share-head strong { margin: 6px 0 2px; }
-.group-shell .gd-share-delta { padding: 2px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; background: var(--status-pending-bg); color: var(--status-pending); }
-.group-shell .gd-share-delta.down { background: var(--status-candidate-bg); color: var(--status-candidate); }
-.group-shell .gd-summary .gd-mini-share .gd-line { width: 100%; height: 100px; }
-.group-shell .gd-mini-share .gd-share-insight { margin: 4px 0 0; color: var(--text-sub); font-weight: 600; }
-@container (max-height: 420px) { .group-shell .gd-mini-share .gd-share-insight { display: none; } }
-
-/* 아래 카드는 내용 높이만큼, 남는 높이는 위쪽 추이·비중 그래프가 채웁니다. */
-.group-shell .gd-summary .gd-mini-trend, .group-shell .gd-summary .gd-mini-share { display: flex; flex-direction: column; min-height: 0; }
-.group-shell .gd-summary .gd-mini-trend .gd-line, .group-shell .gd-summary .gd-mini-share .gd-line { flex: 1 1 auto; min-height: 72px; max-height: 260px; }
-/* 왼쪽 요약 칸이 높아지면 제목·설명은 위에, 핵심 수치와 버튼은 그래프 아래선에 맞춰 아래에 둡니다. */
-.group-shell .gd-summary .gd-overview-copy { display: flex; flex-direction: column; }
-/* 남는 높이를 수치 줄 위아래로 나눠 한쪽에 큰 빈칸이 생기지 않게 합니다. */
-.group-shell .gd-summary .gd-overview-copy .gd-facts, .group-shell .gd-summary .gd-overview-copy .gd-headline-row { margin-top: auto; }
-/* 핵심 수치 줄: 큰 수치 위에 세 칸으로 둡니다. 칸이 좁으면 아래로 줄바꿈합니다. */
-.group-shell .gd-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0 14px; }
-.group-shell .gd-facts > div { padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); min-width: 0; }
-.group-shell .gd-facts dt { font-size: 11px; color: var(--text-muted); white-space: normal; word-break: keep-all; line-height: 1.5; }
-.group-shell .gd-facts dd { margin: 3px 0 0; display: flex; flex-direction: column; }
-.group-shell .gd-facts dd b { font-size: 17px; color: var(--text-strong); line-height: 1.3; }
-.group-shell .gd-facts dd small { font-size: 11px; color: var(--text-muted); white-space: normal; word-break: keep-all; line-height: 1.5; }
-
-/* 모바일은 위아래로 스크롤하므로 높이와 관계없이 보여 주고 한 칸씩 쌓습니다. */
-@media (max-width: 640px) { .group-shell .gd-summary .gd-facts { display: grid; grid-template-columns: minmax(0, 1fr); } }
-/* 추이·비중 카드의 설명 문구는 카드 아래쪽에 맞춥니다. */
-.group-shell .gd-summary .gd-mini-trend .gd-axis-note { margin-top: 6px; }
-
-/* ── 모바일(640px 이하) ──────────────────────────────────────────
-   왼쪽 메뉴는 화면 아래 탭 막대로 옮기고, 본문은 화면 너비를 모두 쓰며 위아래로 스크롤합니다.
-   종합 현황은 한 열로 쌓아 카드가 화면 높이에 잘리지 않게 합니다. */
-@media (max-width: 640px) {
-  .app-shell, .app-shell.with-chat, .app-shell.chat-drawer, .app-shell.group-shell { grid-template-columns: minmax(0, 1fr); }
-  .app-shell .main-wrap { grid-column: 1; padding-bottom: 64px; }
-  .app-shell .menu-handle { display: none; }
-  .app-shell .sidebar {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; height: 60px; width: 100%;
-    display: flex; flex-direction: row; align-items: stretch; gap: 0; padding: 0 4px;
-    overflow-x: auto; overflow-y: hidden; border-right: 0; border-top: 1px solid #e3e8f0; background: #fff;
-    scrollbar-width: none;
-  }
-  .app-shell .sidebar::-webkit-scrollbar { display: none; }
-  .app-shell .sidebar .logo-toggle, .app-shell .sidebar .workspace-tag, .app-shell .sidebar .nav-label,
-  .app-shell .sidebar-bottom .user-avatar, .app-shell .sidebar-bottom > div { display: none; }
-  .app-shell .sidebar > button {
-    flex: 1 0 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-    margin: 0; padding: 6px 2px; border-radius: 0; min-height: 0; height: 60px;
-  }
-  .app-shell .sidebar > button span { display: block; font-size: 10px; line-height: 1.2; white-space: nowrap; }
-  .app-shell .sidebar > button.active { box-shadow: inset 0 3px var(--blue); }
-  .app-shell .sidebar-bottom { position: static; margin: 0; padding: 0; border: 0; background: none; display: flex; align-items: center; }
-  .app-shell .sidebar-bottom button { width: 48px; height: 60px; }
-  .chat-fab { bottom: 76px; right: 14px; }
-
-  .app-shell.group-shell .main-content { overflow-y: auto; overflow-x: hidden; padding: 12px; }
-  .group-shell .gd-root, .group-shell .gd-workspace, .group-shell .gd-case { overflow: visible; height: auto; max-height: none; }
-  .group-shell .gd-workspace { display: flex; flex-direction: column; }
-  .group-shell .gd-process span { display: none; }
-  .group-shell .gd-case { padding: 10px; }
-  .group-shell .gd-summary { height: auto; display: flex; flex-direction: column; gap: 12px; padding: 12px; }
-  .group-shell .gd-summary .gd-overview, .group-shell .gd-summary .gd-context-cards { grid-template-columns: minmax(0, 1fr); }
-  .group-shell .gd-summary .gd-overview-copy { grid-column: auto; }
-  .group-shell .gd-summary .gd-headline-row { flex-direction: column; align-items: stretch; gap: 10px; }
-  .group-shell .gd-summary .gd-support-link { width: 100%; justify-content: center; }
-  .group-shell .gd-summary .gd-mini-trend .gd-line, .group-shell .gd-summary .gd-mini-share .gd-line { height: 150px; flex: none; }
-  .group-shell .gd-summary .gd-context-cards > article { overflow: visible; height: auto; }
-  /* 좁은 탭에는 이름만 한 줄로 보여 줍니다(전체 이름은 탭의 title). */
-  .gd-tabbar .gd-tab > button:first-child > svg, .gd-tabbar .gd-tab small { display: none; }
-  .gd-tabbar .gd-tab > button:first-child { min-width: 0; padding: 7px 8px; }
-  .gd-tabbar .gd-tab > button:first-child > span { min-width: 0; }
-  .gd-tabbar .gd-tab b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-}
-
-/* 탭 이름은 너비가 줄면 한 줄 말줄임표로 줄입니다. */
-.group-shell .gd-tabbar .gd-tab > button:first-child { min-width: 0; overflow: hidden; }
-.group-shell .gd-tabbar .gd-tab > button:first-child > span { min-width: 0; overflow: hidden; }
-.group-shell .gd-tabbar .gd-tab b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.group-shell .gd-tabbar .gd-tab small { white-space: nowrap; flex-shrink: 0; }
-.group-shell .gd-tabbar .gd-tab { padding-left: 12px; padding-right: 12px; }
-
-/* 가독성 하한: 판정 사유·주의 문구·범례가 화면 크기별 축소 규칙에 밀려 9~10px로 작아지지 않게 합니다.
-   설명 문장은 12px, 배지·범례·축 글자는 11px 아래로 내려가지 않습니다. */
-.score-note { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--text-muted); }
-.app-shell.group-shell .gd-summary .gd-candidate-note,
-.app-shell.group-shell .gd-summary .gd-caption,
-.app-shell.group-shell .gd-summary .gd-context-note,
-.app-shell.group-shell .gd-summary .gd-context-cards p,
-.app-shell.group-shell .gd-summary .gd-mini-share p,
-.app-shell.group-shell .gd-summary .gd-mini-trend > small,
-.app-shell.group-shell .gd-population-grid .gd-senior p,
-.app-shell.group-shell .gd-files-panel .gd-directory > p { font-size: 12px; line-height: 1.5; }
-.app-shell.group-shell .gd-summary .gd-household-legend,
-.app-shell.group-shell .gd-summary .gd-compare-legend,
-.app-shell.group-shell .gd-summary .gd-axis-label,
-.app-shell.group-shell .gd-summary .gd-compare-row,
-.app-shell.group-shell .gd-summary .gd-axis-note,
-.app-shell.group-shell .gd-summary .gd-badge,
-.app-shell.group-shell .gd-files-panel .gd-file-list button small,
-.app-shell.group-shell .gd-files-panel .gd-file-list .gd-candidate,
-.app-shell.group-shell .gd-files-panel .gd-source,
-.app-shell.group-shell .gd-tabbar .gd-tab small { font-size: 11px; }
-
-/* 추이 그래프 말풍선: 마우스를 올린 달의 값과 전월 대비 변화 */
-.gd-line .gd-tip rect { fill: #0f1d36; opacity: .92; }
-.gd-line .gd-tip text, .group-shell .gd-summary .gd-line .gd-tip text { fill: #fff; font-size: 13px; font-weight: 700; }
-.gd-line .gd-tip text.sub, .group-shell .gd-summary .gd-line .gd-tip text.sub { fill: #c9d6ea; font-weight: 500; }
-.gd-line rect[fill="transparent"] { cursor: crosshair; }
-
-/* 기준 문구는 의미 단위로 줄을 나누고, 하단 카드와 파일 테두리 사이 공간을 확보합니다. */
-.gd-stat-period { display: flex; flex-direction: column; gap: 2px; }
-.gd-stat-period > span { word-break: keep-all; overflow-wrap: break-word; }
-.group-shell .gd-summary { box-sizing: border-box; overflow: hidden; padding-bottom: 16px; }
-.group-shell .gd-summary .gd-context-cards { align-items: stretch; }
-
-/* 모든 브리핑 내용을 한 장에 유지하고 실제 파일 크기에 맞춰 함께 축소합니다. */
-.app-shell.group-shell .gd-summary { display: block; height: 100%; overflow: hidden; }
-.gd-summary-content { display: grid; gap: 12px; transform-origin: top left; }
-.app-shell.group-shell .gd-summary-content .gd-overview { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
-.app-shell.group-shell .gd-summary-content .gd-overview-copy { grid-column: auto; }
-.app-shell.group-shell .gd-summary-content .gd-context-cards { display: grid; grid-template-columns: 1.07fr 1fr; gap: 12px; }
-.app-shell.group-shell .gd-summary-content .gd-mini-trend .gd-line,
-.app-shell.group-shell .gd-summary-content .gd-mini-share .gd-line { flex: none; height: 140px; min-height: 0; }
-.app-shell.group-shell .gd-summary-content .gd-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 8px; }
-.app-shell.group-shell .gd-summary-content .gd-headline-row { flex-direction: row; margin-top: 8px; }
-.app-shell.group-shell .gd-summary-content .gd-support-link { width: auto; }
-
-/* 두 추이 카드의 제목·대표값 높이를 맞춰 그래프와 월 눈금을 같은 선에 둡니다. */
-.app-shell.group-shell .gd-summary-content .gd-mini-trend > h4,
-.app-shell.group-shell .gd-summary-content .gd-mini-share > h4 { box-sizing: border-box; height: 36px; margin: 0 0 6px; line-height: 1.4; }
-.app-shell.group-shell .gd-summary-content .gd-share-head { box-sizing: border-box; height: 54px; flex: 0 0 54px; align-items: center; margin: 0; }
-.app-shell.group-shell .gd-summary-content .gd-share-head strong { font-size: 28px; line-height: 1.2; margin: 0; }
-.gd-trend-value-label { font-size: 11px; color: var(--text-muted); }
+.group-shell .gd-summary .gd-context-cards > article { overflow-y: auto; scrollbar-width: thin; }
 
 /* Approved DB1 briefing proposal: anomaly explanation and reference flow remain distinct. */
 .group-shell .gd-summary { display:flex; flex-direction:column; }
-.group-shell .gd-summary-pages { display:flex; gap:6px; flex-shrink:0; }
-.group-shell .gd-summary-pages button { flex:1; padding:7px 5px; border:1px solid #dce6f4; border-radius:7px; font-size:12px; color:#526b8e; }
-.group-shell .gd-summary-pages button[aria-current] { background:#eaf2ff; border-color:#93b8fa; color:#2563eb; font-weight:700; }
 .group-shell .gd-summary .gd-overview { grid-template-columns:1fr 1fr; gap:10px; flex:1; min-height:0; overflow:auto; align-content:start; }
-.group-shell .gd-summary .gd-overview-copy { grid-column:1/-1; }
 .group-shell .gd-summary[data-summary-page='0'] .gd-context-cards,
-.group-shell .gd-summary:not([data-summary-page='0']) .gd-overview,
-.group-shell .gd-summary[data-summary-page='1'] .gd-context-cards > article:nth-child(2),
-.group-shell .gd-summary[data-summary-page='2'] .gd-context-cards > article:first-child,
-.group-shell .gd-summary:not([data-summary-page='0']) .gd-detection-note { display:none; }
+.group-shell .gd-summary:not([data-summary-page='0']) .gd-overview { display:none; }
 .group-shell .gd-summary .gd-context-cards { display:block; flex:1; min-height:0; overflow:auto; }
 .group-shell .gd-summary .gd-context-cards > article { min-height:100%; }
 .gd-observation-window { display:block; color:#64748b; font-size:11px; font-weight:500; margin-top:5px; white-space:nowrap; }
 .group-shell .gd-case-counter { font-size:12px; font-weight:700; color:#52617a; white-space:nowrap; padding:0 3px; }
 .group-shell .gd-detection-summary { border:1px solid #ffe0e5; background:linear-gradient(120deg,#fff4f5,#fffafb); border-radius:10px; padding:10px 12px; margin:8px 0 11px; }
-.gd-detection-topline { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
-.gd-detection-badges { display:flex; gap:6px; flex-wrap:wrap; }
-.gd-domain-badge { border-radius:16px; padding:4px 9px; font-size:11px; font-weight:600; }
-.gd-domain-badge.detected { background:#ffe3e9; color:#be123c; }
-.gd-domain-badge.not-detected { background:#edf1f6; color:#64748b; }
-.gd-domain-badge.deferred { background:#fff1d6; color:#946200; }
-.gd-detection-path { font-size:11px; color:#607695; border:1px solid #dce5f0; background:#fff; padding:3px 8px; border-radius:14px; }
-.gd-detection-metrics { display:flex; gap:24px; margin:9px 0 6px; }
-.gd-detection-metrics > div { display:flex; align-items:center; gap:12px; flex:1; min-width:0; }
-.gd-detection-metrics > div + div { border-left:1px solid #efd9e0; padding-left:22px; }
-.gd-detection-metrics span { font-size:13px; color:#233650; font-weight:600; white-space:nowrap; }
-.gd-detection-metrics strong { color:#be123c; font-size:26px; letter-spacing:-.7px; white-space:nowrap; }
-.gd-detection-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-.gd-detection-footer small { color:#71829e; font-size:11px; }
-.gd-detection-footer .text-button { font-size:12px; font-weight:700; }
+
+
+
 .gd-flow-reference-label { color:#405776; font-size:12px; font-weight:700; margin:0 0 5px; }
-.group-shell .gd-detection-note { margin:0; color:#71829e; font-size:10px; flex-shrink:0; }
+
 .group-shell .gd-summary .gd-mini-share strong { margin:8px 0; }
 .group-shell .gd-summary .gd-mini-trend .gd-line { height:86px; }
 .group-shell .gd-summary .gd-support-link { font-size:13px; padding:9px 12px; gap:10px; }
 .group-shell .gd-summary .gd-overview h4 { margin-bottom:5px; }
-@container (max-width:520px) {
- .gd-detection-metrics { gap:10px; }
- .gd-detection-metrics > div { gap:6px; flex-wrap:wrap; }
- .gd-detection-metrics > div + div { padding-left:10px; }
- .gd-detection-metrics strong { font-size:22px; }
-}
 
 /* Keep both original reference charts visible on common 720px-high displays. */
 @container (max-height:480px) {
@@ -444,17 +256,10 @@
  .group-shell .gd-summary .gd-case-heading { margin-bottom:4px; }
  .group-shell .gd-summary .gd-case-heading h2 { font-size:22px; line-height:1.2; }
  .group-shell .gd-summary .gd-detection-summary { padding:7px 10px; margin:5px 0 7px; }
- .group-shell .gd-domain-badge { font-size:10px; padding:3px 7px; line-height:1.2; }
- .group-shell .gd-detection-path { font-size:10px; padding:2px 7px; line-height:1.2; }
- .group-shell .gd-detection-metrics { margin:5px 0 4px; }
- .group-shell .gd-detection-metrics strong { font-size:24px; line-height:1.1; }
- .group-shell .gd-detection-metrics span { font-size:12px; }
- .group-shell .gd-detection-footer small { font-size:10px; line-height:1.3; }
- .group-shell .gd-detection-footer .text-button { padding:0; min-height:0; line-height:1.4; font-size:11px; }
+
+
  .group-shell .gd-flow-reference-label { font-size:11px; line-height:1.2; margin-bottom:4px; }
  .group-shell .gd-summary .gd-overview .gd-narrative { font-size:28px; line-height:1.1; }
- .group-shell .gd-summary .gd-metric-label { font-size:11px; margin:3px 0 0; }
- .group-shell .gd-summary .gd-caption { font-size:9px; line-height:1.3; margin:3px 0 0; }
  .group-shell .gd-summary .gd-mini-trend, .group-shell .gd-summary .gd-mini-share { padding:8px; }
  .group-shell .gd-summary .gd-mini-trend .gd-line { height:58px; }
  .group-shell .gd-summary .gd-overview h4 { font-size:11px; margin:0 0 4px; }
@@ -469,7 +274,7 @@
 .bomi-selected-case { display:flex; align-items:center; gap:6px; width:fit-content; max-width:100%; padding:5px 9px; border-radius:12px; background:#edf5ff; border:1px solid #d6e6ff; color:#2563eb; font-size:11px; line-height:1.4; word-break:keep-all; }
 
 /* Single-screen briefing: communication and mobility comparisons beside reference flow. */
-.group-shell .gd-summary .gd-unified-overview { grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:8px; align-items:stretch; }
+.group-shell .gd-summary .gd-unified-overview { grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:8px; align-items:stretch; }
 .group-shell .gd-summary .gd-unified-heading { grid-column:1/-1; margin:0; }
 .group-shell .gd-summary .gd-summary-with-graphs { margin:0; padding:10px; min-width:0; display:flex; flex-direction:column; gap:8px; }
 .gd-summary-graph-legend { display:flex; gap:12px; flex-wrap:wrap; font-size:10px; color:#64748b; }
@@ -490,18 +295,17 @@
 .gd-summary-track::after { content:''; position:absolute; left:50%; top:-2px; bottom:-2px; border-left:1px solid #94a3b8; }
 .gd-summary-track i { position:absolute; top:0; bottom:0; background:#2563eb; border-radius:2px; }
 .gd-summary-bar.common .gd-summary-track i { background:#9aaac0; }
-.group-shell .gd-summary-with-graphs .gd-detection-footer { margin-top:auto; }
-.group-shell .gd-summary-with-graphs .gd-detection-footer small { font-size:9px; line-height:1.4; }
-.group-shell .gd-summary-with-graphs .gd-detection-footer .text-button { padding:0; min-height:0; font-size:11px; }
+
+
+
 .gd-unified-flow { background:#fbfdff; border:1px solid #e1eaf5; border-radius:10px; padding:10px; min-width:0; display:flex; flex-direction:column; gap:6px; }
 .group-shell .gd-summary .gd-unified-flow .gd-flow-reference-label { margin:0; }
 .group-shell .gd-summary .gd-unified-flow .gd-narrative { font-size:28px; line-height:1.1; }
-.group-shell .gd-summary .gd-unified-flow .gd-mini-trend, .group-shell .gd-summary .gd-unified-flow .gd-mini-share { padding:6px 0; border:0; background:none; }
-.group-shell .gd-summary .gd-unified-flow .gd-mini-trend .gd-line { height:65px; }
-.group-shell .gd-summary .gd-unified-flow .gd-mini-share strong { display:block; font-size:24px; line-height:1.1; margin:3px 0 5px; }
+.group-shell .gd-summary .gd-unified-flow .gd-mini-trend, .group-shell .gd-summary .gd-unified-flow .gd-mini-share { border:0; background:none; }
+.group-shell .gd-summary .gd-unified-flow .gd-mini-share strong { display:block; font-size:24px; line-height:1.1; }
 .group-shell .gd-summary .gd-unified-flow .gd-mini-share strong small { font-size:12px; }
-.gd-unified-flow-footer { display:flex; flex-direction:column; align-items:flex-start; gap:7px; margin-top:auto; }
-.gd-unified-flow-footer > span { font-size:9px; color:#71829e; }
+
+
 .group-shell .gd-summary .gd-unified-flow .gd-support-link { font-size:11px; padding:6px 8px; gap:7px; min-height:0; }
 @container (max-width:620px) {
  .gd-summary-graphs { grid-template-columns:1fr; gap:5px; }
@@ -525,8 +329,8 @@
 .group-shell .gd-summary .gd-unified-flow .gd-mini-trend small { font-size:9px; line-height:1.2; margin:2px 0 0; }
 .group-shell .gd-summary .gd-unified-flow .gd-mini-share .gd-share-track { height:7px; }
 .group-shell .gd-summary .gd-unified-flow .gd-mini-share strong { margin:2px 0 4px; }
-.gd-unified-flow-footer { gap:4px; }
-.gd-unified-flow-footer > span { line-height:1.3; }
+
+
 .group-shell .gd-summary .gd-unified-flow .gd-support-link { line-height:1.2; }
 
 /* Region background follows the indicators in the same briefing, without a separate tab. */
