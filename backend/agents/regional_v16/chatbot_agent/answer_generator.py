@@ -237,8 +237,8 @@ def _reason_answer(evidence):
     paragraphs=[]
     for row in evidence.rows[:3]:
         paragraphs+=_signal_story(row)
-        # 전체 지역 신호 목록에서는 임의의 연령(예: 40대)을 대표로
-        # 붙이지 않는다. 연령을 명시한 조회에서만 별도 답변으로 제공한다.
+        ages=_age_changes_story(row,evidence)
+        if ages:paragraphs.append(ages)
     if len(evidence.rows)>3:paragraphs.append(f"먼저 {len(evidence.rows)}건 중 3건을 보여드렸어요. 지역이나 기준월을 좁히면 나머지도 확인할 수 있어요.")
     paragraphs.append('지역 집계만으로 개인의 고립 여부나 변화의 원인을 판단할 수는 없어요.')
     return ['\n\n'.join(paragraphs)]
@@ -251,67 +251,6 @@ def _query_story_period(intent):
         if start==end:return observation_period_text(start)+' 자료에서는'
     return '조회한 자료에서는'
 
-
-def _detected_signal_label(row):
-    """Name the age-level signal from the dashboard source flags."""
-    communication = bool(row.get('communication_signal'))
-    mobility = bool(row.get('mobility_signal'))
-    if communication and mobility:
-        return '통신·이동 동시 신호'
-    if communication:
-        return '통신 신호'
-    if mobility:
-        return '이동 신호'
-    return '변화 신호'
-
-
-def _detected_metric_details(row):
-    """Expose the concrete metric flags stored in the age-detection payload."""
-    payload = row.get('payload')
-    payload = payload if isinstance(payload, dict) else {}
-    labels = []
-    for metric, label in METRICS.items():
-        absolute = bool(row.get(metric + '_absolute_signal', payload.get(metric + '_absolute_signal')))
-        local = bool(row.get(metric + '_local_signal', payload.get(metric + '_local_signal')))
-        if absolute and local:
-            labels.append(f'{label} (절대 변화·구 공통변화 제거)')
-        elif absolute:
-            labels.append(f'{label} (절대 변화)')
-        elif local:
-            labels.append(f'{label} (구 공통변화 제거)')
-    return ' · '.join(labels)
-
-
-def _region_age_signal_lines(dong, rows):
-    """Render every distinct period, age, and signal for one district."""
-    lines = []
-    seen = set()
-    for item in rows:
-        label_month = str(item.get('date') or '')[:7]
-        age = _age_label(item.get('age_band')) if item.get('age_band') else '연령 확인 불가'
-        signal = _detected_signal_label(item)
-        details = _detected_metric_details(item)
-        key = (label_month, age, signal, details)
-        if key in seen:
-            continue
-        seen.add(key)
-        detail_text = f" · 탐지 지표: {details}" if details else ''
-        lines.append(f"- {observation_period_text(label_month)} · {age} · {signal}{detail_text}")
-    return lines
-
-
-def _signal_month_summary(rows):
-    counts = {}
-    for row in rows:
-        month = str(row.get('date') or '')[:7]
-        if month:
-            counts[month] = counts.get(month, 0) + 1
-    return ', '.join(
-        f"{month[:4]}년 {int(month[5:])}월 {count}건"
-        for month, count in sorted(counts.items())
-    )
-
-
 def _concise_signal_list(intent,evidence):
     rows=evidence.rows
     if not rows:return evidence.summary+' 추가로 확인할 변화 신호는 나오지 않았어요.'
@@ -321,34 +260,15 @@ def _concise_signal_list(intent,evidence):
         paragraphs=[f"{prefix} {names[0]}을 한 번 더 살펴볼 필요가 있어요."]
     else:
         paragraphs=[f"{prefix} 확인이 필요한 지역이 {len(names)}곳 나왔어요."]
-    listed = rows[:10] if len(names) == 1 else [next(row for row in rows if row.get('행정동') == name) for name in names[:10]]
-    global_age_signal_list = not (intent.age_scope_explicit or intent.age_band or intent.age_bands) and any(
-        row.get('age_band') for row in rows
-    )
-    if global_age_signal_list:
-        paragraphs.append(
-            '탐지 기준월별 기록은 ' + _signal_month_summary(rows) +
-            '이며, 이 밖의 조회 기준월에는 탐지 기록이 없습니다.'
-        )
-    for index, row in enumerate(listed, 1):
-        if len(names) > 1:
-            paragraphs.append(f"{index}. {row.get('행정동')}")
+    for row in rows[:10]:
         if row.get('신호 건수') is not None:
             paragraphs.append(f"{row.get('행정동')}에서는 선택한 기간에 변화 신호가 {row['신호 건수']}건 확인됐어요.")
             continue
-        if global_age_signal_list:
-            same_dong = [item for item in rows if item.get('행정동') == row.get('행정동')]
-            paragraphs.extend(_region_age_signal_lines(row.get('행정동'), same_dong))
-        else:
-            paragraphs+=_signal_story(row)
-        # 전체 신호 목록은 탐지 사실을 우선 보여준다. 지역 유형은 사용자가
-        # 별도로 요청했을 때만 제공해, 탐지 신호와 배경 정보를 섞지 않는다.
-        if not global_age_signal_list:
-            cluster=_cluster_story(row,evidence)
-            if cluster:paragraphs.append(cluster)
-        if intent.age_scope_explicit or intent.age_band or intent.age_bands:
-            ages=_age_changes_story(row,evidence)
-            if ages:paragraphs.append(ages)
+        paragraphs+=_signal_story(row)
+        cluster=_cluster_story(row,evidence)
+        if cluster:paragraphs.append(cluster)
+        ages=_age_changes_story(row,evidence)
+        if ages:paragraphs.append(ages)
     if len(rows)>10:paragraphs.append(f"전체 {len(rows)}건 중 먼저 10건을 보여드렸어요.")
     if intent.limit and len(names)<intent.limit:
         paragraphs.append(f"요청하신 {intent.limit}곳보다 적은 이유는, 이번 조건에서 신호가 확인된 지역이 {len(names)}곳이기 때문이에요.")
@@ -391,32 +311,9 @@ def _context_answer(evidence):
             '비슷한 지역 구조를 가진 동끼리 묶은 분류이며, 개인의 위험도나 신호 원인을 뜻하지 않습니다.')
 
 
-def _support_answer(evidence, include_age=False):
+def _support_answer(evidence):
     """Show the numbers people can act on, then explain their limited relation."""
-    lines=[]
-    # 특정 연령을 물은 경우에는 해당 연령의 직접 활동값을 먼저 보여준다.
-    # 지역 배경·강남구 공통자료는 그 뒤에 보조 설명으로 붙인다.
-    age_rows=evidence.supplementary.get('age_signal_changes', []) if include_age else []
-    if age_rows:
-        lines.append('먼저 질문하신 연령대의 지역 직접 자료입니다.')
-        for row in age_rows[:10]:
-            age=AGE_LABEL.get(row.get('age_band'), row.get('age_band','연령 확인 불가'))
-            values=[]
-            for metric in CORE:
-                value=row.get(metric)
-                if isinstance(value,(int,float)):
-                    values.append(f'{METRICS[metric]} {_value(value)}')
-            changes=[]
-            for metric in CORE:
-                pct=row.get(metric+'_change_pct')
-                if isinstance(pct,(int,float)):
-                    changes.append(f'{METRICS[metric]} {pct:+.1f}%')
-            if values:
-                line=f"{row.get('행정동','선택 지역')} {age} · {observation_period_text(row.get('date'))}: " + ', '.join(values)
-                if changes: line += ' · 변화율 ' + ', '.join(changes)
-                lines.append(line)
-        lines += ['', '이 값은 해당 지역·연령대의 집계자료이며 개인의 상태를 뜻하지 않습니다.']
-    lines.append('신호와 함께 볼 수 있는 지역 수치입니다. 이 자료는 원인을 확정하는 근거가 아니라, 현장에서 무엇을 확인할지 정하는 참고자료입니다.')
+    lines=['신호와 함께 볼 수 있는 지역 수치입니다. 이 자료는 원인을 확정하는 근거가 아니라, 현장에서 무엇을 확인할지 정하는 참고자료입니다.']
     if evidence.rows:
         row=evidence.rows[0]
         lines += ['', f"현재 신호: {row.get('행정동')} · {observation_period_text(row.get('date'))} · {SIGNAL_LABEL.get(str(row.get('signal_type','')).lower(),'변화')} 변화"]
@@ -554,7 +451,7 @@ def template_answer(intent:QueryIntent,evidence:Evidence,knowledge:str,explanati
     if intent.question_type in {'rank_regions','signals'}:
         return _concise_signal_list(intent,evidence)
     if intent.question_type=='support':
-        return _support_answer(evidence, include_age=bool(intent.age_scope_explicit or intent.age_band or intent.age_bands))
+        return _support_answer(evidence)
     if intent.question_type=='reason' and evidence.rows:
         # Explain this signal and same-month age changes; detailed contextual
         # evidence remains available through the background-information follow-up.
@@ -570,8 +467,7 @@ def template_answer(intent:QueryIntent,evidence:Evidence,knowledge:str,explanati
     if evidence.rows:
         lines+=['']+[ '- '+_format_row(r) for r in evidence.rows[:10]]
         if len(evidence.rows)>10:lines.append(f'총 {len(evidence.rows)}건 중 10건을 표시했습니다.')
-    # 보조자료(지역 배경·소비·날씨·조사)는 사용자가 해당 맥락을 요청했을 때만
-    # 전용 답변에서 보여준다. 일반 신호/지역 조회에 자동으로 덧붙이지 않는다.
+    lines+=_context_lines(evidence,skip_regions=intent.question_type=='context',skip_local=intent.question_type=='consumption')
     if knowledge:lines+=['',knowledge]
     if evidence.limitations:lines+=['','확인 범위: '+' / '.join(evidence.limitations)]
     return '\n'.join(lines)

@@ -85,13 +85,14 @@ def experience_history(request):
 
 
 def services(request):
-    """GET /api/services: 선택한 동의 복지사업 후보(DB2). 조회는 업무 완료 상태를 바꾸지 않습니다."""
-    context, data, evidence = work_context(request)
+    """GET /api/services: 근거 검토를 마친 동에 맞는 복지사업 후보(DB2)."""
+    context = region_context(request, dashboard_data())
     current = load_workflow(context)
-    evidence = current.get('analysis_evidence') or evidence
+    if 1 not in current.get('done', []):
+        raise ValueError('먼저 분석 근거를 확인하세요.')
     try:
-        matches = service_matching.match_services(context['city'], evidence)
-        references = service_matching.reference_matches(context['city'], evidence)
+        matches = service_matching.match_services(context['city'], current['analysis_evidence'])
+        references = service_matching.reference_matches(context['city'], current['analysis_evidence'])
     except Exception:
         logging.exception('DB2 service lookup failed')
         raise ApiError(503, 'DB2 사업 조회에 실패했습니다. .env 연결 및 DB 권한을 확인하세요.')

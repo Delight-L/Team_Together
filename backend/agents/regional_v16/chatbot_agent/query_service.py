@@ -4,7 +4,8 @@ import json
 import math
 import pandas as pd
 from .schemas import Evidence,QueryIntent
-from .repository import DataRepository,SOURCES,CORE,AGE_LABEL
+from .db1_repository import Db1Repository
+from .repository import SOURCES,CORE,AGE_LABEL
 from .consumption_trends import consumption_trends
 from .observation_period import observation_range_text, observation_period_text, observation_period
 
@@ -51,14 +52,13 @@ def _age_signal_changes(repo,signal_rows):
             })
     return changes
 
-def execute(repo:DataRepository,intent:QueryIntent)->Evidence:
+def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
     names=intent.dongs or ((intent.dong,) if intent.dong else ())
     start,end,age=intent.start_month,intent.end_month,intent.age_band
     kind=intent.question_type
     signal_age_changes=None
     if kind=='data_status':
-        from data_pipeline.runner import status
-        data=status(repo.db)
+        data=repo.pipeline_status()
         return Evidence('데이터 처리 상태','초기 이력과 새 원본 처리 범위입니다.',
             [{'초기 이력 마지막 관측기간':observation_period_text('2025-06'),
               '현재 이력 마지막 관측기간':observation_period_text(str(data.get('history_end',''))[:7]),
@@ -93,37 +93,32 @@ def execute(repo:DataRepository,intent:QueryIntent)->Evidence:
         return Evidence('연령별 활동 변화',f'{"·".join(names)}의 연령별 주요 지표 변화입니다.',rows,
                         ['DB1: a2_age_detection'],['각 결과는 기준월 직전 3개월 관측이며 변화율은 바로 앞 관측기간 대비입니다. 연령별 값을 합산하지 않습니다.'])
     elif kind=='rank_regions':
-        f=repo.signals(start,end,None,intent.signal,age)
+        signal_reader = repo.age_signal_cases if intent.age_scope_explicit else repo.signals
+        f=signal_reader(start,end,None,intent.signal,age)
         if names:f=f.loc[f['행정동'].isin(names)]
         grouped=f.groupby('행정동',as_index=False).size().rename(columns={'size':'신호 건수'}).sort_values(['신호 건수','행정동'],ascending=[False,True]).head(intent.limit or 3)
         e=Evidence('신호가 많은 지역',f'{LABEL[intent.signal]} 신호 건수가 많은 동 {len(grouped)}곳입니다.',_records(grouped),[source],limits)
     elif kind=='signals':
-        f=selected(lambda n,s,e,a:repo.signals(s,e,n,intent.signal,a),age)
-        # age_analysis_repository keeps the detailed per-metric judgement in
-        # ``payload``. Promote only those flags needed to explain the signal;
-        # do not expose the whole raw payload to the answer layer.
-        detail_columns = [
-            metric + '_' + scope + '_signal'
-            for metric in CORE for scope in ('absolute', 'local')
-        ]
-        if 'payload' in f:
-            for column in detail_columns:
-                if column not in f:
-                    f[column] = f['payload'].map(
-                        lambda payload: payload.get(column) if isinstance(payload, dict) else None
-                    )
+        # Explicit 연령 범위(특히 "전체 연령")는 동 단위 a2_detection이
+        # 아니라 a2_age_detection의 사례를 보여준다. 명시하지 않은 경우는
+        # 기존 동 단위 조회를 유지해 화면의 선택 범위와 호환한다.
+        signal_reader = repo.age_signal_cases if intent.age_scope_explicit else repo.signals
+        f=selected(lambda n,s,e,a:signal_reader(s,e,n,intent.signal,a),age)
         if intent.summary_only and not f.empty:
             counts=f.groupby('행정동').size().rename('신호 건수')
             f=f.sort_values('date').drop_duplicates('행정동', keep='last').copy()
             f['신호 건수']=f['행정동'].map(counts).astype(int)
-        cols=['date','행정동','age_band','signal_type','assessment_status','cluster_type','a1_cluster_type',
-              'communication_signal','mobility_signal','combined_signal','any_signal']
+        cols=['date','행정동','age_band','signal_type','assessment_status','cluster_type','a1_cluster_type']
         for metric in CORE:
             cols += [metric+'_log_change',metric+'_valid',metric+'_residual_change_expanding_rz']
-            # 전체 연령 조회도 a2_age_detection 원본을 사용한다. 목록 답변이
-            # “어떤 신호”인지 밝힐 수 있도록 지표별 판정 플래그를 보존한다.
-            cols += [metric+'_local_rz',metric+'_local_threshold',metric+'_local_signal',
-                     metric+'_absolute_rz',metric+'_absolute_threshold',metric+'_absolute_signal']
+            if age:
+                cols += [metric+'_local_rz',metric+'_local_threshold',metric+'_local_signal',
+                         metric+'_absolute_rz',metric+'_absolute_threshold',metric+'_absolute_signal']
+        if intent.age_scope_explicit:
+            source='DB1: a2_age_detection'
+            cols += ['communication_signal','mobility_signal','combined_signal','any_signal']
+            for metric in CORE:
+                cols += [metric+'_log_change',metric+'_valid']
         e=Evidence('신호가 나온 지역',f'조건에 맞는 {LABEL[intent.signal]} 신호는 {len(f)}건입니다.',_records(f,cols),[source],limits)
     elif kind=='anomaly':
         f,rz=repo.anomalies(start,end,intent.metric,age,names)
@@ -162,35 +157,14 @@ def execute(repo:DataRepository,intent:QueryIntent)->Evidence:
         e=Evidence('지역 특성','저장된 k-means 지역유형과 구조적 특성입니다.',_records(f,['dong_name','period','cluster_type','hh_1_ratio','hh_2_ratio','age_60_plus_ratio','disability_ratio','livelihood_recipient_ratio','elderly_living_alone_rate_65plus']),[SOURCES['typology']],['지역유형은 지역의 배경이며 위험 등급이나 신호 원인 판정이 아닙니다.'])
     elif kind=='consumption':
         # Direct consumption queries use requested calendar periods, not telecom label periods.
-        rows=[];shared={}
-        with repo.connection() as c:
-            mapping={n:code for code,n in c.execute('SELECT DISTINCT adm_cd,adm_nm FROM a1_context')}
-            from .district_normalizer import ALIASES
-            mapping={ALIASES.get(n,n):code for n,code in mapping.items()}
-            for month in pd.period_range(start,end,freq='M'):
-                q=f'{month.year}Q{month.quarter}'
-                for name in names:
-                    if age:
-                        rs=c.execute('SELECT payload_json FROM a3a_comparison WHERE period=? AND adm_cd=? AND age=?',(q,mapping[name],AGE_LABEL[age])).fetchall()
-                        for r in rs:
-                            payload=json.loads(r[0]);key=(name,q,payload['domain'])
-                            if not any((x['행정동'],x['period'],x.get('domain'))==key for x in rows):rows.append({'행정동':name,'범위':'해당 동 소재 상점',**payload})
-                    else:
-                        r=c.execute('SELECT payload_json FROM a3a_quarter_summary WHERE period=? AND adm_cd=?',(q,mapping[name])).fetchone()
-                        if r and not any(x['행정동']==name and x['period']==q for x in rows):rows.append({'행정동':name,'period':q,'범위':'해당 동 소재 상점',**json.loads(r[0])})
-                if age:
-                    rs=c.execute('SELECT domain,payload_json FROM a3b_feature WHERE period=? AND district=? AND age=?',(str(month),'11680',AGE_LABEL[age])).fetchall()
-                    for domain,payload in rs:shared[(str(month),domain)]={'district':'강남구','period':str(month),'scope':'merchant_district_shared',**json.loads(payload)}
-                else:
-                    r=c.execute('SELECT payload_json FROM a3b_month_summary WHERE period=? AND district=?',(str(month),'11680')).fetchone()
-                    if r:shared[str(month)]={'district':'강남구','period':str(month),'scope':'merchant_district_shared',**json.loads(r[0])}
+        rows,shared=repo.consumption_evidence(names,start,end,age)
         e=Evidence('소비 보조자료','해당 동 상권 자료와 강남구 공통 소비자료입니다.',rows,['DB1: Analysis3'],['상점 소재지를 기준으로 한 자료이며 해당 동 주민의 소비를 뜻하지 않습니다.'],
             {'analysis3_district_shared':list(shared.values()),'analysis3_dong':rows,'analysis1':[],'direct_calendar_query':True,
              'consumption_trends':consumption_trends(repo,names,start,end,age),
              'requested_period':{'start':start,'end':end}})
         return e
     else:raise ValueError('지원하지 않는 질문 유형입니다.')
-    if age is None and kind in {'signals','reason'} and e.rows:
+    if age is None and kind in {'signals','reason'} and e.rows and not intent.age_scope_explicit:
         signal_age_changes=_age_signal_changes(repo,e.rows)
     if age:
         assessed=selected(repo.activity,age)

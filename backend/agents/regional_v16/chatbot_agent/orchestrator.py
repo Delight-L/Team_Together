@@ -7,7 +7,7 @@ from threading import RLock
 from .schemas import AnswerResult, Evidence
 from .guardrails import validate_input, OUT_OF_SCOPE
 from .content_moderation import InputModerator
-from .repository import DataRepository
+from .db1_repository import Db1Repository
 from .query_service import execute
 from .knowledge_retriever import retrieve
 from .explanation_retriever import retrieve_explanation
@@ -17,23 +17,20 @@ from .conversation_memory import ConversationMemory
 from .llm_intent_resolver import IntentResolver
 from .query_planner import complete_and_validate
 from .dialogue_router import DIALOGUE_REPLIES
-from .analysis2_knowledge import methodology_answer, is_methodology_question
+from .analysis2_knowledge import methodology_answer
 from .observation_period import observation_period
 
 class Chatbot:
- def __init__(self, project_root: Path, model: str="gemini-2.5-flash-lite", intent_resolver=None, moderator=None, repository=None):
+ def __init__(self, project_root: Path, model: str="gemini-2.5-flash-lite", intent_resolver=None, moderator=None, repository: Db1Repository=None):
   self.project_root=project_root
-  self.repo=repository or DataRepository(project_root); self.model=model
+  if repository is None:raise ValueError('Chatbot에는 repository(Db1Repository)를 주입해야 합니다. PostgreSQL 저장소는 pg_repository.PostgresDb1Repository입니다.')
+  self.repo=repository; self.model=model
   self.memory=ConversationMemory()
   self.moderator=moderator if moderator is not None else InputModerator(project_root)
   self.intent_resolver=intent_resolver or IntentResolver(project_root,model,self.repo.available_period())
   self.dashboard_scope=None; self.dashboard_segment_id=None
   self.allow_ai_generation=True
   self._operation_lock=RLock()
- def rebind_snapshot(self, database):
-  """Make a retained browser session read the snapshot selected by the dashboard."""
-  self.repo=DataRepository(self.project_root, db=database)
-  self.intent_resolver.available_period=self.repo.available_period()
  def activate_dashboard_context(self, scope, segment_id):
   self.dashboard_scope=scope; self.dashboard_segment_id=segment_id
   self.memory=ConversationMemory()
@@ -61,32 +58,6 @@ class Chatbot:
     return AnswerResult(text,Evidence("관측기간 안내",text))
   # 2. 목적 체크와 메뉴 필터링
   self.intent_resolver.available_period=self.repo.available_period()
-  # 클러스터명을 직접 물은 경우에는 화면에서 선택한 동을 자동으로
-  # 끼워 넣지 않고, DB에 저장된 해당 클러스터를 먼저 찾는다.
-  if '클러스터' in question:
-   with self.repo.connection() as c:
-    cluster_rows=c.execute('SELECT DISTINCT cluster_type FROM a1_context WHERE cluster_type IS NOT NULL').fetchall()
-    cluster_names=[str(row[0]) for row in cluster_rows]
-    matched=next((name for name in cluster_names if name in question), None)
-    if matched:
-     rows=c.execute('SELECT DISTINCT adm_nm FROM a1_context WHERE cluster_type=? ORDER BY adm_nm',(matched,)).fetchall()
-     dongs=[str(row[0]) for row in rows]
-     text=(f'“{matched}”은 비슷한 지역 구조를 묶은 클러스터 유형입니다. '
-           '개인의 위험도나 이상신호 원인을 뜻하지 않습니다.'
-           + (f' 현재 이 유형에 해당하는 행정동은 {", ".join(dongs[:10])}'
-              + (f' 등 총 {len(dongs)}곳입니다.' if len(dongs)>10 else '입니다.')
-              if dongs else ' 해당 유형의 행정동 자료를 찾지 못했습니다.'))
-     return AnswerResult(text,Evidence('클러스터 설명',text),
-                         ('다른 클러스터도 설명해줘', '이 클러스터에 속한 동을 알려줘'))
-  # 초기 이력과 판정 기준을 함께 묻는 질문은 화면의 지역 배경이 아니라
-  # 데이터 처리·탐지 방법 설명으로 우선 처리한다.
-  q_no_space=re.sub(r'\s+', '', question.lower())
-  if is_methodology_question(question) and any(term in q_no_space for term in ('초기이력','기준','판정')):
-   text=(methodology_answer(question)
-         + '\n\n초기 이력은 2025년 6월까지의 자료로, 이상신호 기준을 만드는 데만 사용했습니다. '
-         '2025년 7월부터 새 탐지 결과를 저장하며, 각 기준월은 직전 3개월 관측을 뜻합니다.')
-   return AnswerResult(text,Evidence('초기 이력과 이상신호 판정 기준',text),
-                       ('2025년 7월부터 탐지 결과가 저장된 이유는?', '기준월과 관측기간은 어떻게 달라?'))
   intent=self.intent_resolver.resolve(question,self.repo.districts(),self.memory)
   if intent.question_type in {'capabilities','consumption_criteria'}:
    text=age_capabilities_answer() if intent.question_type=='capabilities' else consumption_criteria_answer()
