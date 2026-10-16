@@ -177,8 +177,9 @@ class DataRepository:
                         else:
                             r=c.execute('SELECT payload_json FROM a3b_month_summary WHERE period=? AND district=?',(month,'11680')).fetchone()
                             if r:shared[(month,'all','all')]={'district':'강남구','period':month,'scope':'merchant_district_shared',**json.loads(r[0])}
-                    r=c.execute('SELECT payload_json FROM ctx_weather WHERE date=?',(date,)).fetchone()
-                    if r:weather[date]=json.loads(r[0])
+                    if c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='ctx_weather'").fetchone():
+                        r=c.execute('SELECT payload_json FROM ctx_weather WHERE date=?',(date,)).fetchone()
+                        if r:weather[date]=json.loads(r[0])
                     if age_band and c.execute("SELECT 1 FROM sqlite_master WHERE name='ctx_sns_index'").fetchone():
                         r=c.execute('SELECT payload_json FROM ctx_sns_index WHERE adm_cd=? AND date=? AND age_band=?',(code,date,age_band)).fetchone()
                         if r:sns.append(json.loads(r[0]))
