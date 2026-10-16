@@ -17,7 +17,7 @@ from .conversation_memory import ConversationMemory
 from .llm_intent_resolver import IntentResolver
 from .query_planner import complete_and_validate
 from .dialogue_router import DIALOGUE_REPLIES
-from .analysis2_knowledge import methodology_answer
+from .analysis2_knowledge import methodology_answer, is_methodology_question
 from .observation_period import observation_period
 
 class Chatbot:
@@ -61,6 +61,15 @@ class Chatbot:
     return AnswerResult(text,Evidence("관측기간 안내",text))
   # 2. 목적 체크와 메뉴 필터링
   self.intent_resolver.available_period=self.repo.available_period()
+  # 초기 이력과 판정 기준을 함께 묻는 질문은 화면의 지역 배경이 아니라
+  # 데이터 처리·탐지 방법 설명으로 우선 처리한다.
+  q_no_space=re.sub(r'\s+', '', question.lower())
+  if is_methodology_question(question) and any(term in q_no_space for term in ('초기이력','기준','판정')):
+   text=(methodology_answer(question)
+         + '\n\n초기 이력은 2025년 6월까지의 자료로, 이상신호 기준을 만드는 데만 사용했습니다. '
+         '2025년 7월부터 새 탐지 결과를 저장하며, 각 기준월은 직전 3개월 관측을 뜻합니다.')
+   return AnswerResult(text,Evidence('초기 이력과 이상신호 판정 기준',text),
+                       ('2025년 7월부터 탐지 결과가 저장된 이유는?', '기준월과 관측기간은 어떻게 달라?'))
   intent=self.intent_resolver.resolve(question,self.repo.districts(),self.memory)
   if intent.question_type in {'capabilities','consumption_criteria'}:
    text=age_capabilities_answer() if intent.question_type=='capabilities' else consumption_criteria_answer()
