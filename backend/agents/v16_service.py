@@ -60,7 +60,9 @@ def _expand_implicit_screen_info(question: str, context: dict) -> str:
         return question
     if explicit_districts(question):
         return question
-    age = str(context.get('age') or '').strip()
+    # v16 has validated age bands only for 20s and older; do not inject an
+    # unsupported dashboard label such as 10대 into the natural-language query.
+    age = str(context.get('age') or '').strip() if _age_band(context.get('age')) else ''
     subject = f"{context['district']} {age}".strip()
     return f"현재 화면에서 선택된 {subject}의 {question.strip()}"
 
