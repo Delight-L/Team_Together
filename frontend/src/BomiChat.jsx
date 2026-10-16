@@ -105,6 +105,7 @@ function useChat(context, group, userId) {
         messages: [...recent, { role: 'user', text: question }].map(m => ({ role: m.role, content: m.text.slice(0, 6000) })),
         ...(group ? { group } : {}),
       };
+      if (body.age && !['20대', '30대', '40대', '50대', '60대 이상'].includes(body.age)) delete body.age;
       await streamChat(body, (event, payload) => {
         if (request.current !== controller) return;
         if (event === 'route') update(m => ({ ...m, agent: payload.label }));
