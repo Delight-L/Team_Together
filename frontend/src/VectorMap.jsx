@@ -4,6 +4,7 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import boundaries from './data/administrative-regions.json';
 import { Icon } from './components';
+import {DETECTION_METHODS,detectionDescription} from './detectionMap.mjs';
 import { ReliefMap } from './ReliefMap';
 import { createMapStyle, districtData, featureBounds, geometryBounds, regionColor } from './missionMapStyle';
 
@@ -78,7 +79,7 @@ export default function VectorMap({ regions, selected, onSelect, geometry }) {
       map.on('mousemove', 'district-fill', (event) => {
         const name = event.features?.[0]?.properties.name;
         const region = latest.current.regions?.find((r) => r.name === name);
-        setHover(name ? { name, status: region?.status, x: event.point.x, y: event.point.y } : null);
+        setHover(name ? { name, status: region?.detectionMode ? detectionDescription(region) || '탐지 없음' : region?.status, x: event.point.x, y: event.point.y } : null);
       });
       let previousSize = [canvasRef.current.clientWidth, canvasRef.current.clientHeight];
       const resize = new ResizeObserver(() => {
@@ -126,10 +127,18 @@ export default function VectorMap({ regions, selected, onSelect, geometry }) {
       const button = document.createElement('button');
       button.type = 'button';
       const priority = priorities.findIndex((item) => item.name === region.name);
-      button.className = priority >= 0 ? 'vector-priority-marker' : 'vector-district-marker';
+      button.className = region.detectionMode && region.count ? 'vector-priority-marker vector-method-marker' : priority >= 0 ? 'vector-priority-marker' : 'vector-district-marker';
       button.style.setProperty('--marker-color', regionColor(region));
       button.setAttribute('aria-label', `${region.name}, ${region.status}, 후보 ${region.count}개`);
-      if (priority >= 0) {
+      if (region.detectionMode) {
+        const name=document.createElement('b');name.textContent=region.name;button.append(name);
+        for (const method of region.detectionMethods) {
+          const dot=document.createElement('i');dot.className='vector-method-dot';dot.style.background=DETECTION_METHODS[method].color;dot.setAttribute('aria-hidden','true');button.append(dot);
+        }
+        const description=detectionDescription(region);
+        button.title=description ? region.name+' · '+description : region.name+' · 탐지 없음';
+        button.setAttribute('aria-label',button.title);
+      } else if (priority >= 0) {
         const badge = document.createElement('span');
         badge.className = 'vector-priority-number';
         badge.textContent = String(priority + 1);
@@ -157,11 +166,17 @@ export default function VectorMap({ regions, selected, onSelect, geometry }) {
       ordered.forEach(({ button, name, priority }) => {
         const isSelected = name === latest.current.selected;
         button.hidden = false;
+        const methodName = button.classList.contains('vector-method-marker') ? button.querySelector('b') : null;
+        if (methodName) methodName.hidden = false;
         button.classList.toggle('selected', isSelected);
         button.setAttribute('aria-pressed', String(isSelected));
         const box = button.getBoundingClientRect();
         const overlaps = placed.some((p) => box.left < p.right + 2 && box.right > p.left - 2 && box.top < p.bottom + 1 && box.bottom > p.top - 1);
-        if (overlaps && !isSelected && priority < 0) { button.hidden = true; return; }
+        if (overlaps && !isSelected && priority < 0) {
+          if (methodName) { methodName.hidden = true; placed.push(button.getBoundingClientRect()); }
+          else button.hidden = true;
+          return;
+        }
         placed.push(box);
       });
     };

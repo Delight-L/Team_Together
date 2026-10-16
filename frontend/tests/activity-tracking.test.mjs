@@ -3,6 +3,19 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {eventsFor,trackingSeries,latestObservation,pathState,DOMAINS,stateLabel} from '../src/activityTracking.mjs';
 const data=JSON.parse(readFileSync(new URL('../../data/processed/region_insights.json',import.meta.url))).activityTracking;
+import {trackingMonthOptions,eventsInMonth,preferredMonthlyEvent} from '../src/activityTracking.mjs';
+test('month selection covers all districts and includes zero-case months within the observation period',()=>{
+ const choices=trackingMonthOptions(data,'2025-12');
+ assert.equal(choices.find(m=>m.month==='2025-10').count,9);
+ assert.equal(choices.find(m=>m.month==='2025-11').count,1);
+ assert.equal(choices.find(m=>m.month==='2025-12').count,0);
+ assert(trackingMonthOptions(data,'2025-10').every(m=>m.month<='2025-10'));
+ const nov=preferredMonthlyEvent(eventsInMonth(data,'2025-11'),'개포3동','40대');
+ assert.equal(nov.district,'역삼2동');assert.equal(nov.age,'30대');
+ assert.equal(preferredMonthlyEvent(eventsInMonth(data,'2025-12'),'역삼2동','30대'),undefined);
+ const oct=preferredMonthlyEvent(eventsInMonth(data,'2025-10'),'삼성2동','50대');
+ assert.equal(oct.district,'삼성2동');assert.equal(oct.age,'50대');
+});
 test('the ten reviewed episodes and 29 follow-up records keep their exact dong, age and month',()=>{
  assert.equal(data.events.length,10);assert.equal(data.events.reduce((n,e)=>n+e.points.length,0),29);
  const event=eventsFor(data,'개포3동','40대','2025-12')[0];

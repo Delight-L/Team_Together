@@ -1,12 +1,19 @@
 export const TRACKING_AGES=['20대','30대','40대','50대','60대 이상'];
 export const DOMAINS=[
- {key:'communication',label:'통신',metrics:[['call_contacts','전화 연락','#2878ef'],['text_contacts','문자 연락','#09a4ac']]},
- {key:'mobility',label:'이동',metrics:[['weekday_move_count','평일 이동','#2878ef'],['weekend_move_count','휴일 이동','#f18143']]},
+ {key:'communication',label:'통신',metrics:[['call_contacts','전화 연락','#243b63'],['text_contacts','문자 연락','#7b8798']]},
+ {key:'mobility',label:'이동',metrics:[['weekday_move_count','평일 이동','#243b63'],['weekend_move_count','휴일 이동','#7b8798']]},
 ];
 export function pathState(signal={}) {return signal.absolute&&signal.local?'both':signal.absolute?'absolute':signal.local?'local':'none';}
 export function eventsFor(tracking,district,age,endMonth) {
  return (tracking?.events||[]).filter(e=>e.district===district&&(!age||e.age===age)&&e.signalMonth<=endMonth)
   .sort((a,b)=>a.signalMonth.localeCompare(b.signalMonth));
+}
+export function trackingMonthOptions(tracking,endMonth) {
+ return (tracking?.months||[]).filter(month=>month<=endMonth).map(month=>({month,count:(tracking.events||[]).filter(e=>e.signalMonth===month).length}));
+}
+export function eventsInMonth(tracking,month) {return (tracking?.events||[]).filter(e=>e.signalMonth===month);}
+export function preferredMonthlyEvent(events,district,age) {
+ return events.find(e=>e.district===district&&e.age===age)||events.find(e=>e.district===district)||events.find(e=>e.age===age)||events[0];
 }
 export function trackingSeries(event,endMonth,scope='raw') {
  if(!event||event.signalMonth>endMonth)return [];

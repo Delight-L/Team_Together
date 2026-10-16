@@ -82,10 +82,6 @@
 
 .group-shell .bomi-chat-head > svg { flex-shrink: 0; color: #2563eb; }
 
-.bomi-welcome-character { display: none; }
-.group-shell .bomi-welcome { display: grid; grid-template-columns: 100px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 125px; padding: 14px; background: #f8fbfe; border-radius: 10px; }
-.group-shell .bomi-welcome-character { display: block; width: 100px; height: 100px; object-fit: contain; }
-
 .group-shell button:focus-visible { outline: 2px solid #075dff; outline-offset: 3px; }
 
 @media (min-width: 1501px) {
@@ -108,8 +104,6 @@
   .group-shell .gd-case { padding: 20px 16px; }
   .group-shell .gd-support-link { font-size: 12px; padding: 8px 12px; }
   .group-shell .gd-summary .gd-context-cards h3 { font-size: 16px; }
-  .group-shell .bomi-welcome { grid-template-columns: 72px minmax(0, 1fr); }
-  .group-shell .bomi-welcome-character { width: 72px; }
 }
 @media (max-width: 1150px) {
 
@@ -131,8 +125,6 @@
   .group-shell .gd-summary { padding: 17px 10px 10px; }
   .group-shell .gd-case-heading { flex-wrap: wrap; }
   .group-shell .gd-files-panel .gd-file-list { grid-template-columns: 1fr 1fr; }
-  .group-shell .bomi-welcome { grid-template-columns: 92px minmax(0, 1fr); }
-  .group-shell .bomi-welcome-character { width: 92px; }
 }
 @media (max-width: 480px) {
   .group-shell .gd-summary .gd-overview { grid-template-columns: 1fr; }
@@ -266,8 +258,6 @@
  .group-shell .gd-summary .gd-mini-trend small, .group-shell .gd-summary .gd-mini-share p { font-size:9px; margin:3px 0 0; }
  .group-shell .gd-summary .gd-mini-share strong { font-size:26px; line-height:1.1; margin:4px 0 6px; }
 }
-.bomi-chat.has-case .bomi-welcome { display:block; }
-.bomi-chat.has-case .bomi-welcome h3 { margin:0 0 8px; font-size:16px; line-height:1.4; }
 .bomi-chat.has-case .bomi-chat-head small { color:#2563eb; background:#edf5ff; border:1px solid #d6e6ff; border-radius:10px; padding:3px 6px; font-size:10px; line-height:1.4; }
 
 .bomi-chat.has-case .bomi-chat-head small { display:none; }

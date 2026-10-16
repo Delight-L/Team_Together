@@ -3,6 +3,7 @@ import { api, streamChat } from './api';
 import { Icon } from './components';
 import { chatFileName, chatTranscript, downloadChat, usedAi } from './chatExport.mjs';
 import './bomi-chat.css';
+import welcomeArtwork from './assets/bomi-detective-welcome.png';
 
 // 보미 챗봇은 모든 메뉴에서 같은 화면을 씁니다.
 // 질문은 모두 /api/chat으로 보내고, 서버의 총괄 에이전트(backend/agents/supervisor.py)가 담당을 고릅니다.
@@ -143,7 +144,7 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
   const end = useRef(null), field = useRef(null), appliedDraft = useRef(null);
   const contextKey = JSON.stringify(context);
   const targetKey = JSON.stringify([context, group || null]);
-  useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }); }, [chat.messages, chat.busy]);
+  useEffect(() => { if (chat.messages.length) end.current?.scrollIntoView({ block: 'nearest' }); }, [chat.messages, chat.busy]);
   // 지역이 바뀌면 안내를 지웁니다. 아래 예시 질문 효과보다 먼저 실행되어야 같은 순간에 넣은 안내가 남습니다.
   useEffect(() => { setGuided(false); setInput(''); }, [targetKey]);
   useEffect(() => {
@@ -190,19 +191,11 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
       </>}
     </header>
     {(group || context.age) && <div className="bomi-selected-case" aria-label="챗봇 선택 사례"><span className="online-dot" />{place} · {month}</div>}
-    <p className="bomi-scope">{group || context.age ? place : context.district ? context.district : `${context.city} 전체`} 기준으로 분석 설명 · 복지사업 찾기 · 보고서 초안을 도와드려요.</p>
-    <p className={`bomi-mode-line ${chat.mode === 'ai' ? 'ai' : ''}`} role="status">
-      {chat.mode === 'ai'
-        ? `AI 사용 중 · 질문과 최근 대화가 외부 AI(${chat.config?.aiProvider || '관리자 설정'})로 전송돼요`
-        : aiAvailable ? '자료 기반 답변 · 외부로 전송하지 않아요. 위 스위치로 AI를 켤 수 있어요'
-          : '자료 기반 답변 · 외부 AI는 관리자에게 연결을 요청하세요'}
-      {` · 최근 질문·답변 3쌍을 함께 참고해요`}
-    </p>
     {chat.configError && <p className="bomi-error" role="alert">{chat.configError} <button className="text-button" onClick={chat.reloadConfig}>설정 다시 불러오기</button></p>}
-    <div className="bomi-messages" aria-live="polite">
+    <div className={`bomi-messages ${!chat.messages.length ? 'is-empty' : ''}`} aria-live="polite">
       {!chat.messages.length && <div className="bomi-welcome">
         <h3>{group || context.age ? '선택한 사례를 함께 살펴볼까요?' : '무엇을 도와드릴까요?'}</h3>
-        <p>분석 근거부터 관련 복지사업과 보고서 초안까지 물어보세요.</p><div className="bomi-welcome-character"><img src="/brand/bomi-face.png" alt=""/><p>궁금한 내용을 물어보시면<br/>보미가 함께 찾아드릴게요.</p></div>
+        <p>분석 근거부터 관련 복지사업과 보고서 초안까지 물어보세요.</p><div className="bomi-welcome-character"><div className="bomi-welcome-art" role="img" aria-label="돋보기와 태블릿을 든 복지탐정 보미" style={{backgroundImage:`url(${welcomeArtwork})`}}/><p>궁금한 내용을 물어보시면<br/>보미가 함께 찾아드릴게요.</p></div>
       </div>}
       {chat.messages.map((m, i) => m.role === 'assistant' && !m.text && chat.busy && i === chat.messages.length - 1 ? <Typing key={i} /> : <article key={i} className={`bomi-message ${m.role}`}>
         <small>{m.role === 'user' ? '나' : m.agent ? `보미 · ${m.agent}` : '보미'}</small>
@@ -237,6 +230,5 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
       {chat.busy ? <button type="button" onClick={chat.stop}>중지</button>
         : <button className="primary" disabled={!input.trim()} aria-label="질문 보내기"><Icon name="send" size={20} /></button>}
     </form>
-    <p className="bomi-footnote">ⓘ 지역·집단 집계는 개인의 고립 여부를 판정하지 않으며, 사업의 운영·자격은 담당 기관 확인이 필요합니다. 개인정보는 입력하지 마세요.</p>
   </aside>;
 }

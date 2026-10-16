@@ -1,3 +1,5 @@
+import {DETECTION_METHODS} from './detectionMap.mjs';
+
 // 행정동 경계와 분석값은 로컬 자료이며, 도로 배경만 OpenFreeMap에서 가져옵니다.
 export const MAP_COLORS = {
   background: '#f7f9fc', park: '#e0efe7', water: '#dcecf8',
@@ -5,6 +7,10 @@ export const MAP_COLORS = {
 };
 
 export function regionColor(region) {
+  if (region.detectionMode) {
+    const methods=region.detectionMethods || [];
+    return methods.length===1 ? DETECTION_METHODS[methods[0]].color : methods.length>1 ? '#94a3b8' : MAP_COLORS.quiet;
+  }
   return region.status === '연속 후보' ? MAP_COLORS.orange
     : region.count > 0 ? MAP_COLORS.rose : region.pending ? MAP_COLORS.sky : MAP_COLORS.quiet;
 }
