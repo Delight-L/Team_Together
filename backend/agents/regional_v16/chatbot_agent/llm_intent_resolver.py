@@ -294,7 +294,15 @@ JSON만 반환하세요:
         # answer can report month, age band, and signal type.
         global_signal = (
             rule_intent.question_type in {"signals", "rank_regions"}
-            and re.search(r"강남구\s*전체|전체\s*지역|모든\s*동|변화\s*신호가\s*나온\s*동|신호가\s*나온\s*동", question)
+            and (
+                re.search(r"강남구\s*전체|전체\s*지역|모든\s*동|변화\s*신호가\s*나온\s*동|신호가\s*나온\s*동", question)
+                # The bomi adapter calls this shared resolver without passing
+                # the source text. parse_intent already marks this exact
+                # global-list shape as explicit age scope, so retain the same
+                # safeguard in that call path too.
+                or (rule_intent.age_scope_explicit and rule_intent.age_band is None
+                    and rule_intent.dong is None and not names)
+            )
         )
         if global_signal:
             intent = replace(intent, dong=None, dongs=(), age_band=None,
@@ -315,7 +323,10 @@ JSON만 반환하세요:
             intent = replace(intent, purpose="plan_review", question_type="support")
         if intent.question_type in {"signals", "rank_regions", "anomaly", "activity", "age_activity", "reason",
                                     "previous", "context", "support", "consumption", "data_status"}:
-            if not (intent.start_month or intent.end_month) and rule_intent.start_month and rule_intent.end_month:
+            # A YYYY-MM/year/half-year directly written in the current
+            # question is a fact, not a dashboard default. Never let an LLM
+            # or previous screen month silently replace it.
+            if rule_intent.start_month and rule_intent.end_month:
                 return replace(intent, start_month=rule_intent.start_month,
                                end_month=rule_intent.end_month)
         return intent

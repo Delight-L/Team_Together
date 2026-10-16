@@ -117,8 +117,6 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
         if intent.age_scope_explicit:
             source='DB1: a2_age_detection'
             cols += ['communication_signal','mobility_signal','combined_signal','any_signal']
-            for metric in CORE:
-                cols += [metric+'_log_change',metric+'_valid']
         e=Evidence('신호가 나온 지역',f'조건에 맞는 {LABEL[intent.signal]} 신호는 {len(f)}건입니다.',_records(f,cols),[source],limits)
     elif kind=='anomaly':
         f,rz=repo.anomalies(start,end,intent.metric,age,names)

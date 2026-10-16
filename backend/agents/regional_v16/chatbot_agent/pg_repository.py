@@ -36,6 +36,18 @@ class PostgresDb1Repository(SqlDb1Repository):
         super().__init__()
         self.engine = engine
         self.run_id = run_id  # 고정된 run(연결을 연 뒤 확정)
+        # The shared service DB can expose the existing dashboard tables
+        # directly instead of db1_v16's optional run views. In that case the
+        # agent reads the dashboard-compatible source without touching API,
+        # screen, or shared database code.
+        with engine.connect() as connection:
+            has_v16 = connection.exec_driver_sql(
+                "SELECT to_regclass('db1.v16_active_run')"
+            ).scalar() is not None
+        self._dashboard = None
+        if not has_v16:
+            from .dashboard_repository import DashboardDb1Repository
+            self._dashboard = DashboardDb1Repository(engine)
 
     def _connect(self):
         connection = self.engine.connect().execution_options(isolation_level='AUTOCOMMIT')
@@ -71,6 +83,8 @@ class PostgresDb1Repository(SqlDb1Repository):
 
     def has_data(self):
         """활성 run이 있고 갱신이 끝났는지. DB에 연결하지 못하면 예외가 납니다(자료 없음과 장애를 구분)."""
+        if self._dashboard is not None:
+            return self._dashboard.has_data()
         with self.engine.connect() as connection:
             run_id = self.run_id or connection.exec_driver_sql(f'SELECT run_id FROM {SCHEMA}.v16_active_run WHERE id=1').scalar()
             if not run_id:
@@ -80,6 +94,8 @@ class PostgresDb1Repository(SqlDb1Repository):
 
     def pipeline_status(self):
         """SQLite 구현(`data_pipeline.runner.status`)과 같은 항목."""
+        if self._dashboard is not None:
+            return self._dashboard.pipeline_status()
         with self.connection() as c:
             row = c.execute('SELECT payload_json FROM pipeline_state WHERE id=1').fetchone()
             result = json.loads(row[0]) if row else {'status': 'uninitialized'}
@@ -90,3 +106,50 @@ class PostgresDb1Repository(SqlDb1Repository):
                 detection_rows=c.execute('SELECT COUNT(*) FROM a2_detection').fetchone()[0],
                 age_detection_rows=c.execute('SELECT COUNT(*) FROM a2_age_detection').fetchone()[0])
             return result
+
+    # Dashboard-compatible mode implements the public Db1Repository contract
+    # directly.  Keep the normal SqlDb1Repository implementation unchanged
+    # when db1_v16 is provisioned.
+    def districts(self):
+        return self._dashboard.districts() if self._dashboard is not None else super().districts()
+
+    def available_period(self):
+        return self._dashboard.available_period() if self._dashboard is not None else super().available_period()
+
+    def consumption_period(self):
+        return self._dashboard.consumption_period() if self._dashboard is not None else super().consumption_period()
+
+    def district_codes(self):
+        return self._dashboard.district_codes() if self._dashboard is not None else super().district_codes()
+
+    def activity(self, *args, **kwargs):
+        return self._dashboard.activity(*args, **kwargs) if self._dashboard is not None else super().activity(*args, **kwargs)
+
+    def signals(self, *args, **kwargs):
+        return self._dashboard.signals(*args, **kwargs) if self._dashboard is not None else super().signals(*args, **kwargs)
+
+    def age_signal_cases(self, *args, **kwargs):
+        return self._dashboard.age_signal_cases(*args, **kwargs) if self._dashboard is not None else super().age_signal_cases(*args, **kwargs)
+
+    def anomalies(self, *args, **kwargs):
+        return self._dashboard.anomalies(*args, **kwargs) if self._dashboard is not None else super().anomalies(*args, **kwargs)
+
+    def evidence(self, *args, **kwargs):
+        return self._dashboard.evidence(*args, **kwargs) if self._dashboard is not None else super().evidence(*args, **kwargs)
+
+    def context(self, *args, **kwargs):
+        return self._dashboard.context(*args, **kwargs) if self._dashboard is not None else super().context(*args, **kwargs)
+
+    def supplements(self, *args, **kwargs):
+        return self._dashboard.supplements(*args, **kwargs) if self._dashboard is not None else super().supplements(*args, **kwargs)
+
+    def consumption_evidence(self, *args, **kwargs):
+        return self._dashboard.consumption_evidence(*args, **kwargs) if self._dashboard is not None else super().consumption_evidence(*args, **kwargs)
+
+    def consumption_payloads(self, *args, **kwargs):
+        return self._dashboard.consumption_payloads(*args, **kwargs) if self._dashboard is not None else super().consumption_payloads(*args, **kwargs)
+
+    def close(self):
+        if self._dashboard is not None:
+            return self._dashboard.close()
+        return super().close()
