@@ -658,7 +658,7 @@ export default function App() {
             if (action.view) go(action.view);
           }}
           visible={true}
-          context={view === 'dashboard' && chatGroup ? {city: chatGroup.city, district: chatGroup.district, month: chatGroup.month} : {
+          context={view === 'dashboard' && chatGroup ? {city: chatGroup.city, district: chatGroup.district, month: chatGroup.month, age: chatGroup.age, sex: chatGroup.sex} : {
             ...context,
             ...(view === 'chart' && analysisTab === 'compare' && chatScreenScope ? { screen: chatScreenScope } : {}),
             ...(view === 'chart' && analysisTab === 'evidence' && district && selectedRows.length ? {

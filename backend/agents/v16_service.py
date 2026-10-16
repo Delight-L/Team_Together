@@ -44,6 +44,25 @@ METRIC_BUTTON_QUESTIONS = {
 }
 
 SCREEN_SUMMARY = re.compile(r"(?:지금|현재)\s*보는\s*화면|화면\s*(?:내용|정보)?.*(?:정리|설명)|(?:정리|설명).*(?:화면|내용)")
+IMPLICIT_SCREEN_INFO = re.compile(r"(정보|자료|현황|변화|맥락|설명|알려줘|보여줘)")
+
+
+def _age_band(value: object) -> str | None:
+    """Convert the dashboard's Korean age label to the v16 DB band."""
+    text = str(value or '').strip()
+    return {'20대': '20s', '30대': '30s', '40대': '40s',
+            '50대': '50s', '60대': '60plus', '60세 이상': '60plus'}.get(text)
+
+
+def _expand_implicit_screen_info(question: str, context: dict) -> str:
+    """Make an underspecified information question explicitly use the visible card."""
+    if not context.get('district') or not IMPLICIT_SCREEN_INFO.search(question):
+        return question
+    if explicit_districts(question):
+        return question
+    age = str(context.get('age') or '').strip()
+    subject = f"{context['district']} {age}".strip()
+    return f"현재 화면에서 선택된 {subject}의 {question.strip()}"
 
 
 def _expand_dashboard_metric_question(question: str, context: dict) -> str:
@@ -343,8 +362,9 @@ class _ScopedResolver(IntentResolver):
 def reply(question, history, context, use_ai=True, group=None):
     """Return an existing supervisor reply dictionary with request-local memory."""
     provider, key, model = _configuration()
-    public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month")}
+    public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month", "age", "sex")}
     question = _expand_visible_screen_question(question, context.get('screen'))
+    question = _expand_implicit_screen_info(question, public_context)
     question = _expand_dashboard_metric_question(question, public_context)
     resolver = _ScopedResolver(V16_ROOT, model, None, public_context, key, bool(use_ai))
     resolver.provider = provider
@@ -355,6 +375,7 @@ def reply(question, history, context, use_ai=True, group=None):
     bot.activate_dashboard_context({
         'dong': public_context.get('district'),
         'label_month': public_context.get('month'),
+        'age_band': _age_band(public_context.get('age')),
     }, None)
     bot.memory = _RequestMemory(history, bot.repo.districts())
     if SCREEN_SUMMARY.search(question):
