@@ -88,15 +88,6 @@ class Chatbot:
    return AnswerResult(text,Evidence('초기 이력과 이상신호 판정 기준',text),
                        ('2025년 7월부터 탐지 결과가 저장된 이유는?', '기준월과 관측기간은 어떻게 달라?'))
   intent=self.intent_resolver.resolve(question,self.repo.districts(),self.memory)
-  # 전체 지역 신호 목록 질문은 대시보드의 선택 동·연령이나 LLM의
-  # 보조자료 해석을 사용하지 않고 지역 단위 목록 조회로 고정한다.
-  global_signal_question=(
-   (any(term in question for term in ('전체 지역','이상신호 지역','확인 필요한 지역','확인할 지역'))
-    and any(term in question for term in ('모두','전체','몇 곳','알려','찾아')))
-   or '어떤 이상신호든 상관없' in question
-  )
-  if global_signal_question and not intent.age_scope_explicit and not intent.age_band:
-   intent=replace(intent,purpose='track_change',question_type='rank_regions',dong=None,dongs=(),age_band=None,age_bands=(),age_scope_explicit=False)
   if intent.question_type in {'capabilities','consumption_criteria'}:
    text=age_capabilities_answer() if intent.question_type=='capabilities' else consumption_criteria_answer()
    return AnswerResult(text,Evidence('연령별 조회 안내' if intent.question_type=='capabilities' else '소비 증감 비교 기준',text))
