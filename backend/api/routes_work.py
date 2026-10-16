@@ -32,7 +32,7 @@ def report_filename(context, revision=None):
 
 def load_workflow(context):
     """이 지역·동·기준월의 업무 진행 상황입니다. 아직 없으면 빈 dict입니다."""
-    return mission_store.load_all().get(mission_store.identity(context), {})
+    return mission_store.load(context)
 
 
 def work_context(request):

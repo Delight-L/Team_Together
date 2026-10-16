@@ -2,6 +2,8 @@
 import json
 import os
 import re
+import threading
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -24,6 +26,10 @@ SEARCH_FIELDS = ("name", "description", "category", "region", "target", "agency"
 HOUSING_TERMS = ("주거", "주택", "월세", "임대", "보증금", "집수리")
 # 서울·강남 자료이므로 다른 지역(춘천 등)에는 이용 가능한 사업으로 안내하지 않습니다.
 COVERED_CITIES = {"강남구", "서울시", "서울"}
+# 질문 한 번에 여러 번(담당 선택·검색·보고서) 읽으므로 원격 DB 왕복을 잠시 기억해 둡니다.
+CACHE_SECONDS = 60
+_cache = {"at": 0.0, "source": None, "records": None}
+_cache_lock = threading.Lock()
 
 
 def candidate_record(row):
@@ -62,8 +68,25 @@ def resource_source():
 
 
 def load_resources():
-    """요청할 때 DB를 조회하므로 DB 자료 수정은 서버 재시작 없이 반영됩니다."""
-    if resource_source() == "json":
+    """검색할 사업 목록입니다. DB 자료 수정은 서버 재시작 없이 1분 안에 반영됩니다."""
+    source = resource_source()
+    with _cache_lock:
+        fresh = _cache["source"] == source and time.monotonic() - _cache["at"] < CACHE_SECONDS
+        if not fresh:
+            _cache.update(records=_read_resources(source), source=source, at=time.monotonic())
+        # 호출한 쪽이 사업 정보를 고쳐도 기억해 둔 원본은 바뀌지 않게 복사해서 돌려줍니다.
+        return [dict(record) for record in _cache["records"]]
+
+
+
+def clear_cache():
+    """다음 조회 때 DB를 다시 읽게 합니다(테스트·자료 적재 직후용)."""
+    with _cache_lock:
+        _cache.update(at=0.0, source=None, records=None)
+
+
+def _read_resources(source):
+    if source == "json":
         candidates = json.loads((DATA / "policy_candidates.json").read_text(encoding="utf-8"))["records"]
         plans = list(enumerate(json.loads((DATA / "gangnam_policy_plans_2025.json").read_text(encoding="utf-8"))))
     else:

@@ -4,6 +4,19 @@
 // 서버가 알려 준 답변 방식(mode)에 AI 단계가 있으면 AI가 만든 답입니다.
 export const usedAi = mode => /AI (대화|해석|문장 다듬기|의도 판단)/.test(mode || '');
 
+// 서버가 붙인 근거 이름(DB1: a2_detection 같은 내부 테이블 이름)을 담당자가 알아볼 수 있는 말로 바꿉니다.
+// 화면의 «근거 보기»에만 쓰고, 대화 내보내기에는 확인용으로 원래 이름을 남깁니다.
+const SOURCE_NAMES = [
+  [/a2_feature/i, '통신·이동 지표'],
+  [/a2_|analysis2|sequential|탐지/i, '통신·이동 변화 탐지 결과'],
+  [/a1_|analysis1|지역유형|elder/i, '지역 배경(지역 유형) 자료'],
+  [/analysis3/i, '소비·생활 보조 자료'],
+  [/유동인구|_pop\b/i, '집단별 유동인구 집계'],
+  [/서울서베이/, '서울서베이'],
+  [/DB2|복지서비스/i, '지자체 복지서비스 자료'],
+];
+export const sourceLabel = source => SOURCE_NAMES.find(([pattern]) => pattern.test(source || ''))?.[1] || '저장된 분석 자료';
+
 const pad = value => String(value).padStart(2, '0');
 const stamp = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 const LIMIT_NOTE = '지역·집단 집계는 개인의 고립 여부를 판정하지 않으며, 사업의 운영·이용 자격은 담당 기관 확인이 필요합니다.';

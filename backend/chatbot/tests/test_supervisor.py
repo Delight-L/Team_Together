@@ -121,14 +121,14 @@ class RouteTest(unittest.TestCase):
         self.assertIn('외부 AI 호출 없음', result['replace']['mode'])
 
     def test_report_route_explains_missing_steps(self):
-        with patch('backend.db.mission_store.load_all', return_value={}):
+        with patch('backend.db.mission_store.load', return_value={}):
             result = dict(events('보고서 초안 만들어 줘'))
         self.assertEqual(result['route']['agent'], 'report')
         self.assertIn('근거가 아직 없어요', result['replace']['text'])
         self.assertEqual(result['actions']['actions'][0]['view'], 'report')
 
     def test_report_route_returns_draft_action(self):
-        with patch('backend.db.mission_store.load_all', return_value={supervisor.mission_store.identity(CONTEXT): WORKFLOW}):
+        with patch('backend.db.mission_store.load', return_value=WORKFLOW):
             result = dict(events('보고서 작성해줘'))
         draft = result['actions']['actions'][0]['reportDraft']
         self.assertEqual(draft['context']['district'], '삼성1동')
@@ -152,7 +152,7 @@ class RouteTest(unittest.TestCase):
 
     def test_group_report_says_district_basis(self):
         group = ({'age': '70대', 'sex': '여성', 'district': '삼성1동'}, {})
-        with patch('backend.db.mission_store.load_all', return_value={}):
+        with patch('backend.db.mission_store.load', return_value={}):
             result = dict(supervisor.stream([{'role': 'user', 'content': '보고서 초안 만들어 줘'}],
                                             CONTEXT, DATA, group, use_ai=False))
             without_group = dict(events('보고서 초안 만들어 줘'))
@@ -256,7 +256,7 @@ class ConversationDraftTest(unittest.TestCase):
     """«보고서 작성해줘»: 대화에서 찾은 사업·신규 구상안으로 담당자 검토 전 초안을 만듭니다."""
     def setUp(self):
         for target in (ai_key(''), patch.object(llm, 'moderate', AsyncMock(return_value=[])),
-                       patch('backend.db.mission_store.load_all', return_value={})):
+                       patch('backend.db.mission_store.load', return_value={})):
             target.start()
             self.addCleanup(target.stop)
 

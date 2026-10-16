@@ -101,7 +101,7 @@ class SupervisorV16Test(unittest.TestCase):
         with patch.object(supervisor.v16_service, 'reply') as reply, \
                 patch.object(supervisor.welfare_service, 'stream_reply', return_value=iter([
                     ('replace', {'text': '복지사업 안내입니다.'}), ('done', {})])), \
-                patch.object(supervisor.mission_store, 'load_all', return_value={}):
+                patch.object(supervisor.mission_store, 'load', return_value={}):
             self.assertEqual(self.stream('병원 동행 지원사업을 찾아줘')['route']['agent'], 'welfare')
             self.assertEqual(self.stream('보고서 초안 만들어줘')['route']['agent'], 'report')
         reply.assert_not_called()

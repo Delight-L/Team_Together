@@ -15,6 +15,10 @@ class WelfareChatbotRepositoryTest(unittest.TestCase):
     def setUp(self):
         self.engine = create_engine("sqlite://").execution_options(schema_translate_map={"db2": None})
         self.addCleanup(self.engine.dispose)
+        from backend.chatbot.welfare.app.dialogue import resources
+        # 사업 목록은 1분간 기억하므로 테스트마다 비우고 시작·종료합니다.
+        resources.clear_cache()
+        self.addCleanup(resources.clear_cache)
         self.candidates = json.loads((repository.DATA_DIR / "policy_candidates.json").read_text(encoding="utf-8"))
         self.plans = json.loads((repository.DATA_DIR / "gangnam_policy_plans_2025.json").read_text(encoding="utf-8"))
 
@@ -53,6 +57,19 @@ class WelfareChatbotRepositoryTest(unittest.TestCase):
         self.assertIn("DB에서 수정한 담당 기관", answer)
         self.assertIn("DB에서 수정한 확인 절차", answer)
         self.assertEqual(events[-1][0], "done")
+
+    def test_resources_are_read_once_per_cache_window(self):
+        repository.import_json(engine=self.engine)
+        from backend.chatbot.welfare.app.dialogue import resources
+        with patch.dict("os.environ", {"WELFIND_WELFARE_SOURCE": "db"}),                 patch.object(repository, "get_engine", return_value=self.engine),                 patch.object(resources, "load_dataset_rows", wraps=repository.load_dataset_rows) as reads:
+            first = resources.load_resources()
+            first[0]["name"] = "호출한 쪽에서 고친 이름"
+            resources.search("세곡동행", city="강남구")
+            self.assertNotEqual(resources.load_resources()[0]["name"], "호출한 쪽에서 고친 이름")
+            self.assertEqual(reads.call_count, 1)
+            with patch.object(resources.time, "monotonic", return_value=resources.time.monotonic() + resources.CACHE_SECONDS + 1):
+                resources.load_resources()
+            self.assertEqual(reads.call_count, 2)
 
     def test_failed_import_rolls_back_both_datasets(self):
         repository.import_json(engine=self.engine)

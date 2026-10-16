@@ -15,7 +15,6 @@
 .bomi-context > span:not(.online-dot) { white-space: nowrap; }
 .bomi-new { font-size: 11px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; color: #2563eb; background: #fff; flex-shrink: 0; }
 .bomi-chat-head .icon-button { flex-shrink: 0; }
-.bomi-scope { margin: 0; font-size: 12px; color: var(--text-sub); }
 /* AI 사용 스위치(기본 꺼짐)와 현재 답변 방식 안내 */
 .bomi-ai-switch { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; font-size: 11px; font-weight: 600; padding: 5px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--text-sub); background: #fff; cursor: pointer; }
 .bomi-ai-switch .track { position: relative; width: 26px; height: 14px; border-radius: 999px; background: var(--line-strong); transition: background .15s; }
@@ -25,8 +24,11 @@
 .bomi-ai-switch.on .thumb { transform: translateX(12px); }
 .bomi-ai-switch:disabled { cursor: not-allowed; opacity: .55; }
 .bomi-ai-switch:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
-.bomi-mode-line { margin: 0; font-size: 11px; color: var(--text-sub); padding: 6px 9px; border-radius: 8px; background: var(--surface-tint); }
-.bomi-mode-line.ai { color: #5b21b6; background: #f5f3ff; }
+/* 지금 대상·답변 방식 칩 */
+.bomi-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.bomi-chip { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; padding: 3px 9px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; line-height: 1.5; color: var(--text-sub); background: var(--surface-tint); border: 1px solid var(--line); word-break: keep-all; cursor: default; }
+.bomi-chip.target.case { color: #2563eb; background: #edf5ff; border-color: #d6e6ff; }
+.bomi-chip.mode.ai { color: #5b21b6; background: #f5f3ff; border-color: #ddd6fe; }
 .bomi-badge { display: inline-block; margin-right: 6px; padding: 1px 6px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; }
 .bomi-badge.ai { color: var(--status-ai); background: var(--status-ai-bg); }
 .bomi-badge.data { color: var(--status-pending); background: var(--status-pending-bg); }
@@ -40,7 +42,9 @@
 .bomi-message p { margin: 0; white-space: pre-wrap; }
 .bomi-message.user { align-self: flex-end; background: var(--line); border-radius: 12px 12px 0 12px; }
 .bomi-message.assistant { align-self: flex-start; background: var(--surface-tint); border: 1px solid var(--line); border-radius: 12px 12px 12px 0; }
-.bomi-meta { display: block; margin-top: 6px; font-size: 11px; color: var(--text-muted); }
+.bomi-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 4px; margin-top: 6px; font-size: 11px; color: var(--text-muted); }
+.bomi-basis summary { cursor: pointer; color: var(--text-muted); }
+.bomi-basis[open] { flex-basis: 100%; }
 /* v16이 제안하는 다음 질문 버튼 */
 .bomi-followups { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
 .bomi-followups > span { font-size: 12px; font-weight: 700; color: var(--text-sub); }

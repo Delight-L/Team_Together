@@ -211,7 +211,7 @@ def _report(question, history, context, data, use_ai, source_ids=()):
     """보고서 에이전트: 대화에서 찾은 사업·신규 구상안이 있으면 대화 기반 초안, 없으면 업무 기록 초안."""
     workflow, rows = {}, []
     if context.get('district'):
-        workflow = mission_store.load_all().get(mission_store.identity(context), {})
+        workflow = mission_store.load(context)
         rows = region_workspace.region_status(data, context['city'], context['month'], context['district'])['rows']
         if context.get('age'): rows = [r for r in rows if r.get('age_label') == context['age']]
     by_id = {record['id']: record for record in load_resources()}

@@ -466,7 +466,6 @@
 .bomi-chat.has-case .bomi-chat-head small { color:#2563eb; background:#edf5ff; border:1px solid #d6e6ff; border-radius:10px; padding:3px 6px; font-size:10px; line-height:1.4; }
 
 .bomi-chat.has-case .bomi-chat-head small { display:none; }
-.bomi-selected-case { display:flex; align-items:center; gap:6px; width:fit-content; max-width:100%; padding:5px 9px; border-radius:12px; background:#edf5ff; border:1px solid #d6e6ff; color:#2563eb; font-size:11px; line-height:1.4; word-break:keep-all; }
 
 /* Single-screen briefing: communication and mobility comparisons beside reference flow. */
 .group-shell .gd-summary .gd-unified-overview { grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:8px; align-items:stretch; }

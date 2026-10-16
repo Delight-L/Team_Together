@@ -119,7 +119,6 @@
 .app-shell.group-shell .bomi-welcome-character p { text-align:center;font-size:15px; }
 .app-shell.group-shell .bomi-suggestions button { font-size:13px;padding:8px 12px; }
 .app-shell.group-shell .bomi-input textarea { font-size:14px;padding:14px;min-height:80px; }
-.app-shell.group-shell .bomi-scope { font-size:13px; }
 .app-shell.group-shell .bomi-chat-head { gap:7px; }
 .app-shell.group-shell .bomi-chat-head strong { white-space:nowrap;font-size:15px; }
 .app-shell.group-shell .bomi-chat-head img { width:38px; }

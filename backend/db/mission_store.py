@@ -42,6 +42,12 @@ def identity(request):
         fields.append(request["age"])
     return json.dumps(fields, ensure_ascii=False, separators=(",", ":"))
 
+def load(request):
+    """이 담당자·지역·기준월의 업무 기록 하나만 읽습니다. 없으면 빈 dict입니다."""
+    with transaction() as db:
+        row = db.execute(text("SELECT value FROM work.missions WHERE key=:key"), {"key": identity(request)}).fetchone()
+        return normalize(json.loads(row[0])) if row else {}
+
 def load_all():
     with transaction() as db:
         items = {}

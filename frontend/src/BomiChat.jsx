@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api, streamChat } from './api';
 import { Icon } from './components';
-import { chatFileName, chatTranscript, downloadChat, usedAi } from './chatExport.mjs';
+import { chatFileName, chatTranscript, downloadChat, sourceLabel, usedAi } from './chatExport.mjs';
 import './bomi-chat.css';
 
 // 보미 챗봇은 모든 메뉴에서 같은 화면을 씁니다.
@@ -164,6 +164,11 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
   const suggestions = group || !context.district ? SUGGESTIONS[target] : MENU_SUGGESTIONS[view] || SUGGESTIONS[target];
   const month = group?.month || context.month;
   const aiAvailable = !!chat.config?.aiAvailable;
+  const targetName = group || context.age ? place : context.district || `${context.city} 전체`;
+  const modeTitle = chat.mode === 'ai'
+    ? `질문과 최근 대화가 외부 AI(${chat.config?.aiProvider || '관리자 설정'})로 전송돼요`
+    : aiAvailable ? '외부로 전송하지 않고 저장된 자료로 답해요. 위 스위치로 AI를 켤 수 있어요'
+      : '외부로 전송하지 않고 저장된 자료로 답해요. 외부 AI는 관리자에게 연결을 요청하세요';
   // 대화 내보내기: 브라우저에서 바로 .txt 파일을 만듭니다(서버로 보내지 않음).
   function exportChat() {
     const exportedAt = new Date();
@@ -187,15 +192,15 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
         <button className="icon-button" onClick={onExpand} aria-label={expanded ? '챗봇 패널로 돌아가기' : '챗봇 크게 보기'}><Icon name={expanded ? 'minimize' : 'expand'} size={17} /></button>
       </>}
     </header>
-    {(group || context.age) && <div className="bomi-selected-case" aria-label="챗봇 선택 사례"><span className="online-dot" />{place} · {month}</div>}
-    <p className="bomi-scope">{group || context.age ? place : context.district ? context.district : `${context.city} 전체`} 기준으로 분석 설명 · 복지사업 찾기 · 보고서 초안을 도와드려요.</p>
-    <p className={`bomi-mode-line ${chat.mode === 'ai' ? 'ai' : ''}`} role="status">
-      {chat.mode === 'ai'
-        ? `AI 사용 중 · 질문과 최근 대화가 외부 AI(${chat.config?.aiProvider || '관리자 설정'})로 전송돼요`
-        : aiAvailable ? '자료 기반 답변 · 외부로 전송하지 않아요. 위 스위치로 AI를 켤 수 있어요'
-          : '자료 기반 답변 · 외부 AI는 관리자에게 연결을 요청하세요'}
-      {` · 최근 질문·답변 3쌍을 함께 참고해요`}
-    </p>
+    {/* 지금 대상과 답변 방식을 칩으로 보여 줍니다. 자세한 설명은 칩에 마우스를 올리면 보입니다. */}
+    <div className="bomi-chips" aria-label="대화 기준">
+      <span className={`bomi-chip target ${group || context.age ? 'case' : ''}`} title={`${targetName} 기준으로 분석 설명 · 복지사업 찾기 · 보고서 초안을 도와드려요`}>
+        {(group || context.age) && <span className="online-dot" />}{targetName}{month ? ` · ${month}` : ''}
+      </span>
+      <span className={`bomi-chip mode ${chat.mode === 'ai' ? 'ai' : ''}`} role="status" title={modeTitle}>
+        {chat.mode === 'ai' ? `AI 사용 · ${chat.config?.aiProvider || '외부 AI'}로 전송` : '자료 기반 · 외부 전송 없음'}
+      </span>
+    </div>
     {chat.configError && <p className="bomi-error" role="alert">{chat.configError} <button className="text-button" onClick={chat.reloadConfig}>설정 다시 불러오기</button></p>}
     <div className="bomi-messages" aria-live="polite">
       {!chat.messages.length && <div className="bomi-welcome">
@@ -206,10 +211,11 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
         <small>{m.role === 'user' ? '나' : m.agent ? `보미 · ${m.agent}` : '보미'}</small>
         <p>{m.text || '답변을 완료하지 못했습니다.'}</p>
         {m.interrupted && <span className="bomi-notice">완료되지 않은 응답입니다.</span>}
-        {m.role === 'assistant' && m.mode && <span className="bomi-meta">
+        {m.role === 'assistant' && m.mode && <div className="bomi-meta">
           <span className={`bomi-badge ${usedAi(m.mode) ? 'ai' : 'data'}`}>{usedAi(m.mode) ? 'AI 답변' : '자료 기반'}</span>
-          {[m.mode.split(' · ')[0], m.source].filter(Boolean).join(' · ')}
-        </span>}
+          {/* 내부 자료 이름은 접어 두고, 펼치면 담당자가 알아볼 수 있는 말로 보여 줍니다. */}
+          {m.source && <details className="bomi-basis"><summary>근거 보기</summary>{sourceLabel(m.source)}</details>}
+        </div>}
         {m.notices?.map(n => <p key={n} className="bomi-notice" role="status">ⓘ {n}</p>)}
         {m.role === 'assistant' && m.followUps?.length > 0 && <div className="bomi-followups" aria-label="다음 질문">
           <span>다음 질문</span>

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { chatFileName, chatTranscript, usedAi } from '../src/chatExport.mjs';
+import { chatFileName, chatTranscript, sourceLabel, usedAi } from '../src/chatExport.mjs';
 
 const at = new Date(2026, 9, 15, 9, 5);
 const messages = [
@@ -38,4 +38,15 @@ test('파일 이름은 쓸 수 없는 문자와 공백을 _로 바꾸고 시각�
 test('AI 답변 판별은 v16의 AI 의도 판단도 포함', () => {
   assert.equal(usedAi('v16 · AI 의도 판단 · DB1 근거'), true);
   assert.equal(usedAi('데이터 근거 안내 · 외부 AI 호출 없음'), false);
+});
+
+test('근거 보기에는 내부 테이블 이름 대신 담당자용 자료 이름을 보여 준다', () => {
+  assert.equal(sourceLabel('DB1: a2_detection'), '통신·이동 변화 탐지 결과');
+  assert.equal(sourceLabel('DB1: a2_feature'), '통신·이동 지표');
+  assert.equal(sourceLabel('DB1: a1_context / a1_input'), '지역 배경(지역 유형) 자료');
+  assert.equal(sourceLabel('DB1: Analysis3 보조자료'), '소비·생활 보조 자료');
+  assert.equal(sourceLabel('DB1 · 집단별 유동인구'), '집단별 유동인구 집계');
+  assert.equal(sourceLabel('DB1 · age_pop / wkdy_pop / time_pop'), '집단별 유동인구 집계');
+  assert.equal(sourceLabel('DB2 · 지자체 복지서비스'), '지자체 복지서비스 자료');
+  assert.equal(sourceLabel('v16 · DB1'), '저장된 분석 자료');
 });
