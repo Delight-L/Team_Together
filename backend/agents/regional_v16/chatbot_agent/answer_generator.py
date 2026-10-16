@@ -267,11 +267,16 @@ def _concise_signal_list(intent,evidence):
         if row.get('신호 건수') is not None:
             paragraphs.append(f"{row.get('행정동')}에서는 선택한 기간에 변화 신호가 {row['신호 건수']}건 확인됐어요.")
             continue
-        paragraphs+=_signal_story(row)
+        if not (intent.age_scope_explicit or intent.age_band or intent.age_bands) and row.get('age_band'):
+            signal_name=SIGNAL_LABEL.get(str(row.get('signal_type','')).lower(),'변화')
+            paragraphs.append(f"{row.get('행정동')}에서 연령별 {signal_name} 신호가 확인됐어요.")
+        else:
+            paragraphs+=_signal_story(row)
         cluster=_cluster_story(row,evidence)
         if cluster:paragraphs.append(cluster)
-        ages=_age_changes_story(row,evidence)
-        if ages:paragraphs.append(ages)
+        if intent.age_scope_explicit or intent.age_band or intent.age_bands:
+            ages=_age_changes_story(row,evidence)
+            if ages:paragraphs.append(ages)
     if len(rows)>10:paragraphs.append(f"전체 {len(rows)}건 중 먼저 10건을 보여드렸어요.")
     if intent.limit and len(names)<intent.limit:
         paragraphs.append(f"요청하신 {intent.limit}곳보다 적은 이유는, 이번 조건에서 신호가 확인된 지역이 {len(names)}곳이기 때문이에요.")
