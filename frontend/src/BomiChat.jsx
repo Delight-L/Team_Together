@@ -106,6 +106,7 @@ function useChat(context, group, userId) {
         ...(group ? { group } : {}),
       };
       if (body.age && !['20대', '30대', '40대', '50대', '60대 이상'].includes(body.age)) delete body.age;
+      if (/(이상\s*신호|탐지.*지역|지역.*목록|순위)/.test(question)) delete body.age;
       await streamChat(body, (event, payload) => {
         if (request.current !== controller) return;
         if (event === 'route') update(m => ({ ...m, agent: payload.label }));
