@@ -39,9 +39,26 @@ LOGGER = logging.getLogger(__name__)
 CONTEXTUAL_TYPES = {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"}
 LIST_TYPES = {"signals", "rank_regions", "anomaly"}
 MONTH = re.compile(r"^20\d{2}-(0[1-9]|1[0-2])$")
+SCREEN_SUMMARY = re.compile(
+    r"(?:대시보드|현재|지금|선택한|이)\s*(?:화면|자료|정보|내용)?.*(?:요약|정리|설명)"
+    r"|(?:요약|정리|설명).*(?:대시보드|화면|자료|정보|내용)"
+)
 
 
 DEFAULT_MODEL = "gemini-2.5-flash-lite"
+
+
+def _age_band(value: object) -> str | None:
+    """대시보드의 한글 연령 표기를 연령별 탐지 테이블의 코드로 바꾼다."""
+    return {
+        "20대": "20s", "30대": "30s", "40대": "40s", "50대": "50s",
+        "60대": "60plus", "60세 이상": "60plus",
+    }.get(str(value or "").strip())
+
+
+def _is_dashboard_summary(question: str) -> bool:
+    """현재 선택 카드의 핵심 수치를 요약해 달라는 화면 문맥 요청인지 판별한다."""
+    return bool(SCREEN_SUMMARY.search(question))
 
 
 def _configuration():
@@ -220,6 +237,20 @@ class _ScopedResolver(IntentResolver):
     def resolve(self, question, districts, memory):
         names = explicit_districts(question, districts)
         parsed = self._apply_explicit_districts(parse_intent(question, districts), names)
+        # 탐지 기준을 묻는 질문과 현재 카드 요약은 화면의 응답 계약이
+        # 분명하다. 외부 모델의 임의 분류(예: 소비 기준)로 바꾸지 않는다.
+        if parsed.question_type == "methodology":
+            self.last_source = "rule_methodology"
+            self.resolved_intent = self._defaults(parsed, districts, memory, names)
+            return self.resolved_intent
+        if _is_dashboard_summary(question):
+            age = _age_band(self.context.get("age"))
+            intent = replace(parsed, purpose="track_change", question_type="reason",
+                             signal="any", needs=(), use_previous_scope=True,
+                             age_band=age, age_scope_explicit=age is not None)
+            self.last_source = "rule_dashboard_summary"
+            self.resolved_intent = self._defaults(intent, districts, memory, names)
+            return self.resolved_intent
         if self.use_ai and self.config:
             try:
                 prompt = INTENT_PROMPT + "\n" + json.dumps({
@@ -291,11 +322,16 @@ def reply(question, history, context, use_ai=True, group=None):
     """질문 하나에 대한 v16 답변 dict(answer, mode, sources, followUps, notice)를 요청 단위 기억으로 만듭니다."""
     config = _configuration()
     model = config.model if config and config.provider == "gemini" else DEFAULT_MODEL
-    public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month")}
+    public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month", "age")}
     resolver = _ScopedResolver(V16_ROOT, model, None, public_context, config, bool(use_ai))
     bot = Chatbot(V16_ROOT, model=model, intent_resolver=resolver, moderator=_SupervisorModerator(),
                   repository=_repository())
     bot.allow_ai_generation = False
+    bot.activate_dashboard_context({
+        "dong": public_context.get("district"),
+        "label_month": public_context.get("month"),
+        "age_band": _age_band(public_context.get("age")),
+    }, None)
     resolver.available_period = bot.repo.available_period()
     bot.memory = _RequestMemory(history, bot.repo.districts())
     try:

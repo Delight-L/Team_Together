@@ -429,7 +429,12 @@ def _context_lines(evidence,skip_regions=False,skip_local=False):
         lines+=['','강남구 공통 소비 패턴 변화:','동별 소비 분야 비교 자료가 없어 강남구 전체 자료만 확인할 수 있습니다.']
     if s.get('non_exact_quarter_windows'):
         lines.append('일부 3개월 관측기간이 두 분기에 걸칩니다. 이 경우 직전 완료 분기 자료를 별도 배경으로 표시하며 같은 기간의 변화로 비교하지 않습니다.')
-    for date,w in list(s.get('weather',{}).items())[:1]:
+    # Dashboard-compatible storage has no weather supplement and represents
+    # that absence as an empty list.  The original DB1 repository uses a
+    # date-keyed dictionary.  Optional context must never stop a core
+    # dashboard-summary answer from rendering.
+    weather=s.get('weather',{})
+    for date,w in list(weather.items())[:1] if isinstance(weather,dict) else []:
         parts=[]
         for r in w['observation_month_weather']:
             parts.append(f"{r['month']} 강수량 {_value(r.get('rainfall_mm'))}㎜·강수일 {_value(r.get('rain_days'))}일·적설일 {_value(r.get('snow_days'))}")
