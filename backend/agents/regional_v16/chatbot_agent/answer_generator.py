@@ -260,7 +260,10 @@ def _concise_signal_list(intent,evidence):
         paragraphs=[f"{prefix} {names[0]}을 한 번 더 살펴볼 필요가 있어요."]
     else:
         paragraphs=[f"{prefix} 확인이 필요한 지역이 {len(names)}곳 나왔어요."]
-    for row in rows[:10]:
+    listed = rows[:10] if len(names) == 1 else [next(row for row in rows if row.get('행정동') == name) for name in names[:10]]
+    for index, row in enumerate(listed, 1):
+        if len(names) > 1:
+            paragraphs.append(f"{index}. {row.get('행정동')}")
         if row.get('신호 건수') is not None:
             paragraphs.append(f"{row.get('행정동')}에서는 선택한 기간에 변화 신호가 {row['신호 건수']}건 확인됐어요.")
             continue
