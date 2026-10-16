@@ -4,7 +4,8 @@ import json
 import math
 import pandas as pd
 from .schemas import Evidence,QueryIntent
-from .repository import DataRepository,SOURCES,CORE,AGE_LABEL
+from .db1_repository import Db1Repository
+from .repository import SOURCES,CORE,AGE_LABEL
 from .consumption_trends import consumption_trends
 from .observation_period import observation_range_text, observation_period_text, observation_period
 
@@ -51,14 +52,13 @@ def _age_signal_changes(repo,signal_rows):
             })
     return changes
 
-def execute(repo:DataRepository,intent:QueryIntent)->Evidence:
+def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
     names=intent.dongs or ((intent.dong,) if intent.dong else ())
     start,end,age=intent.start_month,intent.end_month,intent.age_band
     kind=intent.question_type
     signal_age_changes=None
     if kind=='data_status':
-        from data_pipeline.runner import status
-        data=status(repo.db)
+        data=repo.pipeline_status()
         return Evidence('데이터 처리 상태','초기 이력과 새 원본 처리 범위입니다.',
             [{'초기 이력 마지막 관측기간':observation_period_text('2025-06'),
               '현재 이력 마지막 관측기간':observation_period_text(str(data.get('history_end',''))[:7]),
@@ -147,28 +147,7 @@ def execute(repo:DataRepository,intent:QueryIntent)->Evidence:
         e=Evidence('지역 특성','저장된 k-means 지역유형과 구조적 특성입니다.',_records(f,['dong_name','period','cluster_type','hh_1_ratio','hh_2_ratio','age_60_plus_ratio','disability_ratio','livelihood_recipient_ratio','elderly_living_alone_rate_65plus']),[SOURCES['typology']],['지역유형은 지역의 배경이며 위험 등급이나 신호 원인 판정이 아닙니다.'])
     elif kind=='consumption':
         # Direct consumption queries use requested calendar periods, not telecom label periods.
-        rows=[];shared={}
-        with repo.connection() as c:
-            mapping={n:code for code,n in c.execute('SELECT DISTINCT adm_cd,adm_nm FROM a1_context')}
-            from .district_normalizer import ALIASES
-            mapping={ALIASES.get(n,n):code for n,code in mapping.items()}
-            for month in pd.period_range(start,end,freq='M'):
-                q=f'{month.year}Q{month.quarter}'
-                for name in names:
-                    if age:
-                        rs=c.execute('SELECT payload_json FROM a3a_comparison WHERE period=? AND adm_cd=? AND age=?',(q,mapping[name],AGE_LABEL[age])).fetchall()
-                        for r in rs:
-                            payload=json.loads(r[0]);key=(name,q,payload['domain'])
-                            if not any((x['행정동'],x['period'],x.get('domain'))==key for x in rows):rows.append({'행정동':name,'범위':'해당 동 소재 상점',**payload})
-                    else:
-                        r=c.execute('SELECT payload_json FROM a3a_quarter_summary WHERE period=? AND adm_cd=?',(q,mapping[name])).fetchone()
-                        if r and not any(x['행정동']==name and x['period']==q for x in rows):rows.append({'행정동':name,'period':q,'범위':'해당 동 소재 상점',**json.loads(r[0])})
-                if age:
-                    rs=c.execute('SELECT domain,payload_json FROM a3b_feature WHERE period=? AND district=? AND age=?',(str(month),'11680',AGE_LABEL[age])).fetchall()
-                    for domain,payload in rs:shared[(str(month),domain)]={'district':'강남구','period':str(month),'scope':'merchant_district_shared',**json.loads(payload)}
-                else:
-                    r=c.execute('SELECT payload_json FROM a3b_month_summary WHERE period=? AND district=?',(str(month),'11680')).fetchone()
-                    if r:shared[str(month)]={'district':'강남구','period':str(month),'scope':'merchant_district_shared',**json.loads(r[0])}
+        rows,shared=repo.consumption_evidence(names,start,end,age)
         e=Evidence('소비 보조자료','해당 동 상권 자료와 강남구 공통 소비자료입니다.',rows,['DB1: Analysis3'],['상점 소재지를 기준으로 한 자료이며 해당 동 주민의 소비를 뜻하지 않습니다.'],
             {'analysis3_district_shared':list(shared.values()),'analysis3_dong':rows,'analysis1':[],'direct_calendar_query':True,
              'consumption_trends':consumption_trends(repo,names,start,end,age),

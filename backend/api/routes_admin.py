@@ -2,9 +2,9 @@
 
 키 원문은 저장만 하고 화면으로 돌려보내지 않습니다(끝 4자리만 표시).
 """
-import asyncio
 import logging
 
+from backend.bomi import aio
 from backend.chatbot import ai_settings
 from backend.chatbot.welfare.app.llm.client import LLM_ERRORS, llm
 
@@ -38,7 +38,7 @@ def ai_test(request):
     if not ai_settings.current().ready:
         return {'ok': False, 'message': 'AI 사용을 켜고 API 키를 저장한 뒤 확인하세요.'}
     try:
-        answer = asyncio.run(llm.complete([{'role': 'user', 'content': '연결 확인입니다. "확인"이라고만 답하세요.'}],
+        answer = aio.run(llm.complete([{'role': 'user', 'content': '연결 확인입니다. "확인"이라고만 답하세요.'}],
                                           max_tokens=20))
     except LLM_ERRORS as exc:
         LOGGER.warning('AI 연결 확인 실패: %s', type(exc).__name__)

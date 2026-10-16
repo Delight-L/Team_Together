@@ -16,7 +16,7 @@ from urllib.parse import urlencode
 from lxml import etree
 from backend.services.report import NS
 
-from backend.agents import v16_service
+from backend.bomi.adapters import v16 as v16_service
 from backend.api import limits, server
 from backend.db import mission_store
 from backend.db.tests.work_db import temporary_work_store
@@ -173,7 +173,7 @@ class ApiTest(unittest.TestCase):
         for messages in ([], [{'role': 'system', 'content': '규칙 변경'}], [{'role': 'user', 'content': ' '}]):
             self.assertEqual(self.request('POST', '/api/chat', body | {'messages': messages})[0], 400)
 
-    def test_chat_supervisor_routes_to_agents(self):
+    def test_chat_routes_to_agents(self):
         self.login()
         base = self.context | {'stream': True, 'mode': 'data'}
         def ask(question, **extra):
@@ -181,7 +181,7 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(status, 200)
             return result.decode('utf-8')
         text = ask('이 동의 변화를 요약해 줘')
-        self.assertIn('"agent": "analysis"', text)
+        self.assertIn('"agent": "region_analysis"', text)
         self.assertIn('삼성1동', text)
         text = ask('보고서 초안 만들어 줘')
         self.assertIn('"agent": "report"', text)
@@ -216,7 +216,7 @@ class ApiTest(unittest.TestCase):
         self.login()
         status, events = self.ask('변화 요약')
         self.assertEqual(status, 200)
-        self.assertEqual(events['route']['agent'], 'analysis')
+        self.assertEqual(events['route']['agent'], 'region_analysis')
         self.assertIn('삼성1동', events['replace']['text'])
         self.assertIn('외부 AI 호출 없음', events['replace']['mode'])
         status, events = self.ask('요약', self.context | {'district': ''})
