@@ -6,7 +6,6 @@
 선택하면 AI가 기초 초안을 공문서 문체로 다듬고(polish), 결과를 기초 초안과 대조합니다.
 대조에서 새 숫자·URL이 생기거나 사업·판단 문구가 빠지면 AI 문장을 버리고 기초 초안을 돌려줍니다.
 """
-import asyncio
 import json
 import logging
 import math
@@ -23,7 +22,7 @@ NOT_RUNNING_TEXT = '운영 중인 사업 아님'
 # AI 문장 다듬기에서 글자 그대로 남아야 하는 판단·표시 문구입니다.
 KEEP_PHRASES = [*DECISION_TEXT.values(), '담당자 판단 확인 필요', PENDING_TEXT, NOT_RUNNING_TEXT]
 LIMIT_NOTE = '개인의 고립 여부나 변화 원인을 확정할 수 없음'
-# 복지사업 담당이 신규 사업 기획안을 답할 때 맨 앞에 붙이는 표시입니다(chatbot/welfare/app/dialogue/orchestrator.py).
+# 복지사업 담당이 신규 사업 기획안을 답할 때 맨 앞에 붙이는 표시입니다(bomi/agents/welfare.py).
 PLANNING_LABEL = '신규 사업 기획 아이디어 · 현재 운영 중인 사업이 아님'
 NEED_MATERIAL = ('보고서 초안을 만들 근거가 아직 없어요. 보미에게 "어르신 돌봄 사업 찾아 줘"처럼 사업을 찾거나 '
                  '"신규 사업 구상해 줘"라고 요청한 뒤 다시 "보고서 작성해줘"라고 하거나, 사업 매칭 검토에서 판단을 저장하세요.')
@@ -277,13 +276,14 @@ async def _polish(draft, request):
 
 def polish(draft, use_ai=False, request=''):
     """use_ai이면 AI로 기초 초안 문장을 다듬고, 근거 대조를 통과한 경우에만 다듬은 문장을 씁니다."""
+    from backend.bomi import aio
     from backend.chatbot.welfare.app.llm.client import LLM_ERRORS, ai_ready
     if not use_ai:
         return draft
     if not ai_ready():
         return draft | {'notice': 'AI 연결 설정이 없어 저장된 근거로 구성한 초안을 만들었습니다.'}
     try:
-        polished = asyncio.run(_polish(draft, request))
+        polished = aio.run(_polish(draft, request))
     except (*LLM_ERRORS, ValueError) as exc:
         LOGGER.warning('보고서 AI 문장 다듬기 실패: %s', type(exc).__name__)
         return draft | {'notice': 'AI 문장 다듬기를 완료하지 못해 저장된 근거로 구성한 초안을 보여 드립니다.'}
@@ -336,6 +336,8 @@ def report_reply(context, workflow, use_ai=False, request='', evidence_rows=(), 
     if notices:
         answer = '\n'.join('ⓘ ' + text for text in notices) + '\n\n' + answer
     return {'answer': answer, 'mode': '보고서 작성 에이전트 · ' + draft['mode'],
+            # 외부 AI가 문장을 다듬은 경우(출력 moderate 대상). 근거 대조에서 버려졌으면 False입니다.
+            'aiGenerated': 'AI 문장 다듬기' in draft['mode'],
             'actions': [{'label': '초안을 보고서 탭에서 수정', 'view': 'report', 'reportDraft': draft}]}
 
 

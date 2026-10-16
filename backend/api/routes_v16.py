@@ -1,11 +1,11 @@
-"""v16 단독 확인 API. 일반 화면 질문은 /api/chat의 총괄 에이전트를 거칩니다."""
+"""v16 단독 확인 API. 일반 화면 질문은 /api/chat의 보미 파이프라인(bomi/)을 거칩니다."""
 import logging
 
-from backend.agents import v16_service
 from backend.api import limits
 from backend.api.common import StreamResponse, dashboard_data, region_context
+from backend.bomi.adapters import v16 as v16_service
+from backend.bomi.request import validate_messages
 from backend.chatbot.guardrails import mask_messages
-from backend.chatbot.welfare import service as welfare_service
 from backend.chatbot.welfare.app.llm.client import ai_ready
 
 
@@ -13,7 +13,7 @@ def chat(request):
     """POST /api/chat/v16: 인증·지역 검사를 거쳐 v16만 호출하는 확인용 API."""
     context = region_context(request, dashboard_data(), district_required=False)
     limits.check_chat(request.user)
-    messages = welfare_service.validate_messages(request.params.get('messages'))
+    messages = validate_messages(request.params.get('messages'))
     if len(messages[-1]['content']) > 2000:
         raise ValueError('질문은 1~2,000자로 입력하세요.')
     messages, pii = mask_messages(messages)

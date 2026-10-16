@@ -7,7 +7,7 @@ from threading import RLock
 from .schemas import AnswerResult, Evidence
 from .guardrails import validate_input, OUT_OF_SCOPE
 from .content_moderation import InputModerator
-from .repository import DataRepository
+from .db1_repository import Db1Repository
 from .query_service import execute
 from .knowledge_retriever import retrieve
 from .explanation_retriever import retrieve_explanation
@@ -21,19 +21,16 @@ from .analysis2_knowledge import methodology_answer
 from .observation_period import observation_period
 
 class Chatbot:
- def __init__(self, project_root: Path, model: str="gemini-2.5-flash-lite", intent_resolver=None, moderator=None, repository=None):
+ def __init__(self, project_root: Path, model: str="gemini-2.5-flash-lite", intent_resolver=None, moderator=None, repository: Db1Repository=None):
   self.project_root=project_root
-  self.repo=repository or DataRepository(project_root); self.model=model
+  if repository is None:raise ValueError('Chatbot에는 repository(Db1Repository)를 주입해야 합니다. PostgreSQL 저장소는 pg_repository.PostgresDb1Repository입니다.')
+  self.repo=repository; self.model=model
   self.memory=ConversationMemory()
   self.moderator=moderator if moderator is not None else InputModerator(project_root)
   self.intent_resolver=intent_resolver or IntentResolver(project_root,model,self.repo.available_period())
   self.dashboard_scope=None; self.dashboard_segment_id=None
   self.allow_ai_generation=True
   self._operation_lock=RLock()
- def rebind_snapshot(self, database):
-  """Make a retained browser session read the snapshot selected by the dashboard."""
-  self.repo=DataRepository(self.project_root, db=database)
-  self.intent_resolver.available_period=self.repo.available_period()
  def activate_dashboard_context(self, scope, segment_id):
   self.dashboard_scope=scope; self.dashboard_segment_id=segment_id
   self.memory=ConversationMemory()

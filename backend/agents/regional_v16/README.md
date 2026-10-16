@@ -26,3 +26,22 @@ DB를 새로 만드는 작업기(`analysis1_worker.py`, `monthly_worker.py`)는 
 v16은 관리자 «AI 설정»을 따릅니다. Gemini면 JSON 스키마를 지정해 질문 의도를 분류하고,
 다른 제공사면 공용 AI 창구(`backend/chatbot/welfare/app/llm/client.py`)를 씁니다.
 AI를 쓰지 않으면 규칙으로 의도를 해석하고, 답변 문장은 항상 DB 근거로 만듭니다.
+
+## 저장소 계층
+
+챗봇 로직은 SQL을 직접 쓰지 않고 `chatbot_agent/db1_repository.py`의 `Db1Repository` 계약만 부릅니다.
+유일한 구현은 `chatbot_agent/pg_repository.py`의 `PostgresDb1Repository`이며, 공통 조회 로직(SQL)은 `chatbot_agent/repository.py`의 `SqlDb1Repository`에만 있습니다.
+`Chatbot`은 저장소를 주입받아야 하며(없으면 `ValueError`), 예전 단독 실행 터미널(`cli.py`·`main.py`·`menu.py`)은 SQLite 전용이라 제거했습니다.
+
+## PostgreSQL 저장소
+
+**PostgreSQL만 씁니다.** SQLite는 계산 파이프라인의 산출물이자 게시 입력일 뿐 서빙에는 쓰지 않습니다(`DB1_REPOSITORY=sqlite` 같은 값은 오류). `DB1_DATABASE_PATH`는 게시할 산출물 경로입니다.
+SQLite 공개본을 PostgreSQL에 올리는 일은 `data_pipeline/publish_postgres.py`가 하고, 프로젝트 루트에서 다음으로 실행합니다.
+
+```bash
+python scripts/publish_v16_to_postgres.py                    # 올리고 활성화
+python scripts/publish_v16_to_postgres.py --status           # 현재 상태
+python scripts/publish_v16_to_postgres.py --activate RUN_ID  # 이전 run으로 되돌리기
+```
+
+저장 구조와 설계는 `backend/ARCHITECTURE.md` 10장을 보세요.

@@ -1,0 +1,75 @@
+flowchart TD
+    FE["프론트엔드 BomiChat.jsx"]
+    CFG["GET /api/chat/config<br/>AI 사용 가능 여부 · 자료 수 · v16 자료 여부"]
+    FE -. "GET" .-> CFG
+    FE -->|"POST /api/chat"| RT["api/routes_chat.chat<br/>화면·그룹 맥락 검사 · limits.check_chat 한도 429<br/>validate_messages 대화 1~40개 · 6000자 → ChatRequest"]
+
+    RT --> PRE["regularization.prepare<br/>길이 2000자 · 최근 3쌍 · 개인정보 가림 가렸으면 notice 이벤트<br/>관리자 AI 설정이 꺼져 있으면 use_ai 해제"]
+    PRE --> FLAG
+
+    FLAG{"단어 규칙에<br/>걸림?"}
+    FLAG -->|"예 외부 호출 없음"| SAFE["route: guide · 안전 검사"]
+    FLAG -->|"아니오"| FIX{"고정 규칙?<br/>보고서 요청 · 업무 방법 · 화면 용어"}
+    FIX -->|"예"| PICK
+    FIX -->|"아니오"| AIQ{"AI 사용?"}
+    AIQ -->|"예"| AIR["Router.by_ai<br/>llm.complete ROUTER_PROMPT"]
+    AIQ -->|"아니오"| RULE2["Router.by_rules<br/>복지 단어 → 그룹 질문 → 분석 단어 → 사업 이름 → 동 이름 → 안내"]
+    AIR -->|"실패 · 알 수 없는 값"| RULE2
+    AIR -->|"성공"| PICK["담당 확정"]
+    RULE2 --> PICK
+    SAFE --> ROUTE
+    PICK --> ROUTE["route 이벤트"]
+
+    ROUTE --> AG{"담당 에이전트 4종<br/>RegulatedAgent"}
+
+    AG --> IN["입력 규제 respond<br/>단어 규칙 → moderate API AI 모드"]
+    IN -->|"걸림"| BLK["replace 차단 안내"]
+    IN -->|"통과"| WHO{"어느 에이전트?"}
+
+    WHO -->|"region_analysis"| RA{"설명기 선택"}
+    RA -->|"화면 용어 · 열린 그룹 질문 · v16 자료 없음"| WS["workspace<br/>group_workspace · region_workspace"]
+    RA -->|"그 밖"| V16["v16 어댑터<br/>Db1Repository → SQLite 공개본"]
+    WS -->|"AI 해석 실패"| WSF["외부 AI 없이 데이터 근거로 재답변<br/>error 이벤트 후 replace"]
+    WS --> DLV
+    WSF --> DLV
+    V16 --> DLV
+
+    WHO -->|"welfare"| WF["팀 JSON 자료 검색<br/>resources.search"]
+    WF --> SRC["sources 이벤트"]
+    SRC --> WAI{"AI 사용?"}
+    WAI -->|"아니오"| LOC["local_answer token"]
+    WAI -->|"예"| STM["llm.stream token<br/>StreamRedactor로 연락처 · URL · 금액 가림"]
+    STM -->|"AI 실패"| WERR["error 이벤트 후 local_answer replace"]
+    STM --> OMOD{"출력 moderate API"}
+    OMOD -->|"걸림"| OBLK["replace 출력 차단 안내"]
+    OMOD -->|"통과"| FOOT["출처 · 확인 상태 token<br/>자격 단정 교정 replace · notice"]
+
+    WHO -->|"report"| RP["업무 기록 · 동 분석 근거 · 대화에서 찾은 사업<br/>report_writer.report_reply"]
+    RP --> POL["AI 켬: 문장 다듬기<br/>check_grounding 근거 대조"]
+    POL --> DLV
+
+    WHO -->|"guide"| GD["고정 안내 문구<br/>외부 AI 없음"]
+    GD --> DLV
+
+    DLV["deliver 출력 규제<br/>AI가 쓴 글에만 moderate API"]
+    DLV -->|"걸림"| OBLK
+    DLV -->|"통과"| RPL["replace · follow_ups · notice · actions"]
+
+    BLK --> SEAL
+    OBLK --> SEAL
+    LOC --> SEAL
+    WERR --> SEAL
+    FOOT --> SEAL
+    RPL --> SEAL
+    SEAL["events.seal<br/>done 정확히 한 번 · 예외는 error 후 done"]
+    SEAL --> RESP["StreamResponse SSE<br/>route · sources · token · replace · follow_ups · actions · notice · error · done"]
+    RESP --> FE
+
+    classDef guard fill:#fdeaea,stroke:#c0392b,color:#222
+    classDef agent fill:#e8f1fb,stroke:#2e6da4,color:#222
+    classDef data fill:#eaf6ea,stroke:#3c8d40,color:#222
+    classDef event fill:#fff6dd,stroke:#b9770e,color:#222
+    class PRE,FLAG,SAFE,IN,BLK,DLV,OMOD,OBLK guard
+    class AG,RA,WS,WSF,V16,WF,STM,LOC,RP,POL,GD agent
+    class RT data
+    class ROUTE,SRC,FOOT,RPL,SEAL,RESP event
