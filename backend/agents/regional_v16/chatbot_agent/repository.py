@@ -89,6 +89,25 @@ class DataRepository:
         return f.loc[mask].copy()
 
     def signals(self,start=None,end=None,dong=None,signal='any',age_band=None):
+        # 이상신호의 기준 원본은 대시보드와 동일한 동·연령별 CSV입니다.
+        # 전체 연령 질문도 이 원본에서 연령별 판정 결과를 모아 조회합니다.
+        if age_band is None:
+            try:
+                from backend.db.age_analysis_repository import load_age_analysis
+                cases = pd.DataFrame(load_age_analysis()['ageDetections'])
+                if not cases.empty:
+                    cases['date'] = cases['month'].astype(str) + '-01'
+                    cases['행정동'] = cases['district'].replace(ALIASES)
+                    cases['age_band'] = cases['age_band'].fillna('')
+                    col = {'any':'any_signal','communication':'communication_signal',
+                           'mobility':'mobility_signal','combined':'combined_signal'}[signal]
+                    cases['age_signal'] = cases[col]
+                    cases = cases.loc[cases[col].fillna(False).eq(True)]
+                    cases = self._period(cases,start,end)
+                    if dong: cases = cases.loc[cases['행정동'].eq(dong)]
+                    return cases.sort_values(['date','행정동','age_band'])
+            except Exception:
+                pass
         f=self.activity(dong,start,end,age_band)
         return f.loc[f[{'any':'any_signal','communication':'communication_signal','mobility':'mobility_signal','combined':'combined_signal'}[signal]].fillna(False).eq(True)]
 
