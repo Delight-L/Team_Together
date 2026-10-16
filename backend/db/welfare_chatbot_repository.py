@@ -16,6 +16,8 @@ from sqlalchemy.dialects.postgresql import JSONB, insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.exc import SQLAlchemyError
 
+from backend.common import get_engine
+
 DATA_DIR = Path(__file__).resolve().parents[1] / "chatbot/welfare/data"
 SCHEMA = "db2"
 metadata = MetaData(schema=SCHEMA)
@@ -76,10 +78,6 @@ CANDIDATE_FIELDS = tuple(c.name for c in candidates.columns if c.name != "positi
 class WelfareDataError(RuntimeError):
     """DB 장애나 적재 누락을 JSON 자료로 숨기지 않고 알립니다."""
 
-
-def get_engine():
-    from backend.db.connection import engine
-    return engine
 
 
 def _upsert(conn, table, rows):

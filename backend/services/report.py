@@ -1,12 +1,11 @@
 """첨부 약식보고서의 OOXML 구성요소를 재사용해 편집 가능한 DOCX를 만듭니다."""
 from copy import deepcopy
-from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from zipfile import ZipFile
-from zoneinfo import ZoneInfo
 from lxml import etree
 from backend.agents.report_writer import SECTIONS, generate_draft, validate_content, report_source_label
+from backend.common import seoul_now
 
 TEMPLATE = Path(__file__).resolve().parents[1] / 'resources' / 'templates' / '약식보고서_서식_보고서.docx'
 NS = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
@@ -60,7 +59,7 @@ def build_report(context, rows, author, department, opinion, source_note, workfl
         section = deepcopy(patterns[-1])
         for child in list(body):
             body.remove(child)
-        now = datetime.now(ZoneInfo('Asia/Seoul'))
+        now = seoul_now()
         date = '’' + now.strftime('%y. %m. %d.') + '(' + '월화수목금토일'[now.weekday()] + ')'
         metadata = f'{department} / 담당: {author}' + (f' / 연락처: {contact}' if contact else '')
         for paragraph, text in zip(title.findall('.//w:p', NS), [draft['title'], date, metadata]):

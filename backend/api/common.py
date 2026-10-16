@@ -1,13 +1,11 @@
 """여러 API에서 함께 쓰는 도구: 요청·응답 형태, 분석 자료 읽기, 지역 권한 검사."""
 import json
 from datetime import datetime
-from pathlib import Path
-from zoneinfo import ZoneInfo
 
+from backend.common import ROOT, SEOUL
 from backend.db import analysis_repository, group_repository
 
 # 경로는 현재 터미널 폴더가 아니라 이 파일 위치를 기준으로 계산합니다.
-ROOT = Path(__file__).resolve().parents[2]
 MAP_FILE = ROOT / 'backend' / 'resources' / 'data' / 'map_boundaries.json'
 ANALYZED_CITY = '강남구'  # 동별 분석 결과가 연결된 지역
 
@@ -72,12 +70,11 @@ def dashboard_data():
         months.add(row['기준연월'])
     data['months'] = sorted(months)
 
-    seoul = ZoneInfo('Asia/Seoul')
-    data['dataCheckedAt'] = datetime.now(seoul).isoformat(timespec='seconds')
+    data['dataCheckedAt'] = datetime.now(SEOUL).isoformat(timespec='seconds')
     # 결과 버전이 'analysis2-숫자'이면 숫자가 분석 파일을 바꾼 시각(나노초)입니다.
     run_id = str(data.get('runId', ''))
     if run_id.startswith('analysis2-') and run_id[10:].isdigit():
-        changed = datetime.fromtimestamp(int(run_id[10:]) / 1e9, seoul)
+        changed = datetime.fromtimestamp(int(run_id[10:]) / 1e9, SEOUL)
         data['analysisFileModifiedAt'] = changed.isoformat(timespec='seconds')
     return data
 

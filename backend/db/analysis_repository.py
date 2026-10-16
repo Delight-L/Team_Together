@@ -6,39 +6,24 @@ import os
 import time
 from copy import deepcopy
 from functools import lru_cache
-from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
-from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
 from sqlalchemy import inspect, text
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
+# backend.common을 불러오면 .env를 먼저 읽습니다(DB 접속 정보와 WELFIND_DATA_SOURCE 확인용).
+from backend.common import ROOT as ROOT_DIR, get_engine, now_text
+
 DETECTION_FILE = ROOT_DIR / "pipelines/db1/Analysis2/outputs/detection.csv"
-
-from dotenv import load_dotenv
-
-# DB 접속 정보와 WELFIND_DATA_SOURCE를 db.connection import 전에도 확인하므로 여기서 먼저 읽습니다.
-load_dotenv(ROOT_DIR / ".env")
 
 from pipelines.preprocessing.regional_types.preprocessor import preprocess_raw_dir
 
 LOGGER = logging.getLogger(__name__)
 SCHEMA = "db1"  # PostgreSQL에서 확인한 실제 스키마 이름입니다.
 RULE_VERSION = "analysis2-v11"
-
-
-def get_engine():
-    from backend.db.connection import engine
-
-    return engine
-
-
-def now_text():
-    return datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
 
 
 def monthly_upload(content, filename):

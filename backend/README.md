@@ -9,6 +9,7 @@ API 서버·보미·에이전트·공유 DB 접근 코드를 관리합니다. �
 | `agents/` | 총괄, 지역 분석, 사업 매칭, 보고서 작성 |
 | `db/` | PostgreSQL 연결·조회·저장 |
 | `services/`, `resources/` | 공통 서비스와 지도·보고서 서식 |
+| `common.py` | 여러 폴더가 함께 쓰는 작은 도구: 프로젝트 경로(`ROOT`), `.env` 읽기, 서울 시각(`seoul_now`·`now_text`), 공용 DB 엔진(`get_engine`) |
 
 ## 실행과 검증
 

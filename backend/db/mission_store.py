@@ -1,10 +1,10 @@
 """담당자·지역·기준월별 미션 및 업무 기록 (공유 PostgreSQL work 스키마에 저장)."""
 import hashlib
 import json
-from datetime import datetime
 
 from sqlalchemy import text
 
+from backend.common import now_text as timestamp, seoul_now
 from backend.db.work_store import lock, transaction
 
 STEPS = ["분석 확인", "근거 검토·질의", "사업 매칭 검토", "보고서 완료"]
@@ -54,10 +54,6 @@ def load_all():
         for key, value in db.execute(text("SELECT key,value FROM work.missions")):
             items[key] = normalize(json.loads(value))
         return items
-
-def timestamp():
-    from zoneinfo import ZoneInfo
-    return datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
 
 def save_event(request, step, record=None):
     """단계 순서를 검사하고 기록·Word 파일·보고서 이력을 함께 저장합니다."""
@@ -181,8 +177,6 @@ def service_candidates(city):
     """주기 수집된 지자체 사업을 검토 후보로 조회합니다. 게시 지역은 자격이 아닙니다."""
     from sqlalchemy import text
     from backend.db.analysis_repository import get_engine
-    from datetime import datetime
-    from zoneinfo import ZoneInfo
     provinces = LOCAL_PROVINCES.get(city)
     if not provinces:
         return []
@@ -202,7 +196,7 @@ def service_candidates(city):
     with get_engine().connect() as db:
         return [dict(row) for row in db.execute(query, {
             "province": provinces[0], "province_alias": provinces[1], "city": city,
-            "today": datetime.now(ZoneInfo('Asia/Seoul')).date()}).mappings()]
+            "today": seoul_now().date()}).mappings()]
 
 
 REFERENCE_FIELDS = ["name", "summary", "benefit_text"]
@@ -216,12 +210,10 @@ def reference_services(city, terms, limit=20):
     """
     from sqlalchemy import text
     from backend.db.analysis_repository import get_engine
-    from datetime import datetime
-    from zoneinfo import ZoneInfo
     terms = list(dict.fromkeys(term for term in terms if term))
     if not terms:
         return []
-    params = {"today": datetime.now(ZoneInfo('Asia/Seoul')).date()}
+    params = {"today": seoul_now().date()}
     corpus = " || ' ' || ".join(f"COALESCE(s.{field}, '')" for field in REFERENCE_FIELDS)
     like = []
     for index, term in enumerate(terms):

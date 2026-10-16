@@ -5,7 +5,7 @@ import json
 import sqlite3
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[2]
+from backend.common import ROOT
 DB1 = ROOT / 'pipelines' / 'db1'
 MODEL_VERSION = 'analysis1_2025H2_elder_v2'
 CONTEXT_NOTE = '2025년 독거노인 수와 2025년 4분기 65세 이상 등록인구를 비교한 연간 지역 배경자료입니다. 공개 시점 미확인으로 과거 월 당시 정보나 개인 고립 판정에 사용하지 않습니다.'

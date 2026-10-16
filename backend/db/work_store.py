@@ -4,6 +4,8 @@ from contextlib import contextmanager
 
 from sqlalchemy import Column, Integer, LargeBinary, MetaData, Table, Text, text
 
+from backend.common import get_engine
+
 SCHEMA = "work"
 metadata = MetaData(schema=SCHEMA)
 # JSON은 기존 SQLite와 같은 문자열로 저장해 키·값 형식을 그대로 유지합니다.
@@ -21,12 +23,6 @@ app_settings = Table("app_settings", metadata, Column("key", Text, primary_key=T
 
 _ready = set()
 _ready_lock = threading.Lock()
-
-
-def get_engine():
-    from backend.db.connection import engine
-
-    return engine
 
 
 def ensure_schema(engine):

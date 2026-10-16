@@ -10,14 +10,13 @@ from copy import deepcopy
 from functools import lru_cache
 import hashlib
 import json
-from pathlib import Path
 import re
 
 import numpy as np
 import pandas as pd
 from sqlalchemy import text
 
-ROOT = Path(__file__).resolve().parents[2]
+from backend.common import ROOT
 SNAPSHOT = ROOT / 'data/processed/group_dashboard.json'
 VERSION = 'flow-groups-v2'
 CITY_PREFIXES = {'강남구': '11230', '춘천시': '32010'}

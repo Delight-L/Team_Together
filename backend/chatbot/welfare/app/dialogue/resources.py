@@ -6,12 +6,10 @@ import threading
 import time
 from pathlib import Path
 
-from dotenv import load_dotenv
-
+import backend.common  # noqa: F401  프로젝트 루트의 .env를 읽습니다(WELFIND_WELFARE_SOURCE).
 from backend.db.welfare_chatbot_repository import load_dataset_rows
 
 DATA = Path(__file__).resolve().parents[2] / "data"
-load_dotenv(Path(__file__).resolve().parents[5] / ".env")
 UNCHECKED = "계획·검토 자료 / 현재 운영 및 자격 미확인"
 # 질문에 한 단어라도 있으면 같은 묶음의 다른 단어로도 찾습니다(예: '외로워' → 고립·관계·모임).
 SYNONYM_GROUPS = [

@@ -1,7 +1,6 @@
 """집단별 근거 안내·검토 메모·DB2 탐색. 동별 업무 기록과 혼합하지 않는다."""
 import json
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from backend.common import seoul_now
 
 from sqlalchemy import text
 
@@ -30,7 +29,7 @@ def review(user, context, body=None):
             need = str(body.get('need', '')).strip()
             if len(note) > 3000 or need not in ['', *NEEDS]:
                 raise ValueError('검토 메모는 3,000자 이내, 지원 목적은 목록에서 선택하세요.')
-            payload = dict(note=note, need=need, updatedAt=datetime.now(ZoneInfo('Asia/Seoul')).isoformat(),
+            payload = dict(note=note, need=need, updatedAt=seoul_now().isoformat(),
                            context=context, sourceRun=body['sourceRun'])
             conn.execute(text('INSERT INTO work.group_reviews (identity,payload) VALUES (:key,:payload) '
                               'ON CONFLICT (identity) DO UPDATE SET payload=excluded.payload'),

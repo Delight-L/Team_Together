@@ -1,12 +1,10 @@
 """공통 DB 연결 설정. 직접 실행하면 SELECT 1로 접속을 확인합니다."""
 
 import os
-from pathlib import Path
 
-from dotenv import load_dotenv
 from sqlalchemy import URL, create_engine, text
 
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+import backend.common  # noqa: F401  프로젝트 루트의 .env를 읽습니다.
 
 # 접속 정보를 바꾸려면 코드 대신 프로젝트의 .env 파일을 수정하세요.
 # os.environ: 필수 값 / os.getenv: 기본값을 줄 수 있는 값입니다.

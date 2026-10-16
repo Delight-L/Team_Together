@@ -6,7 +6,7 @@ import json
 import math
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[2]
+from backend.common import ROOT
 SOURCE = ROOT / 'pipelines/db1/Analysis2/outputs/age_detection/analysis2_age_detection.csv'
 AGE_LABELS = {'20s':'20대','30s':'30대','40s':'40대','50s':'50대','60plus':'60대 이상'}
 AGE_BANDS = {v:k for k,v in AGE_LABELS.items()}
