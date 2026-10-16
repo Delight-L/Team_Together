@@ -251,6 +251,36 @@ def _query_story_period(intent):
         if start==end:return observation_period_text(start)+' 자료에서는'
     return '조회한 자료에서는'
 
+
+def _detected_signal_label(row):
+    """Name the age-level signal from the dashboard source flags."""
+    communication = row.get('communication_signal') is True
+    mobility = row.get('mobility_signal') is True
+    if communication and mobility:
+        return '통신·이동 동시 신호'
+    if communication:
+        return '통신 신호'
+    if mobility:
+        return '이동 신호'
+    return '변화 신호'
+
+
+def _region_age_signal_lines(dong, rows):
+    """Render every distinct period, age, and signal for one district."""
+    lines = []
+    seen = set()
+    for item in rows:
+        label_month = str(item.get('date') or '')[:7]
+        age = _age_label(item.get('age_band')) if item.get('age_band') else '연령 확인 불가'
+        signal = _detected_signal_label(item)
+        key = (label_month, age, signal)
+        if key in seen:
+            continue
+        seen.add(key)
+        lines.append(f"- {observation_period_text(label_month)} · {age} · {signal}")
+    return lines
+
+
 def _concise_signal_list(intent,evidence):
     rows=evidence.rows
     if not rows:return evidence.summary+' 추가로 확인할 변화 신호는 나오지 않았어요.'
@@ -261,19 +291,25 @@ def _concise_signal_list(intent,evidence):
     else:
         paragraphs=[f"{prefix} 확인이 필요한 지역이 {len(names)}곳 나왔어요."]
     listed = rows[:10] if len(names) == 1 else [next(row for row in rows if row.get('행정동') == name) for name in names[:10]]
+    global_age_signal_list = not (intent.age_scope_explicit or intent.age_band or intent.age_bands) and any(
+        row.get('age_band') for row in rows
+    )
     for index, row in enumerate(listed, 1):
         if len(names) > 1:
             paragraphs.append(f"{index}. {row.get('행정동')}")
         if row.get('신호 건수') is not None:
             paragraphs.append(f"{row.get('행정동')}에서는 선택한 기간에 변화 신호가 {row['신호 건수']}건 확인됐어요.")
             continue
-        if not (intent.age_scope_explicit or intent.age_band or intent.age_bands) and row.get('age_band'):
-            signal_name=SIGNAL_LABEL.get(str(row.get('signal_type','')).lower(),'변화')
-            paragraphs.append(f"{row.get('행정동')}에서 연령별 {signal_name} 신호가 확인됐어요.")
+        if global_age_signal_list:
+            same_dong = [item for item in rows if item.get('행정동') == row.get('행정동')]
+            paragraphs.extend(_region_age_signal_lines(row.get('행정동'), same_dong))
         else:
             paragraphs+=_signal_story(row)
-        cluster=_cluster_story(row,evidence)
-        if cluster:paragraphs.append(cluster)
+        # 전체 신호 목록은 탐지 사실을 우선 보여준다. 지역 유형은 사용자가
+        # 별도로 요청했을 때만 제공해, 탐지 신호와 배경 정보를 섞지 않는다.
+        if not global_age_signal_list:
+            cluster=_cluster_story(row,evidence)
+            if cluster:paragraphs.append(cluster)
         if intent.age_scope_explicit or intent.age_band or intent.age_bands:
             ages=_age_changes_story(row,evidence)
             if ages:paragraphs.append(ages)
