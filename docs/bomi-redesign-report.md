@@ -120,7 +120,7 @@
 | AI가 담당을 고르는 경로, moderate API 실제 호출 | 외부 호출이 필요해 구 backend와 직접 대조하지 못함 (가짜 응답으로만 테스트) |
 | 조건을 SQL로 내리기 | 소비 원자료는 **완료**. 탐지 표(JSON 행)는 **의도적으로 하지 않음** — 일부 행만 읽으면 열 집합이 달라져 동작이 바뀔 수 있어 같은 목표를 인덱스로 달성 |
 | 남은 병목 | 신호 목록은 여전히 `_age_signal_changes`가 `activity()`를 136회 부르고, 동별 정렬 인덱스를 처음 만드는 비용(동·연령대마다 약 1ms)이 큼. 질의 로직이라 손대지 않음 |
-| PostgreSQL 구현 | **구현·검증 완료**. 운영 DB 전환도 완료(2026-10-16, v16 자료는 모두 PostgreSQL에서 읽음) |
+| PostgreSQL 구현 | **구현·검증 완료**. 코드는 PostgreSQL에서만 읽음. 단 공유 Oracle DB에는 2026-10-16 기준 아직 게시되지 않음(`db1.v16_*` 없음) |
 | 게시 명령 | 문서에 쓰인 `scripts/publish_v16_to_postgres.py`는 팀 저장소에 없음. 지금은 `data_pipeline/publish_postgres.py`의 `publish`·`activate` 함수만 있음 |
 | `region_analysis`의 출력 가림 | `explain_ai`(db 계층)에서 처리. `Policy`에서는 moderate만 적용 |
 | moderate 인프라 장애 정책 | `ai_settings` 키 조회 중 DB 오류가 나면 `seal`이 `error`로 처리. 통과시킬지는 정하지 않음 |
@@ -128,7 +128,7 @@
 ## 6. 다음 단계 (권장 순서)
 
 1. ~~실제 `db1.sqlite`로 세 구현 대조~~ 완료(9장)
-2. ~~운영 DB 게시~~ 완료. 원격 서버의 응답 시간은 아직 측정하지 않음
+2. 공유 Oracle DB에 게시하고 원격 서버의 응답 시간 확인. **게시 전에는 v16 대신 동·그룹 분석이 답함**
 3. ~~SQLite 서빙 경로 제거~~ 완료(12장)
 4. ~~서버 전환과 문서 갱신~~ 완료. `main.py`는 처음부터 `backend.api.server`를 실행하므로 바꿀 것이 없었음
 5. 게시 명령(`scripts/publish_v16_to_postgres.py`)을 팀 저장소에 추가
