@@ -630,7 +630,7 @@ export default function App() {
           }}
           visible={true}
           inert={chatDrawer && !chatOpen}
-          context={view === 'dashboard' && chatGroup ? {city: chatGroup.city, district: chatGroup.district, month: chatGroup.month, age:chatGroup.age} : context}
+          context={view === 'dashboard' && chatGroup ? {city: chatGroup.city, district: chatGroup.district, month: chatGroup.month, age:chatGroup.age, sex:chatGroup.sex} : context}
           group={view === 'dashboard' ? chatGroup : undefined}
           resizer={!chatDrawer && <ChatResizer width={chatWidth} onChange={setChatWidth} />}
         />

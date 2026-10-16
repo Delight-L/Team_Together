@@ -38,6 +38,16 @@ MONTH = re.compile(r"^20\d{2}-(0[1-9]|1[0-2])$")
 
 
 DEFAULT_MODEL = "gemini-2.5-flash-lite"
+IMPLICIT_SCREEN_INFO = re.compile(r"(정보|자료|현황|변화|맥락|설명|알려줘|보여줘)")
+
+def _age_band(value):
+    return {'20대':'20s','30대':'30s','40대':'40s','50대':'50s','60대':'60plus','60세 이상':'60plus'}.get(str(value or '').strip())
+
+def _expand_implicit_screen_info(question, context):
+    if not context.get('district') or not IMPLICIT_SCREEN_INFO.search(question): return question
+    if re.search(r'(이상\s*신호|탐지.*지역|지역.*목록|순위|[가-힣0-9]{2,8}동)', question): return question
+    age = str(context.get('age') or '').strip() if _age_band(context.get('age')) else ''
+    return f"현재 화면에서 선택된 {context['district']} {age}의 {question.strip()}".replace('  ',' ')
 
 
 def _configuration():
@@ -258,11 +268,15 @@ def reply(question, history, context, use_ai=True, group=None):
     """Return an existing supervisor reply dictionary with request-local memory."""
     config = _configuration()
     model = config.model if config and config.provider == "gemini" else DEFAULT_MODEL
-    public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month")}
+    public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month", "age", "sex")}
+    question = _expand_implicit_screen_info(question, public_context)
     resolver = _ScopedResolver(V16_ROOT, model, None, public_context, config, bool(use_ai))
     bot = Chatbot(V16_ROOT, model=model, intent_resolver=resolver, moderator=_SupervisorModerator())
     bot.allow_ai_generation = False
     resolver.available_period = bot.repo.available_period()
+    bot.activate_dashboard_context({'dong': public_context.get('district'),
+                                    'label_month': public_context.get('month'),
+                                    'age_band': _age_band(public_context.get('age'))}, None)
     bot.memory = _RequestMemory(history, bot.repo.districts())
     result = bot.answer(question)
     source = resolver.last_source or "input_guard"
