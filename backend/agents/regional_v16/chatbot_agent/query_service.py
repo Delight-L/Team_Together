@@ -99,16 +99,31 @@ def execute(repo:DataRepository,intent:QueryIntent)->Evidence:
         e=Evidence('신호가 많은 지역',f'{LABEL[intent.signal]} 신호 건수가 많은 동 {len(grouped)}곳입니다.',_records(grouped),[source],limits)
     elif kind=='signals':
         f=selected(lambda n,s,e,a:repo.signals(s,e,n,intent.signal,a),age)
+        # age_analysis_repository keeps the detailed per-metric judgement in
+        # ``payload``. Promote only those flags needed to explain the signal;
+        # do not expose the whole raw payload to the answer layer.
+        detail_columns = [
+            metric + '_' + scope + '_signal'
+            for metric in CORE for scope in ('absolute', 'local')
+        ]
+        if 'payload' in f:
+            for column in detail_columns:
+                if column not in f:
+                    f[column] = f['payload'].map(
+                        lambda payload: payload.get(column) if isinstance(payload, dict) else None
+                    )
         if intent.summary_only and not f.empty:
             counts=f.groupby('행정동').size().rename('신호 건수')
             f=f.sort_values('date').drop_duplicates('행정동', keep='last').copy()
             f['신호 건수']=f['행정동'].map(counts).astype(int)
-        cols=['date','행정동','age_band','signal_type','assessment_status','cluster_type','a1_cluster_type']
+        cols=['date','행정동','age_band','signal_type','assessment_status','cluster_type','a1_cluster_type',
+              'communication_signal','mobility_signal','combined_signal','any_signal']
         for metric in CORE:
             cols += [metric+'_log_change',metric+'_valid',metric+'_residual_change_expanding_rz']
-            if age:
-                cols += [metric+'_local_rz',metric+'_local_threshold',metric+'_local_signal',
-                         metric+'_absolute_rz',metric+'_absolute_threshold',metric+'_absolute_signal']
+            # 전체 연령 조회도 a2_age_detection 원본을 사용한다. 목록 답변이
+            # “어떤 신호”인지 밝힐 수 있도록 지표별 판정 플래그를 보존한다.
+            cols += [metric+'_local_rz',metric+'_local_threshold',metric+'_local_signal',
+                     metric+'_absolute_rz',metric+'_absolute_threshold',metric+'_absolute_signal']
         e=Evidence('신호가 나온 지역',f'조건에 맞는 {LABEL[intent.signal]} 신호는 {len(f)}건입니다.',_records(f,cols),[source],limits)
     elif kind=='anomaly':
         f,rz=repo.anomalies(start,end,intent.metric,age,names)

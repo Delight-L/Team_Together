@@ -254,8 +254,8 @@ def _query_story_period(intent):
 
 def _detected_signal_label(row):
     """Name the age-level signal from the dashboard source flags."""
-    communication = row.get('communication_signal') is True
-    mobility = row.get('mobility_signal') is True
+    communication = bool(row.get('communication_signal'))
+    mobility = bool(row.get('mobility_signal'))
     if communication and mobility:
         return '통신·이동 동시 신호'
     if communication:
@@ -263,6 +263,23 @@ def _detected_signal_label(row):
     if mobility:
         return '이동 신호'
     return '변화 신호'
+
+
+def _detected_metric_details(row):
+    """Expose the concrete metric flags stored in the age-detection payload."""
+    payload = row.get('payload')
+    payload = payload if isinstance(payload, dict) else {}
+    labels = []
+    for metric, label in METRICS.items():
+        absolute = bool(row.get(metric + '_absolute_signal', payload.get(metric + '_absolute_signal')))
+        local = bool(row.get(metric + '_local_signal', payload.get(metric + '_local_signal')))
+        if absolute and local:
+            labels.append(f'{label} (절대 변화·구 공통변화 제거)')
+        elif absolute:
+            labels.append(f'{label} (절대 변화)')
+        elif local:
+            labels.append(f'{label} (구 공통변화 제거)')
+    return ' · '.join(labels)
 
 
 def _region_age_signal_lines(dong, rows):
@@ -273,12 +290,26 @@ def _region_age_signal_lines(dong, rows):
         label_month = str(item.get('date') or '')[:7]
         age = _age_label(item.get('age_band')) if item.get('age_band') else '연령 확인 불가'
         signal = _detected_signal_label(item)
-        key = (label_month, age, signal)
+        details = _detected_metric_details(item)
+        key = (label_month, age, signal, details)
         if key in seen:
             continue
         seen.add(key)
-        lines.append(f"- {observation_period_text(label_month)} · {age} · {signal}")
+        detail_text = f" · 탐지 지표: {details}" if details else ''
+        lines.append(f"- {observation_period_text(label_month)} · {age} · {signal}{detail_text}")
     return lines
+
+
+def _signal_month_summary(rows):
+    counts = {}
+    for row in rows:
+        month = str(row.get('date') or '')[:7]
+        if month:
+            counts[month] = counts.get(month, 0) + 1
+    return ', '.join(
+        f"{month[:4]}년 {int(month[5:])}월 {count}건"
+        for month, count in sorted(counts.items())
+    )
 
 
 def _concise_signal_list(intent,evidence):
@@ -294,6 +325,11 @@ def _concise_signal_list(intent,evidence):
     global_age_signal_list = not (intent.age_scope_explicit or intent.age_band or intent.age_bands) and any(
         row.get('age_band') for row in rows
     )
+    if global_age_signal_list:
+        paragraphs.append(
+            '탐지 기준월별 기록은 ' + _signal_month_summary(rows) +
+            '이며, 이 밖의 조회 기준월에는 탐지 기록이 없습니다.'
+        )
     for index, row in enumerate(listed, 1):
         if len(names) > 1:
             paragraphs.append(f"{index}. {row.get('행정동')}")
