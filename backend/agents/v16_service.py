@@ -58,7 +58,15 @@ def _expand_implicit_screen_info(question: str, context: dict) -> str:
     """Make an underspecified information question explicitly use the visible card."""
     if not context.get('district') or not IMPLICIT_SCREEN_INFO.search(question):
         return question
-    if explicit_districts(question):
+    # Global signal/list questions intentionally ignore the selected card's
+    # district; otherwise a request for all detected regions becomes a query
+    # for only the currently open dong.
+    if re.search(r"(이상\s*신호|탐지.*지역|지역.*목록|순위)", question):
+        return question
+    # At this stage the resolver's district catalogue is not available yet;
+    # a Korean administrative-dong token is sufficient to detect an explicit
+    # region and preserve the user's wording.
+    if re.search(r"[가-힣0-9]{2,8}동", question):
         return question
     # v16 has validated age bands only for 20s and older; do not inject an
     # unsupported dashboard label such as 10대 into the natural-language query.
