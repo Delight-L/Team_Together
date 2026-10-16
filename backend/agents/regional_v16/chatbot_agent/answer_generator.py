@@ -314,12 +314,12 @@ def _context_answer(evidence):
             '비슷한 지역 구조를 가진 동끼리 묶은 분류이며, 개인의 위험도나 신호 원인을 뜻하지 않습니다.')
 
 
-def _support_answer(evidence):
+def _support_answer(evidence, include_age=False):
     """Show the numbers people can act on, then explain their limited relation."""
     lines=[]
     # 특정 연령을 물은 경우에는 해당 연령의 직접 활동값을 먼저 보여준다.
     # 지역 배경·강남구 공통자료는 그 뒤에 보조 설명으로 붙인다.
-    age_rows=evidence.supplementary.get('age_signal_changes', [])
+    age_rows=evidence.supplementary.get('age_signal_changes', []) if include_age else []
     if age_rows:
         lines.append('먼저 질문하신 연령대의 지역 직접 자료입니다.')
         for row in age_rows[:10]:
@@ -477,7 +477,7 @@ def template_answer(intent:QueryIntent,evidence:Evidence,knowledge:str,explanati
     if intent.question_type in {'rank_regions','signals'}:
         return _concise_signal_list(intent,evidence)
     if intent.question_type=='support':
-        return _support_answer(evidence)
+        return _support_answer(evidence, include_age=bool(intent.age_scope_explicit or intent.age_band or intent.age_bands))
     if intent.question_type=='reason' and evidence.rows:
         # Explain this signal and same-month age changes; detailed contextual
         # evidence remains available through the background-information follow-up.
