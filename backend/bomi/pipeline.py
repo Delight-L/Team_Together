@@ -26,10 +26,15 @@ class ChatPipeline:
         self.router = router or Router()
         self.agents = agents or default_agents()
 
-    def stream(self, request: ChatRequest) -> Iterator[Event]:
+    def stream(self, request: ChatRequest, *, session_token: str | None = None) -> Iterator[Event]:
         """검사를 먼저 끝낸 뒤 이벤트 생성기를 돌려줍니다. 검사 실패(ValueError)는 스트림 시작 전에 납니다."""
         prepared = regularization.prepare(request)
-        return events.seal(self._run(prepared))
+        stream = self._run(prepared)
+        if session_token:
+            from backend.bomi.conversation import events_with_state
+            stream = events_with_state(stream, prepared.request.welfare_state,
+                                       prepared.request.context, session_token)
+        return events.seal(stream)
 
     # ── 내부 단계 ────────────────────────────────────────────────
     def _run(self, prepared: regularization.Prepared) -> Iterator[Event]:

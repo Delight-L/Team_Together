@@ -21,6 +21,10 @@ group_reviews = Table("group_reviews", metadata, Column("identity", Text, primar
 # 관리자 설정(예: AI 설정). 서버 파일은 재배포·재시작 때 지워지므로 DB에 둡니다.
 app_settings = Table("app_settings", metadata, Column("key", Text, primary_key=True), Column("value", Text, nullable=False))
 
+chatbot_embeddings = Table("chatbot_embeddings", metadata,
+    Column("resource_id", Text, primary_key=True), Column("model", Text, primary_key=True),
+    Column("content_hash", Text, nullable=False), Column("vector", Text, nullable=False))
+
 _ready = set()
 _ready_lock = threading.Lock()
 

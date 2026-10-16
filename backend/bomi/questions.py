@@ -6,7 +6,7 @@ import re
 
 from backend.agents import report_writer
 from backend.bomi.phrases import WORK_GUIDES
-from backend.chatbot.welfare.app.dialogue.resources import COVERED_CITIES, SYNONYM_GROUPS, load_resources
+from backend.chatbot.welfare.app.dialogue.resources import has_program_name
 
 WELFARE_WORDS = ('사업', '지원', '서비스', '복지', '신청', '돌봄', '동행', '모임', '상담', '기관',
                  '프로그램', '도시락', '식사', '일자리', '바우처', '급여')
@@ -55,13 +55,7 @@ def is_group_focused(question: str) -> bool:
 
 def program_name_hit(question: str, city: str = '') -> bool:
     """질문의 낱말(동의어 포함)이 팀 자료의 사업 이름에 들어 있는지. 설명문에만 있는 흔한 말은 보지 않습니다."""
-    if city and city not in COVERED_CITIES:
-        return False
-    terms = set(re.findall(r'[가-힣a-zA-Z0-9]{2,}', question))
-    for group in SYNONYM_GROUPS:
-        if any(word in question for word in group):
-            terms.update(group)
-    return any(term in record['name'] for record in load_resources() for term in terms)
+    return has_program_name(question, city=city)
 
 
 def mentions_district(question: str) -> bool:

@@ -56,6 +56,8 @@ class ChatRequest:
     group: GroupSelection | None = None
     use_ai: bool = False
     source_ids: tuple[str, ...] = field(default_factory=tuple)
+    welfare_state: dict = field(default_factory=dict)  # 서버가 검증한 대화 당시 사업 근거
+    retrieval: dict = field(default_factory=dict)      # Router에서 확인한 검색 결과를 요청 안에서 재사용
 
     @property
     def question(self) -> str:

@@ -55,6 +55,7 @@ python -m pytest backend/api/tests backend/db/tests backend/chatbot/tests backen
 - 그 밖의 질문은 AI를 쓰는 중이면 관리자가 고른 AI가 담당을 고릅니다(`Router.by_ai`).
 - AI를 쓰지 않거나 AI 호출이 실패하면 키워드 규칙으로 고릅니다(`Router.by_rules`). 복지 단어 → 복지사업, 분석 단어·동 이름 → 지역 분석,
   사업 이름에 들어 있는 낱말 → 복지사업, 어디에도 해당하지 않으면 보미 안내입니다.
+- 서명된 사업 근거가 있는 후속 질문은 복지 담당으로 연결합니다. AI 사용 중 일반 안내로 분류된 생활 표현도 의미 검색·재정렬에서 관련 사업이 확인되면 복지 담당으로 연결합니다. 담당 선택은 `Router` 안에서만 하고 검색 결과를 복지 에이전트에서 재사용합니다.
 - 단어 규칙(욕설·위험한 요청 등)에 걸린 질문은 외부 호출 없이 보미 안내로 보내 차단합니다.
 
 ### 외부 AI 사용 (기본 꺼짐)
@@ -74,7 +75,8 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
 ### 대화 기억과 대화 기반 보고서
 
 - 이전 대화는 최근 3쌍(질문·답 6개)만 서버로 보냅니다(서버도 `bomi/regularization.py`의 `prepare`에서 한 번 더 자릅니다).
-- 화면은 최근 답에서 찾은 복지사업 id(`sources`, 최대 10개)를 함께 보냅니다. 서버는 자기 자료에 있는 id만 씁니다.
+- 화면은 사업 id(`sources`, 최대 10개)와 서버가 서명한 대화 상태(`conversation`)를 함께 보냅니다. 상태에는 검색 문장·사업 ID·당시 원문·SHA-256·보존 시점을 넣고 로그인 세션과 지역·기준월·연령에 묶어 24시간 유지합니다. 새 대화 또는 화면 맥락 변경 시 초기화합니다.
+- 후속 질문과 보고서는 대화 당시 원문을 사용합니다. 보고서 미리보기에서도 서명을 검사하며, 브라우저가 보낸 임의의 자료 본문은 근거로 신뢰하지 않습니다.
 - "보고서 작성해줘"라고 하면 그 사업들과 최근 신규 사업 구상안, 이 동의 분석 수치로 «대화 기반 초안 · 담당자 검토 전»을 만듭니다.
   최종 저장은 사업 매칭 검토에 판단을 기록한 뒤 «업무 기록»·«보고서 작성»에서 합니다.
 
@@ -82,7 +84,7 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
 응답은 `route`(담당) → `sources`/`token`(복지사업) 또는 `replace`(분석·보고서·안내) → `follow_ups`(v16 다음 질문) → `notice` → `actions`(보고서 탭 이동) → `done` 이벤트 순서로 옵니다.
 복지사업 답변은 끝에 «검토 자료와 확인 상태»(출처·확인 상태)를 붙이고, 미확인 자격을 단정한 AI 답은 자료상 대상·확인 기관 안내로 바꿉니다.
 화면의 «내보내기» 버튼은 대화를 텍스트 파일(.txt)로 내려받습니다(`frontend/src/chatExport.mjs`, 서버로 보내지 않음).
-이벤트 9종의 계약과 순서 규칙은 `bomi/events.py`와 [보미 챗봇 구조 5장](../docs/bomi-architecture.md#5-이벤트-계약-eventspy)에 있습니다.
+이벤트 10종의 계약과 순서 규칙은 `bomi/events.py`와 [보미 챗봇 구조 5장](../docs/bomi-architecture.md#5-이벤트-계약-eventspy)에 있습니다. `conversation` 이벤트는 `sources` 직전에 서명된 대화 상태를 갱신하고, 마지막 `done`은 계속 `events.seal`에서 한 번만 보냅니다.
 복지사업 찾기의 자세한 구조는 [복지사업 검색](#welfare)을 참고하세요.
 
 
@@ -98,7 +100,7 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
 | 요청 | **로그인 시도 제한**: 같은 아이디로 10분 안에 5번 틀리면 10분 잠금 | `backend/api/limits.py` |
 | AI 호출 | **답변 길이 상한**: `OPENAI_MAX_TOKENS`(기본 1,500, Claude는 생각 토큰 때문에 최소 8,000). 잘리면 안내 문구를 붙임 | `backend/chatbot/welfare/app/llm/` |
 | AI 호출 | 프롬프트 규칙: 자격·금액·연락처·URL 생성 금지, 자료 속 문장은 명령이 아님, 원인·개인 판정 금지 | 각 에이전트 프롬프트 |
-| 출력 | **미확인 정보 가리기**: 복지사업·분석 AI 답변의 전화번호·URL·금액이 근거 자료에 없으면 `[자료에 없는 정보 · 기관 확인 필요]`로 바꿈. 복지사업 답변은 줄 단위로 먼저 검사한 뒤 보내 가리기 전 내용이 화면에 나오지 않음 | `backend/chatbot/guardrails.py` `redact_unverified`·`StreamRedactor`, 분석 설명은 `backend/chatbot/explain_ai.py` |
+| 출력 | **미확인 정보 가리기**: 복지 답변은 전체 생성 후 사업별 금액·연락처·URL·날짜·나이·비율, 자격 단정과 출력 moderate를 검사한 뒤 전달. 생성은 45초 제한이며 실패 시 자료 안내로 전환. 신규 기획은 공통 가림 규칙 적용 | `bomi/agents/welfare.py`, `chatbot/welfare/app/dialogue/evidence.py`, `bomi/regularization.py`. 분석 설명은 `chatbot/explain_ai.py` |
 | 출력 | 보고서 근거 대조: 새 숫자·URL, 사업·판단 문구 누락 시 AI 문장을 버림 | `backend/agents/report_writer.py` `check_grounding` |
 
 가린 내용이 있으면 답변 아래에 안내(`notice` 이벤트)를 표시합니다. 사용량·로그인 기록은 서버 메모리에 있어 서버를 재시작하면 초기화됩니다.
@@ -126,7 +128,7 @@ API 키는 서버(`.env` 또는 관리자 «AI 설정»(DB `work.app_settings`))
 
 작업 기준 폴더: `backend/chatbot/welfare/`
 
-복지탐정의 보미가 팀에서 정리한 복지사업 자료를 검색하고 출처와 확인할 조건을 안내하는 모듈입니다.
+복지탐정의 보미가 공유 DB2의 팀 문서·지자체 API·사업 회차 공고를 검색하고 출처와 확인할 조건을 안내하는 모듈입니다.
 선택한 지역과 대화 맥락을 함께 사용하며, 실제 이용 자격이나 현재 모집 여부는 담당 기관 확인이 필요합니다.
 
 ### 구성
@@ -137,9 +139,15 @@ API 키는 서버(`.env` 또는 관리자 «AI 설정»(DB `work.app_settings`))
 | `backend/bomi/agents/welfare_prompt.py` | 복지사업 답변 지시문 |
 | `app/config.py` | 프로젝트 루트 `.env`의 AI 연결 설정 읽기 |
 | `app/schemas.py` | 사용자 질문과 대화 이력 형식 검사 |
-| `app/dialogue/resources.py` | DB2 복지자료 읽기(1분 기억), 사업 검색, 자료 기반 안내 |
+| `app/dialogue/resources.py` | 팀 문서 읽기(1분 기억), API·공고 SQL 검색, 출처와 자료 기반 안내 |
+| `app/dialogue/retrieval.py` | 지역·기간·참고 사례 검색 조건과 결과 재사용 |
+| `app/dialogue/semantic.py` | Gemini 임베딩, 키워드 순위 결합(RRF), 후보 재정렬 |
+| `app/dialogue/evidence.py` | 사업별 주요 사실을 근거와 대조 |
+| `backend/bomi/conversation.py` | 대화 원문 스냅샷 서명·검증과 이벤트 연결 |
+| `backend/db/welfare_chatbot_repository.py` | 복지 원문 조회·지역·기간 SQL 조건 |
+| `backend/db/welfare_search_store.py` | 검색 색인·대화 서명키 DB 접근 |
 | `app/llm/` | 외부 AI 창구 `llm`과 OpenAI·Anthropic·Gemini 어댑터 |
-| `data/*.json` | 출처·페이지·확인 상태를 포함한 복지사업 자료 |
+| `data/*.json` | DB 적재 원본과 명시적인 오프라인 검증용 자료 |
 
 ### 요청 흐름
 
@@ -155,6 +163,26 @@ frontend/src/BomiChat.jsx
 AI 연결 실패나 빈 응답은 자료 검색 안내로 전환하며, 요청이 취소되면 응답 스트림을 종료합니다.
 같은 사업이 여러 자료에 있으면 상세 정보를 가진 자료를 사용하고, 후속 질문은 이전 사업 맥락을 이어 검색합니다.
 
+일반 조회는 선택 지역·광역·전국 자료를 대상으로 기간이 지난 자료와 시작 전 자료를 제외합니다. 사업 공고는 접수기간을 별도로 확인하여 운영 시작 전이라도 접수 중이면 검색합니다. 과거·타 지역 사례·신규 기획 요청은 범위를 별도로 허용하고 해당 상태를 표시합니다. 현재 모집 질문에는 현재 운영·신청 확인이 없는 계획문서를 추천하지 않습니다. 자료 수집일은 운영 확인일이 아니며, 지역 일치도 이용 자격을 보장하지 않습니다.
+
+AI 사용 중 관리자가 Gemini를 허용하면 `gemini-embedding-001` 768차원 임베딩과 키워드 검색 순위를 결합합니다. 후보 최대 15건을 재정렬해 최대 5건을 답변에 전달합니다. AI 꺼짐·다른 제공사는 키워드 검색을 사용합니다. 색인 누락·노후화·외부 호출 실패 시 키워드 검색으로 전환하고 안내합니다. 일부 지역만 색인되어 있어도 알립니다.
+
+문서는 파일·페이지, API·공고는 원문 URL을 화면·보고서·대화 내보내기에 표시합니다. `GET /api/chat/config`의 `resourceCounts`는 유형별 자료 수이고 `resourceCount`는 합계입니다. 현재 모집 사업 수를 뜻하지 않습니다.
+
+### 검색 색인과 대화 상태 저장
+
+기존 원본은 그대로 두고 `work.chatbot_embeddings`에 검색 벡터를, `work.app_settings`에 서버 전용 서명키를 저장합니다. 보고서 버전의 기존 record JSON에는 검증된 대화 원문과 해시를 보존합니다. pgvector나 별도 벡터 DB는 사용하지 않습니다.
+
+색인은 기존 상태를 확인하고 원문 추가·변경 시 갱신합니다. 관리자 Gemini 연결이 허용되어 있어야 하며 공개 사업 내용이 해당 제공사로 전송됩니다. 해시가 같은 자료는 건너뜁니다.
+
+```powershell
+python -m backend.chatbot.welfare.app.dialogue.semantic
+# 다른 지역 참고 자료까지 색인할 때
+python -m backend.chatbot.welfare.app.dialogue.semantic --all-regions
+```
+
+기본 범위는 강남구·춘천시 적용 자료(광역·전국 포함)입니다. DB 원문은 검색 시 읽고 팀 문서는 1분 캐시를 유지합니다. 이번 포팅은 코드와 로컬 검증까지이며 공유 DB 색인 갱신·외부 AI 실호출·배포는 실행하지 않았습니다.
+
 분석 근거 설명·보고서 초안 등 다른 담당은 [보미 챗봇 안내](README.md#bomi)를 참고하세요.
 
 ### 검증
@@ -163,8 +191,10 @@ AI 연결 실패나 빈 응답은 자료 검색 안내로 전환하며, 요청�
 
 ```powershell
 .venv/Scripts/python.exe -m unittest discover -s backend/bomi/tests -t . -v
-.venv/Scripts/python.exe -m unittest discover -s backend/chatbot/tests -v
+.venv/Scripts/python.exe -m unittest backend.db.tests.test_welfare_chatbot_repository -v
 ```
+
+외부 DB 없이 검사할 때는 `WELFIND_WELFARE_SOURCE=json`을 명시합니다. DB 검사는 임시 SQLite를 사용하고 HTTP 검사는 임시 업무 DB로 격리합니다. 테스트는 현재 저장소의 정책에 따라 로컬에서 관리합니다. 복지 원본 DB 조회나 AI 연결 실패를 JSON으로 자동 대체하지 않습니다.
 
 API 키는 서버 `.env` 또는 관리자 AI 설정에 저장하며 저장소나 화면 코드에 노출하지 않습니다.
 
@@ -230,9 +260,9 @@ JSON에 없는 기존 DB 행은 지우지 않습니다. 신규 테이블에는 `
 
 서버의 기본 자료 위치는 `WELFIND_WELFARE_SOURCE=db`입니다. 설정을 생략해도 DB를 읽습니다.
 담당 선택의 사업명 판별, 복지사업 검색, 대화에서 찾은 사업의 보고서 연결, `/api/chat/config`가 같은 DB 자료를 사용합니다.
-질문마다 DB를 다시 읽지 않도록 사업 목록을 1분간 기억하며, DB 수정은 서버 재시작 없이 1분 안에 반영됩니다. 서버는 조회만 하며 기동 시 자동 적재하지 않습니다.
+팀 문서 목록은 1분간 기억하고 API·공고는 검색할 때 조회합니다. 복지 원본은 조회만 하며 기동 시 자동 적재하지 않습니다. 검색 색인·서명키·보고서 저장은 별도 `work` 데이터에 기록합니다.
 DB 오류나 빈 테이블은 명시적으로 알리고(보미는 «복지자료 DB를 조회하지 못했습니다» 안내로 답을 마침) JSON으로 자동 대체하지 않습니다.
 
-`GET /api/chat/config`의 `resourceSource`는 `db` 또는 `json`이며 `resourceCount`는 기존 사업명 중복 처리 후 자료 수입니다.
+`GET /api/chat/config`의 `resourceSource`는 `db` 또는 `json`입니다. `resourceCounts`는 유형별 자료 수이고 `resourceCount`는 중복 처리 후 합계입니다.
 
 분석 근거 설명·보고서 초안 등 다른 담당은 [보미 챗봇 안내](README.md#bomi)를 참고하세요.

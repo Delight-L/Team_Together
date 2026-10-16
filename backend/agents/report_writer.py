@@ -173,8 +173,9 @@ def conversation_draft(context, workflow, evidence_rows, history, sources):
     if not sources and not plan:
         raise ValueError(NEED_MATERIAL)
     sources = sources[:4]
+    from backend.chatbot.welfare.app.dialogue.resources import source_citation
     proposals = [f"{r['name']}: {PENDING_TEXT}\n- 지원 내용: {r['description']}\n- 자료상 대상: {r['target']}\n"
-                 f"- 기관: {r['agency']}\n- 출처: {r['source']} (p. {r['pages']}) · {r['status']}" for r in sources]
+                 f"- 기관: {r['agency']}\n- 출처: {source_citation(r)} · {r['status']}" for r in sources]
     found = [f'기존 사업 {len(sources)}건'] if sources else []
     if plan:
         proposals.append(f'신규 사업 구상안(보미 대화에서 제안 · {NOT_RUNNING_TEXT} · {PENDING_TEXT})\n' + _shorten(plan, 650))
@@ -188,7 +189,7 @@ def conversation_draft(context, workflow, evidence_rows, history, sources):
                               '신규 구상안은 수요 조사·예산·운영 기관 협의 후 추진 여부 결정',
                               '사업 매칭 검토에 판단을 기록한 뒤 최종 보고서로 저장'],
                   mode=f'대화 기반 초안 · {PENDING_TEXT}',
-                  conversation_sources=[{'id': r['id'], 'name': r['name']} for r in sources])
+                  conversation_sources=[dict(r) for r in sources])
 
 
 def validate_content(content):

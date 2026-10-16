@@ -7,7 +7,7 @@ from backend.bomi.events import Event
 from backend.bomi.phrases import GROUP_REPORT_NOTICE
 from backend.bomi.regularization import Policy
 from backend.bomi.request import ChatRequest
-from backend.chatbot.welfare.app.dialogue.resources import load_resources
+from backend.chatbot.welfare.app.dialogue.resources import get_resources_by_ids
 from backend.db import mission_store, region_workspace
 
 
@@ -32,7 +32,7 @@ class ReportAgent(RegulatedAgent):
                 request.data, request.city, request.month, request.district)['rows']
             if request.age:
                 rows = [row for row in rows if row.get('age_label') == request.age]
-        by_id = {record['id']: record for record in load_resources()}
-        sources = [by_id[source_id] for source_id in request.source_ids if source_id in by_id]
+        sources = (request.welfare_state['records'] if request.welfare_state else
+                   get_resources_by_ids(request.source_ids, city=request.city))
         return report_writer.report_reply(
             request.context, workflow, request.use_ai, request.question, rows, request.history, sources)

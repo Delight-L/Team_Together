@@ -170,6 +170,11 @@ def report_preview(request):
     if 'content' in request.params:
         content = report_writer.validate_content(request.params['content'])
     if content:
+        evidence_token = request.params['content'].get('evidence_token')
+        if evidence_token:
+            from backend.bomi.conversation import unpack
+            saved_evidence = unpack(evidence_token, request.session_token, context)
+            content['conversation_sources'] = saved_evidence.get('records', [])[:4]
         fields['opinion'] = content['next_steps']
         selection = request.params['content'].get('selection')
         from backend.agents.report_material import select_material
