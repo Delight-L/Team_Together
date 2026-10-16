@@ -237,8 +237,8 @@ def _reason_answer(evidence):
     paragraphs=[]
     for row in evidence.rows[:3]:
         paragraphs+=_signal_story(row)
-        ages=_age_changes_story(row,evidence)
-        if ages:paragraphs.append(ages)
+        # 전체 지역 신호 목록에서는 임의의 연령(예: 40대)을 대표로
+        # 붙이지 않는다. 연령을 명시한 조회에서만 별도 답변으로 제공한다.
     if len(evidence.rows)>3:paragraphs.append(f"먼저 {len(evidence.rows)}건 중 3건을 보여드렸어요. 지역이나 기준월을 좁히면 나머지도 확인할 수 있어요.")
     paragraphs.append('지역 집계만으로 개인의 고립 여부나 변화의 원인을 판단할 수는 없어요.')
     return ['\n\n'.join(paragraphs)]
