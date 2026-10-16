@@ -22,6 +22,28 @@ def _signal_flag(value):
     if value is None or pd.isna(value):return None
     return bool(value) if value in (True,False) else None
 
+def _signal_type(row):
+    """Return the detected domain even when DB signal_type contains a status value.
+
+    Some dashboard-compatible rows use values such as ``New`` in signal_type while
+    their boolean detection flags are authoritative. Narrative generation needs a
+    domain name, so retain valid domains and otherwise derive one from those flags.
+    """
+    value=str(row.get('signal_type') or '').strip().lower()
+    if value in {'communication','mobility','combined'}:
+        return value
+    if _signal_flag(row.get('combined_signal')) is True:
+        return 'combined'
+    communication=_signal_flag(row.get('communication_signal')) is True
+    mobility=_signal_flag(row.get('mobility_signal')) is True
+    if communication and mobility:
+        return 'combined'
+    if communication:
+        return 'communication'
+    if mobility:
+        return 'mobility'
+    return value
+
 def _metric_change(row,metric):
     value=row.get(metric+'_log_change')
     valid=_signal_flag(row.get(metric+'_valid'))
@@ -108,7 +130,8 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
             counts=f.groupby('행정동').size().rename('신호 건수')
             f=f.sort_values('date').drop_duplicates('행정동', keep='last').copy()
             f['신호 건수']=f['행정동'].map(counts).astype(int)
-        cols=['date','행정동','age_band','signal_type','assessment_status','cluster_type','a1_cluster_type']
+        cols=['date','행정동','age_band','signal_type','assessment_status','cluster_type','a1_cluster_type',
+              'communication_signal','mobility_signal','combined_signal','any_signal']
         for metric in CORE:
             cols += [metric+'_log_change',metric+'_valid',metric+'_residual_change_expanding_rz']
             if age:
@@ -116,8 +139,10 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
                          metric+'_absolute_rz',metric+'_absolute_threshold',metric+'_absolute_signal']
         if intent.age_scope_explicit:
             source='DB1: a2_age_detection'
-            cols += ['communication_signal','mobility_signal','combined_signal','any_signal']
-        e=Evidence('신호가 나온 지역',f'조건에 맞는 {LABEL[intent.signal]} 신호는 {len(f)}건입니다.',_records(f,cols),[source],limits)
+        rows=_records(f,cols)
+        for row in rows:
+            row['signal_type']=_signal_type(row)
+        e=Evidence('신호가 나온 지역',f'조건에 맞는 {LABEL[intent.signal]} 신호는 {len(f)}건입니다.',rows,[source],limits)
     elif kind=='anomaly':
         f,rz=repo.anomalies(start,end,intent.metric,age,names)
         e=Evidence('이례적 감소 후보',f'{METRIC_LABEL.get(intent.metric,"평일 이동 횟수")}의 지역 공통변화를 제외한 Robust Z가 낮은 순입니다.',_records(f,['date','행정동','age_band',rz]),[source],limits)

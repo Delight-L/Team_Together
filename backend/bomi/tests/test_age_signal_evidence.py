@@ -5,7 +5,7 @@ import unittest
 import pandas as pd
 
 from backend.bomi.adapters import v16
-from chatbot_agent.query_service import _age_signal_changes, execute
+from chatbot_agent.query_service import _age_signal_changes, _signal_type, execute
 from chatbot_agent.repository import AGE_LABEL
 from chatbot_agent.schemas import QueryIntent
 
@@ -39,6 +39,11 @@ class AgeRepository:
 
 
 class AgeSignalEvidenceTest(unittest.TestCase):
+    def test_signal_domain_uses_boolean_flags_when_type_contains_status(self):
+        self.assertEqual(_signal_type({"signal_type": "New", "mobility_signal": True}), "mobility")
+        self.assertEqual(_signal_type({"signal_type": "New", "communication_signal": True}), "communication")
+        self.assertEqual(_signal_type({"signal_type": "Mobility", "communication_signal": True}), "mobility")
+
     def test_same_month_only_preserves_true_false_unknown_and_missing_bands(self):
         repository = AgeRepository()
         rows = _age_signal_changes(repository, [{"행정동": "삼성1동", "date": "2025-12", "signal_type": "mobility"}])
@@ -78,6 +83,7 @@ class AgeSignalEvidenceTest(unittest.TestCase):
         intent = QueryIntent("find_region", "signals", start_month="2025-07", end_month="2025-12")
         evidence = execute(repository, intent)
         self.assertEqual([(row["행정동"], row["date"]) for row in evidence.rows], [("삼성1동", "2025-12")])
+        self.assertEqual(evidence.rows[0]["signal_type"], "mobility")
         ages = evidence.supplementary["age_signal_changes"]
         self.assertEqual(len(ages), 5)
         self.assertEqual({(row["행정동"], row["date"]) for row in ages}, {("삼성1동", "2025-12")})

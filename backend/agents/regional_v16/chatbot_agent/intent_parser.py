@@ -30,6 +30,14 @@ def looks_like_reason_followup(question: str) -> bool:
 
 def _month(text: str) -> tuple[str | None, str | None]:
     text = normalize_year_shorthand(text)
+    # "2023년 자료는 빼고 2025년만"처럼 제외할 연도를 함께 쓴 경우,
+    # 첫 연도부터 마지막 연도까지의 범위로 오해하지 않도록 제외 구절을
+    # 기간 추출 전에 제거한다.
+    text = re.sub(
+        r'20\d{2}\s*년(?:도)?\s*(?:자료(?:는|를)?\s*)?(?:빼고|제외(?:하고)?|말고)',
+        '',
+        text,
+    )
     interval=re.search(r'(20\d{2})\s*년\s*(\d{1,2})\s*월?\s*(?:[~～∼–-]|부터)\s*(?:(20\d{2})\s*년\s*)?(\d{1,2})\s*월',text)
     if interval:
         y,a,y2,b=interval.groups();return f'{y}-{int(a):02d}',f'{y2 or y}-{int(b):02d}'

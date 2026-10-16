@@ -51,6 +51,12 @@ class NarrativeTest(unittest.TestCase):
             self.assertNotIn('40대에서는', text)
             self.assertNotIn('50대에서는', text)
 
+    def test_full_year_signal_answer_names_requested_year(self):
+        evidence = Evidence('신호', '조회', rows=[self.row()])
+        text = template_answer(QueryIntent('find_region', 'signals', start_month='2025-01', end_month='2025-12'),
+                               evidence, '')
+        self.assertIn('2025년 자료에서는', text)
+
     def test_age_specific_reason_does_not_claim_local_filter_is_required(self):
         evidence = Evidence('연령 신호', '조회', rows=[self.row(age_band='30s')])
         text = template_answer(QueryIntent('track_change', 'reason', age_band='30s'), evidence, '')

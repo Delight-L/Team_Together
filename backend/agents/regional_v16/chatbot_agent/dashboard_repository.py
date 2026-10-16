@@ -100,7 +100,16 @@ class DashboardDb1Repository:
                 "mobility_signal": _flag(source["mobility_signal"]),
                 "combined_signal": _flag(source["combined_signal"]),
                 "any_signal": _flag(source["any_signal"]),
-                "signal_type": source["signal_type"] or _signal_type(row),
+                # Some published rows contain lifecycle values such as ``New``
+                # here. Detection flags are the source of truth for the domain.
+                "signal_type": (str(source["signal_type"]).lower()
+                                if str(source["signal_type"] or "").lower() in
+                                {"communication", "mobility", "combined"}
+                                else _signal_type({
+                                    "communication_signal": source["communication_signal"],
+                                    "mobility_signal": source["mobility_signal"],
+                                    "combined_signal": source["combined_signal"],
+                                })),
                 "assessment_status": row.get("assessment_status", "assessed"),
             })
             records.append(row)

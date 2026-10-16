@@ -82,6 +82,22 @@ class V16ServiceTest(unittest.TestCase):
         self.assertIsNone(intent.dong)
         self.assertIsNone(intent.age_band)
 
+    def test_year_only_signal_request_keeps_explicit_year_scope(self):
+        with patch("chatbot_agent.orchestrator.execute", return_value=Evidence("신호", "범위 확인")) as execute:
+            service.reply("2025년도에 관측된 이상신호 케이스를 모두 알려줘", [], CONTEXT, use_ai=False)
+        intent = execute.call_args.args[1]
+        self.assertEqual(intent.question_type, "signals")
+        # The fake repository serves July onward, so the requested calendar year
+        # is safely intersected with the actually available period.
+        self.assertEqual((intent.start_month, intent.end_month), ("2025-07", "2025-12"))
+        self.assertEqual(intent.dongs, ())
+
+    def test_excluded_year_is_not_misread_as_range_start(self):
+        with patch("chatbot_agent.orchestrator.execute", return_value=Evidence("신호", "범위 확인")) as execute:
+            service.reply("2023년도 자료는 빼고 2025년도 이상신호만 알려줘", [], CONTEXT, use_ai=False)
+        intent = execute.call_args.args[1]
+        self.assertEqual((intent.start_month, intent.end_month), ("2025-07", "2025-12"))
+
     def test_selected_month_and_dong_default_only_missing_contextual_slots(self):
         with patch("chatbot_agent.orchestrator.execute", return_value=Evidence("근거", "범위 확인")) as execute:
             service.reply("이동이 줄었다는 거야?", [], CONTEXT, use_ai=False)

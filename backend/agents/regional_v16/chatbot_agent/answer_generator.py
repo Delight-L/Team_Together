@@ -248,6 +248,7 @@ def _query_story_period(intent):
     if start and end:
         if start[:4]==end[:4] and start[5:]=='07' and end[5:]=='12':return start[:4]+'년 하반기 자료에서는'
         if start[:4]==end[:4] and start[5:]=='01' and end[5:]=='06':return start[:4]+'년 상반기 자료에서는'
+        if start[:4]==end[:4] and start[5:]=='01' and end[5:]=='12':return start[:4]+'년 자료에서는'
         if start==end:return observation_period_text(start)+' 자료에서는'
     return '조회한 자료에서는'
 
