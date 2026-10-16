@@ -232,6 +232,47 @@ class ReportPolishTest(unittest.TestCase):
             self.assertEqual(draft['summary'], self.base['summary'])
             self.assertIn('자료와 일치하지 않는 내용', draft['notice'])
 
+    def problems(self, **changes):
+        with patch.object(report_writer, 'catalog_names', return_value=['노인맞춤돌봄서비스', '강남구 노인복지관', '교류 지원']):
+            return report_writer.check_grounding(self.polished(**changes), self.base)
+
+    def test_decision_must_stay_with_its_service(self):
+        # 두 사업의 판정을 서로 바꾼 문장: 문구는 모두 남아 있지만 사업과 짝이 틀립니다.
+        swapped = ('교류 지원: 운영 조건 확인 후 재검토\n- 검토 근거: 교류 지원 검토\n'
+                   '상담 지원: 연계 가능성 검토 제안\n- 검토 근거: 자격 확인 필요')
+        problems = self.problems(proposal=swapped)
+        self.assertIn('판단 문구 위치 변경 «교류 지원»', problems)
+        self.assertIn('판단 문구 위치 변경 «상담 지원»', problems)
+        # 문체만 바꾸고 짝을 지키면 통과합니다.
+        kept = ('교류 지원: 연계 가능성 검토 제안 (교류 지원 검토 결과)\n'
+                '상담 지원: 운영 조건 확인 후 재검토 (자격 확인 필요)')
+        self.assertEqual(self.problems(proposal=kept), [])
+
+    def test_new_service_or_agency_name_is_rejected(self):
+        problems = self.problems(proposal=self.base['proposal'] + '\n노인맞춤돌봄서비스 연계도 검토함')
+        self.assertIn('근거에 없는 사업·기관 «노인맞춤돌봄서비스»', problems)
+        problems = self.problems(next_steps='강남구 노인복지관에 문의 필요')
+        self.assertIn('근거에 없는 사업·기관 «강남구 노인복지관»', problems)
+
+    def test_new_causal_or_definitive_claim_is_rejected(self):
+        situation = self.base['situation'] + '\n1인 가구 증가로 인해 전화 연락이 줄었음'
+        self.assertIn('근거에 없는 단정 표현 «로 인해»', self.problems(situation=situation))
+        # 해석 제한 문장의 '확정'은 원래 있으므로, 새로 '확정'을 쓴 경우만 걸러냅니다.
+        situation = self.base['situation'] + '\n고립 위험 지역으로 확정됨'
+        self.assertIn('근거에 없는 단정 표현 «확정»', self.problems(situation=situation))
+
+    def test_number_must_stay_in_its_section_and_korean_counts_are_checked(self):
+        # 지역 현황의 12.3을 사업 제안 근거로 옮기면 걸러냅니다. 검토 요지에는 요약해 쓸 수 있습니다.
+        moved = self.base['proposal'] + '\n- 전화 연락 12.3% 감소 대응'
+        self.assertIn('복지서비스 연계·추진 제안: 근거에 없는 숫자 12.3', self.problems(proposal=moved))
+        self.assertEqual(self.problems(summary='전화 연락 12.3% 감소에 따라 연계 가능성을 검토하고자 함'), [])
+        self.assertIn('근거에 없는 수량 표현 «세 곳»', self.problems(next_steps='세 곳의 기관에 확인 필요'))
+
+    def test_fallback_notice_names_the_reason(self):
+        draft = self.write(json.dumps(self.polished(summary='예산 5,000만원 확보 예정')))
+        self.assertIn('자료와 일치하지 않는 내용', draft['notice'])
+        self.assertIn('이유: 검토 요지: 근거에 없는 숫자 5,000', draft['notice'])
+
     def test_unverified_link_shows_plain_notice_and_original_draft(self):
         draft = self.write(json.dumps(self.polished(summary='참고 https://example.org/new')))
         self.assertEqual(draft['summary'], self.base['summary'])
