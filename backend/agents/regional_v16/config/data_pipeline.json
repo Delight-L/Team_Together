@@ -1,6 +1,6 @@
 {
   "version": 16,
-  "database": "outputs/db1.sqlite",
+  "database": "../../../pipelines/db1/outputs/db1.sqlite",
   "exports": "outputs/integrated",
   "baseline_end": "2025-06-01",
   "auto_scan_on_startup": true,

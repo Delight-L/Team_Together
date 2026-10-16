@@ -17,7 +17,7 @@ from pathlib import Path
 
 from dotenv import dotenv_values
 
-V16_ROOT = Path(__file__).resolve().parent / "chatbot_v16"
+V16_ROOT = Path(__file__).resolve().parent / "regional_v16"
 if str(V16_ROOT) not in sys.path:
     sys.path.insert(0, str(V16_ROOT))
 
@@ -296,7 +296,7 @@ class _ScopedResolver(IntentResolver):
             elif self.context.get("district") in districts:
                 names = (self.context["district"],)
         start, end = intent.start_month, intent.end_month
-        excluded = list(intent.excluded_months)
+        excluded = list(getattr(intent, 'excluded_months', ()))
         # Resolve '12월 말고' against request context before planning.  The
         # question asks for all available results except that month, so the
         # dashboard's selected month must not become the only result range.
@@ -314,12 +314,19 @@ class _ScopedResolver(IntentResolver):
             # actually points at the selection. A standalone explicit-dong
             # question still needs its own reference month (B07).
             points_to_dashboard = bool(re.search(r"이\s*동|그\s*동|지금\s*선택|현재\s*선택|대시보드", question))
-            uses_visible_default = intent.question_type in (LIST_TYPES | {"age_activity"})
+            # 활동 지표 질문도 화면의 기준월을 기본값으로 사용합니다.
+            # 예: "삼성1동의 통화 상대 수"는 현재 화면 기준월의 값을 묻는
+            # 것으로 해석해 불필요한 기간 재질문이나 엉뚱한 자료 fallback을 막습니다.
+            uses_visible_default = intent.question_type in (LIST_TYPES | {"age_activity"}) or (
+                intent.question_type == "activity" and bool(intent.metric))
             if not (start or end) and (points_to_dashboard or uses_visible_default) and MONTH.fullmatch(self.context.get("month", "")):
                 start = end = self.context["month"]
         needs = tuple(item for item in intent.needs if not (item == "행정동" and names or item == "기간" and start and end))
-        return replace(intent, dong=names[0] if len(names) == 1 else None, dongs=tuple(names),
-                       start_month=start, end_month=end, needs=needs, excluded_months=tuple(excluded))
+        changes = dict(dong=names[0] if len(names) == 1 else None, dongs=tuple(names),
+                       start_month=start, end_month=end, needs=needs)
+        if hasattr(intent, 'excluded_months'):
+            changes['excluded_months'] = tuple(excluded)
+        return replace(intent, **changes)
 
 
 def reply(question, history, context, use_ai=True, group=None):
@@ -333,6 +340,11 @@ def reply(question, history, context, use_ai=True, group=None):
     bot = Chatbot(V16_ROOT, model=model, intent_resolver=resolver, moderator=_SupervisorModerator())
     bot.allow_ai_generation = False
     resolver.available_period = bot.repo.available_period()
+    # 웹 대시보드에서 선택한 동·기준월을 v16 내부 질의 계획에도 전달합니다.
+    bot.activate_dashboard_context({
+        'dong': public_context.get('district'),
+        'label_month': public_context.get('month'),
+    }, None)
     bot.memory = _RequestMemory(history, bot.repo.districts())
     if SCREEN_SUMMARY.search(question):
         summary = _visible_evidence_summary(bot, context.get('screen'))

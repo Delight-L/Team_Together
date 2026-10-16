@@ -24,9 +24,14 @@ class DataRepository:
         if not self.db.is_file():raise FileNotFoundError('데이터를 초기화해 주세요: python main.py')
         con=sqlite3.connect(self.db.resolve().as_uri()+'?mode=ro',uri=True)
         try:
-            row=con.execute('SELECT payload_json FROM pipeline_state WHERE id=1').fetchone()
-            if not row or json.loads(row[0]).get('status')!='ready':
-                raise ValueError('데이터 갱신이 완료되지 않았습니다. 처리 상태를 확인해 주세요.')
+            # 구형 파이프라인 DB에는 pipeline_state가 없지만, DB1의 검증된
+            # 분석 테이블은 그대로 읽을 수 있습니다. 상태 테이블이 있는
+            # 신규 DB에서만 기존 ready 검사를 적용합니다.
+            has_state=con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='pipeline_state'").fetchone()
+            if has_state:
+                row=con.execute('SELECT payload_json FROM pipeline_state WHERE id=1').fetchone()
+                if not row or json.loads(row[0]).get('status')!='ready':
+                    raise ValueError('데이터 갱신이 완료되지 않았습니다. 처리 상태를 확인해 주세요.')
             yield con
         finally:con.close()
 
