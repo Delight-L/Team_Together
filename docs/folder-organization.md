@@ -54,7 +54,7 @@ Team_Together/
 
 `backend/db`는 DB를 읽고 저장하는 코드이고, `pipelines/db1`은 분석 결과를 만드는 코드입니다.
 PostgreSQL의 `db1`, `db2`, `work` 스키마 이름과 테이블은 폴더 이동과 관계없이 유지합니다.
-보미 총괄은 `backend/agents/supervisor.py`, 복지 대화 처리는 `backend/chatbot/welfare/app/dialogue/`에 있습니다.
+보미 챗봇 코어(담당 선택·규제·에이전트)는 `backend/bomi/`에 있습니다. 예전 총괄 `backend/agents/supervisor.py`와 복지 대화 `welfare/service.py`·`dialogue/orchestrator.py`는 2026-10-16에 `bomi`로 대체되어 삭제했습니다.
 
 ## 자료 보존 기준
 

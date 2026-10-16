@@ -5,8 +5,9 @@ API 서버·보미·에이전트·공유 DB 접근 코드를 관리합니다. �
 | 폴더 | 역할 |
 |---|---|
 | `api/` | HTTP API, 로그인, 관리자, 업무·대화 요청 |
-| `chatbot/` | 보미 대화, AI 설정, 가드레일, 복지사업 검색 |
-| `agents/` | 총괄, 지역 분석, 사업 매칭, 보고서 작성 |
+| `bomi/` | 보미 챗봇 코어: 담당 선택, 입력·출력 규제, 이벤트 계약, 담당 에이전트 4종 |
+| `chatbot/` | 챗봇과 다른 기능이 함께 쓰는 부품: AI 설정, 규칙 정의, 외부 AI 창구, 복지사업 검색 |
+| `agents/` | 보고서 작성·사업 매칭, v16 지역 변화 신호 엔진(`regional_v16/`) |
 | `db/` | PostgreSQL 연결·조회·저장 |
 | `services/`, `resources/` | 공통 서비스와 지도·보고서 서식 |
 | `common.py` | 여러 폴더가 함께 쓰는 작은 도구: 프로젝트 경로(`ROOT`), `.env` 읽기, 서울 시각(`seoul_now`·`now_text`), 공용 DB 엔진(`get_engine`) |
@@ -17,10 +18,11 @@ Python 환경과 `.env` 준비는 [전체 실행 안내](../README.md#13-실행-
 
 ```powershell
 python main.py
-python -m pytest backend/api/tests backend/db/tests backend/chatbot/tests -q
+python -m pytest backend/api/tests backend/db/tests backend/chatbot/tests backend/bomi/tests -q
 ```
 
-웹 서비스의 분석·복지·업무 데이터는 공유 PostgreSQL의 `db1`·`db2`·`work` 스키마를 사용합니다. 아래 v16 SQLite는 별도 답변 근거 파일입니다.
+웹 서비스의 분석·복지·업무 데이터와 v16 답변 근거는 모두 공유 PostgreSQL(`db1`·`db1_v16`·`db2`·`work` 스키마)에서 읽습니다.
+구조와 설계 이유는 [보미 챗봇 구조](../docs/bomi-architecture.md), 재설계 과정은 [보미 재설계 보고서](../docs/bomi-redesign-report.md)를 보세요.
 
 ## 문서 목차
 
@@ -32,29 +34,28 @@ python -m pytest backend/api/tests backend/db/tests backend/chatbot/tests -q
 
 ## 보미 챗봇
 
-작업 기준 폴더: `backend/chatbot/`
+작업 기준 폴더: `backend/bomi/`
 
 화면의 «보미에게 질문»은 탭 없이 채팅 하나로 모든 질문을 받습니다.
-질문마다 **총괄 에이전트**([backend/agents/supervisor.py](agents/supervisor.py))가 담당 에이전트를 골라 답하고, 답변 위에 담당을 표시합니다.
+질문마다 `bomi/routing.py`의 `Router`가 담당 에이전트를 골라 답하고, 답변 위에 담당을 표시합니다.
 
 | 담당 에이전트 | 처리하는 코드 | 내용 |
 |---|---|---|
-| 지역 변화 신호(v16) | `backend/agents/v16_service.py` → `backend/agents/regional_v16/` | 동 단위 이상신호 지역·탐지 기준·연령별 활동·지역 배경·소비 변화를 DB 근거로 답하고, 답변 아래에 다음 질문을 제안합니다. [v16 안내](README.md#regional-v16) |
-| 지역 분석 | `backend/db/region_workspace.py`(동), `backend/db/group_workspace.py`(연령·성별 그룹) | 열어 둔 그룹의 근거와 화면 판정 용어(판단 보류·기준 미해당·평소 대비 차이 등)를 설명합니다. v16 근거 DB가 없는 서버에서는 동 분석도 맡습니다. |
-| 복지사업 | `backend/chatbot/welfare/` | 공유 DB2의 복지사업 자료에서 관련 사업을 찾아 안내합니다. JSON은 적재 원본과 오프라인 검증용입니다. |
-| 보고서 작성 | `backend/agents/report_writer.py` | 대화에서 찾은 사업·신규 구상안이 있으면 그것으로 «담당자 검토 전» 초안을, 없으면 저장된 분석·사업 검토 기록으로 초안을 만듭니다. [보고서 문서](../docs/report-agent.md) 참고. |
-| 보미 안내 | `backend/agents/supervisor.py` | 검토 의견 작성·현장 확인·보고서 작성 주의점 같은 업무 방법(정해진 답)과, 업무와 무관한 질문을 안내합니다. |
+| 지역 분석 (`region_analysis`) | `bomi/agents/region_analysis.py` → v16(`bomi/adapters/v16.py` → `agents/regional_v16/`), `db/region_workspace.py`(동), `db/group_workspace.py`(연령·성별 그룹) | 동 단위 이상신호 지역·탐지 기준·연령별 활동·지역 배경·소비 변화를 v16 근거로 답하고 다음 질문을 제안합니다. 열어 둔 그룹의 근거와 화면 판정 용어(판단 보류·기준 미해당·평소 대비 차이 등)도 설명합니다. v16 자료가 없으면 동·그룹 분석 근거로 답합니다. [v16 안내](#regional-v16) |
+| 복지사업 (`welfare`) | `bomi/agents/welfare.py`, `chatbot/welfare/` | 공유 DB2의 복지사업 자료에서 관련 사업을 찾아 안내합니다. JSON은 적재 원본과 오프라인 검증용입니다. |
+| 보고서 작성 (`report`) | `bomi/agents/report.py` → `agents/report_writer.py` | 대화에서 찾은 사업·신규 구상안이 있으면 그것으로 «담당자 검토 전» 초안을, 없으면 저장된 분석·사업 검토 기록으로 초안을 만듭니다. [보고서 문서](../docs/report-agent.md) 참고. |
+| 보미 안내 (`guide`) | `bomi/agents/guide.py` | 검토 의견 작성·현장 확인·보고서 작성 주의점 같은 업무 방법(정해진 답)과, 업무와 무관한 질문을 안내합니다. |
 
 ### 담당 선택
 
-- 아래 질문은 AI 사용 여부와 관계없이 규칙으로 먼저 정합니다(`fixed_route`).
+- 아래 질문은 AI 사용 여부와 관계없이 규칙으로 먼저 정합니다(`Router.fixed`).
   - 보고서 초안 요청("보고서 초안 만들어 줘") → 보고서 작성. "보고서 작성 방법·주의점"처럼 쓰는 법을 묻는 질문은 제외합니다.
   - 업무 방법 질문(검토 의견, 현장·추가 확인, 보고서 작성 주의점) → 보미 안내
   - 화면 판정·수치 용어의 뜻(판단 보류, 기준 미해당, 자료 부족, 평소 대비/전월 변화율 등) → 지역 분석
-- 그 밖의 질문은 AI를 쓰는 중이면 관리자가 고른 AI가 담당을 고릅니다. 이때 유해 콘텐츠 검사와 담당 선택을 동시에 실행합니다.
-- AI를 쓰지 않거나 AI 호출이 실패하면 키워드 규칙으로 고릅니다. 복지 단어 → 복지사업, 분석 단어·동 이름 → v16,
+- 그 밖의 질문은 AI를 쓰는 중이면 관리자가 고른 AI가 담당을 고릅니다(`Router.by_ai`).
+- AI를 쓰지 않거나 AI 호출이 실패하면 키워드 규칙으로 고릅니다(`Router.by_rules`). 복지 단어 → 복지사업, 분석 단어·동 이름 → 지역 분석,
   사업 이름에 들어 있는 낱말 → 복지사업, 어디에도 해당하지 않으면 보미 안내입니다.
-- v16을 골랐는데 근거 DB가 없으면 지역 분석 담당이 답합니다.
+- 단어 규칙(욕설·위험한 요청 등)에 걸린 질문은 외부 호출 없이 보미 안내로 보내 차단합니다.
 
 ### 외부 AI 사용 (기본 꺼짐)
 
@@ -72,16 +73,17 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
 
 ### 대화 기억과 대화 기반 보고서
 
-- 이전 대화는 최근 3쌍(질문·답 6개)만 서버로 보냅니다(서버도 `HISTORY_SIZE`로 한 번 더 자릅니다).
+- 이전 대화는 최근 3쌍(질문·답 6개)만 서버로 보냅니다(서버도 `bomi/regularization.py`의 `prepare`에서 한 번 더 자릅니다).
 - 화면은 최근 답에서 찾은 복지사업 id(`sources`, 최대 10개)를 함께 보냅니다. 서버는 자기 자료에 있는 id만 씁니다.
 - "보고서 작성해줘"라고 하면 그 사업들과 최근 신규 사업 구상안, 이 동의 분석 수치로 «대화 기반 초안 · 담당자 검토 전»을 만듭니다.
   최종 저장은 사업 매칭 검토에 판단을 기록한 뒤 «업무 기록»·«보고서 작성»에서 합니다.
 
-요청 흐름: 화면(`frontend/src/BomiChat.jsx`) → `POST /api/chat`(stream) → `backend/api/routes_chat.py` → `backend/agents/supervisor.py` → 담당 에이전트.
+요청 흐름: 화면(`frontend/src/BomiChat.jsx`) → `POST /api/chat`(stream) → `backend/api/routes_chat.py` → `backend/bomi/pipeline.py`(규제·담당 선택) → 담당 에이전트 → `events.seal`.
 응답은 `route`(담당) → `sources`/`token`(복지사업) 또는 `replace`(분석·보고서·안내) → `follow_ups`(v16 다음 질문) → `notice` → `actions`(보고서 탭 이동) → `done` 이벤트 순서로 옵니다.
 복지사업 답변은 끝에 «검토 자료와 확인 상태»(출처·확인 상태)를 붙이고, 미확인 자격을 단정한 AI 답은 자료상 대상·확인 기관 안내로 바꿉니다.
 화면의 «내보내기» 버튼은 대화를 텍스트 파일(.txt)로 내려받습니다(`frontend/src/chatExport.mjs`, 서버로 보내지 않음).
-복지사업 찾기의 자세한 구조는 [welfare/README.md](README.md#welfare)를 참고하세요.
+이벤트 9종의 계약과 순서 규칙은 `bomi/events.py`와 [보미 챗봇 구조 5장](../docs/bomi-architecture.md#5-이벤트-계약-eventspy)에 있습니다.
+복지사업 찾기의 자세한 구조는 [복지사업 검색](#welfare)을 참고하세요.
 
 
 ### 가드레일
@@ -91,7 +93,7 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
 | 입력 | 로그인·소속 지역 검사, 대화 1~40개·메시지 6,000자·질문 2,000자 제한, `system` 역할 차단 | `backend/api/common.py`, `backend/chatbot/welfare/app/schemas.py` |
 | 입력 | **개인정보 가리기**: 주민등록번호·카드번호·전화번호·이메일·상세 주소를 `[○○ 가림]`으로 바꾼 뒤 처리(AI 사용 여부와 무관) | `backend/chatbot/guardrails.py` `mask_pii` |
 | 입력 | **단어 규칙**: 욕설·위험한 요청·지시 무력화 시도("이전 지시 무시" 등)는 항상 막음. 자살 예방·학대·가정폭력처럼 복지 업무에서 쓰는 말은 막지 않음 | `backend/chatbot/guardrails.py` `blocked_words` |
-| 입력 | **유해 콘텐츠 검사**: AI 사용 중이고 OpenAI 키가 있으면 질문을 OpenAI Moderation(무료)으로 검사해 걸리면 답하지 않음. 키가 없거나 검사 API 장애 시에는 통과 | `backend/agents/supervisor.py` `_moderate` |
+| 입력·출력 | **유해 콘텐츠 검사**: AI 사용 중이고 OpenAI 키가 있으면 질문과 AI가 쓴 답을 OpenAI Moderation(무료)으로 검사해 걸리면 차단 안내로 바꿈. 키가 없거나 검사 API 장애 시에는 통과. 에이전트마다 어디에 거는지는 `Policy`로 선언 | `backend/bomi/regularization.py` |
 | 요청 | **사용량 제한**: 사용자별 1분 20회·하루 300회(`.env`의 `WELFIND_CHAT_PER_MINUTE`, `WELFIND_CHAT_PER_DAY`), 초과 시 429 | `backend/api/limits.py` |
 | 요청 | **로그인 시도 제한**: 같은 아이디로 10분 안에 5번 틀리면 10분 잠금 | `backend/api/limits.py` |
 | AI 호출 | **답변 길이 상한**: `OPENAI_MAX_TOKENS`(기본 1,500, Claude는 생각 토큰 때문에 최소 8,000). 잘리면 안내 문구를 붙임 | `backend/chatbot/welfare/app/llm/` |
@@ -102,6 +104,21 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
 가린 내용이 있으면 답변 아래에 안내(`notice` 이벤트)를 표시합니다. 사용량·로그인 기록은 서버 메모리에 있어 서버를 재시작하면 초기화됩니다.
 
 API 키는 서버(`.env` 또는 관리자 «AI 설정»(DB `work.app_settings`))에만 두며 저장소와 화면 코드에 넣지 않습니다.
+
+### 개발 규칙
+
+- 담당 선택은 `bomi/routing.py`에서만 합니다. 자료 유무 같은 사정은 에이전트 안에서 처리합니다.
+- 입력·출력 규제는 `bomi/regularization.py`의 `Policy`로 선언합니다. 규칙(정규식·단어)의 정의는 `chatbot/guardrails.py`에 있습니다.
+- AI 호출은 `chatbot/welfare/app/llm/client.py`의 `llm`만 쓰고, 동기 코드에서는 `bomi/aio.py`의 `aio.run`/`aio.iterate`를 거칩니다.
+- 이벤트 이름·내용을 바꾸면 화면이 깨집니다. `bomi/events.py`를 바꾸기 전에 `frontend/src/BomiChat.jsx`를 함께 확인하세요.
+
+새 에이전트를 추가하려면:
+
+1. `bomi/agents/`에 `RegulatedAgent`를 상속한 클래스를 만들고 `id`, `policy`, `answer(request) -> Iterator[Event]`를 정의합니다. 입력 규제는 `respond()`가 해 주고, `done`·`route`는 보내지 않습니다.
+2. 한 번에 완성되는 답이면 `self.deliver(Reply(...))`(출력 규제 포함)를 쓰고, 스트리밍이면 `events.token(...)`을 `yield`하며 끝에서 `self.regulator.output_flagged_async`로 검사합니다.
+3. `bomi/agents/__init__.py`의 `default_agents()`에 등록합니다.
+4. `bomi/phrases.py`의 `AGENT_LABELS`와 `ROUTER_PROMPT`에 이름과 설명을 추가하고, 키워드 규칙이 필요하면 `Router.by_rules`에 둡니다.
+5. `bomi/tests/test_routing.py`에 예시 질문을 추가합니다.
 
 <a id="welfare"></a>
 
@@ -116,12 +133,12 @@ API 키는 서버(`.env` 또는 관리자 «AI 설정»(DB `work.app_settings`))
 
 | 파일 | 역할 |
 |---|---|
-| `service.py` | 화면 서버와 비동기 대화를 연결하고 스트림 응답을 제공 |
+| `backend/bomi/agents/welfare.py` | 검색·답변·출처·AI 실패 안내, 스트림 응답(복지사업 담당 에이전트) |
+| `backend/bomi/agents/welfare_prompt.py` | 복지사업 답변 지시문 |
 | `app/config.py` | 프로젝트 루트 `.env`의 AI 연결 설정 읽기 |
 | `app/schemas.py` | 사용자 질문과 대화 이력 형식 검사 |
-| `app/dialogue/orchestrator.py` | 검색·답변·출처·AI 실패 안내 처리 |
-| `app/dialogue/resources.py` | 팀 자료 읽기, 사업 검색, 자료 기반 안내 |
-| `app/llm/openai_client.py` | 요청별 AI 연결과 응답 스트림 종료 |
+| `app/dialogue/resources.py` | DB2 복지자료 읽기(1분 기억), 사업 검색, 자료 기반 안내 |
+| `app/llm/` | 외부 AI 창구 `llm`과 OpenAI·Anthropic·Gemini 어댑터 |
 | `data/*.json` | 출처·페이지·확인 상태를 포함한 복지사업 자료 |
 
 ### 요청 흐름
@@ -129,10 +146,9 @@ API 키는 서버(`.env` 또는 관리자 «AI 설정»(DB `work.app_settings`))
 ```text
 frontend/src/BomiChat.jsx
   → backend/api/routes_chat.py
-  → backend/agents/supervisor.py (총괄 에이전트가 복지사업 담당으로 고른 경우)
-  → backend/chatbot/welfare/service.py
-  → app/dialogue/orchestrator.py:handle_chat
-  → app/dialogue/resources.py + app/llm/openai_client.py
+  → backend/bomi/pipeline.py (Router가 복지사업 담당으로 고른 경우)
+  → backend/bomi/agents/welfare.py
+  → app/dialogue/resources.py + app/llm/client.py
 ```
 
 외부 AI 사용 여부는 관리자 허용과 사용자 AI 스위치를 따릅니다. AI를 끄면 자료 검색 결과로 안내하고, 켜면 선택한 제공사의 키와 검색 근거로 답변합니다.
@@ -146,6 +162,7 @@ AI 연결 실패나 빈 응답은 자료 검색 안내로 전환하며, 요청�
 프로젝트 루트에서 실행합니다.
 
 ```powershell
+.venv/Scripts/python.exe -m unittest discover -s backend/bomi/tests -t . -v
 .venv/Scripts/python.exe -m unittest discover -s backend/chatbot/tests -v
 ```
 
@@ -157,32 +174,37 @@ API 키는 서버 `.env` 또는 관리자 AI 설정에 저장하며 저장소나
 
 작업 기준 폴더: `backend/agents/regional_v16/`
 
-보미 총괄 에이전트(`backend/agents/supervisor.py`)가 동 단위 지역 분석 질문을 이 에이전트에 넘깁니다.
-연결 모듈은 `backend/agents/v16_service.py`입니다.
+지역 분석 에이전트(`bomi/agents/region_analysis.py`)가 동 단위 질문을 이 엔진에 넘깁니다.
+연결 모듈은 `backend/bomi/adapters/v16.py` 하나이며, 엔진의 `sys.path` 조정과 임포트도 이 파일에만 있습니다.
+어댑터는 화면에서 고른 동·기준월·연령을 질의 계획에 넘기고, 지표 버튼 입력·«화면 정리해 줘» 같은 짧은 질문을 구체 질문으로 바꿉니다.
 
 ### 폴더 구성
 
 | 폴더·파일 | 역할 |
 |---|---|
-| `chatbot_agent/` | 질문 의도 해석, DB 조회, 답변 문장 작성 |
-| `data_pipeline/` | DB 위치·스냅샷 관리(`runner.py`, `snapshot_manager.py`)와 DB를 새로 만드는 작업기 |
-| `config/data_pipeline.json` | DB 위치·원자료 위치 설정 |
-| `outputs/db1.sqlite` | 답변 근거 DB(약 100MB). **git에 올리지 않습니다** |
+| `chatbot_agent/` | 질문 의도 해석, 근거 조회, 답변 문장 작성 |
+| `chatbot_agent/db1_repository.py` | 저장소 계약(`Db1Repository`). 챗봇 로직은 SQL을 직접 쓰지 않고 이 계약만 부름 |
+| `chatbot_agent/repository.py` | 공통 조회 로직(`SqlDb1Repository`). SQL은 이 파일에만 둠 |
+| `chatbot_agent/pg_repository.py` | 유일한 구현(`PostgresDb1Repository`): 게시된 활성 run을 읽음 |
+| `data_pipeline/` | 계산 작업기(`analysis1_worker.py`, `monthly_worker.py`, `runner.py`, `snapshot_manager.py`)와 PostgreSQL 게시(`publish_postgres.py`, `db1_compat.py`) |
+| `config/data_pipeline.json` | 계산용 DB 위치·원자료 위치 설정 |
+| `evaluation/` | 질문 세트와 평가 결과 |
 
-DB를 새로 만드는 작업기(`analysis1_worker.py`, `monthly_worker.py`)는 공식 분석 코드 `pipelines/db1`을 그대로 불러 씁니다.
-예전에 이 폴더에 있던 DB1 복사본과 단독 확인용 FastAPI 서버는 정리했습니다.
+DB를 새로 만드는 작업기는 공식 분석 코드 `pipelines/db1`을 그대로 불러 씁니다.
 
-### 근거 DB 배치
+### 근거 자료 (PostgreSQL)
 
-- 로컬: `outputs/db1.sqlite`에 둡니다.
-- 다른 위치(배포 서버 등): 환경 변수 `DB1_DATABASE_PATH`로 파일 경로를 지정합니다.
-- DB 파일이 없으면 총괄 에이전트가 기존 지역 분석 담당(`backend/db/region_workspace.py`)으로 답합니다.
+- 챗봇은 **PostgreSQL에서만** 읽습니다. 계산 파이프라인은 SQLite(`outputs/db1.sqlite`, git에 올리지 않음)에 결과를 쓰고, 게시가 이를 PostgreSQL의 `db1.v16_*` 테이블과 `db1_v16` 뷰로 옮깁니다.
+- 게시는 `data_pipeline/publish_postgres.py`의 `publish(sqlite_path, engine)`, 이전 run으로 되돌리기는 `activate(engine, run_id)`입니다. 저장 구조는 [보미 챗봇 구조 6장](../docs/bomi-architecture.md#6-v16-근거-저장소)을 보세요.
+- 게시된 run이 없거나 DB에 연결하지 못하면 `data_ready()`가 False이고, 지역 분석 에이전트가 동·그룹 분석 근거로 답합니다.
+- `DB1_REPOSITORY=sqlite` 같은 예전 설정은 오류로 알립니다(SQLite 서빙은 제거됨).
 
 ### 외부 AI
 
 v16은 관리자 «AI 설정»을 따릅니다. Gemini면 JSON 스키마를 지정해 질문 의도를 분류하고,
 다른 제공사면 공용 AI 창구(`backend/chatbot/welfare/app/llm/client.py`)를 씁니다.
 AI를 쓰지 않으면 규칙으로 의도를 해석하고, 답변 문장은 항상 DB 근거로 만듭니다.
+연령과 활동 지표를 함께 묻거나 소비와 날씨를 함께 묻는 질문은 AI 분류보다 규칙 해석을 우선합니다.
 
 ## 공유 DB2 복지자료
 
@@ -207,9 +229,9 @@ JSON에 없는 기존 DB 행은 지우지 않습니다. 신규 테이블에는 `
 원문은 검토용 후보·과거 계획이며, DB에 저장해도 현재 운영·신청 자격이 확인된 것으로 바뀌지 않습니다.
 
 서버의 기본 자료 위치는 `WELFIND_WELFARE_SOURCE=db`입니다. 설정을 생략해도 DB를 읽습니다.
-총괄 에이전트의 사업명 판별, 복지사업 검색, 대화에서 찾은 사업의 보고서 연결, `/api/chat/config`가 같은 DB 자료를 사용합니다.
+담당 선택의 사업명 판별, 복지사업 검색, 대화에서 찾은 사업의 보고서 연결, `/api/chat/config`가 같은 DB 자료를 사용합니다.
 질문마다 DB를 다시 읽지 않도록 사업 목록을 1분간 기억하며, DB 수정은 서버 재시작 없이 1분 안에 반영됩니다. 서버는 조회만 하며 기동 시 자동 적재하지 않습니다.
-DB 오류나 빈 테이블은 명시적으로 알리고 JSON으로 자동 대체하지 않습니다.
+DB 오류나 빈 테이블은 명시적으로 알리고(보미는 «복지자료 DB를 조회하지 못했습니다» 안내로 답을 마침) JSON으로 자동 대체하지 않습니다.
 
 `GET /api/chat/config`의 `resourceSource`는 `db` 또는 `json`이며 `resourceCount`는 기존 사업명 중복 처리 후 자료 수입니다.
 

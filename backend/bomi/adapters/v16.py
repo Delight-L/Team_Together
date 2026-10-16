@@ -392,7 +392,9 @@ def reply(question, history, context, use_ai=True, group=None):
     model = config.model if config and config.provider == "gemini" else DEFAULT_MODEL
     public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month", "age", "sex")}
     question = _expand_visible_screen_question(question, context.get('screen'))
-    question = _expand_implicit_screen_info(question, public_context)
+    if not _bounded_history(history):
+        # 이어지는 대화에서는 앞 대화의 동·기간을 따르고(대화 기억), 첫 질문일 때만 화면 선택으로 보충합니다.
+        question = _expand_implicit_screen_info(question, public_context)
     question = _expand_dashboard_metric_question(question, public_context)
     # «이 사례»는 대시보드 선택값으로 보충하지 않습니다. 앞 대화에 동·사례가 없으면 대상을 다시 묻습니다.
     if re.search(r"이\s*사례|그\s*사례", question) and re.search(r"탐지|신호|이유", question):

@@ -1,6 +1,6 @@
-# 성능 비교: 원본 backend_old 대 backend (실제 db1.sqlite)
+# 보미 v16 성능 측정 기록 (실제 db1.sqlite)
 
-> 이 보고서의 «신규 (snapshot)»·«신규 (작업 DB)» 열은 이후 제거된 SQLite 서빙 경로의 **당시 측정값(역사 기록)** 입니다. 현재 서빙 경로는 PostgreSQL입니다.
+> 개선 내용과 해석은 [보미 재설계 보고서](bomi-redesign-report.md) 9장에 있습니다. 이 문서의 «신규 (snapshot)»·«신규 (작업 DB)» 열은 이후 제거된 SQLite 서빙 경로의 **당시 측정값(역사 기록)** 입니다. 현재 서빙 경로는 PostgreSQL입니다.
 
 같은 `db1.sqlite`와 같은 질문으로 원본 `backend_old`와 `backend`의 v16 경로를 각각 실행해 비교했습니다.
 
@@ -103,3 +103,33 @@
 - 위의 «데이터 준비에 대한 주의»대로 SQLite 복사본의 `pipeline_state`·`ctx_weather`는 측정용으로 추가·변환한 것이고, 날씨의 눈 기록 상태(`snow_status`)는 복원하지 못했습니다.
 - PostgreSQL은 **같은 컴퓨터의 로컬 서버**라 네트워크 지연이 없습니다. 원격 서버면 질문당 쿼리 4~40회에 왕복 시간이 더해집니다.
 - 메모리는 `tracemalloc`이 세는 Python 객체의 정점이고, 프로세스 전체 메모리가 아닙니다.
+
+## 7. 재현 방법 (`backend/tools/v16_bench/`)
+
+원본 `backend_old`와 `backend`의 v16 경로를 같은 `db1.sqlite`와 같은 질문으로 비교합니다.
+
+```bash
+# 1) 측정용 복사본 만들기 (원본은 그대로)
+python backend/tools/v16_bench/prepare_db.py db1.sqlite  <작업폴더>
+
+# 2) 라운드마다 원본 · PostgreSQL을 번갈아 측정 (3라운드 권장)
+python backend/tools/v16_bench/bench.py old <작업폴더>/work/db1-work.sqlite       <작업폴더>/round_old_1.json  15
+python backend/tools/v16_bench/bench.py pg  <작업폴더>/snapshots/db1-real.sqlite  <작업폴더>/round_pg_1.json   15
+
+# 3) 보고서 만들기 (make_report.py는 SQLite 서빙이 있던 시절의 4그룹 결과용이라, 이제는 결과 JSON을 직접 비교하세요)
+python backend/tools/v16_bench/make_report.py <작업폴더> docs/bomi-performance-comparison.md
+```
+
+- 의존: 프로젝트 `requirements.txt`의 패키지. PostgreSQL 측정에는 `pip install pgserver`가 더 필요합니다.
+- 측정은 질문마다 저장소를 새로 만들고(웹 서비스와 같은 수명), 질문별 출력 해시를 남겨 구현 간 출력이 같은지 함께 확인합니다.
+- `old`와 `pg`는 같은 이름의 패키지(`chatbot_agent`)를 쓰므로 반드시 별도 프로세스로 실행합니다(위 명령이 그렇게 되어 있습니다).
+- backend의 SQLite 서빙(snapshot·작업 DB 경로)은 제거되어, 이 문서의 해당 열은 **당시 측정값(역사 기록)** 입니다.
+
+
+### 데이터 준비 메모
+
+받은 `db1.sqlite`는 파이프라인 산출물이라 `pipeline_state`·`ctx_weather`가 없습니다. `prepare_db.py`는 원본을 두고 **복사본에만**
+이 둘을 추가하며, `ctx_weather`는 PostgreSQL 게시와 같은 변환 코드(`data_pipeline/db1_compat.py`)로 만듭니다.
+`pg` 측정은 이 복사본이 아니라 **받은 원본 파일을 그대로** 게시합니다(원본 `db1.sqlite` 경로를 넘기세요).
+
+> 주의: `old` 측정은 원본 코드가 `backend.…`로 서로를 import하므로, 재현하려면 `backend_old`를 임시로 `backend`라는 이름의 별도 작업 폴더에 두고 실행해야 합니다.

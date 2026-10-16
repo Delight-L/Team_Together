@@ -11,6 +11,9 @@
 | [DB1 서비스 통합](db1-integration.md) | 검사·서비스 DB 반영 |
 | [디자인 규칙](design-rules.md) | 화면 디자인 기준 |
 | [보고서 에이전트](report-agent.md) | 보고서 생성과 검토 |
+| [보미 챗봇 구조](bomi-architecture.md) | 요청 흐름·규제·이벤트 계약·v16 저장소 |
+| [보미 재설계 보고서](bomi-redesign-report.md) | 챗봇 재설계 과정과 결과, 팀 저장소 병합 |
+| [보미 v16 성능 측정 기록](bomi-performance-comparison.md) | 실제 db1.sqlite 측정표와 재현 방법 |
 
 ## README 관리 기준
 

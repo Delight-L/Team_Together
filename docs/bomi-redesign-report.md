@@ -1,7 +1,9 @@
-# 챗봇 클린 코드 개선 보고서
+# 보미 재설계 보고서
 
-대상: `Team_Together/backend`의 보미 챗봇 → `Team_Together/backend`
+대상: `backend`의 보미 챗봇(구 `supervisor`·`v16_service`·`welfare/service` → `backend/bomi/`)
 범위: 챗봇(`bomi/`)을 새로 설계하고, v16 데이터 접근을 정리했습니다. 챗봇 외 코드는 로직 변경 없이 복사했습니다.
+현재 구조는 [보미 챗봇 구조](bomi-architecture.md), 질문별 측정표는 [성능 측정 기록](bomi-performance-comparison.md)에 있습니다.
+팀 저장소에 합친 과정은 [13장](#merge)을 보세요.
 전제: 프런트엔드(`BomiChat.jsx`)와의 이벤트 계약은 그대로 유지합니다(프런트 수정 없음).
 
 ## 1. 한눈에 보기
@@ -118,17 +120,18 @@
 | AI가 담당을 고르는 경로, moderate API 실제 호출 | 외부 호출이 필요해 구 backend와 직접 대조하지 못함 (가짜 응답으로만 테스트) |
 | 조건을 SQL로 내리기 | 소비 원자료는 **완료**. 탐지 표(JSON 행)는 **의도적으로 하지 않음** — 일부 행만 읽으면 열 집합이 달라져 동작이 바뀔 수 있어 같은 목표를 인덱스로 달성 |
 | 남은 병목 | 신호 목록은 여전히 `_age_signal_changes`가 `activity()`를 136회 부르고, 동별 정렬 인덱스를 처음 만드는 비용(동·연령대마다 약 1ms)이 큼. 질의 로직이라 손대지 않음 |
-| PostgreSQL 구현 | **구현·검증 완료**(합성 DB, 로컬 PostgreSQL 16). 운영 DB에서의 게시·전환은 미실시 |
-| `Team_Together/main.py` 전환 | 아직 `backend`를 가리킴. `python -m backend.api.server`로 실행하거나 임포트를 변경해야 함 |
+| PostgreSQL 구현 | **구현·검증 완료**. 운영 DB 전환도 완료(2026-10-16, v16 자료는 모두 PostgreSQL에서 읽음) |
+| 게시 명령 | 문서에 쓰인 `scripts/publish_v16_to_postgres.py`는 팀 저장소에 없음. 지금은 `data_pipeline/publish_postgres.py`의 `publish`·`activate` 함수만 있음 |
 | `region_analysis`의 출력 가림 | `explain_ai`(db 계층)에서 처리. `Policy`에서는 moderate만 적용 |
 | moderate 인프라 장애 정책 | `ai_settings` 키 조회 중 DB 오류가 나면 `seal`이 `error`로 처리. 통과시킬지는 정하지 않음 |
 
 ## 6. 다음 단계 (권장 순서)
 
-1. 실제 `db1.sqlite`가 있는 환경에서 세 구현(구 backend·SQLite·PostgreSQL)의 출력을 대조하고, 건너뛴 테스트 2개를 실행
-2. 운영 DB에 `publish_v16_to_postgres.py`로 게시(원격 서버의 응답 시간 확인). 코드의 기본값은 이미 PostgreSQL이므로 **게시가 끝나기 전에 배포하면 v16이 답하지 못하고 동·그룹 분석이 대신 답함**
-3. 안정화 후 SQLite 서빙 경로와 `snapshot_manager`의 서빙 용도를 제거
-4. 서버 전환(`main.py`)과 문서 갱신
+1. ~~실제 `db1.sqlite`로 세 구현 대조~~ 완료(9장)
+2. ~~운영 DB 게시~~ 완료. 원격 서버의 응답 시간은 아직 측정하지 않음
+3. ~~SQLite 서빙 경로 제거~~ 완료(12장)
+4. ~~서버 전환과 문서 갱신~~ 완료. `main.py`는 처음부터 `backend.api.server`를 실행하므로 바꿀 것이 없었음
+5. 게시 명령(`scripts/publish_v16_to_postgres.py`)을 팀 저장소에 추가
 
 ## 7. 산출물
 
@@ -136,11 +139,12 @@
 |---|---|
 | `backend/bomi/` | 새 챗봇 코어 (`pipeline`·`routing`·`regularization`·`events`·`request`·`questions`·`phrases`·`aio`, `agents/`, `adapters/`, `tests/`) |
 | `backend/agents/regional_v16/chatbot_agent/db1_repository.py` | 저장소 계약 |
-| `backend/agents/regional_v16/chatbot_agent/repository.py` | SQLite 구현 (연결 재사용·캐시) |
-| `backend/ARCHITECTURE.md` | 구조와 역할 |
-| `backend/CHAT_FLOW.md`, `chat_flow.jpg`, `chat_flow.mmd` | 챗봇 흐름도 |
-| `backend/IMPROVEMENT_REPORT.md` | 이 문서 |
-| 이전 진단 | `Team_Together/챗봇_구조_문제점.md` |
+| `backend/agents/regional_v16/chatbot_agent/repository.py` | 공통 조회 로직 `SqlDb1Repository` (연결 재사용·캐시) |
+| `backend/agents/regional_v16/chatbot_agent/pg_repository.py` | PostgreSQL 구현 |
+| `backend/agents/regional_v16/data_pipeline/publish_postgres.py`, `db1_compat.py` | 게시와 산출물 변환 |
+| `backend/tools/v16_bench/` | 성능 측정 재현 도구 |
+| [bomi-architecture.md](bomi-architecture.md), [architecture/bomi_chat_flow.mmd](architecture/bomi_chat_flow.mmd) | 구조와 흐름도 |
+| [bomi-performance-comparison.md](bomi-performance-comparison.md) | 실제 db1.sqlite 측정 기록 |
 
 ## 8. PostgreSQL 구현 결과
 
@@ -158,7 +162,7 @@
 ## 9. 실제 db1.sqlite 비교 결과
 
 같은 `db1.sqlite`(88개 테이블, 약 380MB)와 같은 질문으로 원본 `backend_old`와 `backend`를 각각 실행해 비교했습니다.
-상세는 [PERFORMANCE_COMPARISON.md](PERFORMANCE_COMPARISON.md), 재현은 `tools/v16_bench/`입니다.
+상세는 [성능 측정 기록](bomi-performance-comparison.md), 재현은 `backend/tools/v16_bench/`입니다.
 
 | 항목 | 원본 | 신규 (snapshot) | 개선 |
 |---|---:|---:|---|
@@ -173,6 +177,36 @@
 - 탐지 표만 읽는 질문은 개선이 0.8~1.6배로 작거나 오차 범위입니다(동 변화 이유·연령별 변화는 원본과 동일 수준). 이 DB는 탐지 행이 132행이고 신호가 1건뿐이라 반복 읽기를 없앤 효과가 작게 나타납니다.
 - **실제 데이터로 PostgreSQL을 대조하다 행 순서 불일치를 발견해 고쳤습니다.** SQLite는 기본키 순서, PostgreSQL은 저장 순서로 돌려줘서 `ORDER BY` 없는 여러 행 조회의 순서가 달랐습니다. 6곳에 기본키 순서의 `ORDER BY`를 명시하고, 실제 DB에서 원래 SQL과 행 순서가 같음을 전수 확인했습니다.
 - 받은 `db1.sqlite`는 파이프라인 산출물이라 `pipeline_state`와 `ctx_weather`가 없어 **두 구현 모두 그대로는 열리지 않습니다**(같은 오류). 원본은 건드리지 않고 SQLite 복사본에 두 테이블을 추가·변환해 측정했고, PostgreSQL은 원본 파일을 수정 없이 게시했습니다(게시 단계가 변환).
+
+### 질문마다 개선 폭이 다른 이유
+
+| 질문 유형 | 개선 폭 | 이유 |
+|---|---|---|
+| 소비·지역 배경 | 큼 (9~16배) | 원본이 큰 테이블(`a3a_feature` 10,560행 등)을 통째로 읽었음. 필요한 행만 읽도록 바꾼 효과가 지배적 |
+| 이례적 변화 순위 | 중간 (2.4배) | 원본이 같은 표를 12번 연결해 304회 쿼리. 연결·캐시 효과 |
+| 신호 목록·동 변화 이유·연령별 변화 | 작음 (0.8~1.6배, 일부는 오차 범위) | 읽는 표(`a2_*`)가 132~660행으로 작아 읽기 자체는 싸고, 시간 대부분이 pandas 처리. **동 변화 이유와 연령별 변화는 원본보다 빠르다고 말할 수 없습니다**(이 컴퓨터에서 5라운드 범위가 겹쳐 «동일 수준»으로 해석) |
+| 짧은 질문 (판정 기준, 지역 유형) | 2~3배 | 시간이 거의 연결·확인 비용이어서 연결 1회화의 효과가 상대적으로 큼 |
+
+### 성능에 불리하거나 확인하지 못한 점
+
+| 항목 | 내용 |
+|---|---|
+| 메모리 | 탐지 표를 요청 동안 들고 있어 신호·연령 질문에서 약간 더 씀 (5 → 7MB, 답변 전체 기준 최대 8.7MB) |
+| AI 모드 지연 | 유해 검사(moderate API)가 담당 선택과 **동시에** 실행되던 구조에서, 담당 선택 후 에이전트 안에서 **순차**로 실행되도록 바뀜. AI 모드에서 응답이 moderate 호출만큼 늦어질 수 있음. 이 지연은 측정하지 못함(외부 호출) |
+| 작업 DB 경로 | 변경 감지 쿼리가 더해져 쿼리 수가 조금 많음(예: 신호 목록 24회 대 17회). 시간 차이는 대체로 오차 범위 |
+| PostgreSQL | 로컬 서버에서는 SQLite snapshot과 같은 수준(합계 490 ms 대 474 ms). **원격 서버의 네트워크 지연은 측정하지 못함**. 질문당 쿼리가 4~40회라 왕복 시간이 직접 더해짐 |
+| 데이터 규모 | 실제 데이터의 신호가 1건뿐이라 «신호가 많은 경우»의 개선은 합성 DB로만 확인함 |
+| 측정 오차 | 질문에 따라 ±20~30% 흔들림. 범위가 겹치는 값은 오차 범위로 해석해야 함 |
+| 측정용 데이터 | 받은 `db1.sqlite`에 없는 `pipeline_state`·`ctx_weather`를 SQLite 복사본에 추가·변환해 측정함(원본 파일은 수정하지 않음). PostgreSQL 경로는 **원본 파일을 수정 없이** 게시해 측정. 날씨의 눈 기록 상태(`snow_status`)는 복원하지 못함 |
+
+### 다음에 더 줄일 수 있는 곳
+
+| 대상 | 내용 | 비고 |
+|---|---|---|
+| `_age_signal_changes` | 신호 행 × 연령대 5개마다 `activity()`를 호출(실제 데이터에서 136회). 동·월별로 한 번에 묶어 조회하면 호출이 크게 줄 것 | 질의 로직이라 구조 변경 필요. 신호가 많을수록 효과 큼 |
+| `_load_frame`의 행 단위 `apply` | 신호 종류를 행마다 판정하는 `DataFrame.apply(axis=1)` | 벡터화는 가능하지만 NaN·None 처리까지 같은 결과를 보장하는 검증이 필요 |
+| 동별 인덱스 생성 | 동마다 정렬하는 비용(동·연령대당 약 1ms) | 신호가 많아 거의 모든 동을 쓰는 질문에서 비중이 큼 |
+| PostgreSQL 왕복 | 한 질문의 쿼리를 묶어서 보내기 | 원격 서버에서 효과가 클 가능성이 있으나 측정 후 판단 |
 
 ## 10. 파이프라인 산출물 게시 (두 테이블 문제 해결)
 
@@ -203,3 +237,17 @@
 | 남긴 것 | 계산 파이프라인 출력(`monthly_worker`·`runner`·`snapshot_manager`), 게시 입력 SQLite, 테스트 픽스처 |
 | 테스트 | 저장소 계약 테스트를 mixin으로 바꿔 PostgreSQL 구현으로 실행. SQLite와 PostgreSQL 답변 비교 테스트는 비교 대상이 없어져 «게시본에서 답함»·«파이프라인 산출물 게시 후 답변 동일»로 대체. 전체 190개 통과(건너뜀 2: PostgreSQL이 없을 때와 게시된 실제 자료가 없을 때) |
 | 주의 | 테스트는 `pgserver` 또는 `TEST_DB1_PG_URL`이 없으면 건너뜀(개발 의존성에 `pgserver` 추가 권장) |
+
+<a id="merge"></a>
+
+## 13. 팀 저장소에 합치기 (2026-10-16)
+
+| 항목 | 내용 |
+|---|---|
+| 문제 | 재설계 복사본은 10-15 16:45(`88aa80d`) 시점의 backend를 기준으로 만들어져, 그대로 덮어쓰면 그 뒤의 커밋 약 30개(DB2 복지 조회, v16 대시보드 맥락 수정, `backend/common.py` 통합 등)가 사라짐 |
+| 방법 | 복사본을 `88aa80d` 위의 커밋으로 만들어 3-way 병합. 충돌은 `routes_chat.py`·`chatbot_agent/repository.py`와 하위 README 2개뿐 |
+| bomi로 옮긴 것 | 복지자료 DB2 조회(`load_resources`, 조회 실패 안내), 업무 기록 한 건 조회(`mission_store.load`), v16 대시보드 맥락·지표 버튼·화면 요약·연령+지표 우선·소비+날씨·«이 사례» 되묻기, 보고서 근거 대조 테스트 |
+| 옮기지 않은 것 | v16 의도 분류에서 제공사 SDK를 직접 부르던 코드와 «Gemini» 고정 문구(공용 `llm` 창구 설계와 충돌), 엔진에 없는 `excluded_months`·`age_signals` 처리 |
+| 삭제 | 구 챗봇 코어 `agents/supervisor.py`·`agents/v16_service.py`·`chatbot/welfare/service.py`·`welfare/app/dialogue/orchestrator.py`, v16 단독 실행 `cli.py`·`main.py`·`menu.py`, 이들을 검사하던 테스트 9개(같은 검사는 `bomi/tests`에 있음) |
+| 문서 | `backend/`의 문서 5개와 `bomi/README.md`를 `docs/`의 문서 3개와 `backend/README.md`로 합침 |
+| 원본 보존 | 병합 전 복사본은 `backup/teammate-bomi-copy` 브랜치에 있음 |
