@@ -35,6 +35,12 @@ class Db1Repository(Protocol):
     def district_codes(self) -> dict[str, str]:
         """행정동 이름(별칭 정규화) → 행정동 코드."""
 
+    def cluster_types(self) -> list[str]:
+        """지역 배경에 저장된 클러스터(지역 유형) 이름."""
+
+    def cluster_districts(self, cluster: str) -> list[str]:
+        """그 클러스터에 속한 행정동 이름(가나다순)."""
+
     # ── 탐지·근거 (DataFrame) ───────────────────────────────────
     def activity(self, dong: str | None, start: str | None = None, end: str | None = None,
                  age_band: str | None = None) -> pd.DataFrame:

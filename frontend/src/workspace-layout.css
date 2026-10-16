@@ -1,8 +1,4 @@
 /* 보미는 대화창으로 열고 본문은 왼쪽 메뉴와 두 열로 구성합니다. */
-.management-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
-.management-toolbar label { display: grid; gap: 6px; font-size: 12px; color: var(--text-sub); min-width: 0; }
-.management-toolbar input { max-width: 100%; }
-.upload-files { padding-left: 20px; color: var(--text-sub); font-size: 12px; overflow-wrap: anywhere; }
 .app-shell, .app-shell.group-shell, .app-shell.with-chat {
   --nav-width: 194px; position: relative; height: 100dvh; min-height: 0;
   grid-template-columns: var(--nav-width) minmax(0,1fr) 330px;
@@ -27,20 +23,12 @@
 .gd-tabbar .gd-tab { transform: none; background: #f8f4ec; border-color: #e6ddce; }
 .gd-tabbar .gd-tab > button { transform: none; }
 .gd-tabbar .gd-tab.active { background: #fff; box-shadow: inset 0 -2px #2563eb; }
-.gd-evidence-tab { min-width: 220px; }
 .group-shell .gd-case { border: 8px solid #eee5d6; border-top: 0; border-radius: 0 0 12px 12px; padding: 18px; }
 .gd-summary .gd-context-cards > article { border-color: #e7e8e9; background: #fff; }
 .gd-summary .gd-mini-trend, .gd-summary .gd-mini-share { background: #fff; border-color: #e7e8e9; }
 .gd-evidence-heading { grid-column: 1 / -1; background: #f1f6fd; padding: 12px 16px; border-radius: 9px; }
 .gd-evidence-heading h2 { font-size: 21px; margin: 0 0 5px; }
 .gd-evidence-heading p { margin: 0; font-size: 13px; color: #61718a; }
-.gd-evidence-panel .gd-more { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.gd-more > details { min-width: 0; border: 1px solid #e3e7ed; border-radius: 10px; padding: 14px; font-size: 12px; }
-.gd-more > details > summary { font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
-.gd-more > .gd-review { grid-column: auto; }
-.gd-more .gd-review label { display: block; margin: 12px 0; }
-.gd-more .gd-review textarea { width: 100%; }
-.gd-more table { display: block; overflow-x: auto; }
 .gd-files-panel .gd-directory-filters { max-width: none; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); align-items: end; }
 .gd-directory-filters label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
 .gd-files-panel .gd-directory-filters select { width: 100%; }
@@ -62,30 +50,9 @@
 .gd-summary .gd-context-cards h4 { margin: 10px 0 8px; }
 .gd-summary .gd-senior { padding: 8px; margin: 8px 0; }
 .gd-summary .gd-senior strong { margin: 5px 0; }
-.gd-summary .gd-compare { margin: 6px 0; }
-.gd-evidence-panel .gd-more { display: flex; flex-direction: column; height: 100%; gap: 8px; }
 .gd-evidence-heading { padding: 8px 12px; flex-shrink: 0; }
 .gd-evidence-heading h2 { font-size: 17px; }
 .gd-evidence-heading p { font-size: 11px; }
-.gd-evidence-pages { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 8px; }
-.gd-evidence-navigation { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; }
-.gd-evidence-navigation label { display: flex; align-items: center; gap: 10px; font-size: 12px; }
-.gd-evidence-navigation select { padding: 7px 10px; max-width: 420px; }
-.gd-evidence-content { flex: 1; min-height: 0; }
-.gd-evidence-content > details { border: 1px solid #e3e7ed; border-radius: 10px; padding: 12px; font-size: 12px; }
-.gd-evidence-content > details > summary { pointer-events: none; list-style: none; font-size: 14px; margin-bottom: 8px; }
-.gd-evidence-content p { margin: 5px 0; line-height: 1.6; }
-.gd-evidence-content table { width: 100%; display: table; }
-.gd-evidence-content th, .gd-evidence-content td { padding: 2px 6px; }
-.gd-evidence-content > details[open] > summary { margin-bottom: 6px; }
-.gd-evidence-content p:empty { display: none; }
-.gd-evidence-content .gd-activity { grid-template-columns: 1fr 1fr; gap: 14px; }
-.gd-evidence-content .gd-activity h4 { margin: 4px 0; font-size: 12px; }
-.gd-evidence-content .gd-day { margin: 4px 0; line-height: 12px; }
-.gd-evidence-content .gd-activity .gd-line { height: 110px; }
-.gd-evidence-content .gd-composition { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
-.gd-evidence-content .gd-composition > div { padding: 3px; }
-.gd-evidence-content .gd-review select { padding: 6px 10px; }
 .gd-page-buttons { display: flex; align-items: center; gap: 12px; justify-content: flex-end; margin-top: 6px; font-size: 12px; }
 .gd-page-buttons button { padding: 6px 10px; border: 1px solid #e3e7ed; border-radius: 7px; }
 .gd-files-panel .gd-directory { padding: 10px; }
@@ -96,36 +63,24 @@
   .group-shell .page-heading p { display: none; }
   .gd-summary .gd-context-cards > article > p:not(.gd-context-note) { display: none; }
   .gd-summary .gd-context-note { font-size: 10px; margin: 3px 0; line-height: 1.3; }
-  .gd-evidence-content .gd-review label { margin: 5px 0; }
-  .gd-evidence-content .gd-review textarea { height: 65px; }
   .gd-summary { gap: 8px; }
   .gd-summary .gd-overview { padding-bottom: 4px; gap: 10px; }
   .gd-summary .gd-mini-trend, .gd-summary .gd-mini-share { padding: 8px; }
   .gd-summary .gd-mini-trend .gd-line { height: 60px; }
   .gd-summary .gd-case-heading h2 { font-size: 22px; }
-  .gd-summary .gd-candidate-note { padding: 5px 8px; font-size: 11px; margin-bottom: 5px; }
   .gd-summary .gd-narrative { font-size: 15px; margin: 5px 0; }
-  .gd-summary .gd-caption { font-size: 10px; line-height: 1.5; margin: 4px 0; }
   .gd-summary .gd-context-cards > article { padding: 8px; }
   .gd-summary .gd-context-cards h3 { font-size: 15px; }
   .gd-summary .gd-context-cards h4 { margin: 5px 0; }
   .gd-summary .gd-households { height: 28px; }
-  .gd-summary .gd-household-legend, .gd-summary .gd-compare-legend { margin: 5px 0; }
+  .gd-summary .gd-household-legend { margin: 5px 0; }
   .gd-summary .gd-senior { margin: 5px 0; padding: 6px; }
   .gd-summary .gd-senior strong { font-size: 22px; }
-  .gd-summary .gd-compare { padding: 5px 8px; margin: 4px 0; }
-  .gd-summary .gd-compare-row { margin: 4px 0; }
-  .gd-summary .gd-context-cards .gd-badge { font-size: 9px; padding: 4px 7px; }
-  .gd-summary .gd-overview-copy .gd-case-heading { margin-bottom: 5px; }
-  .gd-summary .gd-candidate-note { line-height: 1.4; }
 }
 @media (max-width: 900px) {
   .app-shell { --nav-width: 64px; }
   .app-shell:not(.nav-collapsed) { --nav-width: 166px; }
   .gd-summary .gd-overview { grid-template-columns: 1fr 1fr; }
-  .gd-summary .gd-overview-copy { grid-column: 1/-1; }
-  .gd-evidence-navigation label { min-width: 0; }
-  .gd-evidence-navigation select { max-width: 250px; }
 }
 /* 탭 제목은 한 줄로 정렬하고 날짜는 같은 줄의 보조 정보로 표시합니다. */
 .group-shell .gd-workspace { grid-template-rows: 54px 60px minmax(0,1fr); }
@@ -136,9 +91,6 @@
 .gd-tabbar .gd-tab b { font-size: 12px; line-height: 18px; }
 .gd-tabbar .gd-tab small { margin: 0; font-size: 10px; line-height: 18px; }
 .gd-tabbar .gd-tab > button + button { height: 38px; padding: 6px 9px; font-size: 18px; }
-.gd-tabbar .gd-evidence-tab { min-width: 205px; }
-.gd-tabbar .gd-files-tab { min-width: 130px; }
-.gd-tabbar .gd-add { height: 38px; }
 .group-shell .gd-case:not(.gd-evidence-panel):not(.gd-files-panel) { align-self: start; height: auto; max-height: 100%; }
 .gd-summary { height: auto; }
 @media (min-height: 800px) {
@@ -159,7 +111,6 @@
 .gd-files-panel .gd-file-list button small { margin-top: 5px; line-height: 1.4; }
 .gd-files-panel .gd-directory footer { margin-top: auto; padding-top: 8px; }
 .gd-files-panel .gd-directory .gd-source { font-size: 10px; }
-.gd-evidence-content > details { background: #fff; }
 @media (min-height: 850px) {
   .gd-files-panel .gd-directory { padding: 22px; gap: 14px; }
   .gd-files-panel .gd-file-list { gap: 14px; }
@@ -167,19 +118,6 @@
   .gd-files-panel .gd-file-list button strong { font-size: 14px; }
   .gd-files-panel .gd-file-list button small { font-size: 11px; }
   .gd-evidence-heading { padding: 14px 18px; }
-  .gd-evidence-navigation { padding: 6px 0; }
-  .gd-evidence-content > details { padding: 22px 24px; font-size: 14px; }
-  .gd-evidence-content > details[open] > summary { font-size: 18px; margin-bottom: 16px; }
-  .gd-evidence-content p { margin: 12px 0; line-height: 1.8; }
-  .gd-evidence-content table { font-size: 14px; }
-  .gd-evidence-content th, .gd-evidence-content td { padding: 10px 12px; }
-  .gd-evidence-content .gd-review label { margin: 16px 0; }
-  .gd-evidence-content .gd-review textarea { height: 140px; }
-  .gd-evidence-content .gd-activity .gd-line { height: 210px; }
-  .gd-evidence-content .gd-activity h4 { font-size: 15px; margin: 12px 0; }
-  .gd-evidence-content .gd-day { margin: 12px 0; line-height: 18px; }
-  .gd-evidence-content .gd-composition { gap: 12px 24px; }
-  .gd-evidence-content > details { min-height: 100%; }
 }
 @media (max-height: 760px) {
   .gd-files-panel .gd-directory { gap: 5px; padding: 10px; }
@@ -209,38 +147,8 @@
   .gd-summary .gd-households { height: 32px; }
   .gd-summary .gd-household-legend { margin: 8px 0; gap: 8px; }
   .gd-summary .gd-context-cards h4 { margin: 8px 0; }
-  .gd-summary .gd-compare-legend { margin: 10px 0; }
 }
 @media (max-width: 900px) {
   .gd-population-grid { grid-template-columns: 1fr; }
   .gd-population-grid .gd-senior > span { min-height: 0; }
-}
-
-/* 화면 너비별 배치(App.jsx의 navQuery·drawerQuery와 같은 기준)
-   1100px 미만: 보미를 오른쪽 서랍으로 바꾸고 본문이 화면 너비를 씁니다. */
-.app-shell.chat-drawer { grid-template-columns: var(--nav-width) minmax(0,1fr); }
-.app-shell.chat-drawer .bomi-chat.panel {
-  position: fixed; top: 0; right: 0; z-index: 60; width: min(380px, 100vw); height: 100dvh;
-  background: #fff; border-left: 1px solid #e3e8f0; box-shadow: -12px 0 32px #12213e1f;
-  transform: translateX(100%); visibility: hidden; transition: transform .22s ease-out, visibility 0s linear .22s;
-}
-.app-shell.chat-drawer.chat-open .bomi-chat.panel { transform: none; visibility: visible; transition: transform .22s ease-out; }
-.chat-drawer-backdrop { position: fixed; inset: 0; z-index: 55; border: 0; padding: 0; background: #12213e33; cursor: default; }
-.chat-drawer-close { position: fixed; top: 12px; right: min(392px, calc(100vw - 44px)); z-index: 61; width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #dfe4eb; box-shadow: 0 2px 8px #12213e1f; }
-.chat-fab {
-  position: fixed; right: 20px; bottom: 20px; z-index: 50; display: flex; align-items: center; gap: 8px;
-  padding: 12px 18px; border: 0; border-radius: 999px; background: var(--blue); color: #fff;
-  font-size: 14px; font-weight: 700; box-shadow: 0 8px 24px #2563eb40; cursor: pointer;
-}
-.chat-fab:hover { background: var(--blue-strong); }
-.chat-fab:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
-@media (max-width: 480px) {
-  /* 서랍이 화면 전체를 덮으므로 닫기 버튼 줄을 따로 두어 머리글 버튼과 겹치지 않게 합니다. */
-  .chat-drawer-close { right: 12px; top: 10px; }
-  .app-shell.chat-drawer .bomi-chat.panel { padding-top: 56px; }
-  .chat-fab span { display: none; }
-  .chat-fab { padding: 14px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .app-shell.chat-drawer .bomi-chat.panel { transition: none; }
 }

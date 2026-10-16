@@ -34,9 +34,6 @@
 .bomi-badge.data { color: var(--status-pending); background: var(--status-pending-bg); }
 @media (prefers-reduced-motion: reduce) { .bomi-ai-switch .track, .bomi-ai-switch .thumb { transition: none; } }
 .bomi-messages { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
-.bomi-welcome { border: 1px solid var(--line); background: var(--surface-soft); border-radius: 12px; padding: 14px; }
-.bomi-welcome h3 { margin: 0 0 6px; font-size: 15px; color: var(--text-strong); }
-.bomi-welcome p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--text-sub); }
 .bomi-message { max-width: 92%; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.7; }
 .bomi-message small { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 2px; }
 .bomi-message p { margin: 0; white-space: pre-wrap; }
@@ -71,7 +68,6 @@
 @media (prefers-reduced-motion: reduce) { .bomi-input.guided textarea { animation: none; } }
 .bomi-input textarea { flex: 1; min-width: 0; resize: none; font-size: 13px; padding: 9px 11px; border-radius: 10px; }
 .bomi-input button { flex-shrink: 0; padding: 8px 12px; border-radius: 10px; }
-.bomi-footnote { margin: 0; font-size: 11px; color: var(--text-muted); }
 @media (max-width: 760px) {
   .bomi-chat.embedded { height: 620px; }
   .bomi-chat { padding: 14px; }
@@ -86,3 +82,14 @@
 .bomi-dots.still::after { content: '…'; animation: none; }
 @keyframes bomi-dots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
 @media (prefers-reduced-motion: reduce) { .bomi-dots::after { content: '…'; animation: none; } }
+
+/* Shared welcome card: artwork keeps its original proportions at every panel width. */
+.bomi-chat { container-type:inline-size; }
+.bomi-messages.is-empty { overflow:hidden;gap:0;padding:0; }
+.app-shell .bomi-chat .bomi-welcome { display:flex;flex-direction:column;flex:1 0 auto;min-height:100%;padding:24px 18px 22px;gap:16px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(140deg,#f8fbff,#f3f8ff); }
+.app-shell .bomi-chat .bomi-welcome h3 { margin:0;text-align:center;font-size:clamp(17px,5.25cqw,22px);font-weight:800;line-height:1.45;color:var(--text-strong); }
+.app-shell .bomi-chat .bomi-welcome > p { margin:0;text-align:center;font-size:clamp(13px,4cqw,16px);line-height:1.75;color:var(--text-sub); }
+.app-shell .bomi-chat .bomi-welcome-character { display:flex;flex:1;min-height:0;width:100%;flex-direction:column;align-items:center;justify-content:center;gap:22px; }
+.app-shell .bomi-chat .bomi-welcome-art { width:100%;aspect-ratio:1116 / 720;flex-shrink:0;background-size:100% auto;background-position:center 54%;background-repeat:no-repeat;border-radius:18px; }
+.app-shell .bomi-chat .bomi-welcome-character p { margin:0;text-align:center;font-size:clamp(14px,4.2cqw,17px);line-height:1.7;color:var(--text-sub); }
+@media(max-height:740px) { .app-shell .bomi-chat .bomi-welcome { padding:16px 14px;gap:10px; } .app-shell .bomi-chat .bomi-welcome-character { gap:12px; } }

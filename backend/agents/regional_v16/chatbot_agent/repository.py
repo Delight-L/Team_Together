@@ -272,6 +272,18 @@ class SqlDb1Repository:
                 return {ALIASES.get(n,n):code for code,n in c.execute('SELECT DISTINCT adm_cd,adm_nm FROM a1_context')}
         return dict(self._cached(('district_codes',),load))
 
+    def cluster_types(self):
+        def load():
+            with self.connection() as c:
+                return [str(r[0]) for r in c.execute('SELECT DISTINCT cluster_type FROM a1_context WHERE cluster_type IS NOT NULL ORDER BY cluster_type')]
+        return list(self._cached(('cluster_types',),load))
+
+    def cluster_districts(self,cluster):
+        def load():
+            with self.connection() as c:
+                return [str(r[0]) for r in c.execute('SELECT DISTINCT adm_nm FROM a1_context WHERE cluster_type=? ORDER BY adm_nm',(cluster,))]
+        return list(self._cached(('cluster_districts',cluster),load))
+
     # 테이블별로 SQL 조건을 걸 수 있는 컬럼
     CONSUMPTION_TABLES={'a3a_feature':('period','adm_cd','age'),'a3a_comparison':('period','adm_cd','age'),
                         'a3b_feature':('period','district','age')}

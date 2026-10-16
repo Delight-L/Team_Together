@@ -1,15 +1,17 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import boundaries from './data/administrative-regions.json';
 import { Icon } from './components';
+import {DETECTION_METHODS,detectionDescription} from './detectionMap.mjs';
 
 const palette = {
+  absolute:['#fff8d6','#f5d566','#946200'], local:['#e0faf4','#7edbd0','#0f766e'], both:['#fff0f2','#f4b8c4','#c53d55'], mixed:['#f1f5f9','#cbd5e1','#64748b'],
   missing: ['#f1f5f9', '#dce3ec', '#94a3b8'],
   quiet: ['#e8eef9', '#bdcde3', '#93aecb'],
   rose: ['#ff97b6', '#ff527f', '#ce3565'],
   orange: ['#ffe3a6', '#f4ba62', '#bd873a'],
   sky: ['#c2ddff', '#91baf0', '#6289bb'],
 };
-const tone = (region) => region.status === '자료 없음' ? 'missing' : region.count ? region.status === '연속 후보' ? 'orange' : 'rose' : region.pending ? 'sky' : 'quiet';
+const tone = (region) => region.detectionMode && region.detectionMethods?.length ? region.detectionMethods.length===1 ? region.detectionMethods[0] : 'mixed' : region.status === '자료 없음' ? 'missing' : region.count ? region.status === '연속 후보' ? 'orange' : 'rose' : region.pending ? 'sky' : 'quiet';
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const constrain = (view) => {
   const horizontal = (view.zoom - 1) * 450 + 30;
@@ -145,16 +147,16 @@ export function ReliefMap({ geometry, regions, selected, onSelect }) {
               onClick={(event) => choose(event, unit.name)} onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(event, unit.name); }
               }}>
-              <title>{unit.name} · {region.status}</title>
+              <title>{unit.name} · {region.detectionMode ? detectionDescription(region) || '탐지 없음' : region.status}</title>
               {/* 같은 경계를 층으로 쌓아 판의 측면을 표현합니다. 높이는 분석 수치가 아닙니다. */}
               {[20, 16, 12, 8, 4, 0, -4, -8, -12].filter((level) => level >= -lift).map((level) =>
                 <path key={level} d={unit.path} transform={`translate(0 ${level})`} fill={palette[color][2]} stroke={palette[color][2]} strokeWidth="1" fillRule="evenodd" aria-hidden="true" />)}
               <path d={unit.path} transform="translate(0 17)" fill="none" stroke="#b0edff" strokeWidth="2" filter={`url(#${id}-glow)`} aria-hidden="true" />
-              <path className="relief-top" d={unit.path} transform={`translate(0 ${-lift})`} fill={`url(#${id}-${color})`} stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" fillRule="evenodd" filter={region.count ? `url(#${id}-rose-glow)` : undefined} />
-              <text x={unit.x} y={unit.y - lift} textAnchor="middle" dominantBaseline="middle">{unit.name}</text>
+              <path className="relief-top" d={unit.path} transform={`translate(0 ${-lift})`} fill={`url(#${id}-${color})`} stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" fillRule="evenodd" filter={region.count && !region.detectionMode ? `url(#${id}-rose-glow)` : undefined} />
+              <text x={unit.x} y={unit.y - lift} textAnchor="middle" dominantBaseline="middle">{unit.name}</text>{region.detectionMethods?.map((method,j)=><circle key={method} cx={unit.x+(j-(region.detectionMethods.length-1)/2)*13} cy={unit.y-lift+15} r="5" fill={DETECTION_METHODS[method].color} stroke="white" strokeWidth="1"/>)}
             </g>;
           })}
-          {scene.units.filter((unit) => priorities.slice(0, 3).some((region) => region.name === unit.name)).map((unit) => {
+          {scene.units.filter((unit) => priorities.filter(region=>!region.detectionMode).slice(0, 3).some((region) => region.name === unit.name)).map((unit) => {
             const region = rows.get(unit.name), color = palette[tone(region)][2];
             const x = unit.x, y = unit.y - 48;
             const labelX = x > 640 ? -175 : 24;
