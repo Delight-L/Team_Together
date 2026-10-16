@@ -254,6 +254,10 @@ class _ScopedResolver(IntentResolver):
                                      metric=parsed.metric, age_band=parsed.age_band,
                                      age_bands=parsed.age_bands, age_scope_explicit=True,
                                      needs=tuple(n for n in intent.needs if n not in {'연령'}))
+                elif '소비' in question and '날씨' in question:
+                    # 소비·날씨 맥락은 지역 배경 조회로 고정해 날씨 보조자료가
+                    # 지역 유형 답변으로 대체되지 않도록 합니다.
+                    intent = replace(intent, purpose='plan_review', question_type='support', needs=())
                 self.last_source = self.provider
                 if intent.question_type == "age_activity":
                     bands, unsupported = comparison_ages(question)
