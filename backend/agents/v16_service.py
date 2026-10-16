@@ -247,6 +247,13 @@ class _ScopedResolver(IntentResolver):
                         messages=[{"role": "user", "content": prompt}])
                     text = "".join(getattr(block, "text", "") for block in response.content)
                 intent = self._apply_local_constraints(self._validate(_json_object(text), districts), parsed, names)
+                # 연령과 활동 지표가 명시된 질문은 LLM이 지역 배경으로
+                # 잘못 분류해도 규칙 기반 의도를 우선합니다.
+                if parsed.metric and parsed.age_band:
+                    intent = replace(intent, purpose='track_change', question_type='age_activity',
+                                     metric=parsed.metric, age_band=parsed.age_band,
+                                     age_bands=parsed.age_bands, age_scope_explicit=True,
+                                     needs=tuple(n for n in intent.needs if n not in {'연령'}))
                 self.last_source = self.provider
                 if intent.question_type == "age_activity":
                     bands, unsupported = comparison_ages(question)
