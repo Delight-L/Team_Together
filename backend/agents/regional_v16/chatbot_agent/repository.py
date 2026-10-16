@@ -179,7 +179,20 @@ class DataRepository:
                             if r:shared[(month,'all','all')]={'district':'강남구','period':month,'scope':'merchant_district_shared',**json.loads(r[0])}
                     if c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='ctx_weather'").fetchone():
                         r=c.execute('SELECT payload_json FROM ctx_weather WHERE date=?',(date,)).fetchone()
-                        if r:weather[date]=json.loads(r[0])
+                    elif c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='ctx_weather_month'").fetchone():
+                        r=c.execute('SELECT payload_json FROM ctx_weather_month WHERE period=?',(date[:7],)).fetchone()
+                    else:
+                        r=None
+                    if r:
+                        payload=json.loads(r[0])
+                        if 'observation_month_weather' not in payload:
+                            payload={'observation_month_weather': [
+                                {'month': payload.get('period', date[:7]),
+                                 'rainfall_mm': payload.get('rainfall_mm'),
+                                 'rain_days': payload.get('rain_days'),
+                                 'snow_days': payload.get('snow_days')}
+                            ]}
+                        weather[date]=payload
                     if age_band and c.execute("SELECT 1 FROM sqlite_master WHERE name='ctx_sns_index'").fetchone():
                         r=c.execute('SELECT payload_json FROM ctx_sns_index WHERE adm_cd=? AND date=? AND age_band=?',(code,date,age_band)).fetchone()
                         if r:sns.append(json.loads(r[0]))
