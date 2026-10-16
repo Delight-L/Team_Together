@@ -61,6 +61,23 @@ class Chatbot:
     return AnswerResult(text,Evidence("관측기간 안내",text))
   # 2. 목적 체크와 메뉴 필터링
   self.intent_resolver.available_period=self.repo.available_period()
+  # 클러스터명을 직접 물은 경우에는 화면에서 선택한 동을 자동으로
+  # 끼워 넣지 않고, DB에 저장된 해당 클러스터를 먼저 찾는다.
+  if '클러스터' in question:
+   with self.repo.connection() as c:
+    cluster_rows=c.execute('SELECT DISTINCT cluster_type FROM a1_context WHERE cluster_type IS NOT NULL').fetchall()
+    cluster_names=[str(row[0]) for row in cluster_rows]
+    matched=next((name for name in cluster_names if name in question), None)
+    if matched:
+     rows=c.execute('SELECT DISTINCT adm_nm FROM a1_context WHERE cluster_type=? ORDER BY adm_nm',(matched,)).fetchall()
+     dongs=[str(row[0]) for row in rows]
+     text=(f'“{matched}”은 비슷한 지역 구조를 묶은 클러스터 유형입니다. '
+           '개인의 위험도나 이상신호 원인을 뜻하지 않습니다.'
+           + (f' 현재 이 유형에 해당하는 행정동은 {", ".join(dongs[:10])}'
+              + (f' 등 총 {len(dongs)}곳입니다.' if len(dongs)>10 else '입니다.')
+              if dongs else ' 해당 유형의 행정동 자료를 찾지 못했습니다.'))
+     return AnswerResult(text,Evidence('클러스터 설명',text),
+                         ('다른 클러스터도 설명해줘', '이 클러스터에 속한 동을 알려줘'))
   # 초기 이력과 판정 기준을 함께 묻는 질문은 화면의 지역 배경이 아니라
   # 데이터 처리·탐지 방법 설명으로 우선 처리한다.
   q_no_space=re.sub(r'\s+', '', question.lower())
