@@ -309,6 +309,21 @@ JSON만 반환하세요:
                              age_scope_explicit=True, use_previous_scope=False,
                              start_month=rule_intent.start_month or intent.start_month,
                              end_month=rule_intent.end_month or intent.end_month)
+        # ``연령별`` 비교는 단일 연령의 activity 조회와 결과 모양이
+        # 다르다. 질문에 명시된 비교 범위와 지표는 사실이므로, 모델이
+        # 화면의 현재 연령에 끌려 단일 값 조회로 바꾸지 못하게 한다.
+        if rule_intent.question_type == "age_activity":
+            intent = replace(
+                intent,
+                purpose="track_change",
+                question_type="age_activity",
+                metric=rule_intent.metric or intent.metric,
+                age_band=rule_intent.age_band,
+                age_bands=rule_intent.age_bands,
+                age_scope_explicit=rule_intent.age_scope_explicit,
+                include_values=rule_intent.include_values or intent.include_values,
+                needs=tuple(item for item in intent.needs if item not in {"지표", "조회 목적", "연령"}),
+            )
         # These are explicit response contracts in the current question, not
         # a best-effort semantic guess.  Preserve them even when Gemini calls
         # the same short Korean phrasing a generic signal query.
