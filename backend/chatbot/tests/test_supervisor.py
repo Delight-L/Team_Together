@@ -261,8 +261,8 @@ class ConversationDraftTest(unittest.TestCase):
             self.addCleanup(target.stop)
 
     def test_found_services_become_pending_proposals(self):
-        from backend.chatbot.welfare.app.dialogue.resources import RESOURCES
-        record = RESOURCES[0]
+        from backend.chatbot.welfare.app.dialogue.resources import load_resources
+        record = load_resources()[0]
         messages = [{'role': 'user', 'content': '어르신 돌봄 사업 찾아 줘'},
                     {'role': 'assistant', 'content': '자료에서 찾았어요.'},
                     {'role': 'user', 'content': '보고서 작성해줘'}]

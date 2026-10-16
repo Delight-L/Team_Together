@@ -16,7 +16,7 @@ function ConsumptionChart({rows,label}){
   {rows.map((r,i)=>{const y=39+i*46,valid=r.available&&Number.isFinite(r.change),px=valid?x(r.change):zero,color=r.change>0?'#2cad94':'#4d85ea';return <g key={r.domain}><text x="8" y={y-2} className="ri-domain-label">{r.label}</text>{valid&&<text x="8" y={y+16} className="ri-domain-detail">{fmt(r.baselineDaily,2)} → {fmt(r.currentDaily,2)}건/일</text>}{valid?<><rect x={Math.min(zero,px)} y={y-12} width={Math.max(2,Math.abs(px-zero))} height="23" rx="4" fill={color}/><text x={r.change>0?px+12:px-12} y={y+5} textAnchor={r.change>0?'start':'end'} fill={color} className="ri-change-value">{r.change>0?'+':''}{fmt(r.change)}%</text><title>{r.label}: {fmt(r.change)}%, 과거 {fmt(r.baselineDaily,2)}건/일 → 현재 {fmt(r.currentDaily,2)}건/일</title></>:<text x={zero+15} y={y+5} className="ri-axis">비교 자료 부족</text>}</g>;})}
  </svg>;
 }
-export default function RegionAnalysis({city,district,onSelect,age,onAgeChange}){
+export default function RegionAnalysis({city,district,onSelect,age,onAgeChange,onServices}){
  const [data,setData]=useState(null),[error,setError]=useState(''),[retry,setRetry]=useState(0);
  const [period,setPeriod]=useState(''),[quarter,setQuarter]=useState('');
  const [surveyAge,setSurveyAge]=useState(REGION_AGES.includes(age)?age:'40대');
@@ -45,6 +45,7 @@ export default function RegionAnalysis({city,district,onSelect,age,onAgeChange})
    <section className="ri-topic" aria-labelledby="ri-survey-title"><header className="ri-topic-header"><div><h2 id="ri-survey-title">강남구 주민들의 사회적 연결 마음</h2><p>{city} {surveyAge}의 관계망과 외로움</p></div><div className="ri-survey-controls"><span>{surveyYear}년 서울서베이</span><div className="ri-age-tabs" aria-label="서울서베이 연령대 선택">{REGION_AGES.map(a=><button key={a} aria-pressed={surveyAge===a} onClick={()=>setSurveyAge(a)}>{a}</button>)}</div></div></header>
     <div className="ri-survey-grid">{survey.map(r=><article key={r.metric}><h3>{r.label}</h3><strong>{Number.isFinite(r.gangnam)?`${fmt(r.gangnam*100)}%`:'자료 없음'}</strong>{[['gangnam',city],['seoul','서울 전체']].map(([key,name])=><div className={`ri-survey-bar ${key}`} key={key}><span>{name}</span><div><i style={{width:Number.isFinite(r[key])?`${r[key]*100/surveyMax*100}%`:'0%'}}/></div><b>{Number.isFinite(r[key])?`${fmt(r[key]*100)}%`:'자료 없음'}</b></div>)}</article>)}</div><p className="ri-note"><span className="ri-blue">● {city} {surveyAge}</span>　● 서울 전체 {surveyAge}　 · 비율(%) · 세 그래프 동일 눈금 0–{surveyMax}%</p><p className="ri-note">구·연령별 연간 조사값으로, 선택한 동의 조사 결과나 고립률을 뜻하지 않습니다.</p>
    </section>
+   <section className="ri-topic ri-next-step"><div><h2>이 지역에 어떤 지원사업을 검토할까요?</h2><p>{city} {selected?.name} · {consumerAge}의 분석을 바탕으로 사업 후보를 확인합니다.</p></div><button className="primary" onClick={onServices}>사업 매칭 검토로 →</button></section>
   </>}
  </div>;
 }

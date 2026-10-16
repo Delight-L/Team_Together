@@ -1,5 +1,7 @@
-import DetectionEvidence, { SignalBadges } from './DetectionEvidence';
-import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import DetectionEvidence, { SignalBadges, signalState } from './DetectionEvidence';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { fitDomain } from './chartScale.mjs';
+
 import { createPortal } from 'react-dom';
 import { api, query } from './api';
 import { Icon } from './components';
@@ -59,24 +61,61 @@ function ServiceResults({ matches }) {
   return <article className="gd-service-result"><h3>{service.name}</h3><PageButtons page={current} pages={matches.items.length} onPage={value => {setPage(value);setTextPage(0);}} label="사업 이동"/><p style={{whiteSpace:'pre-wrap'}}>{text.slice(part * 400, part * 400 + 400)}</p>{pages > 1 && <PageButtons page={part} pages={pages} onPage={setTextPage} label="사업 상세 내용 이동"/>}{/^https?:\/\//i.test(service.source_url || '') && <a href={service.source_url} target="_blank" rel="noreferrer">공식 안내 확인 ↗</a>}</article>;
 }
 
-function LineChart({ points, field = 'mean', label }) {
+// 말풍선 글자 폭 어림값(한글은 넓게). 그린 뒤에는 실제 글자 폭으로 다시 맞춥니다.
+const tipWidth = text => [...text].reduce((w, c) => w + (c.charCodeAt(0) > 0x1100 ? 14 : 8), 0);
+
+// unit: 눈금 단위(예: '%'), lastColor: 이번 달 점을 강조할 색(없으면 강조하지 않음)
+// detail(p, i): 마우스를 올린 달의 말풍선 둘째 줄(예: 전월 대비 변화). 없으면 값만 보여 줍니다.
+function LineChart({ points, field = 'mean', label, unit = '', lastColor, detail }) {
   const fillId = useId();
+  const [hover, setHover] = useState(null), [tipText, setTipText] = useState(0), tipRef = useRef(null);
+  useLayoutEffect(() => {
+    const texts = tipRef.current ? [...tipRef.current.querySelectorAll('text')] : [];
+    const width = texts.length ? Math.ceil(Math.max(...texts.map(t => t.getComputedTextLength()))) : 0;
+    setTipText(old => old === width ? old : width);
+  }, [hover]);
+  // 그래프 칸의 실제 높이에 맞춰 viewBox 높이를 정합니다. 칸이 커지면 글자는 그대로, 선만 세로로 넓어집니다.
+  const svgRef = useRef(null), [height, setHeight] = useState(148);
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width: w, height: h } = entry.contentRect;
+      if (w && h) setHeight(Math.max(120, Math.round(430 * h / w)));
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const values = points.filter(p => Number.isFinite(p[field]));
   if (!values.length) return <p className="gd-empty">표시할 자료가 없습니다.</p>;
-  const max = Math.max(...values.map(p => p[field]), 1);
-  const x = i => 32 + i * 370 / Math.max(points.length - 1, 1);
-  const y = v => 112 - v / max * 84;
+  // 세로축은 자료 범위에 맞춰 변화가 잘 보이게 합니다(0부터 시작하지 않을 수 있음).
+  const { low, high, ticks, fromZero } = fitDomain(values.map(p => p[field]));
+  const digits = high - low < 6 ? 1 : 0;
+  const lastIndex = points.findLastIndex(p => Number.isFinite(p[field]));
+  // 단위(%)가 붙은 눈금은 글자가 길어 왼쪽 여백을 더 둡니다.
+  const left = unit ? 48 : 32;
+  const x = i => left + i * (402 - left) / Math.max(points.length - 1, 1);
+  const base = height - 36;
+  const y = v => base - (v - low) / (high - low) * (height - 52);
   // 월이 빠진 구간은 선으로 연결하지 않는다.
   const segments = []; let segment = [];
   points.forEach((p, i) => { if (Number.isFinite(p[field])) segment.push([x(i), y(p[field])]); else if (segment.length) { segments.push(segment); segment = []; } });
   if (segment.length) segments.push(segment);
-  return <><svg className="gd-line" viewBox="0 0 430 148" role="img" aria-label={label}>
+  return <><svg ref={svgRef} className="gd-line" viewBox={`0 0 430 ${height}`} role="img" aria-label={label}>
     <defs><linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1"><stop stopColor="#60a5fa" stopOpacity=".24"/><stop offset="1" stopColor="#60a5fa" stopOpacity=".02"/></linearGradient></defs>
-    {segments.map((seg, i) => <polygon key={i} points={[...seg, [seg.at(-1)[0], 112], [seg[0][0], 112]].map(p => p.join(",")).join(" ")} fill={`url(#${fillId})`} />)}
-    {[0, max / 2, max].map((v, i) => <g key={i}><line x1="32" x2="405" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x="26" y={y(v) + 4} textAnchor="end">{fmt(v, 0)}</text></g>)}
+    {segments.map((seg, i) => <polygon key={i} points={[...seg, [seg.at(-1)[0], base], [seg[0][0], base]].map(p => p.join(",")).join(" ")} fill={`url(#${fillId})`} />)}
+    {ticks.map((v, i) => <g key={i}><line x1={left} x2="405" y1={y(v)} y2={y(v)} stroke="#e2e8f0" /><text x={left - 6} y={y(v) + 4} textAnchor="end">{fmt(v, digits)}{unit}</text></g>)}
     {segments.map((s, i) => <polyline key={i} points={s.map(p => p.join(',')).join(' ')} fill="none" stroke="#2563eb" strokeWidth="3" />)}
-    {points.map((p, i) => <g key={p.month || p.label}>{Number.isFinite(p[field]) && <circle cx={x(i)} cy={y(p[field])} r="4" fill="#2563eb"><title>{p.month || p.label}: {fmt(p[field], 2)}</title></circle>}{(points.length < 9 || i % 6 === 0 || i === points.length - 1) && <text x={x(i)} y="138" textAnchor="middle">{p.month ? Number(p.month.slice(5)) + '월' : p.label}</text>}</g>)}
-  </svg></>;
+    {points.map((p, i) => <g key={p.month || p.label}>{Number.isFinite(p[field]) && <circle cx={x(i)} cy={y(p[field])} r={hover === i ? 6 : lastColor && i === lastIndex ? 6 : 4} fill={lastColor && i === lastIndex ? lastColor : '#2563eb'} stroke={lastColor && i === lastIndex || hover === i ? '#fff' : undefined} strokeWidth="2" />}{(points.length < 9 || i % 6 === 0 || i === points.length - 1) && <text x={x(i)} y={height - 10} textAnchor="middle">{p.month ? Number(p.month.slice(5)) + '월' : p.label}</text>}</g>)}
+    {hover !== null && Number.isFinite(points[hover]?.[field]) && (() => {
+      const p = points[hover], lines = [`${p.month ? `${p.month.slice(0, 4)}년 ${Number(p.month.slice(5))}월` : p.label} · ${fmt(p[field], 2)}${unit}`, detail?.(p, hover)].filter(Boolean);
+      const w = (tipText || Math.max(...lines.map(tipWidth))) + 18, h = lines.length * 18 + 10;
+      const tx = Math.min(Math.max(x(hover) - w / 2, 2), 428 - w), py = y(p[field]);
+      const ty = py - h - 10 >= 2 ? py - h - 10 : Math.min(py + 10, base - h);
+      return <g className="gd-tip" pointerEvents="none" ref={tipRef}><line x1={x(hover)} x2={x(hover)} y1={8} y2={base} stroke="#94a3b8" strokeDasharray="3 3" /><rect x={tx} y={ty} width={w} height={h} rx="6" />{lines.map((t, k) => <text key={k} x={tx + 9} y={ty + 19 + k * 18} className={k ? 'sub' : ''}>{t}</text>)}</g>;
+    })()}
+    {points.map((p, i) => Number.isFinite(p[field]) && <rect key={'hit' + i} x={i ? (x(i - 1) + x(i)) / 2 : 0} width={(i ? (x(i) - x(i - 1)) / 2 : x(0)) + (i < points.length - 1 ? (x(i + 1) - x(i)) / 2 : 430 - x(i))} y="0" height={base} fill="transparent" onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(h => h === i ? null : h)} onClick={() => setHover(i)} />)}
+  </svg>{!fromZero && <small className="gd-axis-note">세로축은 {fmt(low, digits)}{unit}부터 시작합니다.</small>}</>;
 }
 
 function DetectionSummary({detection, group}) {
@@ -84,7 +123,7 @@ function DetectionSummary({detection, group}) {
   const extent = Math.max(1,...metrics.flatMap(r => [r.local,r.common]).filter(Number.isFinite).map(Math.abs));
   return <section className="gd-detection-summary gd-summary-with-graphs" aria-label="통신·이동 탐지 요약">
     <div className="gd-metrics-heading"><h3>통신·이동 변화</h3><div className="gd-summary-graph-legend"><span><i/>{group.district} {group.age}</span><span><i/>{group.city} {group.age} 공통 변화</span></div></div>
-    <div className="gd-summary-graphs">{metrics.map((r,i) => <article key={r.label} className={`gd-summary-metric ${detection[i<2?'communication_signal':'mobility_signal'] === true ? `is-detected ${detection.payload?.[(i<2?'communication':'mobility')+'_local_signal'] ? 'signal-local' : 'signal-absolute'}` : ''}`}><header><h4><Icon name={i<2?'chat':'chart'} size={22}/>{r.label}</h4></header><div className="gd-metric-value"><strong>{pct(r.local)}</strong>{Number.isFinite(r.local) && <span>{r.local<0?'감소':r.local>0?'증가':'변화 없음'}</span>}</div><div className="gd-summary-bars" role="img" aria-label={`${r.label}: ${group.district} ${pct(r.local)}, ${group.city} 같은 연령 공통 변화 ${pct(r.common)}`}>
+    <div className="gd-summary-graphs">{metrics.map((r,i) => <article key={r.label} className={`gd-summary-metric ${detection[i<2?'communication_signal':'mobility_signal'] === true ? `is-detected signal-${signalState(detection.payload?.[(i<2?'communication':'mobility')+'_absolute_signal'],detection.payload?.[(i<2?'communication':'mobility')+'_local_signal'])}` : ''}`}><header><h4><Icon name={i<2?'chat':'chart'} size={22}/>{r.label}</h4></header><div className="gd-metric-value"><strong>{pct(r.local)}</strong>{Number.isFinite(r.local) && <span>{r.local<0?'감소':r.local>0?'증가':'변화 없음'}</span>}</div><div className="gd-summary-bars" role="img" aria-label={`${r.label}: ${group.district} ${pct(r.local)}, ${group.city} 같은 연령 공통 변화 ${pct(r.common)}`}>
       {['local','common'].map(key => <div key={key} className={`gd-summary-bar ${key}`}><span>{key === 'local' ? group.district : group.city}</span><div className="gd-summary-track"><i style={signedBar(r[key],extent)}/></div><small>{pct(r[key])}</small></div>)}
     </div></article>)}</div><div className="gd-detection-footer"><small>직전 기준월 대비 · 중앙선 0 · ← 감소 / 증가 →</small></div>
   </section>;
@@ -92,10 +131,8 @@ function DetectionSummary({detection, group}) {
 
 function DetectionHeading({group, detection, onEvidence}) {
   const p=detection?.payload || {};
-  const absolute=p.communication_absolute_signal || p.mobility_absolute_signal;
-  const local=p.communication_local_signal || p.mobility_local_signal;
-  const names=[detection?.communication_signal && '전화·문자 연락 감소', detection?.mobility_signal && '평일·휴일 이동 감소'].filter(Boolean);
-  return <header className="gd-case-heading gd-unified-heading"><div className="gd-case-title"><h2>{groupLabel(group)}</h2><h3>{names.length ? names.join(' · ')+' 탐지' : '변화 살펴보기'}</h3><button className="text-button gd-heading-evidence" onClick={onEvidence}>탐지 근거 보기 →</button></div><div className="gd-path-explanation"><SignalBadges absolute={absolute} local={local}/><p>{local ? "강남구 같은 연령대의 공통 흐름을 고려해도 이 지역의 감소가 두드러집니다." : absolute ? "이 지역·연령대의 감소가 평소보다 크게 나타났습니다." : "통신·이동의 변화를 살펴봅니다."}</p></div></header>;
+  const domains=[['communication','전화·문자 연락','chat'],['mobility','평일·휴일 이동','chart']].filter(([key])=>detection?.[key+'_signal']);
+  return <header className="gd-case-heading gd-unified-heading"><div className="gd-case-title"><h2>{groupLabel(group)}</h2>{domains.map(([key,label,icon])=><span key={key} className={`gd-domain-chip signal-${signalState(p[key+'_absolute_signal'],p[key+'_local_signal'])}`}><Icon name={icon} size={20}/>{label} 감소 탐지</span>)}<button className="text-button gd-heading-evidence" onClick={onEvidence}>탐지 근거 보기 →</button></div><div className="gd-path-explanation">{domains.map(([key,label])=><span className="gd-domain-explanation" key={key}>{domains.length>1&&<b>{key==='communication'?'통신':'이동'}</b>}<SignalBadges absolute={p[key+'_absolute_signal']} local={p[key+'_local_signal']}/></span>)}{domains.length===1&&<p>{p[domains[0][0]+'_absolute_signal']&&p[domains[0][0]+'_local_signal']?'평소보다 크게 감소했고, 공통 흐름을 고려해도 감소가 두드러집니다.':p[domains[0][0]+'_local_signal']?'강남구 같은 연령대의 공통 흐름을 고려해도 이 지역의 감소가 두드러집니다.':'이 지역·연령대의 감소가 평소보다 크게 나타났습니다.'}</p>}</div></header>;
 }
 
 // 조사 파일 카드가 글자 겹침 없이 들어가는 최소 폭입니다. 높이는 실제 카드 내용과 여백으로 잽니다.
@@ -200,10 +237,11 @@ function GroupCase({ group, active, shown, evidenceShown, summaryStep, user, onR
     {error ? <div role="alert" className="gd-error">{error}<button onClick={() => { setError(''); setRetry(r => r + 1); }}>다시 연결</button></div> : !row ? <p role="status">집단별 근거를 읽고 있습니다…</p> : <>
       <div hidden={evidenceShown} className="gd-summary" data-summary-page={summaryPage}><div className="gd-overview gd-unified-overview"><DetectionHeading group={group} detection={detection} onEvidence={() => setSummaryPage(3)}/>
       {detection && <DetectionSummary detection={detection} rows={evidenceRows} group={group} onEvidence={() => setSummaryPage(3)}/>}
-      <section className="gd-unified-flow" aria-label="유동량 참고"><div className="gd-flow-reference-label">유동량 참고</div><div className="gd-headline-row"><div><h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `${fmt(Math.abs(row.change_pct), 2)}% ${row.change_pct > 0 ? '증가' : row.change_pct < 0 ? '감소' : '변화 없음'}` : '비교 자료 부족'}</h3><p className="gd-metric-label">전월 대비 유동량{group.sex === '통합' ? ' · 남녀 합산' : ''}</p></div></div>
-      <article className="gd-mini-trend"><h4>월별 유동량 추이</h4><LineChart points={data.series} label={`${groupLabel(group)} 월별 구역별 평균 유동량`} /><small>각 월 전체 구역의 평균</small></article>
-      <article className="gd-mini-share"><h4>동 전체 유동량 중 비중</h4><strong>{fmt(row.share, 2)}<small>%</small></strong><div className="gd-share-track"><i style={{width: `${Number.isFinite(row.share) ? Math.max(0, Math.min(100, row.share)) : 0}%`}}/></div></article>
-      <div className="gd-unified-flow-footer"><span>실제 사람 수가 아닌 관측 활동 규모</span></div></section><button className="primary gd-support-link gd-standalone-support" onClick={openServices}>지원사업 후보 확인 <Icon name="arrow" size={18}/></button><div className="gd-inline-background"><RegionContextCards structure={structure} survey={data.regional?.survey} detection={detection} group={group} backgroundOnly /></div></div>
+      <section className="gd-unified-flow" aria-label="유동량 참고"><div className="gd-flow-reference-label">관측된 활동량 변화</div><div className="gd-headline-row"><div><h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `${fmt(Math.abs(row.change_pct), 2)}% ${row.change_pct > 0 ? '증가' : row.change_pct < 0 ? '감소' : '변화 없음'}` : '비교 자료 부족'}</h3><p className="gd-metric-label">지난달과 비교한 활동량입니다.</p></div></div>
+      <article className="gd-mini-trend"><h4>월별 유동량 추이</h4><LineChart points={data.series} label={`${groupLabel(group)} 월별 구역별 평균 유동량`} detail={p => Number.isFinite(p.change_pct) ? `전월 대비 ${pct(p.change_pct)} · 공통 구역 기준` : '전월 비교 불가'} /><small>각 월 전체 구역의 평균</small></article>
+      <article className="gd-mini-share"><h4>동 전체에서 차지하는 비중</h4><strong>{fmt(row.share, 2)}<small>%</small></strong><div className="gd-share-track"><i style={{width: `${Number.isFinite(row.share) ? Math.max(0, Math.min(100, row.share)) : 0}%`}}/></div></article>
+      <div className="gd-unified-flow-footer"><span>관측 활동량이며, 실제 사람 수와 다릅니다.</span></div></section><button className="primary gd-support-link gd-standalone-support" onClick={openServices}>지원사업 후보 확인 <Icon name="arrow" size={18}/></button><div className="gd-inline-background"><RegionContextCards structure={structure} survey={data.regional?.survey} detection={detection} group={group} backgroundOnly /></div></div>
+
       <p className="gd-detection-note">탐지 신호는 개인의 고립 판정이 아닙니다.</p>
       {evidenceRows.length > 0 && <div className="gd-signal-card"><DetectionEvidence rows={evidenceRows} group={group} detection={detection} onBack={() => { setSummaryPage(0); onSummary(); }}/></div>}
       </div><details hidden={evidenceShown || summaryPage !== 0} className="gd-all-details"><summary>자료 출처와 상세 값 보기</summary><div className="gd-more"><header className="gd-evidence-heading"><h2>상세 근거</h2><p>{groupLabel(group)} · {group.month}</p></header>
@@ -265,7 +303,7 @@ export default function GroupDashboard({ city, month: preferredMonth, user, onRe
   const statusOf = g => analysis?.analysisScope === 'dong_age'
     ? ageStatus(analysis.ageDetections || [], { ...g, month: g.month || month })
     : statusByDistrict[g.district] || (g.code === '1123074' ? statusByDistrict['일원2동'] : undefined);
-  // 전체 근거와 조사 파일은 고정 탭입니다. 그룹 탭을 열거나 고르면 브리핑으로 전환됩니다.
+  // 탐지 현황과 조사 파일은 고정 탭입니다. 그룹 탭을 열거나 고르면 브리핑으로 전환됩니다.
   const [workspaceTab, setWorkspaceTab] = useState('group');
   const [summaryStep, setSummaryStep] = useState(1);
   const setShowFiles = value => { setWorkspaceTab(value ? 'files' : 'group'); if (!value) setSummaryStep(1); };
@@ -315,7 +353,7 @@ export default function GroupDashboard({ city, month: preferredMonth, user, onRe
     {workspaceStorageFailed && <p className="gd-scope-note" role="status">탭 임시 저장에 실패했습니다. 새로고침 시 열린 탭을 복원하지 못할 수 있습니다.</p>}
     {active && active.month !== month && <p className="gd-scope-note">조사 파일 기준월은 {month}, 현재 열린 브리핑은 <b>{active.month} · {groupLabel(active)}</b>입니다.</p>}
     <div className="gd-workspace"><ol className="gd-process" aria-label="브리핑 읽는 순서">{[['연락·이동 변화 확인', '탐지된 변화와 감소 폭을 살펴봅니다.'], ['가구·관계망 함께 보기', '가구 구성과 사회적 연결을 함께 봅니다.'], ['필요한 지원 검토', '확인한 필요에 맞는 지원을 검토합니다.']].map(([title, text], i) => <li key={title}><div className="gd-step-guide"><b>{i + 1}</b><span className="gd-step-icon"><Icon name={['discover', 'neighborhood', 'support'][i]} size={26}/></span><div><strong>{title}</strong><span>{text}</span></div></div></li>)}</ol><div className="gd-tabbar"><div className="gd-tabs-window"><div className="gd-tabs-track" role="tablist" aria-label="사례 검토 파일">
-        {[['overview','전체 근거','clipboard'],['support','지원 검토','services'],['files','조사 파일','report']].map(([id,label,icon],index)=>{const selected=id==='overview'?!filesShown&&!evidenceShown:id==='support'?evidenceShown:filesShown;return <div key={id} className={`gd-tab ${selected?'active':''}`}><button role="tab" id={'tab-'+id} aria-selected={selected} aria-controls={id==='files'?'panel-files':active?'panel-'+groupKey(active):'panel-evidence-empty'} tabIndex={selected?0:-1} ref={el=>{tabRefs.current[id]=el;}} onKeyDown={e=>changeTab(e,index)} onClick={()=>{setWorkspaceTab(['group','support','files'][index]);setSummaryStep(index===1?3:1);}}><Icon name={icon} size={22}/><span><b>{label}</b></span></button></div>;})}
+        {[['overview','탐지 현황','clipboard'],['support','지원 검토','services'],['files','조사 파일','report']].map(([id,label,icon],index)=>{const selected=id==='overview'?!filesShown&&!evidenceShown:id==='support'?evidenceShown:filesShown;return <div key={id} className={`gd-tab ${selected?'active':''}`}><button role="tab" id={'tab-'+id} aria-selected={selected} aria-controls={id==='files'?'panel-files':active?'panel-'+groupKey(active):'panel-evidence-empty'} tabIndex={selected?0:-1} ref={el=>{tabRefs.current[id]=el;}} onKeyDown={e=>changeTab(e,index)} onClick={()=>{setWorkspaceTab(['group','support','files'][index]);setSummaryStep(index===1?3:1);}}><Icon name={icon} size={22}/><span><b>{label}</b></span></button></div>;})}
       </div></div><div className="gd-tab-controls">{state.tabs.length>0 && <span className="gd-case-counter" aria-label="현재 탐지 사례 순서">{state.tabs.findIndex(g=>groupKey(g)===state.active)+1} / {state.tabs.length}</span>}<button className="gd-tab-arrow previous" aria-label="이전 탐지 사례" disabled={state.tabs.findIndex(g=>groupKey(g)===state.active)<=0} onClick={()=>scrollTabs(-1)}><Icon name="arrow" size={18}/></button><button className="gd-tab-arrow" aria-label="다음 탐지 사례" disabled={!state.tabs.length || state.tabs.findIndex(g=>groupKey(g)===state.active)>=state.tabs.length-1} onClick={()=>scrollTabs(1)}><Icon name="arrow" size={18}/></button></div></div>
       <section className="gd-case gd-files-panel" role="tabpanel" id="panel-files" aria-labelledby="tab-files" hidden={!filesShown}><Directory catalog={catalog} city={city} month={month} loading={loading} error={error} retry={() => setRetry(n => n + 1)} onOpen={open} state={state} searchRef={searchRef} statusOf={statusOf} detectionMode={cases.length > 0} /></section>
       {state.tabs.map(g => <GroupCase key={groupKey(g)} group={g} active={groupKey(g) === state.active} shown={!filesShown && !evidenceShown && groupKey(g) === state.active} evidenceShown={evidenceShown && groupKey(g) === state.active} onEvidence={openEvidence} summaryStep={summaryStep} user={user} onRegion={onRegion} analysis={analysis} onSummary={() => {setWorkspaceTab('group'); setSummaryStep(1);}} candidate={CANDIDATE_ORDER.includes(statusOf(g)?.status) ? statusOf(g) : null} />)}

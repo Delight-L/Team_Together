@@ -93,3 +93,7 @@ DB1의 개별 분석 테스트는 서로 같은 이름의 내부 모듈을 사�
 `pipelines/db1/run_tests.ps1`처럼 분석별 폴더에서 별도 프로세스로 실행합니다.
 `pipelines/db1/outputs/db1.sqlite`가 `version https://git-lfs.github.com/spec/v1`로 시작하면
 실제 SQLite가 아닌 전달 포인터입니다. 해당 파일이 필요한 테스트는 실제 DB 전달본을 받은 뒤 실행해야 합니다.
+
+## 폴더별 문서 찾기
+
+README는 [프로젝트 루트](../README.md), [frontend](../frontend/README.md), [backend](../backend/README.md), [pipelines](../pipelines/README.md), [DB1](../pipelines/db1/README.md), [docs](README.md)에 둡니다. 작은 하위 폴더의 실행·출처·검증 설명은 해당 영역 README의 목차에서 찾습니다. 상세 설계·검증 기록은 기존 이름의 문서로 보존합니다.

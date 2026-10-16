@@ -8,6 +8,14 @@
 
 ---
 
+## 문서 안내
+
+- [화면 개발·지도 출처](frontend/README.md)
+- [서버·보미·에이전트](backend/README.md)
+- [데이터 전처리·분석·수집](pipelines/README.md)
+- [DB1 실행·분석 기준](pipelines/db1/README.md)
+- [팀 문서·아키텍처 안내](docs/README.md)
+
 ## 1. 프로젝트 개요
 
 본 프로젝트는 개인의 사회적 고립 여부를 직접 판단하는 것이 아니라, **지역 × 인구집단 단위에서 관찰되는 행동 및 사회적 맥락의 변화로부터 사회적 고립과 관련될 수 있는 위험신호를 탐지**하는 것을 목표로 합니다.
@@ -28,7 +36,7 @@
 
 ![자료에서 담당자 검토까지 이어지는 WELFIND 시스템 아키텍처](docs/architecture/system_architecture.png)
 
-> 발표용 16:9 그림입니다. [고해상도 PNG](docs/architecture/system_architecture.png) · [편집 가능한 SVG](docs/architecture/system_architecture.svg) · [그림 안내](docs/architecture/README.md)
+> 발표용 16:9 그림입니다. [고해상도 PNG](docs/architecture/system_architecture.png) · [편집 가능한 SVG](docs/architecture/system_architecture.svg) · [그림 안내](docs/README.md#architecture)
 
 - 웹 서비스의 업무 기록은 모두 공유 PostgreSQL `work` 스키마에 저장합니다. SQLite는 DB1 분석 실행기의 작업·전달 파일(`pipelines/db1/outputs/db1.sqlite`)과 테스트용 메모리 DB에만 씁니다.
 - 위험신호 수치는 Python 통계 분석으로 만들고, LLM은 수치를 계산하지 않고 근거를 설명합니다.
@@ -176,7 +184,7 @@ DB1 근거·DB2/팀 자료를 출처와 함께 답변
 | 보고서 작성 | 대화·업무 기록으로 «담당자 검토 전» 보고서 초안을 만듭니다. |
 | 보미 안내 | 검토 의견 작성·현장 확인·보고서 작성 주의점 같은 업무 방법과, 업무와 무관한 질문을 안내합니다. |
 
-외부 AI(OpenAI·Anthropic Claude·Google Gemini)는 기본 꺼짐입니다. 끄면 데이터 근거 안내와 자료 검색 결과로만 답합니다. 자세한 내용은 [챗봇 안내](backend/chatbot/README.md)를 참고하세요.
+외부 AI(OpenAI·Anthropic Claude·Google Gemini)는 기본 꺼짐입니다. 끄면 데이터 근거 안내와 자료 검색 결과로만 답합니다. 자세한 내용은 [챗봇 안내](backend/README.md#bomi)를 참고하세요.
 
 ---
 
@@ -388,7 +396,7 @@ cd ..
 | 사업 매칭 검토 | 확인한 필요에 맞는 지자체 복지사업을 찾아 검토 기록을 남깁니다. |
 | 업무 기록 | 저장한 지역 업무 목록과 검토·후속 조치 기록 |
 | 보고서 작성 | 분석과 사업 검토 결과로 Word 보고서 초안을 만들고 저장합니다. |
-| 보미에게 질문 | 모든 메뉴에서 같은 챗봇 하나. 총괄 에이전트가 질문마다 담당(분석 근거 설명·복지사업 찾기·보고서 초안)을 골라 답합니다. [챗봇 안내](backend/chatbot/README.md) |
+| 보미에게 질문 | 모든 메뉴에서 같은 챗봇 하나. 총괄 에이전트가 질문마다 담당(분석 근거 설명·복지사업 찾기·보고서 초안)을 골라 답합니다. [챗봇 안내](backend/README.md#bomi) |
 | 데이터 관리·활동 이력 | 관리자 전용. 분석 자료 검사·반영과 반영 이력 |
 
 판정(신규·연속·변화 후보 등)은 동 단위 지표가 평소 흐름과 다른지 본 결과이며, 개인의 고립 여부를 판정하지 않습니다.
