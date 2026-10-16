@@ -65,63 +65,81 @@ def _fit_blocks(blocks, limit):
     return '\n'.join(result)
 
 
+def _region(context):
+    return f"{context['city']} {context['district']}" + (f" {context['age']}" if context.get('age') else '')
+
+
+def _situation(context, rows, empty_text):
+    """지역 현황 줄 목록: 대상·기준월, 변화 후보 지표(최대 3건), 해석 제한 문장."""
+    signals = [row for row in rows if row.get('is_risk_signal')]
+    lines = [f"대상 지역: {_region(context)} / 기준월: {context['month']}"]
+    lines += [evidence_sentence(row) for row in signals[:3]]
+    if len(signals) > 3:
+        lines.append(f'변화 후보 {len(signals)}건 중 3건 요약. 전체 근거는 지역 분석 화면에서 확인')
+    if not signals:
+        lines.append(empty_text)
+    lines.append('지역 집계자료의 변화로 ' + LIMIT_NOTE)
+    return lines
+
+
+def _draft(context, workflow, *, title_note, summary, situation, proposals, next_steps, mode, **extra):
+    """두 초안이 함께 쓰는 형식: 항목별 글자 수 맞추기와 보고서 탭이 쓰는 근거 버전 정보."""
+    from backend.db.mission_store import review_revision
+    district = context['district'] + (' ' + context['age'] if context.get('age') else '')
+    return {'title': f'{district} 복지서비스 연계 검토보고{title_note}', 'summary': summary,
+            'situation': _fit_blocks(situation, LIMITS['situation']),
+            'proposal': _fit_blocks(proposals, LIMITS['proposal']),
+            'next_steps': _fit_blocks(next_steps, LIMITS['next_steps']),
+            'context': {k: context[k] for k in ('city', 'district', 'month', 'age') if k in context},
+            # 보고서 탭이 지금 업무 기록과 같은 근거로 인식하도록 현재 검토 기록 버전을 넣습니다.
+            'review_id': review_revision(workflow), 'review_snapshot': workflow.get('reviews', []),
+            'mode': mode, **extra}
+
+
+def _review_proposal(review):
+    """사업 검토 기록 한 건 → '사업명: 판단 문구'와 검토 근거·이용 조건 줄."""
+    status = DECISION_TEXT.get(review.get('decision'), '담당자 판단 확인 필요')
+    lines = [f"{review.get('name', '사업명 확인 필요')}: {status}", f"- 검토 근거: {review.get('note', '확인 필요')}"]
+    checks = review.get('checks')
+    if checks is not None:
+        lines.append('- 이용 조건: ' + ' / '.join(f"{label} {'확인' if checks.get(key) else '미확인'}" for key, label in
+                                              [('residency', '거주'), ('eligibility', '대상'), ('application', '접수·신청')]))
+    if review.get('service_snapshot', {}).get('detail_pending'):
+        lines.append('- 상세정보 수집·재확인 대기. 이용 조건은 원문 및 운영기관 확인 필요')
+    if review.get('source_url'):
+        lines.append('- 안내 원문: ' + str(review['source_url']))
+    return '\n'.join(lines)
+
+
 def generate_draft(context, workflow, selection=None, experience=None):
     """외부 AI 없이 저장된 기록을 구성합니다. 첨부 예시는 업무 사실로 쓰지 않습니다."""
     if not context.get('district'):
         raise ValueError('보고서를 작성할 행정동을 먼저 선택하세요.')
     if 2 not in workflow.get('done', []) or not workflow.get('analysis_evidence'):
         raise ValueError('분석 근거 확인과 사업 매칭 검토 기록 저장을 먼저 완료하세요.')
-    region = f"{context['city']} {context['district']}" + (f" {context['age']}" if context.get('age') else '')
     from backend.agents.report_material import select_material, record_sections
-    selected_rows, reviews, options = select_material(workflow, selection)
-    signals = [r for r in selected_rows if r.get('is_risk_signal')]
-    situation = [f"대상 지역: {region} / 기준월: {context['month']}"]
-    for row in signals[:3]:
-        situation.append(evidence_sentence(row))
-    if len(signals) > 3:
-        situation.append(f'변화 후보 {len(signals)}건 중 3건 요약. 전체 근거는 지역 분석 화면에서 확인')
-    if not signals and selection is not None:
-        situation.append('이번 초안에 포함한 후보 지표 상세 없음. 전체 분석은 지역 분석 화면에서 확인')
-    elif not signals:
-        situation.append('저장된 분석에서 변화 후보가 확인되지 않음. 자료 충분 여부와 현장 상황은 별도 확인 필요')
-    situation.append('지역 집계자료의 변화로 ' + LIMIT_NOTE)
-    saved_reviews = workflow.get('reviews', [])
-    proposals = []
-    for review in reviews[:4]:
-        status = DECISION_TEXT.get(review.get('decision'), '담당자 판단 확인 필요')
-        proposal = f"{review.get('name', '사업명 확인 필요')}: {status}\n- 검토 근거: {review.get('note', '확인 필요')}"
-        if review.get('checks') is not None:
-            checks = review['checks']
-            proposal += '\n- 이용 조건: ' + ' / '.join(f"{label} {'확인' if checks.get(key) else '미확인'}" for key, label in [('residency', '거주'), ('eligibility', '대상'), ('application', '접수·신청')])
-        snapshot = review.get('service_snapshot', {})
-        if snapshot.get('detail_pending'):
-            proposal += '\n- 상세정보 수집·재확인 대기. 이용 조건은 원문 및 운영기관 확인 필요'
-        if review.get('source_url'):
-            proposal += '\n- 안내 원문: ' + str(review['source_url'])
-        proposals.append(proposal)
+    rows, reviews, options = select_material(workflow, selection)
+    chosen = selection is not None
+    situation = _situation(context, rows, '이번 초안에 포함한 후보 지표 상세 없음. 전체 분석은 지역 분석 화면에서 확인' if chosen else
+                           '저장된 분석에서 변화 후보가 확인되지 않음. 자료 충분 여부와 현장 상황은 별도 확인 필요')
+    proposals = [_review_proposal(review) for review in reviews[:4]]
     if len(reviews) > 4:
         proposals.append(f'전체 {len(reviews)}건 중 4건 요약. 나머지는 사업 검토 기록에서 확인')
     if not proposals:
-        proposals.append('이번 초안에 사업 상세를 포함하지 않음. 저장된 사업 검토 기록에서 확인 필요' if selection is not None else '저장된 사업 검토 내용 확인 필요')
-    record_note, record_followup = record_sections(experience or {}, options)
-    if record_note:
-        situation.append('담당자 검토 의견: ' + record_note)
-    next_steps = record_followup or '운영기관에 지원 대상·거주·연령·소득·신청 기간 및 모집 여부 확인\n현장 수요와 담당 기관 의견을 확인한 후 연계·추진 여부 검토'
+        proposals.append('이번 초안에 사업 상세를 포함하지 않음. 저장된 사업 검토 기록에서 확인 필요' if chosen else '저장된 사업 검토 내용 확인 필요')
+    note, followup = record_sections(experience or {}, options)
+    if note:
+        situation.append('담당자 검토 의견: ' + note)
+    next_steps = followup or '운영기관에 지원 대상·거주·연령·소득·신청 기간 및 모집 여부 확인\n현장 수요와 담당 기관 의견을 확인한 후 연계·추진 여부 검토'
     viable = any(r.get('decision') == '적합' for r in reviews)
-    summary = (f'{region}의 지역 분석 및 사업 검토 결과를 바탕으로 '
+    summary = (f'{_region(context)}의 지역 분석 및 사업 검토 결과를 바탕으로 '
                + ('관련 복지서비스 연계 가능성을 검토하고자 함' if viable else
                   '서비스 이용 조건과 현장 수요를 추가 확인한 후 연계 여부를 검토하고자 함'))
-    from backend.db.mission_store import review_revision
-    return {'title': f"{context['district']}{(' ' + context['age']) if context.get('age') else ''} 복지서비스 연계 검토보고",
-            'summary': summary, 'situation': _fit_blocks(situation, LIMITS['situation']),
-            'proposal': _fit_blocks(proposals, LIMITS['proposal']),
-            'next_steps': _fit_blocks(next_steps.split('\n'), LIMITS['next_steps']),
-            'selection': options if selection is not None else None,
-            'experience_version': (experience or {}).get('version') if options.get('include_note') or options.get('include_followup') else None,
-            'context': {k: context[k] for k in ('city', 'district', 'month', 'age') if k in context},
-            'review_id': review_revision(workflow),
-            'review_snapshot': saved_reviews,
-            'mode': '저장된 근거로 구성 · 외부 AI 호출 없음'}
+    uses_record = options.get('include_note') or options.get('include_followup')
+    return _draft(context, workflow, title_note='', summary=summary, situation=situation, proposals=proposals,
+                  next_steps=next_steps.split('\n'), mode='저장된 근거로 구성 · 외부 AI 호출 없음',
+                  selection=options if chosen else None,
+                  experience_version=(experience or {}).get('version') if uses_record else None)
 
 
 def latest_plan(history):
@@ -155,43 +173,23 @@ def conversation_draft(context, workflow, evidence_rows, history, sources):
     plan = latest_plan(history)
     if not sources and not plan:
         raise ValueError(NEED_MATERIAL)
-    region = f"{context['city']} {context['district']}" + (f" {context['age']}" if context.get('age') else '')
-
-    signals = [row for row in evidence_rows if row.get('is_risk_signal')]
-    situation = [f"대상 지역: {region} / 기준월: {context['month']}"]
-    for row in signals[:3]:
-        situation.append(evidence_sentence(row))
-    if not signals:
-        situation.append('이번 달 분석에서 변화 후보로 표시된 지표 없음. 현장 상황은 별도 확인 필요')
-    situation.append('지역 집계자료의 변화로 ' + LIMIT_NOTE)
-
-    proposals = []
-    for record in sources[:4]:
-        proposals.append(f"{record['name']}: {PENDING_TEXT}\n- 지원 내용: {record['description']}\n"
-                         f"- 자료상 대상: {record['target']}\n- 기관: {record['agency']}\n"
-                         f"- 출처: {record['source']} (p. {record['pages']}) · {record['status']}")
+    sources = sources[:4]
+    proposals = [f"{r['name']}: {PENDING_TEXT}\n- 지원 내용: {r['description']}\n- 자료상 대상: {r['target']}\n"
+                 f"- 기관: {r['agency']}\n- 출처: {r['source']} (p. {r['pages']}) · {r['status']}" for r in sources]
+    found = [f'기존 사업 {len(sources)}건'] if sources else []
     if plan:
         proposals.append(f'신규 사업 구상안(보미 대화에서 제안 · {NOT_RUNNING_TEXT} · {PENDING_TEXT})\n' + _shorten(plan, 650))
-
-    found = []
-    if sources:
-        found.append(f'기존 사업 {min(len(sources), 4)}건')
-    if plan:
         found.append('신규 사업 구상안')
-    summary = (f"{region} 관련 보미 대화에서 검토한 {'·'.join(found)}을 바탕으로 "
+    summary = (f"{_region(context)} 관련 보미 대화에서 검토한 {'·'.join(found)}을 바탕으로 "
                f'복지서비스 연계·추진 가능성을 검토하기 위한 초안임({PENDING_TEXT})')
-    next_steps = ('각 사업 운영기관에 지원 대상·신청 기간·모집 여부 확인\n'
-                  '신규 구상안은 수요 조사·예산·운영 기관 협의 후 추진 여부 결정\n'
-                  '사업 매칭 검토에 판단을 기록한 뒤 최종 보고서로 저장')
-    from backend.db.mission_store import review_revision
-    return {'title': f"{context['district']}{(' ' + context['age']) if context.get('age') else ''} 복지서비스 연계 검토보고(대화 기반 초안)",
-            'summary': summary, 'situation': _fit_blocks(situation, LIMITS['situation']),
-            'proposal': _fit_blocks(proposals, LIMITS['proposal']), 'next_steps': next_steps,
-            'context': {k: context[k] for k in ('city', 'district', 'month', 'age') if k in context},
-            # 보고서 탭이 지금 업무 기록과 같은 근거로 인식하도록 현재 검토 기록 버전을 넣습니다.
-            'review_id': review_revision(workflow), 'review_snapshot': workflow.get('reviews', []),
-            'conversation_sources': [{'id': r['id'], 'name': r['name']} for r in sources[:4]],
-            'mode': f'대화 기반 초안 · {PENDING_TEXT}'}
+    return _draft(context, workflow, title_note='(대화 기반 초안)', summary=summary,
+                  situation=_situation(context, evidence_rows, '이번 달 분석에서 변화 후보로 표시된 지표 없음. 현장 상황은 별도 확인 필요'),
+                  proposals=proposals,
+                  next_steps=['각 사업 운영기관에 지원 대상·신청 기간·모집 여부 확인',
+                              '신규 구상안은 수요 조사·예산·운영 기관 협의 후 추진 여부 결정',
+                              '사업 매칭 검토에 판단을 기록한 뒤 최종 보고서로 저장'],
+                  mode=f'대화 기반 초안 · {PENDING_TEXT}',
+                  conversation_sources=[{'id': r['id'], 'name': r['name']} for r in sources])
 
 
 def validate_content(content):
@@ -293,9 +291,9 @@ def check_grounding(polished, draft):
         new_numbers = sorted(set(NUMBER.findall(polished[key])) - set(NUMBER.findall(source)))
         if new_numbers:
             problems.append(f'{label}: 근거에 없는 숫자 ' + ', '.join(new_numbers[:5]))
-    for count in sorted(set(KOREAN_COUNT.findall(text))):
-        if text.count(count) > material.count(count):
-            problems.append(f'근거에 없는 수량 표현 «{count}»')
+    # 한글 수량·단정 표현은 기초 초안보다 많이 나오면 새로 쓴 것으로 봅니다.
+    problems += [f'근거에 없는 수량 표현 «{w}»' for w in sorted(set(KOREAN_COUNT.findall(text))) if text.count(w) > material.count(w)]
+    problems += [f'근거에 없는 단정 표현 «{w}»' for w in ASSERTIVE_WORDS if text.count(w) > material.count(w)]
     if any(url not in material for url in URL.findall(text)):
         problems.append('확인되지 않은 링크')
     names = _draft_names(draft)
@@ -313,9 +311,6 @@ def check_grounding(polished, draft):
             problems.append(f'판단 문구 변경 «{phrase}»')
     if LIMIT_NOTE in draft['situation'] and LIMIT_NOTE not in polished['situation']:
         problems.append('해석 제한 문장 누락')
-    for word in ASSERTIVE_WORDS:
-        if text.count(word) > material.count(word):
-            problems.append(f'근거에 없는 단정 표현 «{word}»')
     for name in sorted(set(catalog_names()), key=len, reverse=True):
         if len(name) >= 4 and name in text and name not in material and name not in str(draft.get('review_snapshot', '')):
             problems.append(f'근거에 없는 사업·기관 «{name}»')
