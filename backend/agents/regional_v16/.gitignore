@@ -1,6 +1,0 @@
-.env
-__pycache__/
-*.py[cod]
-*.sqlite-wal
-*.sqlite-shm
-*.log

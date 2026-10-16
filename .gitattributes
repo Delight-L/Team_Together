@@ -1,0 +1,3 @@
+# Git LFS로 관리하는 큰 파일. 저장소 전체의 속성은 이 파일 하나로 관리합니다.
+# DB1 운영 DB는 GitHub 일반 파일 크기 제한을 넘습니다.
+pipelines/db1/outputs/db1.sqlite filter=lfs diff=lfs merge=lfs -text
