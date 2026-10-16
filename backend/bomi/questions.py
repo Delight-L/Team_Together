@@ -6,7 +6,7 @@ import re
 
 from backend.agents import report_writer
 from backend.bomi.phrases import WORK_GUIDES
-from backend.chatbot.welfare.app.dialogue.resources import COVERED_CITIES, RESOURCES, SYNONYM_GROUPS
+from backend.chatbot.welfare.app.dialogue.resources import COVERED_CITIES, SYNONYM_GROUPS, load_resources
 
 WELFARE_WORDS = ('사업', '지원', '서비스', '복지', '신청', '돌봄', '동행', '모임', '상담', '기관',
                  '프로그램', '도시락', '식사', '일자리', '바우처', '급여')
@@ -61,7 +61,7 @@ def program_name_hit(question: str, city: str = '') -> bool:
     for group in SYNONYM_GROUPS:
         if any(word in question for word in group):
             terms.update(group)
-    return any(term in record['name'] for record in RESOURCES for term in terms)
+    return any(term in record['name'] for record in load_resources() for term in terms)
 
 
 def mentions_district(question: str) -> bool:

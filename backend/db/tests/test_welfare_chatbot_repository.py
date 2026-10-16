@@ -40,8 +40,8 @@ class WelfareChatbotRepositoryTest(unittest.TestCase):
     def test_database_edits_reach_search_and_agent_without_json_reads(self):
         repository.import_json(engine=self.engine)
         from backend.chatbot.welfare.app.dialogue import resources
-        from backend.chatbot.welfare.service import stream_reply
-        from backend.agents.supervisor import rule_route
+        from backend.bomi.routing import Router
+        from backend.bomi.tests.helpers import events as chat_events, make_request
         with self.engine.begin() as conn:
             conn.execute(update(repository.plans).where(repository.plans.c.plan_index == 0).values(
                 agency="DB에서 수정한 담당 기관", procedure="DB에서 수정한 확인 절차"))
@@ -50,9 +50,9 @@ class WelfareChatbotRepositoryTest(unittest.TestCase):
                 patch.object(Path, "read_text", side_effect=AssertionError("JSON을 읽으면 안 됩니다.")):
             records = resources.search("세곡동행의 신청 방법은?", city="강남구")
             self.assertEqual(records[0]["agency"], "DB에서 수정한 담당 기관")
-            self.assertEqual(rule_route("세곡동행", {"city": "강남구"}), "welfare")
-            events = list(stream_reply([{"role": "user", "content": "세곡동행의 신청 방법은?"}],
-                                       {"city": "강남구"}, use_ai=False))
+            context = {"city": "강남구"}
+            self.assertEqual(Router().by_rules(make_request("세곡동행", context=context)), "welfare")
+            events = chat_events("세곡동행의 신청 방법은?", context=context)
         answer = "".join(value.get("text", "") for event, value in events if event == "token")
         self.assertIn("DB에서 수정한 담당 기관", answer)
         self.assertIn("DB에서 수정한 확인 절차", answer)
@@ -109,7 +109,7 @@ class WelfareChatbotRepositoryTest(unittest.TestCase):
                 resources.resource_source()
 
     def test_database_failure_finishes_agent_stream_without_exposing_details(self):
-        from backend.agents import supervisor
+        from backend.bomi.tests.helpers import events as chat_events
         context = {"city": "강남구", "district": "세곡동", "month": "2025-12"}
         # 담당 선택 중 사업명을 조회하는 경우와 복지 담당이 실제 검색하는 경우를 검사합니다.
         for question in ("배움마켓", "세곡동행 지원 내용을 알려줘"):
@@ -117,8 +117,7 @@ class WelfareChatbotRepositoryTest(unittest.TestCase):
                     patch.dict("os.environ", {"WELFIND_WELFARE_SOURCE": "db"}), \
                     patch("backend.chatbot.welfare.app.dialogue.resources.load_dataset_rows",
                           side_effect=repository.WelfareDataError("internal-secret")):
-                events = list(supervisor.stream([{"role": "user", "content": question}],
-                                                context, {}, use_ai=False))
+                events = chat_events(question, context=context, data={"months": []})
             self.assertEqual(events[-1][0], "done")
             errors = [value["message"] for event, value in events if event == "error"]
             self.assertEqual(len(errors), 1)

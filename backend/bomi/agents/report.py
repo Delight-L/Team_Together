@@ -7,7 +7,7 @@ from backend.bomi.events import Event
 from backend.bomi.phrases import GROUP_REPORT_NOTICE
 from backend.bomi.regularization import Policy
 from backend.bomi.request import ChatRequest
-from backend.chatbot.welfare.app.dialogue.resources import RESOURCES
+from backend.chatbot.welfare.app.dialogue.resources import load_resources
 from backend.db import mission_store, region_workspace
 
 
@@ -27,12 +27,12 @@ class ReportAgent(RegulatedAgent):
         """대화에서 찾은 사업·신규 구상안이 있으면 대화 기반 초안, 없으면 업무 기록 초안."""
         workflow, rows = {}, []
         if request.district:
-            workflow = mission_store.load_all().get(mission_store.identity(request.context), {})
+            workflow = mission_store.load(request.context)
             rows = region_workspace.region_status(
                 request.data, request.city, request.month, request.district)['rows']
             if request.age:
                 rows = [row for row in rows if row.get('age_label') == request.age]
-        by_id = {record['id']: record for record in RESOURCES}
+        by_id = {record['id']: record for record in load_resources()}
         sources = [by_id[source_id] for source_id in request.source_ids if source_id in by_id]
         return report_writer.report_reply(
             request.context, workflow, request.use_ai, request.question, rows, request.history, sources)

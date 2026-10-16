@@ -23,6 +23,8 @@
 import logging
 from collections.abc import Iterator
 
+from backend.db.welfare_chatbot_repository import WelfareDataError
+
 LOGGER = logging.getLogger(__name__)
 
 Event = tuple[str, dict]
@@ -32,6 +34,7 @@ FOLLOW_UPS, ACTIONS, NOTICE, ERROR, DONE = 'follow_ups', 'actions', 'notice', 'e
 EVENT_NAMES = (ROUTE, SOURCES, TOKEN, REPLACE, FOLLOW_UPS, ACTIONS, NOTICE, ERROR, DONE)
 
 FAILURE_MESSAGE = '답변을 만드는 중 문제가 생겼습니다. 잠시 후 다시 질문해 주세요.'
+WELFARE_DATA_MESSAGE = '복지자료 DB를 조회하지 못했습니다. 관리자에게 DB 연결과 자료 적재 상태 확인을 요청해 주세요.'
 
 
 def route(agent: str, label: str, by: str) -> Event:
@@ -84,6 +87,9 @@ def seal(stream: Iterator[Event]) -> Iterator[Event]:
         for name, payload in stream:
             if name != DONE:
                 yield name, payload
+    except WelfareDataError:
+        LOGGER.exception('복지자료 DB 조회 실패')
+        yield error(WELFARE_DATA_MESSAGE)
     except Exception:
         LOGGER.exception('보미 답변 처리 실패')
         yield error(FAILURE_MESSAGE)

@@ -79,7 +79,7 @@ class AgentPolicyTest(unittest.TestCase):
 class AgentRegulationTest(unittest.TestCase):
     def setUp(self):
         for target in (patch.object(v16, 'data_ready', return_value=False),
-                       patch('backend.db.mission_store.load_all', return_value={})):
+                       patch('backend.db.mission_store.load', return_value={})):
             target.start()
             self.addCleanup(target.stop)
 
@@ -135,9 +135,8 @@ class AgentRegulationTest(unittest.TestCase):
             # 담당 선택(max_tokens=50)과 문장 다듬기(max_tokens=3000)를 구분합니다.
             return json.dumps(polished) if max_tokens == 3000 else '{"agent": "report"}'
         moderate = AsyncMock(side_effect=[[], ['violence']])
-        workflows = {mission_store.identity(CONTEXT): WORKFLOW}
         with ai_key('test'), patch.object(llm, 'moderate', moderate), patch.object(llm, 'complete', complete), \
-                patch('backend.db.mission_store.load_all', return_value=workflows):
+                patch('backend.db.mission_store.load', return_value=WORKFLOW):
             result = dict(events('보고서 작성해줘', ai=True))
         self.assertEqual(result['replace']['text'], OUTPUT_BLOCKED)
         self.assertNotIn('actions', result)
