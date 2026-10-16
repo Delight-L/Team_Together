@@ -86,13 +86,6 @@
 .briefing-shell .page-heading p {
   margin-top: 7px;
 }
-.briefing-v2 {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: 108px minmax(0, 1fr) 109px;
-  gap: 14px;
-}
 .mission-kpis {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -343,52 +336,12 @@
 .mission-legend .quiet {
   background: #cddbcf;
 }
-/* REGION INSIGHT는 지도 카드 내부의 비모달 팝오버입니다. 페이지 전환/화면 차단이 없습니다. */
-.region-insight {
-  position: absolute;
-  z-index: 3;
-  top: 12px;
-  right: 12px;
-  bottom: 38px;
-  width: 288px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: #fffffff5;
-  border: 1px solid var(--line);
-  border-radius: 15px;
-  box-shadow: 0 8px 30px #24446126;
-  backdrop-filter: blur(12px);
-  padding: 14px;
-  animation: insight-arrive 0.22s ease-out;
-}
-.region-insight > header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-shrink: 0;
-}
-.region-insight h2 {
-  font-size: 18px;
-  margin-top: 4px;
-}
-.region-insight .eyebrow {
-  font-size: 11px;
-  color: #5890c7;
-}
-.insight-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  margin-top: 10px;
-  margin-bottom: 9px;
-}
-.insight-summary small {
-  font-size: 11px;
-  color: var(--text-faint);
-}
+
+
+
+
+
+
 .status-tag {
   display: inline-flex;
   border-radius: 6px;
@@ -410,61 +363,6 @@
 .status-tag.sky {
   background: var(--status-pending-bg);
   color: var(--status-pending);
-}
-.insight-count {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 11px;
-  background: var(--surface-soft);
-  border-radius: 9px;
-  margin-bottom: 10px;
-}
-.insight-count strong {
-  font-size: 24px;
-  color: #2563eb;
-}
-.insight-count small {
-  font-size: 11px;
-  margin-left: 4px;
-}
-.insight-count span {
-  color: var(--text-faint);
-  font-size: 11px;
-}
-.region-insight .table-scroll {
-  flex: 1;
-  min-height: 0;
-  scrollbar-width: thin;
-}
-.region-insight table {
-  font-size: 11px;
-}
-.region-insight th,
-.region-insight td {
-  padding: 9px 4px;
-}
-.region-insight .badge {
-  font-size: 11px;
-  padding: 3px 4px;
-}
-.region-insight > .hint {
-  padding: 9px 0;
-  font-size: 11px;
-  line-height: 1.7;
-}
-.insight-actions {
-  display: grid;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.insight-actions button {
-  font-size: 11px;
-  padding: 9px 7px;
-  gap: 6px;
-}
-.insight-open .mission-map .mission-scene {
-  width: calc(100% - 268px);
 }
 .mission-highlights {
   display: flex;
@@ -563,61 +461,11 @@
   flex: 1;
   min-height: 0;
 }
-.region-directory,
-.directory-map {
+.directory-map  {
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-}
-.region-directory h2 > span {
-  font-size: 11px;
-  color: var(--text-faint);
-  font-weight: 400;
-  margin-left: 4px;
-}
-.directory-filters {
-  display: flex;
-  gap: 6px;
-  padding: 2px 14px 14px;
-}
-.directory-filters input {
-  flex: 1;
-  min-width: 70px;
-}
-.directory-filters input,
-.directory-filters select {
-  font-size: 11px;
-  padding: 8px;
-  border-radius: 8px;
-}
-.directory-filters select {
-  max-width: 95px;
-}
-.directory-table {
-  flex: 1;
-  overflow: auto;
-  min-height: 0;
-  scrollbar-width: thin;
-}
-.directory-table table {
-  font-size: 11px;
-}
-.directory-table th,
-.directory-table td {
-  padding: 11px 8px;
-}
-.directory-table th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-.directory-table tr.selected td {
-  background: var(--surface-tint);
-}
-.directory-table .text-button {
-  font-size: 11px;
-  padding: 0;
 }
 .district-link {
   font-weight: 600;
@@ -625,12 +473,7 @@
   padding: 0;
   color: var(--text-sub);
 }
-.region-directory > footer {
-  padding: 12px 14px;
-  font-size: 11px;
-  color: var(--text-faint);
-  border-top: 1px solid var(--line);
-}
+
 .directory-map-body {
   flex: 1;
   min-height: 0;
@@ -646,11 +489,7 @@
   padding: 12px 16px;
   font-size: 11px;
 }
-.directory-map .region-insight {
-  width: calc(100% - 24px);
-  max-width: 320px;
-  bottom: 12px;
-}
+
 @keyframes insight-arrive {
   from {
     opacity: 0;
@@ -669,10 +508,6 @@
   .app-shell.nav-collapsed {
     --nav-width: 76px;
   }
-  .briefing-v2 {
-    grid-template-rows: 124px minmax(0, 1fr) 120px;
-    gap: 18px;
-  }
   .mission-kpi {
     padding: 20px;
     gap: 16px;
@@ -686,20 +521,8 @@
   .mission-kpi p {
     font-size: 11px;
   }
-  .region-insight {
-    width: 320px;
-    padding: 18px;
-  }
-  .insight-open .mission-map .mission-scene {
-    width: calc(100% - 305px);
-  }
-  .region-insight table {
-    font-size: 11px;
-  }
-  .region-insight td,
-  .region-insight th {
-    padding: 12px 5px;
-  }
+
+
   .highlight-grid span {
     font-size: 11px;
   }
@@ -740,12 +563,6 @@
   .mission-kpi p {
     font-size: 11px;
   }
-  .region-insight {
-    width: 262px;
-  }
-  .insight-open .mission-map .mission-scene {
-    width: calc(100% - 240px);
-  }
   .highlight-grid > button {
     padding: 8px;
     gap: 7px;
@@ -762,10 +579,6 @@
   }
 }
 @media (max-height: 800px) {
-  .briefing-v2 {
-    grid-template-rows: 95px minmax(0, 1fr) 98px;
-    gap: 12px;
-  }
   .mission-kpi {
     padding: 12px;
   }
@@ -775,33 +588,13 @@
   .mission-kpi p {
     font-size: 11px;
   }
-  .region-insight {
-    top: 9px;
-    right: 9px;
-    bottom: 35px;
-    padding: 10px;
-  }
-  .region-insight h2 {
-    font-size: 15px;
-  }
-  .insight-count {
-    display: none;
-  }
-  .insight-summary {
-    margin-top: 6px;
-    margin-bottom: 6px;
-  }
-  .region-insight th,
-  .region-insight td {
-    padding: 7px 4px;
-  }
-  .region-insight > .hint {
-    display: none;
-  }
-  .insight-actions button {
-    padding: 7px;
-    font-size: 11px;
-  }
+
+
+
+
+
+
+
   .mission-highlights > header {
     padding: 10px 14px 7px;
   }
@@ -875,12 +668,6 @@
   .regional-overview {
     grid-template-columns: minmax(0, 1fr) minmax(230px, 1fr);
   }
-  .region-insight {
-    width: 245px;
-  }
-  .insight-open .mission-map .mission-scene {
-    width: calc(100% - 210px);
-  }
 }
 @media (max-width: 850px) {
   .app-shell,
@@ -914,10 +701,7 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) minmax(200px, 0.8fr);
   }
-  .directory-map .region-insight {
-    width: 270px;
-    max-width: calc(100% - 24px);
-  }
+
   .briefing-shell .page-heading {
     flex-wrap: nowrap;
   }
@@ -948,10 +732,6 @@
   }
   .briefing-shell .page-heading h1 {
     font-size: 19px;
-  }
-  .briefing-v2 {
-    grid-template-rows: 78px minmax(0, 1fr) 95px;
-    gap: 9px;
   }
   .mission-kpis {
     gap: 6px;
@@ -1011,43 +791,13 @@
     width: 23px;
     height: 23px;
   }
-  .region-insight {
-    left: 6px;
-    right: 6px;
-    top: 6px;
-    bottom: 31px;
-    width: auto;
-    padding: 10px;
-  }
-  .insight-open .mission-map .mission-scene {
-    width: 100%;
-  }
-  .region-insight h2 {
-    font-size: 14px;
-  }
-  .region-insight table {
-    font-size: 11px;
-  }
-  .region-insight th,
-  .region-insight td {
-    padding: 6px 3px;
-  }
-  .insight-actions {
-    display: flex;
-    gap: 5px;
-  }
-  .insight-actions button {
-    flex: 1;
-    min-width: 0;
-    font-size: 11px;
-    padding: 7px 3px;
-  }
-  .insight-actions svg {
-    display: none;
-  }
-  .region-insight > .hint {
-    font-size: 11px;
-  }
+
+
+
+
+
+
+
   .mission-highlights > header {
     padding: 9px 10px 7px;
   }
@@ -1074,41 +824,13 @@
   .highlight-grid strong {
     font-size: 18px;
   }
-  .directory-filters {
-    flex-wrap: wrap;
-    padding: 0 10px 10px;
-  }
-  .directory-filters input {
-    width: 100%;
-    flex-basis: 100%;
-  }
-  .directory-table th,
-  .directory-table td {
-    font-size: 11px;
-    padding: 8px 5px;
-  }
-  .directory-table .status-tag {
-    font-size: 11px;
-  }
   .directory-map > footer {
     font-size: 11px;
   }
-  .directory-map .region-insight {
-    width: calc(100% - 12px);
-    max-width: none;
-    bottom: 6px;
-  }
-  .region-directory > footer {
-    font-size: 11px;
-    padding: 8px 10px;
-  }
+
+
   .nav-collapsed .sidebar > .logo-toggle .bomi-face {
     width: 38px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .region-insight {
-    animation: none;
   }
 }
 /* 기본 안내 버튼은 항상 접근 가능하고, 자유 대화 입력과 비용 경로를 분리합니다. */
@@ -1192,36 +914,7 @@
 
 
 /* 지도 높이와 후보 요약 높이를 맞추고, 신호등 세 칸은 같은 크기로 유지합니다. */
-.briefing-v2 {
-  grid-template-columns: minmax(0, 1fr) clamp(150px, 13vw, 200px);
-  grid-template-rows: minmax(320px, 1fr) 100px;
-  grid-template-areas: "map signals" "highlights highlights";
-  gap: 14px;
-  overflow: auto;
-}
-.briefing-v2 > .mission-map-card { grid-area: map; }
-.briefing-v2 > .mission-kpis {
-  grid-area: signals;
-  min-width: 0;
-  min-height: 0;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-.briefing-v2 > .mission-highlights { grid-area: highlights; }
-.briefing-v2 .mission-kpi {
-  min-width: 0; min-height: 0;
-  flex-direction: column; justify-content: center; text-align: center;
-  gap: clamp(4px, 0.8vh, 10px); padding: 12px 10px;
-}
-.briefing-v2 .mission-kpi-icon { width: clamp(36px, 5vh, 54px); height: clamp(36px, 5vh, 54px); display: grid; }
-.briefing-v2 .mission-kpi > div > span { font-size: 12px; }
-.briefing-v2 .mission-kpi strong { font-size: clamp(28px, 3.8vh, 38px); line-height: 1.2; margin-top: 5px; }
-.briefing-v2 .mission-kpi p { display: block; font-size: 11px; line-height: 1.5; margin-top: 5px; }
-.briefing-v2 .mission-kpi-note { display: inline-block; position: static; font-size: 11px; padding: 4px 8px; }
-.briefing-v2 .mission-map-card > header { flex-wrap: wrap; gap: 6px; }
-.briefing-v2 .mission-map-card h2 { font-size: clamp(12px, 1.1vw, 17px); }
-.briefing-v2 .region-insight { width: min(290px, calc(100% - 24px)); box-shadow: 0 8px 30px #233c5626; z-index: 5; }
+
 .road-map { background: var(--line); isolation: isolate; user-select: none; -webkit-user-select: none; }
 .road-map-canvas { position: absolute; inset: 0 0 34px; z-index: 0; font-family: inherit; }
 .directory-map .road-map-canvas { bottom: 0; }
@@ -1249,71 +942,17 @@
 .roadmap-pin-label b { color: var(--text); font-size: 13px; }
 .roadmap-pin-label small { color: var(--pin-color); font-size: 11px; }
 .roadmap-pin:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; border-radius: 8px; }
-.map-zoom-hint { position: absolute; z-index: 2; right: 12px; bottom: 64px; display: flex;
-  align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; background: #fffffff0;
-  color: var(--text-muted); font-size: 11px; pointer-events: none; }
-.map-zoom-hint output { border-left: 1px solid var(--line); padding-left: 10px; min-width: 40px; }
-.directory-map .map-zoom-hint { bottom: 30px; }
+
+
+
 .map-tile-error { position: absolute; z-index: 3; top: 12px; left: 56px; right: 12px;
   padding: 8px 10px; background: #fff7e6; border-radius: 8px; font-size: 11px; color: #805c19; }
 .map-tile-error button { margin-left: 8px; text-decoration: underline; }
-@media (max-height: 750px) and (min-width: 851px) {
-  .briefing-v2 { grid-template-rows: minmax(300px, 1fr) 88px; gap: 10px; }
-  .briefing-v2 .mission-kpi { gap: 5px; padding: 8px; }
-  .briefing-v2 .mission-kpi-icon { width: 34px; height: 34px; }
-  .briefing-v2 .mission-kpi strong { font-size: 28px; }
-  .briefing-v2 .mission-kpi p { display: none; }
-}
-@media (max-width: 1100px) and (min-width: 851px) {
-  .briefing-v2 { grid-template-columns: minmax(0, 1fr) 138px; gap: 10px; }
-  .briefing-v2 .mission-kpi > div > span { font-size: 11px; }
-  .briefing-v2 .mission-kpi p { font-size: 11px; }
-  .map-zoom-hint span { display: none; }
-}
 @media (max-width: 850px) {
   .briefing-shell .main-content { overflow-y: auto; }
-  .briefing-v2 { flex: none; min-height: 660px; grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(360px, 1fr) auto; grid-template-areas: "signals" "map" "highlights"; }
-  .briefing-v2 > .mission-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto; gap: 6px; }
-  .briefing-v2 .mission-kpi { gap: 5px; padding: 10px 5px; }
-  .briefing-v2 .mission-kpi-icon { width: 32px; height: 32px; }
-  .briefing-v2 .mission-kpi > div > span { font-size: 11px; }
-  .briefing-v2 .mission-kpi strong { font-size: 27px; }
-  .briefing-v2 .mission-kpi p, .briefing-v2 .mission-kpi-note { display: none; }
-  .map-zoom-hint { right: 8px; font-size: 11px; }
-  .map-zoom-hint span { display: none; }
-  .briefing-v2 .mission-highlights { min-height: 96px; }
 }
 /* 카드 내부 요소 합계가 카드 높이를 넘지 않도록 명시적인 줄 높이를 사용합니다. */
-.briefing-v2 .mission-kpi { gap: 6px; padding: 10px 8px; }
-.briefing-v2 .mission-kpi-icon { width: 40px; height: 40px; }
-.briefing-v2 .mission-kpi > div:not(.mission-kpi-icon) { display: grid; gap: 4px; }
-.briefing-v2 .mission-kpi > div > span { display: block; line-height: 16px; }
-.briefing-v2 .mission-kpi strong { margin: 0; font-size: 32px; line-height: 36px; }
-.briefing-v2 .mission-kpi p { margin: 0; line-height: 12px; }
-.briefing-v2 .mission-kpi-note { line-height: 12px; padding: 3px 8px; flex-shrink: 0; }
 .road-map .leaflet-tile-pane { filter: saturate(0.55) brightness(1.05); }
-.map-jurisdiction {
-  position: absolute; z-index: 2; left: 12px; bottom: 64px;
-  display: grid; gap: 3px; padding: 8px 10px; border: 1px solid var(--line);
-  border-radius: 8px; background: #ffffffed; color: var(--text);
-  font-size: 11px; font-weight: 700; pointer-events: none;
-}
-.map-jurisdiction span { color: var(--text-muted); font-size: 11px; font-weight: 400; }
-.directory-map .map-jurisdiction { bottom: 30px; }
-@media (max-height: 800px) and (min-width: 851px) {
-  .briefing-v2 .mission-kpi-icon { width: 30px; height: 30px; }
-  .briefing-v2 .mission-kpi { gap: 4px; padding: 8px; }
-  .briefing-v2 .mission-kpi strong { font-size: 28px; line-height: 32px; }
-  .briefing-v2 .mission-kpi p { display: none; }
-}
-@media (max-height: 650px) and (min-width: 851px) {
-  .briefing-v2 .mission-kpi-note { display: none; }
-}
-@media (max-width: 850px) {
-  .briefing-v2 .mission-kpi-icon { width: 30px; height: 30px; }
-  .briefing-v2 .mission-kpi strong { font-size: 27px; line-height: 30px; }
-}
 /* 도로는 위치 파악을 돕는 배경으로, 행정동 경계와 후보 표시를 우선합니다. */
 .road-map .leaflet-tile-pane { opacity: 0.48; filter: saturate(0.3) brightness(1.08); }
 .roadmap-district-label.leaflet-tooltip { color: var(--text); font-weight: 700; }
@@ -1340,9 +979,9 @@
 .relief-district.candidate text { fill: #53263f; font-weight: 800; font-size: 14px; }
 .relief-priority { cursor: pointer; outline: none; }
 .relief-priority:focus-visible rect, .relief-priority:hover rect { stroke: #2563eb; stroke-width: 2; }
-.relief-map .map-zoom-hint, .relief-map .map-jurisdiction { bottom: 68px; }
+
 .relief-map-note { position: absolute; left: 12px; bottom: 42px; font-size: 11px; color: var(--text-muted); pointer-events: none; }
-.directory-map .relief-map .map-zoom-hint, .directory-map .relief-map .map-jurisdiction { bottom: 36px; }
+
 .directory-map .relief-map-note { bottom: 10px; }
 @media (max-width: 600px) {
   .map-view-toggle { top: 7px; right: 7px; }
@@ -1351,25 +990,15 @@
 }
 @media (prefers-reduced-motion: reduce) { .relief-district .relief-top { transition: none; } }
 /* 넓어진 요약 카드는 아이콘을 왼쪽에 두어 낮은 화면에서도 잘리지 않습니다. */
-@media (min-width: 851px) {
-  .briefing-v2 { grid-template-columns: minmax(0, 1fr) clamp(210px, 16vw, 250px); }
-  .briefing-v2 .mission-kpi { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-content: center; justify-content: initial; text-align: left; gap: 8px 12px; padding: 14px; }
-  .briefing-v2 .mission-kpi-icon { width: 40px; height: 40px; grid-row: 1 / 3; align-self: center; }
-  .briefing-v2 .mission-kpi > div:not(.mission-kpi-icon) { gap: 3px; }
-  .briefing-v2 .mission-kpi p { display: block; font-size: 11px; line-height: 14px; }
-  .briefing-v2 .mission-kpi-note { display: inline-block; grid-column: 2; justify-self: start; }
-  .briefing-v2 > .mission-kpis { grid-template-rows: repeat(3, minmax(120px, 1fr)); }
-  .briefing-v2 { grid-template-rows: minmax(384px, 1fr) 100px; }
-}
 .road-map .leaflet-tile-pane { opacity: 0.72; filter: saturate(0.35) brightness(1.05); }
 .roadmap-district-label.leaflet-tooltip { font-size: 12px; background: #ffffffe0; padding: 2px 5px; border-radius: 4px; }
 /* E 시안: 관할 전체와 선택 동의 도로 확대창을 동시에 표시합니다. */
 .overview-lens { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(190px, 1fr); height: 100%; background: var(--surface-soft); }
 .lens-overview { min-width: 0; min-height: 0; }
 .lens-overview .road-map, .lens-overview .leaflet-container { background: var(--surface-soft); }
-.lens-overview .map-zoom-hint { bottom: 48px; left: 12px; right: auto; }
-.lens-overview .map-zoom-hint span { display: none; }
-.lens-overview .map-jurisdiction { bottom: 85px; }
+
+
+
 .lens-overview .roadmap-district-label { font-size: 11px; }
 .lens-detail { padding: 20px 10px 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-width: 0; }
 .lens-detail header { text-align: center; display: grid; gap: 5px; }
@@ -1392,13 +1021,9 @@
 .lens-connector line { stroke: #ee7595; stroke-width: 1.5; stroke-dasharray: 5 5; opacity: .7; }
 .lens-detail { position: relative; z-index: 2; }
 /* 전체 지도와 선택 동을 하나의 지도 영역에서 전환합니다. */
-.single-overview { position: relative; height: 100%; min-height: 0; isolation: isolate; }
-.single-overview .road-map, .single-overview .leaflet-container { background: var(--surface-soft); }
-.single-overview .map-view-toggle { z-index: 4; }
-.single-overview .roadmap-district-label { font-size: 11px; padding: 1px 3px; }
-.single-overview .map-jurisdiction { bottom: 72px; }
-.single-overview .map-zoom-hint { left: 12px; right: auto; bottom: 48px; }
-.single-overview .map-zoom-hint span { display: none; }
+
+
+
 .map-region-chip { position: absolute; z-index: 3; bottom: 52px; right: 12px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fffffff5; font-size: 11px; color: var(--text-muted); max-width: calc(100% - 125px); }
 .map-region-chip b { color: var(--text); }
 .map-region-chip button { border: 0; border-radius: 5px; padding: 4px 6px; background: var(--surface-tint); color: #3168ae; cursor: pointer; font-size: 11px; }
@@ -1418,9 +1043,6 @@
 .vector-map .map-tools { top: 16px; left: 16px; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 16px #334b6b0c; }
 .vector-map .map-tools button { width: 34px; height: 34px; color: var(--text-sub); }
 .vector-map .map-tools button:focus-visible { outline: 2px solid #3978d6; outline-offset: -3px; }
-.vector-region-picker { position: absolute; z-index: 2; top: 16px; right: 16px; display: flex; flex-direction: row; align-items: center; gap: 6px;
-  padding: 8px 10px; background: #fffffff2; border: 1px solid var(--line); border-radius: 10px; color: var(--text-muted); box-shadow: 0 4px 16px #334b6b08; }
-.vector-region-picker select { width: auto; max-width: 180px; height: 22px; margin: 0; padding: 0 3px; font: inherit; font-size: 11px; color: var(--text-sub); background: transparent; border: 0; cursor: pointer; }
 .vector-district-marker { padding: 3px 6px; border: 1px solid transparent; border-radius: 7px; background: #ffffffb8;
   font: inherit; font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; cursor: pointer; }
 .vector-district-marker:hover, .vector-district-marker.selected { color: #2866bf; background: var(--surface-tint); border-color: #9dbbe8; }
@@ -1436,9 +1058,9 @@
 .vector-priority-marker.selected { border: 2px solid #3978d6; background: var(--surface-soft); }
 .vector-district-marker:focus-visible, .vector-priority-marker:focus-visible { outline: 3px solid #3978d6; outline-offset: 3px; }
 .vector-district-marker[hidden], .vector-priority-marker[hidden] { display: none; }
-.vector-map .map-jurisdiction { bottom: 52px; left: 16px; padding: 9px 12px; border-radius: 10px; background: #fffffff2; }
-.vector-map .map-zoom-hint { left: auto; right: 16px; bottom: 52px; border-radius: 10px; background: #fffffff2; }
-.vector-map .map-zoom-hint span { display: inline; }
+
+
+
 .vector-map .maplibregl-ctrl-attrib { font-family: inherit; font-size: 11px; color: var(--text-muted); background: #fffffff0; }
 .vector-map .maplibregl-ctrl-attrib a { color: inherit; }
 .vector-map .maplibregl-ctrl-bottom-right { bottom: 36px; right: 6px; }
@@ -1451,17 +1073,14 @@
 .vector-map-fallback > p { position: absolute; top: 12px; left: 58px; right: 12px; background: #fffffff0; padding: 8px; font-size: 11px; border-radius: 8px; }
 @media (max-width: 850px) {
   .vector-map .map-tools { top: 10px; left: 10px; }
-  .vector-region-picker { top: 10px; right: 10px; }
-  .vector-region-picker select { max-width: 145px; }
-  .vector-map .map-jurisdiction { left: 10px; bottom: 52px; }
-  .vector-map .map-zoom-hint { right: 10px; }
-  .vector-map .map-zoom-hint span { display: none; }
+
+
+
   .vector-priority-marker { padding: 7px 9px; gap: 6px; }
 }
-/* 지역 현황: 동 상세는 표 자리(왼쪽)에 열고 지도는 가리지 않습니다. */
-.region-detail { padding: 14px; gap: 8px; }
-.region-detail .back-to-list { align-self: flex-start; font-size: 13px; }
-.region-detail .region-insight { position: static; width: auto; flex: 1; min-height: 0; overflow: auto; box-shadow: none; border: 0; padding: 4px 2px; background: transparent; backdrop-filter: none; animation: none; }
+
+
+
 .vector-priority-marker { padding: 5px 9px 5px 5px; gap: 6px; }
 .vector-priority-marker .vector-priority-number { width: 22px; height: 22px; border-radius: 7px; font-size: 12px; }
 .vector-priority-marker b { font-size: 12px; white-space: nowrap; }
@@ -1469,20 +1088,6 @@
 .directory-map .vector-district-marker { padding: 1px 4px; font-size: 11px; background: #ffffffd9; }
 .map-hover-label { position: absolute; z-index: 5; pointer-events: none; display: flex; gap: 6px; align-items: center; padding: 5px 8px; border-radius: 8px; background: #0f172ae6; color: #fff; font-size: 12px; white-space: nowrap; }
 .map-hover-label span { font-size: 11px; color: var(--line-strong); }
-.region-detail .region-insight > header .icon-button { display: none; }
+
 /* 지도 출처 표기는 이용 조건상 남기되 작고 흐리게 */
 .vector-map .maplibregl-ctrl-attrib { font-size: 11px; opacity: .7; }
-
-/* 지역 목록의 제목·안내·도움말·필터를 같은 여백으로 정렬합니다. */
-.region-directory > header { padding: 20px 20px 0; margin-bottom: 12px; }
-.region-directory > .hint { margin: 0 20px 12px; }
-.region-directory > .status-legend { margin: 0 20px 12px; }
-.region-directory > .directory-filters { padding: 0 20px 20px; }
-.directory-summary { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 20px 12px; color: var(--text-sub); font-size: 12px; }
-.directory-summary b { color: var(--text-strong); margin-left: 4px; }
-.directory-filters { flex-wrap: wrap; }
-@media (max-width: 1100px) {
-  .regional-overview { grid-template-columns: minmax(0, 1fr); overflow-y: auto; align-content: start; }
-  .regional-overview > .region-directory { min-height: 480px; }
-  .regional-overview > .directory-map { min-height: 400px; }
-}

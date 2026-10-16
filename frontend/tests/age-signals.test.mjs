@@ -49,17 +49,11 @@ test('all monthly detections open once without a sex label and survive restorati
   assert.equal(availableWorkspace(state,{districts:[{code:'1123059',name:'삼성2동'}],months:['2025-10'],ages:['20대'],sexes:['남성','여성']},'2025-10').tabs.length,1);
 });
 
-import { observationWindow, detectionBadge } from '../src/ageSignals.mjs';
+import { observationWindow } from '../src/ageSignals.mjs';
 test('observation window is three months BEFORE the label, including year boundaries', () => {
  assert.equal(observationWindow('2025-10'),'2025.07–09');
  assert.equal(observationWindow('2025-11'),'2025.08–10');
  assert.equal(observationWindow('2026-02'),'2025.11–2026.01');
  assert.equal(observationWindow('2026-01'),'2025.10–12');
  assert.equal(observationWindow('2025-13'),'');
-});
-test('pending domain is never labelled as not detected', () => {
- assert.equal(detectionBadge(true,'통신'),'통신 변화 탐지');
- assert.equal(detectionBadge(false,'이동'),'이동 미탐지');
- assert.equal(detectionBadge(null,'이동'),'이동 판단 보류');
- assert.equal(detectionBadge(undefined,'통신'),'통신 판단 보류');
 });

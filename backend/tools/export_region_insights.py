@@ -1,6 +1,10 @@
 """Export aggregate DB1 context without changing the authoritative DB1 database."""
 from pathlib import Path
 import argparse,csv,sqlite3,json,hashlib,math
+try:
+    from .export_activity_tracking import activity_tracking
+except ImportError:
+    from export_activity_tracking import activity_tracking
 
 
 def export(source, target):
@@ -33,7 +37,7 @@ def export(source, target):
     assert len({(r['period'],r['code'],r['age'],r['domain']) for r in consumption})==len(consumption)
     payload={'city':'강남구','scope':'regional_context','typologies':typologies,'consumption':consumption,
              'surveys':surveys,'consumptionScope':'merchant_dong_customer_age','surveyScope':'district_age_annual',
-             'alignment':'retrospective_context',
+             'alignment':'retrospective_context','activityTracking':activity_tracking(source),
              'sourceHashes':{str(p.relative_to(source)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [*paths,path]}}
     target.parent.mkdir(parents=True,exist_ok=True)
     target.write_text(json.dumps(payload,ensure_ascii=False,allow_nan=False),encoding='utf-8')

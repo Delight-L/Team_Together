@@ -13,7 +13,7 @@ const boundaryAttribution = '경계: <a href="https://sgis.kostat.go.kr" target=
   '<a href="https://github.com/vuski/admdongkor" target="_blank" rel="noopener noreferrer">admdongkor</a> · CC BY 4.0';
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export default function VectorMap({ regions, selected, onSelect, geometry, flat = false }) {
+export default function VectorMap({ regions, selected, onSelect, geometry }) {
   const canvasRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
@@ -21,7 +21,6 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
   const latest = useRef({ regions, selected, onSelect });
   latest.current = { regions, selected, onSelect };
   const [ready, setReady] = useState(false);
-  const [zoom, setZoom] = useState(null);
   const [baseError, setBaseError] = useState(false);
   const [renderError, setRenderError] = useState(false);
   // 지도가 좁아 이름이 숨겨진 동도 마우스를 올리면 이름과 판정을 보여 줍니다.
@@ -70,7 +69,6 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
       map.on('sourcedata', (event) => {
         if (event.sourceId === 'basemap' && event.sourceDataType === 'content') setBaseError(false);
       });
-      map.on('zoomend', () => setZoom(map.getZoom()));
       map.on('click', 'district-fill', (event) => {
         const name = event.features?.[0]?.properties.name;
         if (name) latest.current.onSelect(name);
@@ -94,7 +92,6 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
         }
       });
       resize.observe(canvasRef.current);
-      setZoom(map.getZoom());
       return () => {
         resize.disconnect();
         markersRef.current.forEach(({ marker }) => marker.remove());
@@ -177,7 +174,7 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
       markersRef.current.forEach(({ marker }) => marker.remove());
       markersRef.current = [];
     };
-  }, [ready, features, regions, flat]);
+  }, [ready, features, regions]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -187,15 +184,8 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
       button.setAttribute('aria-pressed', String(name === selected));
       if (name === selected) button.hidden = false;
     });
-    const feature = features.find((item) => item.properties.name === selected);
-    // 지역 현황(flat)은 다른 동과 비교하는 화면이므로 선택해도 확대하지 않고 강조만 합니다.
-    if (feature && !flat) {
-      map.fitBounds(geometryBounds(feature.geometry), {
-        padding: { top: 60, bottom: 90, left: 42, right: 42 },
-        maxZoom: 14, duration: reduceMotion() ? 0 : 650,
-      });
-    } else if (initialCamera.current) map.easeTo({ ...initialCamera.current, padding: 0, duration: reduceMotion() ? 0 : 450 });
-  }, [ready, features, selected, flat]);
+    if (initialCamera.current) map.easeTo({ ...initialCamera.current, padding: 0, duration: reduceMotion() ? 0 : 450 });
+  }, [ready, features, selected]);
 
   const reset = () => {
     onSelect('');
@@ -214,15 +204,6 @@ export default function VectorMap({ regions, selected, onSelect, geometry, flat 
       <button onClick={() => mapRef.current?.zoomOut()} aria-label="지도 축소">−</button>
       <button onClick={reset} aria-label="지도 배율 초기화"><Icon name="map" size={15} /></button>
     </div>
-    {!flat && <label className="vector-region-picker"><Icon name="map" size={14} />
-      <select aria-label="지도에서 지역 선택" value={selected || ''} onChange={(event) => onSelect(event.target.value)}>
-        <option value="">{city} 전체 보기</option>
-        {regions.map((region) => <option key={region.name} value={region.name}>{region.name} · {region.status}</option>)}
-      </select>
-    </label>}
-    <div className="map-jurisdiction">{city} 관할 지역 <span>{features.length}개 {city.endsWith('구') ? '행정동' : '읍면동'}</span></div>
-    <div className="map-zoom-hint"><span>휠로 확대·축소 · 끌어서 이동</span>
-      <output aria-label="지도 확대 단계">{zoom === null ? '—' : `줌 ${zoom.toFixed(1)}`}</output></div>
     {baseError && <div className="map-tile-error" role="status">지도 배경을 불러오지 못했습니다. 지역 선택은 계속 사용할 수 있습니다.
       <button onClick={() => { setBaseError(false); mapRef.current?.refreshTiles('basemap'); }}>다시 불러오기</button>
     </div>}

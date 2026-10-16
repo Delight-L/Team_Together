@@ -179,13 +179,13 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .help-button:hover:not(:disabled) { background: var(--line); }
 .topbar .icon-button { display: inline-flex; align-items: center; gap: 5px; width: auto; padding: 6px 10px; }
 .topbar-chat-label { font-size: 12px; font-weight: 700; }
-.status-legend { margin: 0 14px 10px; font-size: 12px; color: var(--text-sub); }
-.status-legend summary { cursor: pointer; color: #1d4ed8; font-weight: 600; }
-.status-legend p { margin: 8px 0; line-height: 1.6; }
-.status-legend dl { display: grid; gap: 4px; margin: 0; }
-.status-legend dl > div { display: grid; grid-template-columns: 72px 1fr; gap: 8px; }
-.status-legend dt { font-weight: 700; color: var(--text-strong); }
-.status-legend dd { margin: 0; }
+
+
+
+
+
+
+
 .status-tag[title] { cursor: help; }
 abbr[title] { text-decoration: underline dotted; cursor: help; }
 

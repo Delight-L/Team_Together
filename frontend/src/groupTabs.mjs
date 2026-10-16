@@ -4,11 +4,6 @@ export function openGroup(state, group) {
   const id = groupKey(group);
   return { ...state, tabs: state.tabs.some(t => groupKey(t) === id) ? state.tabs : [...state.tabs, group], active: id };
 }
-export function closeGroup(state, id) {
-  const index = state.tabs.findIndex(t => groupKey(t) === id);
-  const tabs = state.tabs.filter(t => groupKey(t) !== id);
-  return { ...state, tabs, active: state.active === id ? (tabs.length ? groupKey(tabs[Math.min(index, tabs.length - 1)]) : '') : state.active };
-}
 
 const validMonth = m => typeof m === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(m);
 export function restoreWorkspace(value, city) {
