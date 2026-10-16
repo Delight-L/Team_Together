@@ -313,7 +313,30 @@ def _context_answer(evidence):
 
 def _support_answer(evidence):
     """Show the numbers people can act on, then explain their limited relation."""
-    lines=['신호와 함께 볼 수 있는 지역 수치입니다. 이 자료는 원인을 확정하는 근거가 아니라, 현장에서 무엇을 확인할지 정하는 참고자료입니다.']
+    lines=[]
+    # 특정 연령을 물은 경우에는 해당 연령의 직접 활동값을 먼저 보여준다.
+    # 지역 배경·강남구 공통자료는 그 뒤에 보조 설명으로 붙인다.
+    age_rows=evidence.supplementary.get('age_signal_changes', [])
+    if age_rows:
+        lines.append('먼저 질문하신 연령대의 지역 직접 자료입니다.')
+        for row in age_rows[:10]:
+            age=AGE_LABEL.get(row.get('age_band'), row.get('age_band','연령 확인 불가'))
+            values=[]
+            for metric in CORE:
+                value=row.get(metric)
+                if isinstance(value,(int,float)):
+                    values.append(f'{METRICS[metric]} {_value(value)}')
+            changes=[]
+            for metric in CORE:
+                pct=row.get(metric+'_change_pct')
+                if isinstance(pct,(int,float)):
+                    changes.append(f'{METRICS[metric]} {pct:+.1f}%')
+            if values:
+                line=f"{row.get('행정동','선택 지역')} {age} · {observation_period_text(row.get('date'))}: " + ', '.join(values)
+                if changes: line += ' · 변화율 ' + ', '.join(changes)
+                lines.append(line)
+        lines += ['', '이 값은 해당 지역·연령대의 집계자료이며 개인의 상태를 뜻하지 않습니다.']
+    lines.append('신호와 함께 볼 수 있는 지역 수치입니다. 이 자료는 원인을 확정하는 근거가 아니라, 현장에서 무엇을 확인할지 정하는 참고자료입니다.')
     if evidence.rows:
         row=evidence.rows[0]
         lines += ['', f"현재 신호: {row.get('행정동')} · {observation_period_text(row.get('date'))} · {SIGNAL_LABEL.get(str(row.get('signal_type','')).lower(),'변화')} 변화"]

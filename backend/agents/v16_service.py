@@ -1,24 +1,21 @@
 """Request-scoped v16 specialist used by the main supervisor.
 
-v16 지역 변화 신호 에이전트(backend/agents/regional_v16)를 보미 총괄 에이전트에 연결합니다.
-- AI 사용 여부·제공사·키는 관리자 «AI 설정»(chatbot/ai_settings.py)을 따릅니다. v16 전용 .env 키는 쓰지 않습니다.
-  Gemini면 v16 원래 방식(JSON 스키마 지정)으로, 다른 제공사면 공용 llm 창구로 질문 의도를 분류합니다.
-- 근거 자료는 DB1 SQLite(outputs/db1.sqlite, 또는 DB1_DATABASE_PATH)입니다. 저장소에 올리지 않으므로
-  파일이 없는 서버에서는 data_ready()가 False이고, 총괄 에이전트가 기존 지역 분석 담당으로 답합니다.
-Historical text is restored without replaying old queries, and SQLite evidence uses v16's existing
+Only Gemini classifies a current question when AI is enabled. Historical text is
+restored without replaying old queries, and SQLite evidence uses v16's existing
 validated renderers. No process-global conversation or credential mutation.
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
+import math
+import os
 import re
 import sys
 from dataclasses import replace
 from pathlib import Path
 
-from backend.chatbot import ai_settings
+from dotenv import dotenv_values
 
 V16_ROOT = Path(__file__).resolve().parent / "regional_v16"
 if str(V16_ROOT) not in sys.path:
@@ -33,41 +30,112 @@ from chatbot_agent.schemas import GuardResult
 
 LOGGER = logging.getLogger(__name__)
 CONTEXTUAL_TYPES = {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"}
-LIST_TYPES = {"signals", "rank_regions", "anomaly"}
+LIST_TYPES = {"signals", "age_signals", "rank_regions", "anomaly"}
 MONTH = re.compile(r"^20\d{2}-(0[1-9]|1[0-2])$")
 
 
-DEFAULT_MODEL = "gemini-2.5-flash-lite"
+METRIC_BUTTON_QUESTIONS = {
+    "통화 상대 수": "통화 상대 수 이상신호",
+    "통화": "통화 상대 수 이상신호",
+    "문자 상대 수": "문자 상대 수 이상신호",
+    "문자": "문자 상대 수 이상신호",
+    "평일 이동": "평일 이동 이상신호",
+    "휴일 이동": "휴일 이동 이상신호",
+}
+
+SCREEN_SUMMARY = re.compile(r"(?:지금|현재)\s*보는\s*화면|화면\s*(?:내용|정보)?.*(?:정리|설명)|(?:정리|설명).*(?:화면|내용)")
 IMPLICIT_SCREEN_INFO = re.compile(r"(정보|자료|현황|변화|맥락|설명|알려줘|보여줘)")
 
-def _age_band(value):
-    return {'20대':'20s','30대':'30s','40대':'40s','50대':'50s','60대':'60plus','60세 이상':'60plus'}.get(str(value or '').strip())
 
-def _expand_implicit_screen_info(question, context):
-    if not context.get('district') or not IMPLICIT_SCREEN_INFO.search(question): return question
-    if re.search(r'(이상\s*신호|탐지.*지역|지역.*목록|순위|[가-힣0-9]{2,8}동)', question): return question
+def _age_band(value: object) -> str | None:
+    """Convert the dashboard's Korean age label to the v16 DB band."""
+    text = str(value or '').strip()
+    return {'20대': '20s', '30대': '30s', '40대': '40s',
+            '50대': '50s', '60대': '60plus', '60세 이상': '60plus'}.get(text)
+
+
+def _expand_implicit_screen_info(question: str, context: dict) -> str:
+    """Make an underspecified information question explicitly use the visible card."""
+    if not context.get('district') or not IMPLICIT_SCREEN_INFO.search(question):
+        return question
+    # Global signal/list questions intentionally ignore the selected card's
+    # district; otherwise a request for all detected regions becomes a query
+    # for only the currently open dong.
+    if re.search(r"(이상\s*신호|탐지.*지역|지역.*목록|순위)", question):
+        return question
+    # At this stage the resolver's district catalogue is not available yet;
+    # a Korean administrative-dong token is sufficient to detect an explicit
+    # region and preserve the user's wording.
+    if re.search(r"[가-힣0-9]{2,8}동", question):
+        return question
+    # v16 has validated age bands only for 20s and older; do not inject an
+    # unsupported dashboard label such as 10대 into the natural-language query.
     age = str(context.get('age') or '').strip() if _age_band(context.get('age')) else ''
-    return f"현재 화면에서 선택된 {context['district']} {age}의 {question.strip()}".replace('  ',' ')
+    subject = f"{context['district']} {age}".strip()
+    return f"현재 화면에서 선택된 {subject}의 {question.strip()}"
+
+
+def _expand_dashboard_metric_question(question: str, context: dict) -> str:
+    """메인 대시보드의 지표 버튼 입력을 실제 상세 질문으로 확장한다."""
+    normalized = " ".join(question.strip().split())
+    if context.get("district") and normalized in METRIC_BUTTON_QUESTIONS:
+        return f"현재 선택한 {context['district']}의 {METRIC_BUTTON_QUESTIONS[normalized]}를 자세히 설명해줘"
+    return question
+
+
+def _expand_visible_screen_question(question: str, screen: object) -> str:
+    """Turn an implicit chart-summary request into a bounded data question."""
+    if not isinstance(screen, dict) or not SCREEN_SUMMARY.search(question):
+        return question
+    metric, start, end = (str(screen.get(key) or '').strip() for key in ('metric', 'from', 'to'))
+    dongs = tuple(name for name in screen.get('districts', ()) if isinstance(name, str) and name)
+    if not (metric and MONTH.fullmatch(start) and MONTH.fullmatch(end) and dongs):
+        return question
+    # “전월”은 일반 후속질문 규칙에서 previous로 해석될 수 있으므로,
+    # 화면에 표시된 전월 변화율은 월별 변화 추이 요청으로 명시한다.
+    return f"{'·'.join(dongs)}의 {metric} {start}부터 {end}까지 월별 변화 추이를 정리해줘"
+
+
+def _visible_evidence_summary(bot: Chatbot, screen: object) -> str | None:
+    """Summarize the exact selected-detail card before any district-wide context."""
+    if not isinstance(screen, dict) or screen.get('kind') != 'evidence':
+        return None
+    dongs = tuple(name for name in screen.get('districts', ()) if isinstance(name, str) and name)
+    month = str(screen.get('to') or '')
+    labels = tuple(label for label in screen.get('metrics', ()) if isinstance(label, str))
+    columns = {'전화 연락': 'call_contacts', '문자 연락': 'text_contacts',
+               '평일 이동': 'weekday_move_count', '휴일 이동': 'weekend_move_count'}
+    if len(dongs) != 1 or not MONTH.fullmatch(month) or not labels:
+        return None
+    frame = bot.repo.activity(dongs[0], month, month)
+    if frame.empty:
+        return f"{dongs[0]}의 {month} 화면 자료를 찾지 못했습니다."
+    row = frame.iloc[0]
+    parts = []
+    for label in labels:
+        value = row.get(columns.get(label, '') + '_log_change')
+        if isinstance(value, (int, float)) and math.isfinite(value):
+            parts.append(f"{label} {math.expm1(value) * 100:.1f}%")
+    if not parts:
+        return f"{dongs[0]}의 {month} 화면에서 변화율을 확인할 수 있는 지표가 없습니다."
+    return (f"{dongs[0]}의 {month} 화면 요약입니다. " + ' · '.join(parts) + '. '
+            '모두 선택한 동의 전월 대비 집계 변화율이며, 개인의 상태를 뜻하지 않습니다.')
 
 
 def _configuration():
-    """관리자 AI 설정. 외부 AI를 쓸 수 없으면 None입니다."""
+    # 관리자 AI 설정을 지역분석에도 그대로 적용합니다.
+    from backend.chatbot import ai_settings
     config = ai_settings.current()
-    return config if config.ready else None
+    return config.provider, config.api_key, config.model
 
 
 def ai_available():
-    return _configuration() is not None
+    return bool(_configuration()[1])
 
 
 def data_ready():
-    """v16 근거 자료(DB1 SQLite)가 이 서버에 있는지."""
-    try:
-        from chatbot_agent.repository import DataRepository
-        return DataRepository(V16_ROOT).db.is_file()
-    except Exception as exc:  # 설정 파일 손상 등도 «자료 없음»으로 보고 기존 담당으로 넘깁니다.
-        LOGGER.warning("v16 자료 확인 실패: %s", type(exc).__name__)
-        return False
+    """챗봇 설정/상태 API가 사용하는 v16 자료 준비 여부입니다."""
+    return V16_ROOT.exists() and (V16_ROOT / "chatbot_agent").exists()
 
 
 def _bounded_history(history):
@@ -119,7 +187,7 @@ class _RequestMemory(ConversationMemory):
                 continue
             self.turns.append(ConversationTurn(
                 question, parsed.purpose, parsed.question_type, tuple(names), start, end,
-                parsed.signal, item["content"][:1600], parsed.age_band, parsed.age_bands,
+                parsed.signal, item["content"][:1600], parsed.age_band, parsed.age_bands, parsed.metric,
             ))
             self.turns = self.turns[-self.max_turns:]
             if "알려주세요" in item["content"] or "어느 기간" in item["content"]:
@@ -169,43 +237,57 @@ use_previous_scope는 현재 질문이 실제 직전 조회를 이어갈 때만 
 JSON 스키마에 맞는 객체만 반환하세요."""
 
 
-def _ask_ai(config, prompt):
-    """질문 의도 JSON 문자열을 받습니다. Gemini는 스키마를 강제하고, 다른 제공사는 스키마를 지시문으로 넘깁니다."""
-    if config.provider == "gemini":
-        from google import genai
-        client = genai.Client(api_key=config.api_key, http_options={"timeout": 20000})
-        try:
-            response = client.models.generate_content(model=config.model, contents=prompt, config={
-                "temperature": 0, "response_mime_type": "application/json", "response_json_schema": INTENT_SCHEMA,
-            })
-        finally:
-            client.close()
-        return response.text or ""
-    from backend.chatbot.welfare.app.llm.client import llm
-    system = prompt + "\nJSON 스키마:\n" + json.dumps(INTENT_SCHEMA, ensure_ascii=False)
-    return asyncio.run(llm.complete([{"role": "system", "content": system},
-                                     {"role": "user", "content": "위 current_question의 의도를 JSON으로 분류하세요."}],
-                                    json_mode=True, max_tokens=1000))
-
-
 class _ScopedResolver(IntentResolver):
-    def __init__(self, root, model, period, context, config, use_ai):
+    def __init__(self, root, model, period, context, key, use_ai):
         super().__init__(root, model, period)
-        self.context, self.config, self.use_ai = context, config, use_ai
+        self.context, self.key, self.use_ai = context, key, use_ai
         self.failure_status = None
 
     def resolve(self, question, districts, memory):
         names = explicit_districts(question, districts)
         parsed = self._apply_explicit_districts(parse_intent(question, districts), names)
-        if self.use_ai and self.config:
+        if self.use_ai and self.key:
             try:
                 prompt = INTENT_PROMPT + "\n" + json.dumps({
                     "allowed_districts": sorted(districts), "available_period": self.available_period,
                     "dashboard_defaults": self.context, "history": memory.as_prompt_data(),
                     "current_question": question,
                 }, ensure_ascii=False)
-                intent = self._apply_local_constraints(self._validate(_json_object(_ask_ai(self.config, prompt)), districts), parsed, names)
-                self.last_source = "ai"
+                if self.provider == "gemini":
+                    from google import genai
+                    client = genai.Client(api_key=self.key, http_options={"timeout": 20000})
+                    try:
+                        response = client.models.generate_content(model=self.model, contents=prompt, config={
+                            "temperature": 0, "response_mime_type": "application/json", "response_json_schema": INTENT_SCHEMA,
+                        })
+                        text = response.text or ""
+                    finally:
+                        client.close()
+                elif self.provider == "openai":
+                    from openai import OpenAI
+                    response = OpenAI(api_key=self.key, timeout=20).chat.completions.create(
+                        model=self.model, messages=[{"role": "user", "content": prompt}],
+                        temperature=0, response_format={"type": "json_object"})
+                    text = response.choices[0].message.content or ""
+                else:
+                    from anthropic import Anthropic
+                    response = Anthropic(api_key=self.key).messages.create(
+                        model=self.model, max_tokens=1200, temperature=0,
+                        messages=[{"role": "user", "content": prompt}])
+                    text = "".join(getattr(block, "text", "") for block in response.content)
+                intent = self._apply_local_constraints(self._validate(_json_object(text), districts), parsed, names)
+                # 연령과 활동 지표가 명시된 질문은 LLM이 지역 배경으로
+                # 잘못 분류해도 규칙 기반 의도를 우선합니다.
+                if parsed.metric and parsed.age_band:
+                    intent = replace(intent, purpose='track_change', question_type='age_activity',
+                                     metric=parsed.metric, age_band=parsed.age_band,
+                                     age_bands=parsed.age_bands, age_scope_explicit=True,
+                                     needs=tuple(n for n in intent.needs if n not in {'연령'}))
+                elif '소비' in question and '날씨' in question:
+                    # 소비·날씨 맥락은 지역 배경 조회로 고정해 날씨 보조자료가
+                    # 지역 유형 답변으로 대체되지 않도록 합니다.
+                    intent = replace(intent, purpose='plan_review', question_type='support', needs=())
+                self.last_source = self.provider
                 if intent.question_type == "age_activity":
                     bands, unsupported = comparison_ages(question)
                     if unsupported:
@@ -223,13 +305,13 @@ class _ScopedResolver(IntentResolver):
                         intent = replace(intent, age_band=None, age_scope_explicit=True)
             except Exception as exc:
                 self.failure_status = getattr(exc, "code", None)
-                LOGGER.warning("v16 AI intent unavailable (%s, status=%s)", type(exc).__name__, self.failure_status)
+                LOGGER.warning("v16 Gemini intent unavailable (%s, status=%s)", type(exc).__name__, self.failure_status)
                 self.last_source = "local_model_error"
                 intent = self._fallback(question, districts, memory, names)
         else:
             self.last_source = "local_ai_off" if not self.use_ai else "local_no_key"
             intent = self._fallback(question, districts, memory, names)
-        if self.last_source != "ai":
+        if self.last_source != "gemini":
             if re.fullmatch(r"(?:변화\s*)?요약[.!?\s]*", question.strip()):
                 scoped = self.context.get("district") in districts
                 intent = replace(intent, purpose="track_change" if scoped else "find_region",
@@ -237,10 +319,10 @@ class _ScopedResolver(IntentResolver):
                                  use_previous_scope=scoped, needs=())
             elif re.search(r"요약", question) and re.search(r"이\s*동|그\s*동", question):
                 intent = replace(intent, purpose="track_change", question_type="reason", use_previous_scope=True)
-        self.resolved_intent = self._defaults(intent, districts, memory, names)
+        self.resolved_intent = self._defaults(intent, districts, memory, names, question)
         return self.resolved_intent
 
-    def _defaults(self, intent, districts, memory, explicit_names):
+    def _defaults(self, intent, districts, memory, explicit_names, question):
         if intent.purpose == "dialogue" or intent.question_type in {"methodology", "capabilities", "consumption_criteria", "data_status"}:
             return intent
         previous = memory.last_scope()
@@ -254,39 +336,73 @@ class _ScopedResolver(IntentResolver):
             elif self.context.get("district") in districts:
                 names = (self.context["district"],)
         start, end = intent.start_month, intent.end_month
+        excluded = list(getattr(intent, 'excluded_months', ()))
+        # Resolve '12월 말고' against request context before planning.  The
+        # question asks for all available results except that month, so the
+        # dashboard's selected month must not become the only result range.
+        for index, value in enumerate(excluded):
+            if value.startswith("__month__"):
+                month = value[-2:]
+                year = self.context.get("month", "")[:4]
+                if not re.fullmatch(r"20\d{2}", year):
+                    year = (self.available_period or (None, None))[1][:4]
+                excluded[index] = f"{year}-{month}"
         if not (start or end) and not intent.all_available_period:
             if previous and (intent.use_previous_scope or names and set(names).issubset(previous.districts)):
                 start, end = previous.start_month, previous.end_month
-            if not (start or end) and MONTH.fullmatch(self.context.get("month", "")):
+            # A selected dashboard month is a default only when the user
+            # actually points at the selection. A standalone explicit-dong
+            # question still needs its own reference month (B07).
+            points_to_dashboard = bool(re.search(r"이\s*동|그\s*동|지금\s*선택|현재\s*선택|대시보드", question))
+            # 활동 지표 질문도 화면의 기준월을 기본값으로 사용합니다.
+            # 예: "삼성1동의 통화 상대 수"는 현재 화면 기준월의 값을 묻는
+            # 것으로 해석해 불필요한 기간 재질문이나 엉뚱한 자료 fallback을 막습니다.
+            uses_visible_default = intent.question_type in (LIST_TYPES | {"age_activity"}) or (
+                intent.question_type == "activity" and bool(intent.metric))
+            if not (start or end) and (points_to_dashboard or uses_visible_default) and MONTH.fullmatch(self.context.get("month", "")):
                 start = end = self.context["month"]
         needs = tuple(item for item in intent.needs if not (item == "행정동" and names or item == "기간" and start and end))
-        return replace(intent, dong=names[0] if len(names) == 1 else None, dongs=tuple(names),
+        changes = dict(dong=names[0] if len(names) == 1 else None, dongs=tuple(names),
                        start_month=start, end_month=end, needs=needs)
+        if hasattr(intent, 'excluded_months'):
+            changes['excluded_months'] = tuple(excluded)
+        return replace(intent, **changes)
 
 
 def reply(question, history, context, use_ai=True, group=None):
     """Return an existing supervisor reply dictionary with request-local memory."""
-    config = _configuration()
-    model = config.model if config and config.provider == "gemini" else DEFAULT_MODEL
+    provider, key, model = _configuration()
     public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month", "age", "sex")}
+    question = _expand_visible_screen_question(question, context.get('screen'))
     question = _expand_implicit_screen_info(question, public_context)
-    resolver = _ScopedResolver(V16_ROOT, model, None, public_context, config, bool(use_ai))
+    question = _expand_dashboard_metric_question(question, public_context)
+    resolver = _ScopedResolver(V16_ROOT, model, None, public_context, key, bool(use_ai))
+    resolver.provider = provider
     bot = Chatbot(V16_ROOT, model=model, intent_resolver=resolver, moderator=_SupervisorModerator())
     bot.allow_ai_generation = False
     resolver.available_period = bot.repo.available_period()
-    bot.activate_dashboard_context({'dong': public_context.get('district'),
-                                    'label_month': public_context.get('month'),
-                                    'age_band': _age_band(public_context.get('age'))}, None)
+    # 웹 대시보드에서 선택한 동·기준월을 v16 내부 질의 계획에도 전달합니다.
+    bot.activate_dashboard_context({
+        'dong': public_context.get('district'),
+        'label_month': public_context.get('month'),
+        'age_band': _age_band(public_context.get('age')),
+    }, None)
     bot.memory = _RequestMemory(history, bot.repo.districts())
+    if SCREEN_SUMMARY.search(question):
+        summary = _visible_evidence_summary(bot, context.get('screen'))
+        if summary:
+            return {"answer": summary, "mode": "v16 · 저장된 자료 답변 · DB1 근거",
+                    "sources": [{"label": "대시보드 선택 동 분석값"}],
+                    "intentSource": "dashboard_screen", "memoryMode": "request_history", "followUps": []}
     result = bot.answer(question)
     source = resolver.last_source or "input_guard"
     answer = result.text
     intent = getattr(resolver, "resolved_intent", None)
-    if intent and intent.question_type in LIST_TYPES and not (intent.dong or intent.dongs):
+    if intent and intent.question_type in LIST_TYPES and not (intent.dong or intent.dongs) and not getattr(intent, 'excluded_months', ()):
         answer = f"{public_context['city'] or '강남구'} 전체 지역을 살펴본 결과예요.\n\n{answer}"
     result_dict = {
         "answer": answer,
-        "mode": ("v16 · AI 의도 판단 · DB1 근거" if source == "ai"
+        "mode": ("v16 · Gemini 의도 판단 · DB1 근거" if source == "gemini"
                  else "v16 · 저장된 자료 답변 · DB1 근거" if source == "local_model_error"
                  else "v16 · 외부 AI 호출 없음 · DB1 근거"),
         "sources": [{"label": label} for label in result.evidence.sources] or [{"label": "v16 · DB1"}],
@@ -294,14 +410,14 @@ def reply(question, history, context, use_ai=True, group=None):
     }
     notices = []
     if use_ai and source == "local_no_key":
-        notices.append("AI 연결 설정이 없어 저장된 자료로 답했습니다.")
+        notices.append("Gemini 연결 설정이 없어 저장된 자료로 답했습니다.")
     elif use_ai and source == "local_model_error":
         if resolver.failure_status == 429:
-            notices.append("AI 사용 한도를 초과해 보조 규칙과 저장된 자료로 답했습니다.")
+            notices.append("Gemini 사용 한도를 초과해 보조 규칙과 저장된 자료로 답했습니다.")
         elif resolver.failure_status in {401, 403}:
-            notices.append("AI 연결 권한을 확인하지 못해 보조 규칙과 저장된 자료로 답했습니다.")
+            notices.append("Gemini 연결 권한을 확인하지 못해 보조 규칙과 저장된 자료로 답했습니다.")
         else:
-            notices.append("AI 연결이 원활하지 않아 보조 규칙과 저장된 자료로 답했습니다.")
+            notices.append("Gemini 연결이 원활하지 않아 보조 규칙과 저장된 자료로 답했습니다.")
     gender_requested = re.search(r"남성|여성|남자|여자|성별", question) or (
         group and re.search(r"(?:이|그|선택한|현재)\s*그룹", question))
     if gender_requested and intent and intent.question_type in (CONTEXTUAL_TYPES | LIST_TYPES):
