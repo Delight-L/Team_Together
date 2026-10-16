@@ -356,7 +356,7 @@ def reply(question, history, context, use_ai=True, group=None):
     source = resolver.last_source or "input_guard"
     answer = result.text
     intent = getattr(resolver, "resolved_intent", None)
-    if intent and intent.question_type in LIST_TYPES and not (intent.dong or intent.dongs) and not intent.excluded_months:
+    if intent and intent.question_type in LIST_TYPES and not (intent.dong or intent.dongs) and not getattr(intent, 'excluded_months', ()):
         answer = f"{public_context['city'] or '강남구'} 전체 지역을 살펴본 결과예요.\n\n{answer}"
     result_dict = {
         "answer": answer,
