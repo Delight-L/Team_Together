@@ -376,6 +376,14 @@ def reply(question, history, context, use_ai=True, group=None):
     question = _expand_visible_screen_question(question, context.get('screen'))
     question = _expand_implicit_screen_info(question, public_context)
     question = _expand_dashboard_metric_question(question, public_context)
+    # "이 사례"는 대시보드 선택값으로 임의 보충하지 않는다. 바로 앞
+    # 대화에 명시적인 동/사례가 없으면 사용자가 대상을 다시 지정하게 한다.
+    if re.search(r"이\s*사례|그\s*사례", question) and re.search(r"탐지|신호|이유", question):
+        prior = ' '.join(str(item.get('content') or '') for item in (history or [])[-4:] if isinstance(item, dict))
+        if not re.search(r"[가-힣0-9]{2,8}동|전체\s*지역|강남구\s*전체", prior):
+            return {"answer": "어떤 사례를 말씀하시는지 확인이 필요해요. 지역(행정동), 기준월, 연령대 중 하나를 알려주시거나 바로 앞 답변의 사례를 지정해 주세요.",
+                    "mode": "v16 · 사례 확인 필요", "sources": [],
+                    "intentSource": "clarification", "memoryMode": "request_history", "followUps": []}
     resolver = _ScopedResolver(V16_ROOT, model, None, public_context, key, bool(use_ai))
     resolver.provider = provider
     bot = Chatbot(V16_ROOT, model=model, intent_resolver=resolver, moderator=_SupervisorModerator())
