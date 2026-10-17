@@ -3,6 +3,7 @@ import re
 from backend.common import SEOUL
 from datetime import datetime
 from backend.chatbot.welfare.app.dialogue import resources, semantic
+from backend.chatbot.welfare.app.dialogue.query_rules import excludes_past
 
 FOLLOWUP = re.compile(
     r'^(?:(?:그|이)(?:사업|지원|프로그램)(?:의|은|는)?|그러면|그럼)?'
@@ -17,7 +18,7 @@ def is_followup(question):
 def filters(query, planning=False):
     reference = planning or bool(re.search(r'다른\s*지역|타\s*지역|참고\s*사례|비교\s*사례', query))
     past_year = any(int(year) < datetime.now(SEOUL).year for year in re.findall(r'(20\d{2})\s*년', query))
-    historical = planning or past_year or bool(re.search(r'과거|지난|종료된|이전\s*공고', query))
+    historical = (planning or past_year or bool(re.search(r'과거|지난|종료된|이전\s*공고', query))) and not excludes_past(query)
     return {'include_reference': reference, 'include_past': historical}
 
 

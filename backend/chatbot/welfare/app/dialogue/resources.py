@@ -10,6 +10,7 @@ import threading
 import time
 
 import backend.common
+from backend.chatbot.welfare.app.dialogue.query_rules import excludes_past, named_program
 
 from backend.db.welfare_chatbot_repository import (
     catalog_counts, database_id, load_dataset_rows, search_catalog,
@@ -182,11 +183,16 @@ def search_terms(query):
 def has_program_name(query, *, city=""):
     terms = search_terms(query)
     documents = load_resources() if not city or city in COVERED_CITIES else []
-    if any((len(compact(r["name"])) >= 3 and compact(r["name"]) in compact(query))
+    if any(named_program(query, r['name'])
            or any(term in r["name"] for term in terms) for r in documents):
         return True
     return resource_source() == "db" and bool(search_catalog(
         query, terms, city=city, name_only=True, include_past=True, limit=1))
+
+
+def named_document_requested(query):
+    """조건으로 제외되기 전의 고유 문서 사업명이 질문에 명시됐는지 확인합니다."""
+    return any(named_program(query, record['name']) for record in load_resources())
 
 
 def source_citation(record):
@@ -198,7 +204,7 @@ def source_citation(record):
     if record.get("collected_at"):
         citation += f' · 자료 수집일 {record["collected_at"][:10]} (운영 확인일 아님)'
     if record.get("snapshot_hash"):
-        citation += f' · 대화 당시 자료 {record["snapshot_hash"][:12]}'
+        citation += ' · 대화 당시 보존 자료'
     return citation
 
 
@@ -216,13 +222,16 @@ def search(query, limit=5, *, city="", district="", include_reference=False, inc
     """질문과 관련 있는 사업을 점수 순으로 limit개까지 돌려줍니다."""
     if limit < 1:
         return []
+    past_excluded = excludes_past(query)
+    include_past = include_past and not past_excluded
     # 사업명 자체를 문장에서 찾습니다. 조사('세곡동행의/에')와 띄어쓰기를 허용합니다.
     # 사업을 콕 집어 물으면 일반 동의어로 찾은 다른 사업을 섞지 않습니다.
     documents = load_resources()
+    requested_document = any(named_program(query, r['name']) for r in documents)
     resources = documents if not city or city in COVERED_CITIES or include_reference else []
     if city and city not in COVERED_CITIES and include_reference:
         resources = [dict(r, reference_only=True, status=r["status"] + " / 다른 지역 참고 사례") for r in resources]
-    if asks_current_recruitment(query) and not include_past:
+    if (asks_current_recruitment(query) or past_excluded) and not include_past:
         resources = [r for r in resources if r.get("current_operation_verified") and r.get("application_details_verified")]
     terms = search_terms(query)
     if resource_source() == "db":
@@ -230,10 +239,13 @@ def search(query, limit=5, *, city="", district="", include_reference=False, inc
             query, terms, city=city, include_reference=include_reference, include_past=include_past,
             support_terms=HOUSING_TERMS if any(term in query for term in HOUSING_TERMS) else (),
             target_term="자립준비청년" if "자립준비청년" in compact(query) else "")]
-    named = [r for r in resources if len(compact(r["name"])) >= 3 and compact(r["name"]) in compact(query)]
+    named = [r for r in resources if named_program(query, r['name'])]
     if named:
         named.sort(key=lambda r: (r.get("source_type") != "document", len(compact(r["name"]))), reverse=True)
         return named[:limit]
+    if requested_document:
+        # 명시한 사업이 지역·기간 조건에서 제외됐다면 다른 사업으로 대체하지 않습니다.
+        return []
     # 지원 분야는 실제 사업명·지원 내용으로 확인합니다. '청년/자립' 관련성만으로
     # 경제 지원을 주거 지원으로 추천하지 않습니다.
     if any(term in query for term in HOUSING_TERMS):

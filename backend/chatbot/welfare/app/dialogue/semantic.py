@@ -12,6 +12,7 @@ import math
 from backend.chatbot import ai_settings
 from backend.db import welfare_search_store
 from backend.chatbot.welfare.app.dialogue import resources
+from backend.chatbot.welfare.app.dialogue.query_rules import excludes_past, named_program
 
 MODEL = "gemini-embedding-001"
 DIMENSIONS = 768
@@ -101,11 +102,16 @@ async def hybrid_search(query, lexical, **filters):
     if resources.resource_source() != "db" or not config.ready or config.provider != "gemini":
         return lexical[:5], "keyword"
     # 명확한 사업명 질의는 다른 사업을 끼워 넣지 않습니다.
-    if any(len(resources.compact(r["name"])) >= 3 and resources.compact(r["name"]) in resources.compact(query) for r in lexical):
+    if any(named_program(query, r['name']) for r in lexical):
         return lexical[:5], "exact_name"
+    if resources.named_document_requested(query):
+        return [], 'exact_name_filtered'
     try:
+        past_excluded = excludes_past(query)
+        if past_excluded:
+            filters = {**filters, 'include_past': False}
         corpus = resources.retrieval_corpus(**filters)
-        if resources.asks_current_recruitment(query) and not filters.get("include_past"):
+        if (resources.asks_current_recruitment(query) or past_excluded) and not filters.get("include_past"):
             corpus = [r for r in corpus if r.get("source_type") != "document" or
                 (r.get("current_operation_verified") and r.get("application_details_verified"))]
         if any(t in query for t in resources.HOUSING_TERMS):

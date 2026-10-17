@@ -27,17 +27,20 @@ def _request(config, messages, max_tokens, json_mode=False):
 
 
 async def stream(config, messages: list[dict], max_tokens: int) -> AsyncIterator[str]:
-    client = genai.Client(api_key=config.api_key)
-    response = await client.aio.models.generate_content_stream(**_request(config, messages, max_tokens))
-    async for chunk in response:
-        if chunk.text:
-            yield chunk.text
-        candidates = chunk.candidates or []
-        if candidates and candidates[0].finish_reason == types.FinishReason.MAX_TOKENS:
-            yield TRUNCATED
+    async with genai.Client(api_key=config.api_key).aio as client:
+        response = await client.models.generate_content_stream(**_request(config, messages, max_tokens))
+        try:
+            async for chunk in response:
+                if chunk.text:
+                    yield chunk.text
+                candidates = chunk.candidates or []
+                if candidates and candidates[0].finish_reason == types.FinishReason.MAX_TOKENS:
+                    yield TRUNCATED
+        finally:
+            await response.aclose()
 
 
 async def complete(config, messages: list[dict], json_mode: bool, max_tokens: int) -> str:
-    client = genai.Client(api_key=config.api_key)
-    response = await client.aio.models.generate_content(**_request(config, messages, max_tokens, json_mode))
-    return response.text or ''
+    async with genai.Client(api_key=config.api_key).aio as client:
+        response = await client.models.generate_content(**_request(config, messages, max_tokens, json_mode))
+        return response.text or ''

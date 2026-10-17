@@ -25,6 +25,8 @@ from backend.bomi.request import ChatRequest
 from backend.chatbot.welfare.app.dialogue.resources import compact, local_answer, source_footer
 from backend.chatbot.welfare.app.dialogue import retrieval
 from backend.chatbot.welfare.app.dialogue.evidence import validate_answer
+from backend.chatbot.welfare.app.dialogue.presentation import answer_material, contains_internal_metadata
+from backend.chatbot.welfare.app.dialogue.query_rules import excludes_past
 from backend.chatbot.welfare.app.llm.client import LLM_ERRORS, EmptyAnswer, llm
 from backend.db import region_workspace
 
@@ -119,7 +121,7 @@ class WelfareAgent(RegulatedAgent):
         planning = is_planning_request(question)
         state, prefetched = state or {}, prefetched or {}
         query = search_question(messages)
-        if _is_followup(question) and state.get('records'):
+        if _is_followup(question) and state.get('records') and not excludes_past(question):
             query = (state.get('anchor', '') + ' ' + question)[-3000:]
             found = {'records': state['records'], 'mode': 'conversation_snapshot'}
         elif use_ai and prefetched.get('query') == query:
@@ -148,7 +150,7 @@ class WelfareAgent(RegulatedAgent):
         material = {'context': context, 'records': records}
         material_text = json.dumps(material, ensure_ascii=False)
         prompt = (SYSTEM + '\n선택 지역은 검색 맥락이며 자격 보장이 아닙니다. 기준월은 분석 기준으로 사업 운영 시점과 다릅니다.'
-                  '\n검색된 팀 자료:\n' + material_text)
+                  '\n검색된 팀 자료:\n' + json.dumps(answer_material(context, records), ensure_ascii=False))
         ai_messages = [{'role': 'system', 'content': prompt}, *messages[-HISTORY_FOR_AI:]]
         if planning:
             yield events.token(PLANNING_LABEL)
@@ -163,6 +165,10 @@ class WelfareAgent(RegulatedAgent):
                 raise EmptyAnswer('빈 AI 응답')
             if await self.regulator.output_flagged_async(''.join(parts), self.policy, generated_by_ai=True):
                 yield events.replace(OUTPUT_BLOCKED, BLOCKED_MODE, '')
+                return
+            if not planning and contains_internal_metadata(''.join(parts), records):
+                yield events.replace(local_answer(records), '자료 기반 · 확인 상태 안내')
+                yield events.notice('자료의 확인 상태를 알기 쉬운 안내로 정리했어요.')
                 return
             # 기존 사업 조회: 미확인 자격을 단정한 답은 확인 안내로 바꾸고, 아니면 출처·확인 상태를 붙입니다.
             # 신규 사업 구상안에는 붙이지 않습니다(기획안이 실제 사업 출처를 가진 것처럼 보이지 않게).
