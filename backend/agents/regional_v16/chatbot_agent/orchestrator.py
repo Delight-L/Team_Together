@@ -137,6 +137,7 @@ class Chatbot:
     f"왜 {prefix}이 확인 대상인가요?",
     f"{prefix}의 지역 배경 정보 보여줘",
     "이상신호 기준은 무엇인가요?",
+    "연령별 이상신호 전체 탐지 보기",
    )
   if intent.question_type == "reason" and dong:
    return (
