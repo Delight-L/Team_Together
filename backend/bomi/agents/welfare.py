@@ -1,14 +1,15 @@
 """복지사업 에이전트: 팀 자료에서 사업을 찾아 안내하거나 신규 사업 기획 아이디어를 제안합니다.
 
 흐름
-1. 후속 질문이면 원래 사업 질문과 합쳐 검색어를 만들고, 팀 JSON 자료에서 검색합니다(DB 아님).
+1. DB2 문서·API·공고를 검색하고, 서명된 후속 질문은 대화 당시 근거를 유지합니다.
 2. sources 이벤트로 찾은 사업을 먼저 보냅니다.
-3. AI 꺼짐 → 자료 기반 답변(local_answer). AI 켬 → 토큰 스트리밍 + 자료에 없는 연락처·URL·금액 가림.
+3. AI 꺼짐 → 자료 안내. AI 켬 → 전체 생성 후 사업별 근거·자격·출력 규제를 검사하고 전달합니다.
 4. AI 실패 → 자료 기반 답변으로 대체합니다.
 
 done은 보내지 않습니다(파이프라인이 한 번만 보냅니다).
 """
 import json
+import asyncio
 import math
 import re
 from collections.abc import AsyncIterator
@@ -21,7 +22,11 @@ from backend.bomi.events import Event
 from backend.bomi.phrases import BLOCKED_MODE, OUTPUT_BLOCKED
 from backend.bomi.regularization import Policy
 from backend.bomi.request import ChatRequest
-from backend.chatbot.welfare.app.dialogue.resources import compact, local_answer, search, source_footer
+from backend.chatbot.welfare.app.dialogue.resources import compact, local_answer, source_footer
+from backend.chatbot.welfare.app.dialogue import retrieval
+from backend.chatbot.welfare.app.dialogue.evidence import validate_answer
+from backend.chatbot.welfare.app.dialogue.presentation import answer_material, contains_internal_metadata
+from backend.chatbot.welfare.app.dialogue.query_rules import excludes_past
 from backend.chatbot.welfare.app.llm.client import LLM_ERRORS, EmptyAnswer, llm
 from backend.db import region_workspace
 
@@ -33,12 +38,9 @@ PLANNING_AI_FAILED = 'AI 연결 문제로 신규 사업 기획안을 완성하�
 AI_ERROR_NOTICE = 'AI 응답을 완료하지 못해 자료 검색 안내로 전환했습니다. 관리자 AI 설정과 연결을 확인해 주세요.'
 ELIGIBILITY_MODE = '자료 기반 · 현재 자격 확인 필요'
 ELIGIBILITY_NOTICE = '현재 자격이 미확인인 사업의 신청 가능·불가 단정은 자료 기반 확인 안내로 바꿨어요.'
-FOLLOWUP = re.compile(
-    r'^(?:(?:그|이)(?:사업|지원|프로그램)(?:의|은|는)?|그러면|그럼)?'
-    r'(?:대상|자격|조건|신청|서류|문의|연락처|담당기관|운영|기간|비용|지원금|어디로)')
-ELIGIBILITY_QUESTION = re.compile(r'신청(?:할|하실)?수|신청가능|자격|대상에해당')
 ELIGIBILITY_DECISIONS = ('신청할수없', '신청하실수없', '신청할수있', '신청하실수있', '신청가능합니다',
-                         '신청가능해요', '신청불가', '신청불가능', '신청대상입니다', '자격이있습니다', '자격이없습니다')
+                         '신청가능해요', '현재모집중입니다', '현재접수중입니다', '상시모집입니다',
+                         '신청불가', '신청불가능', '신청대상입니다', '자격이있습니다', '자격이없습니다')
 PLANNING_REQUEST = re.compile(
     r'기존(?:의)?(?:복지)?사업(?:말고|대신|이아닌)|'
     r'(?:새로운|새|신규)(?:복지)?(?:사업|프로그램).*(?:구상|기획|아이디어|설계|추천|제안)|'
@@ -51,7 +53,7 @@ def is_planning_request(question: str) -> bool:
 
 def _is_followup(question: str) -> bool:
     short = re.sub(r'\s+', '', question).strip('?!？.!')
-    return len(short) <= 30 and bool(FOLLOWUP.match(short))
+    return retrieval.is_followup(short)
 
 
 def search_question(messages: list[dict]) -> str:
@@ -68,8 +70,6 @@ def search_question(messages: list[dict]) -> str:
 def unverified_eligibility_answer(question: str, answer: str, records: list[dict]) -> str | None:
     """미검토 자격에 대한 확정 답변(«신청할 수 없습니다» 등)은 원문 대상·기관 확인 안내로 바꿉니다. 필요 없으면 None."""
     if not records or all(r.get('eligibility_reviewed') for r in records):
-        return None
-    if not ELIGIBILITY_QUESTION.search(compact(question)):
         return None
     if not any(phrase in compact(answer) for phrase in ELIGIBILITY_DECISIONS):
         return None
@@ -112,13 +112,30 @@ class WelfareAgent(RegulatedAgent):
         analysis = signal_summary(request) if request.use_ai else None
         if analysis:
             context['analysis'] = analysis
-        return aio.iterate(self._converse(list(request.messages), context, request.use_ai))
+        return aio.iterate(self._converse(list(request.messages), context, request.use_ai,
+                                          state=request.welfare_state, prefetched=request.retrieval))
 
-    async def _converse(self, messages: list[dict], context: dict, use_ai: bool) -> AsyncIterator[Event]:
+    async def _converse(self, messages: list[dict], context: dict, use_ai: bool,
+                        *, state=None, prefetched=None) -> AsyncIterator[Event]:
         question = messages[-1]['content']
         planning = is_planning_request(question)
-        records = search(search_question(messages), city=context.get('city', ''), district=context.get('district', ''))
-        yield events.sources(records, 'AI 대화' if use_ai else '자료 검색 · AI 사용 안 함')
+        state, prefetched = state or {}, prefetched or {}
+        query = search_question(messages)
+        if _is_followup(question) and state.get('records') and not excludes_past(question):
+            query = (state.get('anchor', '') + ' ' + question)[-3000:]
+            found = {'records': state['records'], 'mode': 'conversation_snapshot'}
+        elif use_ai and prefetched.get('query') == query:
+            found = prefetched
+        else:
+            found = await retrieval.retrieve(query, city=context.get('city', ''),
+                district=context.get('district', ''), use_ai=use_ai, planning=planning)
+        records, mode = found['records'], found['mode']
+        yield events.sources(records, 'AI 대화' if use_ai else '자료 검색 · AI 사용 안 함',
+                             retrieval=mode, query=query)
+        if 'partial' in mode:
+            yield events.notice('일부 지역 자료는 의미 검색 색인이 없어 키워드 검색으로 보완했습니다.')
+        if 'unavailable' in mode or 'missing' in mode:
+            yield events.notice('의미 검색 또는 재정렬을 완료하지 못해 사용 가능한 검색 결과로 답합니다.')
         if not use_ai:
             yield events.token(PLANNING_NEEDS_AI if planning else local_answer(records))
             return
@@ -133,26 +150,25 @@ class WelfareAgent(RegulatedAgent):
         material = {'context': context, 'records': records}
         material_text = json.dumps(material, ensure_ascii=False)
         prompt = (SYSTEM + '\n선택 지역은 검색 맥락이며 자격 보장이 아닙니다. 기준월은 분석 기준으로 사업 운영 시점과 다릅니다.'
-                  '\n검색된 팀 자료:\n' + material_text)
+                  '\n검색된 팀 자료:\n' + json.dumps(answer_material(context, records), ensure_ascii=False))
         ai_messages = [{'role': 'system', 'content': prompt}, *messages[-HISTORY_FOR_AI:]]
         if planning:
             yield events.token(PLANNING_LABEL)
         tokens = llm.stream(ai_messages)
-        # 답변 속 연락처·URL·금액이 자료에 없으면 가립니다. 줄 단위로 검사한 뒤 보내므로 가리기 전 내용은 화면에 나오지 않습니다.
-        redactor = self.regulator.redact_stream(material_text, self.policy)
         parts = []
         try:
-            async for text in tokens:
-                parts.append(text)
-                if ready := redactor.feed(text):
-                    yield events.token(ready)
+            # 근거 검사와 출력 규제가 끝나기 전에는 AI 원문을 화면에 보내지 않습니다.
+            async with asyncio.timeout(45):
+                async for text in tokens:
+                    parts.append(text)
             if not parts:
                 raise EmptyAnswer('빈 AI 응답')
-            if rest := redactor.flush():
-                yield events.token(rest)
-            # 출력 규제(moderate API): 이미 보낸 글은 replace로 통째로 바꿉니다.
             if await self.regulator.output_flagged_async(''.join(parts), self.policy, generated_by_ai=True):
                 yield events.replace(OUTPUT_BLOCKED, BLOCKED_MODE, '')
+                return
+            if not planning and contains_internal_metadata(''.join(parts), records):
+                yield events.replace(local_answer(records), '자료 기반 · 확인 상태 안내')
+                yield events.notice('자료의 확인 상태를 알기 쉬운 안내로 정리했어요.')
                 return
             # 기존 사업 조회: 미확인 자격을 단정한 답은 확인 안내로 바꾸고, 아니면 출처·확인 상태를 붙입니다.
             # 신규 사업 구상안에는 붙이지 않습니다(기획안이 실제 사업 출처를 가진 것처럼 보이지 않게).
@@ -160,12 +176,16 @@ class WelfareAgent(RegulatedAgent):
             if correction:
                 yield events.replace(correction, ELIGIBILITY_MODE)
                 yield events.notice(ELIGIBILITY_NOTICE)
-            elif records and not planning:
-                yield events.token(source_footer(records))
-            if redactor.hidden and not correction:
-                yield events.notice('답변에 팀 자료에서 확인되지 않은 ' + '·'.join(redactor.hidden)
-                                    + '이(가) 있어 가렸어요. 담당 기관에 직접 확인해 주세요.')
-        except LLM_ERRORS:
+            else:
+                answer, hidden = (self.regulator.redact(''.join(parts), material_text, self.policy)
+                                  if planning else validate_answer(''.join(parts), records))
+                if not planning:
+                    answer += source_footer(records)
+                yield events.token(answer)
+                if hidden:
+                    yield events.notice('해당 사업 자료에서 확인되지 않은 ' + '·'.join(hidden)
+                                        + '을 가렸어요. 기관 확인이 필요합니다.')
+        except (*LLM_ERRORS, TimeoutError):
             yield events.error(AI_ERROR_NOTICE)
             yield events.replace(PLANNING_AI_FAILED if planning else local_answer(records), '자료 검색 · AI 연결 실패')
         finally:

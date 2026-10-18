@@ -61,6 +61,7 @@ function useChat(context, group, userId) {
   // AI 사용 스위치: 기본 꺼짐. 관리자가 AI를 허용했고 사용자가 켰을 때만 외부 AI를 씁니다.
   const [aiOn, setAiOn] = useState(() => loadAiSwitch(userId));
   const request = useRef(null);
+  const conversation = useRef(null);
   useEffect(() => {
     let active = true;
     let generation = 0;
@@ -77,7 +78,7 @@ function useChat(context, group, userId) {
   const mode = aiOn && config?.aiAvailable ? 'ai' : 'data';
   function setAi(on) { setAiOn(on); saveAiSwitch(userId, on); }
   useEffect(() => {
-    request.current?.abort(); request.current = null; setMessages([]); setError(''); setRetryQuestion(''); setBusy(false);
+    request.current?.abort(); request.current = null; conversation.current = null; setMessages([]); setError(''); setRetryQuestion(''); setBusy(false);
     return () => { request.current?.abort(); request.current = null; };
   }, [contextKey]);
   function stop() {
@@ -102,7 +103,7 @@ function useChat(context, group, userId) {
     const sources = [...new Set(recent.flatMap(m => (m.sources || []).map(r => r.id)))].slice(0, 10);
     try {
       const body = {
-        ...context, mode, sources,
+        ...context, mode, sources, conversation: conversation.current,
         messages: [...recent, { role: 'user', text: question }].map(m => ({ role: m.role, content: m.text.slice(0, 6000) })),
         ...(group ? { group } : {}),
       };
@@ -110,7 +111,8 @@ function useChat(context, group, userId) {
       if (/(이상\s*신호|탐지.*지역|지역.*목록|순위)/.test(question)) delete body.age;
       await streamChat(body, (event, payload) => {
         if (request.current !== controller) return;
-        if (event === 'route') update(m => ({ ...m, agent: payload.label }));
+        if (event === 'conversation') conversation.current = payload.state;
+        else if (event === 'route') update(m => ({ ...m, agent: payload.label }));
         else if (event === 'token') update(m => ({ ...m, text: m.text + payload.text }));
         else if (event === 'sources') update(m => ({ ...m, sources: payload.records, mode: payload.mode }));
         else if (event === 'replace') update(m => ({ ...m, text: payload.text, mode: payload.mode, source: payload.source || m.source }));
@@ -131,7 +133,7 @@ function useChat(context, group, userId) {
       if (request.current === controller) { request.current = null; setBusy(false); }
     }
   }
-  const reset = () => { request.current?.abort(); request.current = null; setMessages([]); setError(''); setRetryQuestion(''); setBusy(false); };
+  const reset = () => { request.current?.abort(); request.current = null; conversation.current = null; setMessages([]); setError(''); setRetryQuestion(''); setBusy(false); };
   return { messages, busy, error, send, reset, stop, config, configError, reloadConfig: () => setConfigRevision(value => value + 1), retryQuestion, mode, aiOn, setAi };
 }
 
@@ -224,8 +226,9 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
           <span>다음 질문</span>
           {m.followUps.map(q => <button type="button" key={q} disabled={chat.busy} onClick={() => submit(q)}>{q}</button>)}
         </div>}
-        {m.sources?.length > 0 && <details className="bomi-sources"><summary>참고한 팀 자료 · {m.sources.length}건</summary>
-          {m.sources.map(r => <div key={r.id}><strong>{r.name}</strong><p>{r.source} · p. {r.pages}</p><small>{r.status}</small></div>)}
+        {m.sources?.length > 0 && <details className="bomi-sources"><summary>참고한 복지 자료 · {m.sources.length}건</summary>
+          {m.sources.map(r => <div key={r.id}><strong>{r.name}</strong><p>{r.source}{r.pages ? ` · p. ${r.pages}` : ''}
+            {!r.pages && /^https?:\/\//i.test(r.url || '') && <> · <a href={r.url} target="_blank" rel="noopener noreferrer">원문 보기</a></>}</p><small>{r.status}</small></div>)}
         </details>}
         {onAction && m.actions?.map(a => <button key={a.label} className="bomi-action" onClick={() => onAction(a)}>{a.label} →</button>)}
       </article>)}

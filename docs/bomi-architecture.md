@@ -41,7 +41,7 @@ flowchart TD
 | `pipeline.py` | 위 단계를 순서대로 연결 | 규칙·답변 로직 |
 | `routing.py` | **담당 선택의 유일한 위치** | 자료 유무에 따른 대체 |
 | `regularization.py` | 규칙·moderate API를 에이전트별 `Policy`로 적용 | 담당 선택 |
-| `events.py` | 프런트와 맺은 이벤트 9종 계약, `seal` | |
+| `events.py` | 프런트와 맺은 이벤트 10종 계약, `seal` | |
 | `request.py` | `ChatRequest`·`GroupSelection` 타입, 입력 검증 | |
 | `questions.py` | 질문 분류 순수 함수, 키워드 목록 | |
 | `phrases.py` | 고정 문구, AI 담당 선택 지시문 | 로직 |
@@ -93,7 +93,7 @@ AI 해석이 실패하면 외부 AI 없이 같은 근거로 다시 답하고, �
 | 에이전트 | 입력 규칙 | 입력 moderate | 출력 가림(규칙) | 출력 moderate |
 |---|:-:|:-:|:-:|:-:|
 | region_analysis | ✓ | ✓ | `explain_ai`가 근거 대조 | ✓ (AI 해석문) |
-| welfare | ✓ | ✓ | ✓ (줄 단위 스트림) | ✓ (끝에서 `replace`) |
+| welfare | ✓ | ✓ | ✓ (전체 생성 후 사업별 근거 검사) | ✓ (원문 공개 전 검사) |
 | report | ✓ | ✓ | `check_grounding`이 근거 대조 | ✓ (AI가 다듬은 경우) |
 | guide | ✓ | ✓ | – | – (고정 문구) |
 
@@ -103,12 +103,13 @@ AI 해석이 실패하면 외부 AI 없이 같은 근거로 다시 답하고, �
 
 ## 5. 이벤트 계약 (`events.py`)
 
-화면(`frontend/src/BomiChat.jsx`)은 아래 9가지만 처리하므로 이름과 내용 필드를 바꾸면 화면이 깨집니다.
+화면(`frontend/src/BomiChat.jsx`)은 아래 10종을 처리하므로 이름과 내용 필드를 바꾸면 화면이 깨집니다.
 
 | 이름 | 내용 | 화면에서 하는 일 |
 |---|---|---|
 | `route` | agent, label, by | 담당 이름 표시 |
 | `sources` | records, mode | 참고한 복지사업 목록 |
+| `conversation` | state | 다음 요청에 보낼 서명된 대화 근거 |
 | `token` | text | 답변 글자를 이어 붙임 |
 | `replace` | text, mode, source | 답변 전체를 교체 |
 | `follow_ups` | questions | 후속 질문 버튼 |
@@ -119,7 +120,7 @@ AI 해석이 실패하면 외부 AI 없이 같은 근거로 다시 답하고, �
 
 ```
 [notice(개인정보 가림)] → route →
-  welfare           : sources → token* → [replace] → [notice] → [error → replace]
+  welfare           : [conversation] → sources → [notice] → token/replace → [notice] → [error → replace]
   그 밖의 에이전트   : [error] → replace → [follow_ups] → [notice] → [actions]
   차단(입력·출력)   : replace
 → done   (seal이 정확히 한 번)
@@ -127,6 +128,12 @@ AI 해석이 실패하면 외부 AI 없이 같은 근거로 다시 답하고, �
 
 `seal`은 예외를 상세 없이 `error`로 바꿉니다. 복지자료 DB 조회 실패(`WelfareDataError`)는 «복지자료 DB를 조회하지 못했습니다» 안내로 구분합니다.
 화면은 `route`의 `agent` 값을 쓰지 않고 `label`만 표시합니다.
+
+### 복지 검색과 대화 근거
+
+`Router`가 담당을 선택하고 `agents/welfare.py`가 공통 `Policy`를 적용합니다. `chatbot/welfare/app/dialogue/retrieval.py`는 검색 조건, `semantic.py`는 의미 검색, `evidence.py`는 사업별 사실 검사를 담당합니다. DB 조회는 `db/welfare_chatbot_repository.py`, 색인·서명키 저장은 `db/welfare_search_store.py`에 둡니다.
+
+`conversation.py`는 세션·지역·기준월·연령에 묶인 24시간짜리 사업 원문 스냅샷을 서명합니다. 파이프라인은 이 상태 이벤트를 연결한 뒤 `events.seal`로 마감하므로 저장 오류나 연결 취소에도 기존 예외 처리·종료 규칙을 따릅니다. 보고서 에이전트와 최종 미리보기는 서명된 대화 당시 근거를 사용합니다.
 
 ## 6. v16 근거 저장소
 

@@ -9,9 +9,12 @@
 """
 import json
 import logging
+import asyncio
 from dataclasses import dataclass
 
 from backend.bomi import questions
+from backend.bomi import aio
+from backend.chatbot.welfare.app.dialogue import retrieval
 from backend.bomi.phrases import AGENT_LABELS, ROUTER_PROMPT
 from backend.bomi.request import ChatRequest
 from backend.chatbot.welfare.app.llm.client import LLM_ERRORS, llm
@@ -71,9 +74,9 @@ class Router:
                     {'role': 'user', 'content': '선택된 화면 맥락(JSON 자료): ' + json.dumps(screen, ensure_ascii=False)},
                     *recent, {'role': 'user', 'content': request.question}]
         try:
-            answer = await llm.complete(messages, json_mode=True, max_tokens=50)
+            answer = await asyncio.wait_for(llm.complete(messages, json_mode=True, max_tokens=1000), 20)
             agent = json.loads(answer).get('agent')
-        except (*LLM_ERRORS, ValueError, AttributeError) as exc:
+        except (*LLM_ERRORS, ValueError, AttributeError, TimeoutError) as exc:
             LOGGER.warning('AI 담당 선택 실패, 규칙으로 대체: %s', type(exc).__name__)
             return None
         agent = LEGACY_NAMES.get(agent, agent)
@@ -84,6 +87,13 @@ class Router:
         fixed = self.fixed(request)
         if fixed:
             return Route(fixed, BY_RULE)
-        if ai_agent:
-            return Route(ai_agent, BY_AI)
-        return Route(self.by_rules(request), BY_RULE)
+        if request.welfare_state.get('records') and retrieval.is_followup(request.question):
+            return Route('welfare', '대화 조건')
+        selected = Route(ai_agent, BY_AI) if ai_agent else Route(self.by_rules(request), BY_RULE)
+        if request.use_ai and selected.agent == 'guide':
+            found = aio.run(retrieval.retrieve(request.question, city=request.city,
+                                              district=request.district, use_ai=True))
+            if found['records'] and found['mode'].startswith('hybrid_reranked'):
+                request.retrieval.update(found)
+                return Route('welfare', '의미 검색 확인')
+        return selected
