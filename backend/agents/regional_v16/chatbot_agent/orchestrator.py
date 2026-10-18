@@ -17,7 +17,7 @@ from .conversation_memory import ConversationMemory
 from .llm_intent_resolver import IntentResolver
 from .query_planner import complete_and_validate
 from .dialogue_router import DIALOGUE_REPLIES
-from .analysis2_knowledge import methodology_answer, is_methodology_question
+from .analysis2_knowledge import methodology_answer
 from .observation_period import observation_period
 
 class Chatbot:
@@ -71,15 +71,6 @@ class Chatbot:
              if dongs else ' 해당 유형의 행정동 자료를 찾지 못했습니다.'))
     return AnswerResult(text,Evidence('클러스터 설명',text),
                         ('다른 클러스터도 설명해줘', '이 클러스터에 속한 동을 알려줘'))
-  # 초기 이력과 판정 기준을 함께 묻는 질문은 화면의 지역 배경이 아니라
-  # 데이터 처리·탐지 방법 설명으로 우선 처리한다.
-  q_no_space=re.sub(r'\s+', '', question.lower())
-  if is_methodology_question(question) and any(term in q_no_space for term in ('초기이력','기준','판정')):
-   text=(methodology_answer(question)
-         + '\n\n초기 이력은 2025년 6월까지의 자료로, 이상신호 기준을 만드는 데만 사용했습니다. '
-         '2025년 7월부터 새 탐지 결과를 저장하며, 각 기준월은 직전 3개월 관측을 뜻합니다.')
-   return AnswerResult(text,Evidence('초기 이력과 이상신호 판정 기준',text),
-                       ('2025년 7월부터 탐지 결과가 저장된 이유는?', '기준월과 관측기간은 어떻게 달라?'))
   intent=self.intent_resolver.resolve(question,self.repo.districts(),self.memory)
   if intent.question_type in {'capabilities','consumption_criteria'}:
    text=age_capabilities_answer() if intent.question_type=='capabilities' else consumption_criteria_answer()
@@ -137,14 +128,29 @@ class Chatbot:
  @staticmethod
  def _follow_ups(intent: QueryIntent, evidence: Evidence) -> tuple[str, ...]:
   """Offer the next useful question for the answer just shown, with its scope."""
+  if not evidence.rows and intent.question_type in {"reason", "support", "previous"}:
+   return (
+    "2025년 다른 이상신호 지역 찾아줘",
+    "2025년 하반기 이상신호 탐지 지역 알려줘",
+    "이상신호 기준은 무엇인가요?",
+   )
   first = evidence.rows[0] if evidence.rows else {}
   dong = first.get("행정동") or intent.dong
   prefix = f"{dong}" if dong else "선택한 지역"
+  # 전체 사례 조회는 첫 번째 행(예: 개포3동)을 현재 선택 지역으로
+  # 간주하면 안 된다. 결과 전체를 탐색할 수 있는 후속 질문을 제공한다.
+  if intent.question_type in {"signals", "rank_regions"} and intent.age_scope_explicit and len({r.get("행정동") for r in evidence.rows}) > 1:
+   return (
+    "이상신호가 탐지된 모든 동을 자세히 설명해줘",
+    "각 이상신호의 탐지 기준과 변화 수치 알려줘",
+    "2025년 이상신호가 없는 지역도 알려줘",
+   )
   if intent.question_type in {"signals", "rank_regions"} and dong:
    return (
     f"왜 {prefix}이 확인 대상인가요?",
     f"{prefix}의 지역 배경 정보 보여줘",
     "이상신호 기준은 무엇인가요?",
+    "연령별 이상신호 전체 탐지 보기",
    )
   if intent.question_type == "reason" and dong:
    return (

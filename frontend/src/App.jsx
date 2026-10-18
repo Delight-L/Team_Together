@@ -53,7 +53,7 @@ const titles = {
 // 컴포넌트는 화면의 한 조각을 만드는 함수입니다. JSX는 HTML과 비슷하지만,
 // class 대신 className, onclick 대신 onClick을 사용합니다.
 // onLogin은 부모 App이 전달한 함수이며 로그인 후 user 상태를 갱신합니다.
-function Login({ onLogin }) {
+function Login({ onLogin, sessionNotice = '' }) {
   const [id, setId] = useState('gangnam01'),
     [password, setPassword] = useState('demo1234'),
     [error, setError] = useState(''),
@@ -98,6 +98,7 @@ function Login({ onLogin }) {
           <span className="eyebrow">WELFIND WORKSPACE</span>
           <h2>반갑습니다, 담당자님</h2>
           <p>시연 계정으로 업무 공간에 접속하세요.</p>
+          {sessionNotice && <p className="error" role="status">{sessionNotice}</p>}
           <label>
             아이디
             <input
@@ -160,7 +161,8 @@ export default function App() {
   const [user, setUser] = useState(null),
     [checking, setChecking] = useState(true),
     [data, setData] = useState(null),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [sessionNotice, setSessionNotice] = useState('');
   function openSupport() { setSupportOpen(true); }
   // 단계별 안내: 계정마다 처음 로그인할 때 한 번 자동으로 열고, 상단 ? 버튼으로 다시 볼 수 있습니다.
   const [tourOpen, setTourOpen] = useState(false);
@@ -195,6 +197,16 @@ export default function App() {
       .then((d) => setUser(d.user))
       .catch(() => {})
       .finally(() => setChecking(false));
+  }, []);
+  useEffect(() => {
+    const returnToLogin = () => {
+      clearDrafts();
+      setUser(null);
+      setData(null);
+      setSessionNotice('서버가 다시 시작되어 로그인 세션이 초기화되었습니다. 다시 로그인해 주세요.');
+    };
+    window.addEventListener('welfind-session-expired', returnToLogin);
+    return () => window.removeEventListener('welfind-session-expired', returnToLogin);
   }, []);
   useEffect(() => {
     if (!user) return;
@@ -288,7 +300,7 @@ export default function App() {
     if (top) setDistrict(top.name);
   }, [view, regions]);
   if (checking) return <div className="loading">복지탐정 업무 공간을 준비하고 있습니다…</div>;
-  if (!user) return <Login onLogin={setUser} />;
+  if (!user) return <Login onLogin={(nextUser) => { setSessionNotice(''); setUser(nextUser); }} sessionNotice={sessionNotice} />;
   const select = (name) => setDistrict(name);
   const start = async () => {
     if (await mutate('/workflow/start')) go('chart');

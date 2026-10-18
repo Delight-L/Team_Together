@@ -50,6 +50,18 @@ class Db1Repository(Protocol):
                 signal: str = 'any', age_band: str | None = None) -> pd.DataFrame:
         """신호가 잡힌 행. signal: any | communication | mobility | combined."""
 
+    def age_signal_cases(self, start: str | None = None, end: str | None = None,
+                         dong: str | None = None, signal: str = 'any',
+                         age_band: str | None = None) -> pd.DataFrame:
+        """연령별 이상신호 사례를 조회한다.
+
+        ``signals(age_band=None)``은 동 단위 ``a2_detection``을 뜻하므로,
+        연령을 지정하지 않은 질문에서 이를 재사용하면 동 단위 결과와
+        연령별 결과가 섞인다. 이 메서드는 ``a2_age_detection``만 대상으로
+        하여 월·동·연령·신호 유형을 한 행의 사례로 반환한다.
+        ``NULL`` 플래그는 평가 보류이므로 False로 바꾸지 않는다.
+        """
+
     def anomalies(self, start: str | None = None, end: str | None = None, metric: str | None = None,
                   age_band: str | None = None, dongs: tuple = ()) -> tuple[pd.DataFrame, str]:
         """지표 Robust Z가 낮은 순 상위 10행과 사용한 컬럼 이름."""

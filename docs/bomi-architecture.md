@@ -197,3 +197,12 @@ SQLite 공개본 ──publish──▶ db1.v16_<테이블>(run_id, 원래 열�
 | `ctx_weather` | `ctx_weather_month` + `ctx_weather_window` | 작업기의 `weather_context`와 **같은 모양**(`label_weather`, `observation_month_weather`)으로 변환해 적재. 원천이 없으면 빈 표 |
 
 산출물에는 «눈 기록이 `-`(확인 불가)였는지» 정보가 없어 변환 결과의 `snow_status`는 모두 `observed`입니다.
+
+
+## 2026-10-19 에이전트 통합
+
+- `docoup3`: 복지사업 검색·근거 검증, 서명된 대화 근거와 보고서 연결을 반영했습니다.
+- `shinwon`: 연령별 신호 사례 조회, 전체 지역 범위 보존, 화면 맥락과 후속 질문 개선을 반영했습니다.
+- `db1.v16_active_run` 테이블이 없으면 `DashboardDb1Repository`가 대시보드와 같은 DB1 테이블 및 전달된 연령별 CSV를 읽습니다. 이 경로는 게시를 대신 수행하지 않습니다.
+- Gemini 연결은 운영체제 인증서 저장소를 사용하면서 TLS 검증을 유지합니다(`truststore`).
+- 기존 테스트 제외와 중복 문서 통합 방침은 유지합니다.

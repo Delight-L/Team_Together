@@ -37,6 +37,19 @@ class Route:
 
 
 class Router:
+    @staticmethod
+    def _continues_regional_analysis(request: ChatRequest) -> bool:
+        """``2025년도로 확대해봐``처럼 대상이 생략된 분석 후속 질문을 보존한다."""
+        if not questions.is_period_expansion(request.question):
+            return False
+        return any(
+            item.get('role') == 'user' and (
+                any(word in item.get('content', '') for word in questions.ANALYSIS_WORDS)
+                or questions.mentions_district(item.get('content', ''))
+            )
+            for item in request.history
+        )
+
     def fixed(self, request: ChatRequest) -> str | None:
         """AI 사용 여부와 상관없이 규칙으로 정하는 담당. 해당하지 않으면 None."""
         question = request.question
@@ -44,12 +57,16 @@ class Router:
             return 'report'
         if questions.work_guide(question):
             return 'guide'
+        if questions.is_screen_summary(question):
+            return 'region_analysis'
         if questions.is_screen_term_question(question):
             return 'region_analysis'
         return None
 
     def by_rules(self, request: ChatRequest) -> str:
         question = request.question
+        if self._continues_regional_analysis(request):
+            return 'region_analysis'
         if any(word in question for word in questions.WELFARE_WORDS):
             return 'welfare'
         if request.group and questions.is_group_focused(question):
@@ -66,7 +83,7 @@ class Router:
 
     async def by_ai(self, request: ChatRequest) -> str | None:
         """AI가 고른 담당. 실패하거나 알 수 없는 값이면 None(호출한 쪽이 규칙으로 대체)."""
-        recent = [{'role': m['role'], 'content': m['content'][:500]} for m in request.history[-4:]]
+        recent = [{'role': m['role'], 'content': m['content'][:800]} for m in request.history[-6:]]
         screen = {key: request.context.get(key, '') for key in ('city', 'district', 'month')}
         if request.group:
             screen['group'] = {key: request.group.context.get(key, '') for key in ('district', 'month', 'age', 'sex')}

@@ -22,6 +22,28 @@ def _signal_flag(value):
     if value is None or pd.isna(value):return None
     return bool(value) if value in (True,False) else None
 
+def _signal_type(row):
+    """Return the detected domain even when DB signal_type contains a status value.
+
+    Some dashboard-compatible rows use values such as ``New`` in signal_type while
+    their boolean detection flags are authoritative. Narrative generation needs a
+    domain name, so retain valid domains and otherwise derive one from those flags.
+    """
+    value=str(row.get('signal_type') or '').strip().lower()
+    if value in {'communication','mobility','combined'}:
+        return value
+    if _signal_flag(row.get('combined_signal')) is True:
+        return 'combined'
+    communication=_signal_flag(row.get('communication_signal')) is True
+    mobility=_signal_flag(row.get('mobility_signal')) is True
+    if communication and mobility:
+        return 'combined'
+    if communication:
+        return 'communication'
+    if mobility:
+        return 'mobility'
+    return value
+
 def _metric_change(row,metric):
     value=row.get(metric+'_log_change')
     valid=_signal_flag(row.get(metric+'_valid'))
@@ -92,24 +114,67 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
                 row[m+'_change_pct']=_metric_change(row,m)
         return Evidence('연령별 활동 변화',f'{"·".join(names)}의 연령별 주요 지표 변화입니다.',rows,
                         ['DB1: a2_age_detection'],['각 결과는 기준월 직전 3개월 관측이며 변화율은 바로 앞 관측기간 대비입니다. 연령별 값을 합산하지 않습니다.'])
+    elif kind=='age_data_coverage':
+        # Compare each previously displayed district signal with the age table
+        # at that exact label month. A district having age rows in some other
+        # month must not be described as having data for this case.
+        frames=[repo.signals(start,end,name,intent.signal,None) for name in names] if names else [repo.signals(start,end,None,intent.signal,None)]
+        signals=pd.concat(frames,ignore_index=True) if frames else pd.DataFrame()
+        if not signals.empty:
+            signals=signals.sort_values(['date','행정동'])
+        age_all=repo.activity(None,None,None,next(iter(AGE_LABEL)))
+        age_months=age_all.get('date',pd.Series(dtype=object)).astype(str).str[:7]
+        coverage_start=age_months.min() if not age_months.empty else None
+        coverage_end=age_months.max() if not age_months.empty else None
+        rows=[]
+        for item in _records(signals,['date','행정동']):
+            month=item.get('date')
+            available=any(not repo.activity(item.get('행정동'),month,month,band).empty for band in AGE_LABEL)
+            rows.append({'date':month,'행정동':item.get('행정동'),'age_data_available':available,
+                         'age_data_start':coverage_start,'age_data_end':coverage_end})
+        return Evidence('연령별 자료 제공기간 비교','신호 사례별 동일 기준월의 연령별 자료 유무를 확인했습니다.',rows,
+                        ['DB1: a2_detection','DB1: a2_age_detection'],
+                        ['동 단위 신호 자료와 연령별 자료의 제공기간이 다를 수 있습니다.'])
     elif kind=='rank_regions':
-        f=repo.signals(start,end,None,intent.signal,age)
+        signal_reader = repo.age_signal_cases if intent.age_scope_explicit else repo.signals
+        f=signal_reader(start,end,None,intent.signal,age)
         if names:f=f.loc[f['행정동'].isin(names)]
         grouped=f.groupby('행정동',as_index=False).size().rename(columns={'size':'신호 건수'}).sort_values(['신호 건수','행정동'],ascending=[False,True]).head(intent.limit or 3)
         e=Evidence('신호가 많은 지역',f'{LABEL[intent.signal]} 신호 건수가 많은 동 {len(grouped)}곳입니다.',_records(grouped),[source],limits)
     elif kind=='signals':
-        f=selected(lambda n,s,e,a:repo.signals(s,e,n,intent.signal,a),age)
+        # Explicit 연령 범위(특히 "전체 연령")는 동 단위 a2_detection이
+        # 아니라 a2_age_detection의 사례를 보여준다. 명시하지 않은 경우는
+        # 기존 동 단위 조회를 유지해 화면의 선택 범위와 호환한다.
+        signal_reader = repo.age_signal_cases if intent.age_scope_explicit else repo.signals
+        f=selected(lambda n,s,e,a:signal_reader(s,e,n,intent.signal,a),age)
         if intent.summary_only and not f.empty:
             counts=f.groupby('행정동').size().rename('신호 건수')
             f=f.sort_values('date').drop_duplicates('행정동', keep='last').copy()
             f['신호 건수']=f['행정동'].map(counts).astype(int)
-        cols=['date','행정동','age_band','signal_type','assessment_status','cluster_type','a1_cluster_type']
+        cols=['date','행정동','age_band','signal_type','assessment_status','cluster_type','a1_cluster_type',
+              'communication_signal','mobility_signal','combined_signal','any_signal']
         for metric in CORE:
             cols += [metric+'_log_change',metric+'_valid',metric+'_residual_change_expanding_rz']
             if age:
                 cols += [metric+'_local_rz',metric+'_local_threshold',metric+'_local_signal',
                          metric+'_absolute_rz',metric+'_absolute_threshold',metric+'_absolute_signal']
-        e=Evidence('신호가 나온 지역',f'조건에 맞는 {LABEL[intent.signal]} 신호는 {len(f)}건입니다.',_records(f,cols),[source],limits)
+        if intent.age_scope_explicit:
+            source='DB1: a2_age_detection'
+        rows=_records(f,cols)
+        for row in rows:
+            row['signal_type']=_signal_type(row)
+        supplementary={}
+        # “모든 케이스”를 물었을 때 동 단위 공개 신호와 연령별 공개
+        # 신호를 섞어 세지 않도록, 두 범위를 별도로 함께 알려 준다.
+        if not intent.age_scope_explicit:
+            try:
+                age_cases=repo.age_signal_cases(start,end,None,intent.signal,None)
+                supplementary['age_case_count']=len(age_cases)
+                supplementary['age_case_district_count']=age_cases['행정동'].nunique() if not age_cases.empty else 0
+            except (AttributeError, KeyError, ValueError):
+                pass
+        scope_label = '연령별' if intent.age_scope_explicit else '동 단위'
+        e=Evidence('신호가 나온 지역',f'{scope_label} 조건에 맞는 {LABEL[intent.signal]} 신호는 {len(f)}건입니다.',rows,[source],limits,supplementary)
     elif kind=='anomaly':
         f,rz=repo.anomalies(start,end,intent.metric,age,names)
         e=Evidence('이례적 감소 후보',f'{METRIC_LABEL.get(intent.metric,"평일 이동 횟수")}의 지역 공통변화를 제외한 Robust Z가 낮은 순입니다.',_records(f,['date','행정동','age_band',rz]),[source],limits)
@@ -154,7 +219,7 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
              'requested_period':{'start':start,'end':end}})
         return e
     else:raise ValueError('지원하지 않는 질문 유형입니다.')
-    if age is None and kind in {'signals','reason'} and e.rows:
+    if age is None and kind in {'signals','reason'} and e.rows and not intent.age_scope_explicit:
         signal_age_changes=_age_signal_changes(repo,e.rows)
     if age:
         assessed=selected(repo.activity,age)
@@ -170,7 +235,7 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
             e.supplementary['age_signal_changes']=signal_age_changes
         # A regional-background question without a selected signal month should
         # not expand into every available quarter of consumption data.
-        if kind == 'support' and dates:
+        if kind in {'support', 'context'} and dates:
             trends=[];quarters={}
             signal_observation_end=None
             if kind=='support' and dates:

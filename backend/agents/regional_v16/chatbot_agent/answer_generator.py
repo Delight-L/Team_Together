@@ -77,6 +77,10 @@ def _commerce_lines(rows,limit=12):
         where=(f'{name} 소재 상점' if scope=='merchant_dong'
                else '강남구 전체 상점 (동별 자료와 별도 · 월별 비교)')
         lines += ['',f"{where} · {_period_label(period)}"+(f" / {_period_label(previous)} 대비" if previous else '')]
+        reference = next((row for row in entries if row.get('selection_alignment') == 'nearest_comparable_period'), None)
+        if reference:
+            requested = reference.get('requested_period', '선택한 기간')
+            lines.append(f"선택한 {requested} 자료는 같은 단위로 비교할 수 없어, 가장 가까운 비교 가능한 {_period_label(period)} 자료를 대신 보여드립니다.")
         if scope=='merchant_dong' and any(r.get('alignment')=='separate_prior_complete_quarter' for r in entries):
             lines.append('신호 관측기간과 정확히 같지 않은 분기의 참고 변화입니다. 신호와 동시에 변한 것으로 해석하지 않습니다.')
         elif scope=='merchant_dong' and any(r.get('alignment')=='partly_after_signal_observation' for r in entries):
@@ -194,6 +198,24 @@ def _signal_story(row):
     else:
         finding='두 지표의 변화가 모두 평소 변화 범위에서 아래쪽으로 크게 벗어나 신호가 잡혔어요.'
         paragraphs.append(opening+f"강남구 전체에서 함께 나타난 흐름을 감안하고 {dong}의 과거 변화와 비교했을 때, "+finding)
+    # 실제 이동 감소와 보정 후 신호를 혼동하지 않도록 방향을 먼저 설명합니다.
+    nondecreasing=[m for m in CORE[2:] if m in metrics and _number(changes.get(m)) and changes[m]>=0]
+    if signal in {'mobility','combined'} and nondecreasing:
+        labels='·'.join(METRICS[m] for m in nondecreasing)
+        direction=f"{labels}는 실제로 줄지 않았어요. "
+        if age:
+            explanation=(direction+
+                '연령별 판정 기준은 동 전체 판정과 달라요. 원래 변화와 강남구 공통 흐름을 감안한 변화를 각각 살펴봐요. '
+                '증가한 지표를 실제 감소로 해석해서는 안 돼요. '
+                '저장된 신호가 어떤 연령별 판정 경로에서 나왔는지와 점수·기준값을 확인해야 정확한 이유를 설명할 수 있어요.')
+        else:
+            explanation=(direction+
+                '그런데 현재 동 전체의 이동 신호는 실제 이동 횟수가 줄었는지를 필수 조건으로 두지 않아요. '
+                '각 지표의 변화에서 강남구 공통 흐름을 뺀 뒤, 그 변화가 해당 동의 과거 변화 범위보다 얼마나 낮은지 점수로 비교해요. '
+                '평일과 휴일의 보정된 변화 점수가 모두 탐지 기준 이하면, 실제 이동 횟수가 증가해도 신호가 잡힐 수 있어요. '
+                '즉 이번 표시는 실제 이동 감소가 아니라 보정한 변화가 과거보다 이례적으로 낮다는 뜻이에요. '
+                '다만 이 사례의 구체적인 판정 이유를 검증하려면 강남구 변화와 보정 점수·탐지 기준값을 함께 확인해야 해요.')
+        paragraphs[1]=explanation+' 이 결과만으로 고립 위험이 커졌다고 판단할 수는 없어요.'
     if row.get('review_reasons') or row.get('interest_structural_issue'):
         paragraphs.append('자료 품질도 함께 확인할 필요가 있어요. 확인할 수 없는 값을 0으로 보지는 않아요.')
     return paragraphs
@@ -234,6 +256,9 @@ def _age_changes_story(row,evidence):
     return '\n'.join(lines)
 
 def _reason_answer(evidence):
+    if not evidence.rows:
+        return ['선택한 지역·기간에는 이상신호 기록이 0건입니다. 이 결과는 해당 기준월에 추가 확인 기준에 해당하는 변화가 없었다는 뜻이며, 지역의 문제가 없다고 단정하는 것은 아닙니다.\n\n'
+                '2025년의 다른 이상신호 지역을 찾아 안내해 드릴까요? 아래의 “2025년 다른 이상신호 지역 찾아줘”를 누르면 같은 해에 신호가 기록된 지역을 확인할 수 있어요.']
     paragraphs=[]
     for row in evidence.rows[:3]:
         paragraphs+=_signal_story(row)
@@ -248,8 +273,34 @@ def _query_story_period(intent):
     if start and end:
         if start[:4]==end[:4] and start[5:]=='07' and end[5:]=='12':return start[:4]+'년 하반기 자료에서는'
         if start[:4]==end[:4] and start[5:]=='01' and end[5:]=='06':return start[:4]+'년 상반기 자료에서는'
+        if start[:4]==end[:4] and start[5:]=='01' and end[5:]=='12':return start[:4]+'년 자료에서는'
         if start==end:return observation_period_text(start)+' 자료에서는'
     return '조회한 자료에서는'
+
+def _group_signal_rows_by_dong(rows):
+    """답변에 표시할 신호 행을 행정동별로 입력 순서대로 묶는다."""
+    groups={}
+    for row in rows:
+        dong=row.get('행정동') or '해당 지역'
+        groups.setdefault(dong,[]).append(row)
+    return list(groups.items())
+
+def _numbered_signal_groups(rows,evidence):
+    """여러 지역의 긴 설명을 동별 번호가 붙은 블록으로 만든다."""
+    blocks=[]
+    for index,(dong,dong_rows) in enumerate(_group_signal_rows_by_dong(rows),start=1):
+        details=[]
+        for row in dong_rows:
+            if row.get('신호 건수') is not None:
+                details.append(f"선택한 기간에 변화 신호가 {row['신호 건수']}건 확인됐어요.")
+                continue
+            details+=_signal_story(row)
+            ages=_age_changes_story(row,evidence)
+            if ages:details.append(ages)
+        cluster=_cluster_story(dong_rows[0],evidence)
+        if cluster:details.append(cluster)
+        blocks.append(f"{index}. {dong}\n"+'\n\n'.join(details))
+    return blocks
 
 def _concise_signal_list(intent,evidence):
     rows=evidence.rows
@@ -260,21 +311,26 @@ def _concise_signal_list(intent,evidence):
         paragraphs=[f"{prefix} {names[0]}을 한 번 더 살펴볼 필요가 있어요."]
     else:
         paragraphs=[f"{prefix} 확인이 필요한 지역이 {len(names)}곳 나왔어요."]
-    listed = rows[:10] if len(names) == 1 else [next(row for row in rows if row.get('행정동') == name) for name in names[:10]]
-    for index, row in enumerate(listed, 1):
-        if len(names) > 1:
-            paragraphs.append(f"{index}. {row.get('행정동')}")
-        if row.get('신호 건수') is not None:
-            paragraphs.append(f"{row.get('행정동')}에서는 선택한 기간에 변화 신호가 {row['신호 건수']}건 확인됐어요.")
-            continue
-        paragraphs+=_signal_story(row)
-        cluster=_cluster_story(row,evidence)
-        if cluster:paragraphs.append(cluster)
-        ages=_age_changes_story(row,evidence)
-        if ages:paragraphs.append(ages)
+    displayed=rows[:10]
+    if len(names)>1:
+        paragraphs+=_numbered_signal_groups(displayed,evidence)
+    else:
+        for row in displayed:
+            if row.get('신호 건수') is not None:
+                paragraphs.append(f"{row.get('행정동')}에서는 선택한 기간에 변화 신호가 {row['신호 건수']}건 확인됐어요.")
+                continue
+            paragraphs+=_signal_story(row)
+            cluster=_cluster_story(row,evidence)
+            if cluster:paragraphs.append(cluster)
+            ages=_age_changes_story(row,evidence)
+            if ages:paragraphs.append(ages)
     if len(rows)>10:paragraphs.append(f"전체 {len(rows)}건 중 먼저 10건을 보여드렸어요.")
     if intent.limit and len(names)<intent.limit:
         paragraphs.append(f"요청하신 {intent.limit}곳보다 적은 이유는, 이번 조건에서 신호가 확인된 지역이 {len(names)}곳이기 때문이에요.")
+    age_count=evidence.supplementary.get('age_case_count')
+    age_districts=evidence.supplementary.get('age_case_district_count')
+    if age_count is not None and age_count != len(rows):
+        paragraphs.append(f"참고로 위 목록은 동 단위 신호 기준이에요. 연령별 신호 자료까지 별도로 세면 {age_count}건, {age_districts}개 동이며 동 단위 기록과 합산하지 않습니다.")
     paragraphs.append('지역 집계만으로 주민의 고립 여부나 변화의 원인을 판단할 수는 없어요.')
     return '\n\n'.join(paragraphs)
 
@@ -310,36 +366,17 @@ def _context_answer(evidence):
     cluster=row.get('cluster_type')
     if not cluster:
         return f"{row.get('dong_name')}의 클러스터 분류가 저장되어 있지 않습니다. 동별 수치가 아닌 강남구 전체 참고자료가 필요하면 그렇게 요청해 주세요."
-    return (f"{row.get('dong_name')}은 “{cluster}” 클러스터입니다. "
-            '비슷한 지역 구조를 가진 동끼리 묶은 분류이며, 개인의 위험도나 신호 원인을 뜻하지 않습니다.')
+    lines = [f"{row.get('dong_name')}은 “{cluster}” 클러스터입니다. "
+             '비슷한 지역 구조를 가진 동끼리 묶은 분류이며, 개인의 위험도나 신호 원인을 뜻하지 않습니다.']
+    # “지역 배경”은 유형명만이 아니라 신호 판정 밖의 보조 맥락도 함께
+    # 보여 주는 메뉴다. 소비·기상은 아래 함수가 범위와 한계를 표시한다.
+    lines.extend(_context_lines(evidence, skip_regions=True))
+    return '\n'.join(lines)
 
 
-def _support_answer(evidence, include_age=False):
+def _support_answer(evidence):
     """Show the numbers people can act on, then explain their limited relation."""
-    lines=[]
-    # 특정 연령을 물은 경우에는 해당 연령의 직접 활동값을 먼저 보여준다.
-    # 지역 배경·강남구 공통자료는 그 뒤에 보조 설명으로 붙인다.
-    age_rows=evidence.supplementary.get('age_signal_changes', []) if include_age else []
-    if age_rows:
-        lines.append('먼저 질문하신 연령대의 지역 직접 자료입니다.')
-        for row in age_rows[:10]:
-            age=AGE_LABEL.get(row.get('age_band'), row.get('age_band','연령 확인 불가'))
-            values=[]
-            for metric in CORE:
-                value=row.get(metric)
-                if isinstance(value,(int,float)):
-                    values.append(f'{METRICS[metric]} {_value(value)}')
-            changes=[]
-            for metric in CORE:
-                pct=row.get(metric+'_change_pct')
-                if isinstance(pct,(int,float)):
-                    changes.append(f'{METRICS[metric]} {pct:+.1f}%')
-            if values:
-                line=f"{row.get('행정동','선택 지역')} {age} · {observation_period_text(row.get('date'))}: " + ', '.join(values)
-                if changes: line += ' · 변화율 ' + ', '.join(changes)
-                lines.append(line)
-        lines += ['', '이 값은 해당 지역·연령대의 집계자료이며 개인의 상태를 뜻하지 않습니다.']
-    lines.append('신호와 함께 볼 수 있는 지역 수치입니다. 이 자료는 원인을 확정하는 근거가 아니라, 현장에서 무엇을 확인할지 정하는 참고자료입니다.')
+    lines=['신호와 함께 볼 수 있는 지역 수치입니다. 이 자료는 원인을 확정하는 근거가 아니라, 현장에서 무엇을 확인할지 정하는 참고자료입니다.']
     if evidence.rows:
         row=evidence.rows[0]
         lines += ['', f"현재 신호: {row.get('행정동')} · {observation_period_text(row.get('date'))} · {SIGNAL_LABEL.get(str(row.get('signal_type','')).lower(),'변화')} 변화"]
@@ -426,11 +463,18 @@ def _context_lines(evidence,skip_regions=False,skip_local=False):
         lines+=['','강남구 공통 소비 패턴 변화:','동별 소비 분야 비교 자료가 없어 강남구 전체 자료만 확인할 수 있습니다.']
     if s.get('non_exact_quarter_windows'):
         lines.append('일부 3개월 관측기간이 두 분기에 걸칩니다. 이 경우 직전 완료 분기 자료를 별도 배경으로 표시하며 같은 기간의 변화로 비교하지 않습니다.')
-    for date,w in list(s.get('weather',{}).items())[:1]:
+    # Dashboard-compatible storage has no weather supplement and represents
+    # that absence as an empty list.  The original DB1 repository uses a
+    # date-keyed dictionary.  Optional context must never stop a core
+    # dashboard-summary answer from rendering.
+    weather=s.get('weather',{})
+    for date,w in list(weather.items())[:1] if isinstance(weather,dict) else []:
         parts=[]
         for r in w['observation_month_weather']:
             parts.append(f"{r['month']} 강수량 {_value(r.get('rainfall_mm'))}㎜·강수일 {_value(r.get('rain_days'))}일·적설일 {_value(r.get('snow_days'))}")
         lines+=['','관측기간의 서울 공통 기상 보조정보: '+' / '.join(parts),'적설일의 ‘-’는 확인 불가로 표시합니다. 기상값은 신호 판정 조건에 사용하지 않습니다.']
+        if w.get('selection_alignment') == 'nearest_available_period':
+            lines.append(f"선택한 {w.get('requested_period')} 기상자료가 없어, 가장 가까운 {w.get('reference_period')} 자료를 참고로 보여드립니다.")
     sns=s.get('sns_same_period',[])
     if sns:
         r=sns[0];lines.append(f"같은 기간 {r.get('adm_nm')} {AGE_LABEL.get(r.get('age_band'),'')}의 SNS 표준화 지수는 {_value(r.get('sns_index_mean'))}입니다. 사용 건수나 시계열 증감률로 해석하지 않습니다.")
@@ -471,13 +515,34 @@ def _context_lines(evidence,skip_regions=False,skip_local=False):
 
 def template_answer(intent:QueryIntent,evidence:Evidence,knowledge:str,explanation:str='')->str:
     if intent.question_type=='age_activity':return _age_activity_answer(intent,evidence)
+    if intent.question_type=='age_data_coverage':
+        if not evidence.rows:return '직전 신호 사례와 같은 기준월의 연령별 자료를 찾지 못했습니다.'
+        start=next((r.get('age_data_start') for r in evidence.rows if r.get('age_data_start')),None)
+        end=next((r.get('age_data_end') for r in evidence.rows if r.get('age_data_end')),None)
+        month_label=lambda value: f'{value[:4]}년 {int(value[5:7])}월' if value else '기준월 확인 불가'
+        lines=[]
+        if start and end:
+            lines.append(f'연령별 자료는 {month_label(start)}~{month_label(end)} 기준월에만 제공되기 때문이에요.')
+        for index,row in enumerate(evidence.rows,start=1):
+            dong=row.get('행정동','해당 지역');month=row.get('date')
+            if row.get('age_data_available'):
+                detail='동일 기준월의 20대·30대·40대·50대·60세 이상 자료가 있어 함께 보여드릴 수 있어요.'
+            elif start and month and month < start:
+                detail=f'해당 기준월이 연령별 자료 시작 시점인 {month_label(start)}보다 앞서 동일 기준월 자료가 없어요.'
+            elif end and month and month > end:
+                detail=f'해당 기준월이 연령별 자료 마지막 시점인 {month_label(end)}보다 뒤라 동일 기준월 자료가 없어요.'
+            else:
+                detail='동일 기준월의 연령별 자료가 없어 함께 비교할 수 없어요.'
+            lines.append(f'{index}. {dong} · {month_label(month)} 기준\n{detail}')
+        lines.append('다른 두 동도 연령별 자료 자체가 전혀 없는 것은 아니며, 이상신호가 나온 기준월과 같은 달의 자료가 없는 것입니다.')
+        return '\n\n'.join(lines)
     if intent.question_type=='consumption':return _consumption_answer(intent,evidence)
     if intent.question_type=='activity' and intent.metric:return _metric_value_answer(intent,evidence)
     if intent.question_type=='context':return _context_answer(evidence)
     if intent.question_type in {'rank_regions','signals'}:
         return _concise_signal_list(intent,evidence)
     if intent.question_type=='support':
-        return _support_answer(evidence, include_age=bool(intent.age_scope_explicit or intent.age_band or intent.age_bands))
+        return _support_answer(evidence)
     if intent.question_type=='reason' and evidence.rows:
         # Explain this signal and same-month age changes; detailed contextual
         # evidence remains available through the background-information follow-up.
@@ -493,8 +558,7 @@ def template_answer(intent:QueryIntent,evidence:Evidence,knowledge:str,explanati
     if evidence.rows:
         lines+=['']+[ '- '+_format_row(r) for r in evidence.rows[:10]]
         if len(evidence.rows)>10:lines.append(f'총 {len(evidence.rows)}건 중 10건을 표시했습니다.')
-    # 보조자료(지역 배경·소비·날씨·조사)는 사용자가 해당 맥락을 요청했을 때만
-    # 전용 답변에서 보여준다. 일반 신호/지역 조회에 자동으로 덧붙이지 않는다.
+    lines+=_context_lines(evidence,skip_regions=intent.question_type=='context',skip_local=intent.question_type=='consumption')
     if knowledge:lines+=['',knowledge]
     if evidence.limitations:lines+=['','확인 범위: '+' / '.join(evidence.limitations)]
     return '\n'.join(lines)

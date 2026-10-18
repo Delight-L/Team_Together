@@ -6,6 +6,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 import json,threading
 import pandas as pd
+
+from .period_matching import nearest_period
 from .district_normalizer import ALIASES
 
 SOURCES={'detection':'DB1: a2_detection','evidence':'DB1: a2_evidence',
@@ -112,6 +114,18 @@ class SqlDb1Repository:
             return {ALIASES.get(n,n) for n in names}
         return set(self._cached(('districts',),load))
 
+    def cluster_types(self):
+        def load():
+            with self.connection() as c:
+                return [str(r[0]) for r in c.execute('SELECT DISTINCT cluster_type FROM a1_context WHERE cluster_type IS NOT NULL ORDER BY cluster_type')]
+        return list(self._cached(('cluster_types',),load))
+
+    def cluster_districts(self,cluster):
+        def load():
+            with self.connection() as c:
+                return [str(r[0]) for r in c.execute('SELECT DISTINCT adm_nm FROM a1_context WHERE cluster_type=? ORDER BY adm_nm',(cluster,))]
+        return list(self._cached(('cluster_districts',cluster),load))
+
     def available_period(self):
         def load():
             with self.connection() as c:lo,hi=c.execute('SELECT MIN(date),MAX(date) FROM a2_detection').fetchone()
@@ -131,7 +145,14 @@ class SqlDb1Repository:
 
     def _load_frame(self,name,age_band=None):
         with self.connection() as c:
-            if age_band:
+            if name=='age_detection':
+                sql="SELECT result_json FROM a2_age_detection WHERE age_scheme='service'"
+                params=[]
+                if age_band:
+                    sql += ' AND age_band=?'; params.append(age_band)
+                sql += ' ORDER BY date,adm_cd,age_band'
+                rows=c.execute(sql,params).fetchall()
+            elif age_band:
                 rows=c.execute("SELECT result_json FROM a2_age_detection WHERE age_scheme='service' AND age_band=? ORDER BY date,adm_cd",(age_band,)).fetchall()
             else:
                 table,col={'detection':('a2_detection','result_json'),'feature':('a2_feature','feature_json'),
@@ -142,7 +163,7 @@ class SqlDb1Repository:
             if col not in f:f[col]=pd.Series(index=f.index,dtype=object)
         f['행정동']=f['행정동'].replace(ALIASES)
         if 'dong_name' in f:f['dong_name']=f.dong_name.replace(ALIASES)
-        if name!='feature' or age_band:
+        if name!='feature' or age_band or name=='age_detection':
             def signal(r):
                 if r.get('combined_signal') is True or r.get('combined_signal')==1:return 'combined'
                 if r.get('communication_signal') is True or r.get('communication_signal')==1:return 'communication'
@@ -153,7 +174,7 @@ class SqlDb1Repository:
                 source=metric+('_local_rz' if age_band else '_rz')
                 target=metric+'_residual_change_expanding_rz'
                 if target not in f:f[target]=f[source] if source in f else None
-            if age_band:
+            if age_band or name=='age_detection':
                 f['consecutive_signal']=f.get('adjacent_signal_run',pd.Series(0,index=f.index)).gt(1)
             elif 'consecutive_signal' not in f:f['consecutive_signal']=False
         return f
@@ -198,27 +219,25 @@ class SqlDb1Repository:
         return f.loc[mask].copy()
 
     def signals(self,start=None,end=None,dong=None,signal='any',age_band=None):
-        # 이상신호의 기준 원본은 대시보드와 동일한 동·연령별 CSV입니다.
-        # 전체 연령 질문도 이 원본에서 연령별 판정 결과를 모아 조회합니다.
-        if age_band is None:
-            try:
-                from backend.db.age_analysis_repository import load_age_analysis
-                cases = pd.DataFrame(load_age_analysis()['ageDetections'])
-                if not cases.empty:
-                    cases['date'] = cases['month'].astype(str) + '-01'
-                    cases['행정동'] = cases['district'].replace(ALIASES)
-                    cases['age_band'] = cases['age_band'].fillna('')
-                    col = {'any':'any_signal','communication':'communication_signal',
-                           'mobility':'mobility_signal','combined':'combined_signal'}[signal]
-                    cases['age_signal'] = cases[col]
-                    cases = cases.loc[cases[col].fillna(False).eq(True)]
-                    cases = self._period(cases,start,end)
-                    if dong: cases = cases.loc[cases['행정동'].eq(dong)]
-                    return cases.sort_values(['date','행정동','age_band'])
-            except Exception:
-                pass
         f=self.activity(dong,start,end,age_band)
         return f.loc[f[{'any':'any_signal','communication':'communication_signal','mobility':'mobility_signal','combined':'combined_signal'}[signal]].fillna(False).eq(True)]
+
+    def age_signal_cases(self,start=None,end=None,dong=None,signal='any',age_band=None):
+        """Return only confirmed rows from the age-level detection table.
+
+        The overall signal table and the age-level table have different grains;
+        keeping this as a separate repository method prevents a global request
+        from accidentally showing a dong-level row as an age-level case.
+        """
+        f=self._read('age_detection',age_band)
+        if f.empty:return f.copy()
+        f=self._period(f,start,end)
+        if dong:f=f.loc[f['행정동'].eq(dong)]
+        column={'any':'any_signal','communication':'communication_signal',
+                'mobility':'mobility_signal','combined':'combined_signal'}[signal]
+        # A deferred/unknown flag is deliberately not treated as a positive
+        # signal, while the original nullable component columns remain intact.
+        return f.loc[f[column].fillna(False).eq(True)].sort_values(['date','행정동','age_band'])
 
     def anomalies(self,start=None,end=None,metric=None,age_band=None,dongs=()):
         f=self.activity(None,start,end,age_band);metric=metric or 'weekday_move_count'
@@ -271,18 +290,6 @@ class SqlDb1Repository:
             with self.connection() as c:
                 return {ALIASES.get(n,n):code for code,n in c.execute('SELECT DISTINCT adm_cd,adm_nm FROM a1_context')}
         return dict(self._cached(('district_codes',),load))
-
-    def cluster_types(self):
-        def load():
-            with self.connection() as c:
-                return [str(r[0]) for r in c.execute('SELECT DISTINCT cluster_type FROM a1_context WHERE cluster_type IS NOT NULL ORDER BY cluster_type')]
-        return list(self._cached(('cluster_types',),load))
-
-    def cluster_districts(self,cluster):
-        def load():
-            with self.connection() as c:
-                return [str(r[0]) for r in c.execute('SELECT DISTINCT adm_nm FROM a1_context WHERE cluster_type=? ORDER BY adm_nm',(cluster,))]
-        return list(self._cached(('cluster_districts',cluster),load))
 
     # 테이블별로 SQL 조건을 걸 수 있는 컬럼
     CONSUMPTION_TABLES={'a3a_feature':('period','adm_cd','age'),'a3a_comparison':('period','adm_cd','age'),
@@ -345,6 +352,8 @@ class SqlDb1Repository:
         with self.connection() as con:
             c=_Memo(con)
             tables=self._table_names(con)
+            weather_rows=c.all('SELECT date,payload_json FROM ctx_weather ORDER BY date') if 'ctx_weather' in tables else []
+            weather_by_date={str(date)[:7]:json.loads(payload) for date,payload in weather_rows}
             codes={ALIASES.get(n,n):code for code,n in c.all('SELECT DISTINCT adm_cd,adm_nm FROM a1_context')}
             year=int(max(dates)[:4]) if dates else 2025
             if 'ctx_survey_annual' in tables:
@@ -393,8 +402,15 @@ class SqlDb1Repository:
                         else:
                             r=c.one('SELECT payload_json FROM a3b_month_summary WHERE period=? AND district=?',(month,'11680'))
                             if r:shared[(month,'all','all')]={'district':'강남구','period':month,'scope':'merchant_district_shared',**json.loads(r[0])}
-                    r=c.one('SELECT payload_json FROM ctx_weather WHERE date=?',(date,))
-                    if r:weather[date]=json.loads(r[0])
+                    requested_weather=date[:7]
+                    matched_weather=requested_weather if requested_weather in weather_by_date else nearest_period(weather_by_date, requested_weather)
+                    if matched_weather:
+                        item=dict(weather_by_date[matched_weather])
+                        if matched_weather != requested_weather:
+                            item['selection_alignment']='nearest_available_period'
+                            item['requested_period']=requested_weather
+                            item['reference_period']=matched_weather
+                        weather[date]=item
                     if age_band and 'ctx_sns_index' in tables:
                         r=c.one('SELECT payload_json FROM ctx_sns_index WHERE adm_cd=? AND date=? AND age_band=?',(code,date,age_band))
                         if r:sns.append(json.loads(r[0]))

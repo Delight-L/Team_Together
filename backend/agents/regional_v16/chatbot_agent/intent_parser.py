@@ -30,6 +30,14 @@ def looks_like_reason_followup(question: str) -> bool:
 
 def _month(text: str) -> tuple[str | None, str | None]:
     text = normalize_year_shorthand(text)
+    # "2023년 자료는 빼고 2025년만"처럼 제외할 연도를 함께 쓴 경우,
+    # 첫 연도부터 마지막 연도까지의 범위로 오해하지 않도록 제외 구절을
+    # 기간 추출 전에 제거한다.
+    text = re.sub(
+        r'20\d{2}\s*년(?:도)?\s*(?:자료(?:는|를)?\s*)?(?:빼고|제외(?:하고)?|말고)',
+        '',
+        text,
+    )
     interval=re.search(r'(20\d{2})\s*년\s*(\d{1,2})\s*월?\s*(?:[~～∼–-]|부터)\s*(?:(20\d{2})\s*년\s*)?(\d{1,2})\s*월',text)
     if interval:
         y,a,y2,b=interval.groups();return f'{y}-{int(a):02d}',f'{y2 or y}-{int(b):02d}'
@@ -77,6 +85,13 @@ def comparison_ages(text):
 def _all_period(text: str) -> bool:
     return bool(re.search(r"(전체|모든)\s*(기간|연도|월)|전\s+(기간|연도|월)|처음부터|전부", text))
 
+
+def _all_signal_cases(text: str) -> bool:
+    """모든 신호 케이스를 요구하면 연령별 사례까지 펼쳐 보인다."""
+    return bool(re.search(r"(?:모든|모두|전체|전부)\s*(?:이상\s*신호|신호)?\s*(?:탐지된|탐지된\s*)?(?:케이스|사례|기록)?", text)
+                and re.search(r"(?:이상\s*신호|신호|탐지)", text)
+                or re.search(r"이상\s*신호.*(?:모든|모두|전체|전부)", text))
+
 def _limit(text: str) -> int | None:
     # People often ask for "3곳" rather than "3개 동".
     # Do not read the number in a district name (for example, 삼성2동) as a rank limit.
@@ -96,17 +111,23 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
     metric = next((code for word,code in METRICS.items() if word in question), None)
     limit = _limit(question)
     age_words=bool(re.search(r'연령|나이|세대|[2-6]0\s*대|60\s*세',q))
-    incremental_follow_up = bool(re.search(r'같은\s*기준월|그럼\s*[2-6]0대|지금\s*선택한|현재\s*선택한', q))
-    if any(word in q for word in ('소비','상권','거래')) and any(word in q for word in ('기준','급증 판단','급증 판정')):
+    incremental_follow_up = bool(re.search(
+        r'같은\s*기준월|그럼\s*[2-6]0대|지금\s*선택한|현재\s*선택한|'
+        r'(?:20\d{2}\s*년(?:도)?|전체\s*(?:기간|연도)|전\s*(?:기간|연도)).*(?:확대|넓혀|전체|전부)|'
+        r'(?:확대|넓혀).*(?:20\d{2}\s*년(?:도)?|전체\s*(?:기간|연도)|전\s*(?:기간|연도))', q))
+    age_coverage_followup = bool(
+        '자료' in q and any(word in q for word in ('다른 동', '다른 지역', '나머지 동', '나머지 지역'))
+        and any(word in q for word in ('없', '왜', '차이'))
+    )
+    if age_coverage_followup:
+        purpose, kind = 'track_change', 'age_data_coverage'
+        dong = None
+    elif any(word in q for word in ('소비','상권','거래')) and any(word in q for word in ('기준','급증 판단','급증 판정')):
         purpose, kind = 'plan_review', 'consumption_criteria'
     elif is_methodology_question(question):
         purpose, kind = "track_change", "methodology"
     elif age_words and re.search(r'볼\s*수|가능|지원|제공',q):
         purpose, kind = 'track_change', 'capabilities'
-    elif age_words and metric and not any(word in q for word in ('신호','탐지','판정 기준','이유')):
-        # "선택한 동의 30대 통화 상대 수"처럼 변화라는 단어 없이
-        # 특정 연령·활동지표의 현재값만 묻는 질문도 연령별 활동으로 분류한다.
-        purpose, kind = 'track_change', 'age_activity'
     elif age_words and any(word in q for word in ('변화','달라','차이','추이','비교','지표','활동','어떻게')) and not any(word in q for word in ('신호','탐지','판정 기준','이유')):
         purpose, kind = 'track_change', 'age_activity'
     elif any(word in q for word in ('데이터 상태','처리 상태','업데이트 상태','초기 이력','초기이력')):
@@ -132,6 +153,14 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
         purpose, kind = "find_region", "rank_regions"
     else:
         purpose, kind = "find_region", "signals"
+    # “이상신호가 탐지된 모든 동을 자세히 설명해줘”처럼 전체 목록과
+    # 설명 요청이 함께 오면 개별 동(reason)으로 축소하지 않는다.
+    all_detected_dongs = bool(re.search(
+        r"이상\s*신호.*탐지된\s*모든\s*동|모든\s*동.*이상\s*신호|모든\s*(?:이상\s*)?신호.*(?:동|케이스|사례)",
+        question
+    ))
+    if all_detected_dongs:
+        purpose, kind = "find_region", "signals"
     needs=[]
     age,ambiguous=age_condition(question)
     bands=()
@@ -145,8 +174,21 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
         kind == "signals" and signal != "any"
         and any(word in q for word in ("구간", "언제", "시기", "기간"))
     )
-    follow_up = incremental_follow_up or (not dong and (kind in {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"} or signal_period_follow_up))
+    all_signal_cases = _all_signal_cases(question) and kind in {"signals", "rank_regions"}
+    global_signal_scope = bool(re.search(
+        r"강남구\s*전체|전체\s*지역|모든\s*동|변화\s*신호가\s*나온\s*동|신호가\s*나온\s*동", question
+    )) and kind in {"signals", "rank_regions"}
+    follow_up = incremental_follow_up or age_coverage_followup or (not dong and (kind in {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"} or signal_period_follow_up))
+    if global_signal_scope:
+        dong = None
+        follow_up = False
+    include_values=bool(
+        re.search(r'원값|실제\s*값|월별\s*값|원수치',question)
+        # A decimal copied from the dashboard card (for example 13.97)
+        # means the user is comparing displayed values, not only change rates.
+        or (kind=='age_activity' and re.search(r'(?<!\d)\d+\.\d+(?!\d)',question))
+    )
     return QueryIntent(purpose, kind, dong, start, end, signal, metric, tuple(needs), limit,
                        (), follow_up, all_period, age_band=age,
-                       age_scope_explicit=bool(age or bands or ambiguous or re.search(r'전\s*연령|전체\s*연령',question)),age_bands=bands,
-                       include_values=bool(re.search(r'원값|실제\s*값|월별\s*값|원수치',question)))
+                       age_scope_explicit=bool(age or bands or ambiguous or global_signal_scope or all_signal_cases or re.search(r'전\s*연령|전체\s*연령',question)),age_bands=bands,
+                       include_values=include_values)

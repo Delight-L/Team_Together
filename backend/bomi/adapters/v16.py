@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import logging
-import math
 import os
 import re
 import sys
@@ -37,95 +36,37 @@ from chatbot_agent.orchestrator import Chatbot
 from chatbot_agent.schemas import GuardResult
 
 LOGGER = logging.getLogger(__name__)
-CONTEXTUAL_TYPES = {"reason", "previous", "activity", "age_activity", "context", "support", "consumption"}
+CONTEXTUAL_TYPES = {"reason", "previous", "activity", "age_activity", "age_data_coverage", "context", "support", "consumption"}
 LIST_TYPES = {"signals", "rank_regions", "anomaly"}
 MONTH = re.compile(r"^20\d{2}-(0[1-9]|1[0-2])$")
+SCREEN_SUMMARY = re.compile(
+    r"(?:대시보드|현재|지금|선택한|이)\s*(?:화면|자료|정보|내용)?.*(?:요약|정리|설명)"
+    r"|(?:요약|정리|설명).*(?:대시보드|화면|자료|정보|내용)"
+)
+SCREEN_REFERENCE = re.compile(
+    r"대시보드|현재\s*(?:화면|선택)|지금\s*(?:화면|선택)|선택된\s*(?:화면|지역|동|연령)"
+)
 
 
 DEFAULT_MODEL = "gemini-2.5-flash-lite"
 
-# 메인 대시보드의 지표 버튼이 보내는 짧은 입력 → 실제 질문
-METRIC_BUTTON_QUESTIONS = {
-    "통화 상대 수": "통화 상대 수 이상신호",
-    "통화": "통화 상대 수 이상신호",
-    "문자 상대 수": "문자 상대 수 이상신호",
-    "문자": "문자 상대 수 이상신호",
-    "평일 이동": "평일 이동 이상신호",
-    "휴일 이동": "휴일 이동 이상신호",
-}
-SCREEN_SUMMARY = re.compile(r"(?:지금|현재)\s*보는\s*화면|화면\s*(?:내용|정보)?.*(?:정리|설명)|(?:정리|설명).*(?:화면|내용)")
-IMPLICIT_SCREEN_INFO = re.compile(r"(정보|자료|현황|변화|맥락|설명|알려줘|보여줘)")
-CASE_CLARIFICATION = ("어떤 사례를 말씀하시는지 확인이 필요해요. 지역(행정동), 기준월, 연령대 중 하나를 알려주시거나 "
-                      "바로 앞 답변의 사례를 지정해 주세요.")
-
 
 def _age_band(value: object) -> str | None:
-    """대시보드의 연령 표시(예: 30대)를 v16 DB의 연령대 코드로 바꿉니다. 지원하지 않는 연령은 None."""
-    text = str(value or '').strip()
-    return {'20대': '20s', '30대': '30s', '40대': '40s',
-            '50대': '50s', '60대': '60plus', '60세 이상': '60plus'}.get(text)
+    """대시보드의 한글 연령 표기를 연령별 탐지 테이블의 코드로 바꾼다."""
+    return {
+        "20대": "20s", "30대": "30s", "40대": "40s", "50대": "50s",
+        "60대": "60plus", "60세 이상": "60plus",
+    }.get(str(value or "").strip())
 
 
-def _expand_implicit_screen_info(question: str, context: dict) -> str:
-    """대상이 빠진 정보 질문(«변화 알려줘»)을 화면에서 선택한 동·연령 기준으로 명시합니다."""
-    if not context.get('district') or not IMPLICIT_SCREEN_INFO.search(question):
-        return question
-    # 전체 이상신호·목록 질문은 선택한 동으로 좁히지 않습니다.
-    if re.search(r"(이상\s*신호|탐지.*지역|지역.*목록|순위)", question):
-        return question
-    # 질문에 이미 행정동이 있으면 그대로 둡니다(이 단계에선 동 목록이 없어 «…동» 낱말로 판단).
-    if re.search(r"[가-힣0-9]{2,8}동", question):
-        return question
-    # v16은 20대 이상만 검증된 연령대가 있어 10대 같은 표시는 넣지 않습니다.
-    age = str(context.get('age') or '').strip() if _age_band(context.get('age')) else ''
-    subject = f"{context['district']} {age}".strip()
-    return f"현재 화면에서 선택된 {subject}의 {question.strip()}"
+def _is_dashboard_summary(question: str) -> bool:
+    """현재 선택 카드의 핵심 수치를 요약해 달라는 화면 문맥 요청인지 판별한다."""
+    return bool(SCREEN_SUMMARY.search(question))
 
 
-def _expand_dashboard_metric_question(question: str, context: dict) -> str:
-    """메인 대시보드의 지표 버튼 입력을 실제 상세 질문으로 확장합니다."""
-    normalized = " ".join(question.strip().split())
-    if context.get("district") and normalized in METRIC_BUTTON_QUESTIONS:
-        return f"현재 선택한 {context['district']}의 {METRIC_BUTTON_QUESTIONS[normalized]}를 자세히 설명해줘"
-    return question
-
-
-def _expand_visible_screen_question(question: str, screen: object) -> str:
-    """«화면 정리해 줘»를 화면에 보이는 지표·기간·동의 월별 추이 질문으로 바꿉니다."""
-    if not isinstance(screen, dict) or not SCREEN_SUMMARY.search(question):
-        return question
-    metric, start, end = (str(screen.get(key) or '').strip() for key in ('metric', 'from', 'to'))
-    dongs = tuple(name for name in screen.get('districts', ()) if isinstance(name, str) and name)
-    if not (metric and MONTH.fullmatch(start) and MONTH.fullmatch(end) and dongs):
-        return question
-    # «전월»은 후속질문 규칙에서 previous로 해석될 수 있어 월별 변화 추이 요청으로 명시합니다.
-    return f"{'·'.join(dongs)}의 {metric} {start}부터 {end}까지 월별 변화 추이를 정리해줘"
-
-
-def _visible_evidence_summary(bot: Chatbot, screen: object) -> str | None:
-    """근거 카드를 보고 있을 때, 그 카드의 지표 변화율만 요약합니다."""
-    if not isinstance(screen, dict) or screen.get('kind') != 'evidence':
-        return None
-    dongs = tuple(name for name in screen.get('districts', ()) if isinstance(name, str) and name)
-    month = str(screen.get('to') or '')
-    labels = tuple(label for label in screen.get('metrics', ()) if isinstance(label, str))
-    columns = {'전화 연락': 'call_contacts', '문자 연락': 'text_contacts',
-               '평일 이동': 'weekday_move_count', '휴일 이동': 'weekend_move_count'}
-    if len(dongs) != 1 or not MONTH.fullmatch(month) or not labels:
-        return None
-    frame = bot.repo.activity(dongs[0], month, month)
-    if frame.empty:
-        return f"{dongs[0]}의 {month} 화면 자료를 찾지 못했습니다."
-    row = frame.iloc[0]
-    parts = []
-    for label in labels:
-        value = row.get(columns.get(label, '') + '_log_change')
-        if isinstance(value, (int, float)) and math.isfinite(value):
-            parts.append(f"{label} {math.expm1(value) * 100:.1f}%")
-    if not parts:
-        return f"{dongs[0]}의 {month} 화면에서 변화율을 확인할 수 있는 지표가 없습니다."
-    return (f"{dongs[0]}의 {month} 화면 요약입니다. " + ' · '.join(parts) + '. '
-            '모두 선택한 동의 전월 대비 집계 변화율이며, 개인의 상태를 뜻하지 않습니다.')
+def _references_dashboard(question: str) -> bool:
+    """질문이 직전 대화가 아니라 현재 화면 선택을 명시적으로 가리키는지 확인한다."""
+    return bool(SCREEN_REFERENCE.search(question))
 
 
 def _configuration():
@@ -197,6 +138,20 @@ def _displayed_months(text):
     return sorted(set(primary))
 
 
+def _display_source(label):
+    """Keep database table names out of the user-facing reply metadata."""
+    raw = str(label or "")
+    if "a1_context" in raw or "a1_input" in raw:
+        return "지역유형·지역 구조 자료"
+    if "a2_age_detection" in raw:
+        return "연령별 변화 신호 자료"
+    if "a2_detection" in raw:
+        return "지역 변화 신호 자료"
+    if "a3" in raw:
+        return "소비 보조자료"
+    return raw
+
+
 class _RequestMemory(ConversationMemory):
     def __init__(self, history, districts):
         super().__init__()
@@ -226,7 +181,7 @@ class _RequestMemory(ConversationMemory):
                 continue
             self.turns.append(ConversationTurn(
                 question, parsed.purpose, parsed.question_type, tuple(names), start, end,
-                parsed.signal, item["content"][:1600], parsed.age_band, parsed.age_bands, parsed.metric,
+                parsed.signal, item["content"][:1600], parsed.age_band, parsed.age_bands,
             ))
             self.turns = self.turns[-self.max_turns:]
             if "알려주세요" in item["content"] or "어느 기간" in item["content"]:
@@ -261,6 +216,7 @@ question_type:
 - methodology: 이상신호 기준/Robust Z/수학적 탐지 공식. 소비 문맥을 임의로 만들지 마세요.
 - consumption_criteria: 소비 급증 판정 기준 자체. capabilities: 연령별 조회 지원 여부.
 - previous: 전월 탐지 여부. anomaly: 특정 활동 지표의 이례적인 변화 순위. data_status: 자료 갱신 상태.
+- age_data_coverage: 직전 신호 목록에서 어떤 사례만 연령별 자료가 보이는 이유와 자료 제공기간 비교.
 - greeting/thanks/feedback/insult/off_topic: 일반 대화, 질문 수정 요청/불만은 feedback.
 methodology/capabilities/consumption_criteria/일반 대화는 지역이나 기간을 요구하지 않습니다.
 연령은 20s/30s/40s/50s/60plus(60세 이상)이며 전체 연령은 null입니다. 지원하지 않는 나이는 needs=['연령'].
@@ -269,6 +225,8 @@ age_activity에 특정 연령이 없으면 age_bands=[]로 다섯 연령을 각�
 소비자료의 metric은 null. 소비의 양/품목 질문도 consumption이며 품목 대신 소비 분야 자료를 찾습니다.
 예: '2025년에 이상신호가 뜬 곳'은 signals, '이상신호 기준은?'은 methodology,
 '그 동 연령대 변화는?'은 age_activity + use_previous_scope=true.
+'삼성1동은 자료가 있는데 왜 다른 동은 없어?'처럼 직전 목록의 연령별 자료 유무 차이를 묻는 질문은
+age_data_coverage + use_previous_scope=true이며, 직전 목록의 모든 동과 기준월을 비교하세요.
 use_previous_scope는 현재 질문이 실제 직전 조회를 이어갈 때만 true. 새로운 광역 목록에 과거 동을 넣지 마세요.
 대시보드 선택은 생략 조건의 보조입니다. 전체 지역 찾기는 선택한 동/성별/연령 그룹으로 좁히지 않습니다.
 명시한 지역/기간은 대시보드보다 우선합니다. 날짜는 YYYY-MM이며 2025년 하반기는 2025-07~2025-12입니다.
@@ -304,6 +262,33 @@ class _ScopedResolver(IntentResolver):
     def resolve(self, question, districts, memory):
         names = explicit_districts(question, districts)
         parsed = self._apply_explicit_districts(parse_intent(question, districts), names)
+        # In a comparison such as "삼성1동은 있고 왜 다른 동은 없어?",
+        # the named dong is the example being contrasted, not a request to
+        # discard the other districts from the preceding result list.
+        if parsed.question_type == "age_data_coverage":
+            intent = replace(parsed, dong=None, dongs=(), use_previous_scope=True, needs=())
+            self.last_source = "rule_age_data_coverage"
+            self.resolved_intent = self._defaults(intent, districts, memory, ())
+            return self.resolved_intent
+        # 탐지 기준을 묻는 질문과 현재 카드 요약은 화면의 응답 계약이
+        # 분명하다. 외부 모델의 임의 분류(예: 소비 기준)로 바꾸지 않는다.
+        if parsed.question_type == "methodology":
+            self.last_source = "rule_methodology"
+            self.resolved_intent = self._defaults(parsed, districts, memory, names)
+            return self.resolved_intent
+        if _is_dashboard_summary(question):
+            age = _age_band(self.context.get("age"))
+            district = self.context.get("district") if self.context.get("district") in districts else None
+            month = self.context.get("month") if MONTH.fullmatch(self.context.get("month", "")) else None
+            intent = replace(parsed, purpose="track_change", question_type="reason",
+                             signal="any", needs=(),
+                             dong=district, dongs=(district,) if district else (),
+                             start_month=month, end_month=month,
+                             age_band=age, age_scope_explicit=age is not None,
+                             use_previous_scope=False)
+            self.last_source = "rule_dashboard_summary"
+            self.resolved_intent = self._defaults(intent, districts, memory, names)
+            return self.resolved_intent
         if self.use_ai and self.config:
             try:
                 prompt = INTENT_PROMPT + "\n" + json.dumps({
@@ -312,15 +297,6 @@ class _ScopedResolver(IntentResolver):
                     "current_question": question,
                 }, ensure_ascii=False)
                 intent = self._apply_local_constraints(self._validate(_json_object(_ask_ai(self.config, prompt)), districts), parsed, names)
-                # 연령과 활동 지표가 명시된 질문은 AI가 지역 배경으로 잘못 분류해도 규칙 해석을 우선합니다.
-                if parsed.metric and parsed.age_band:
-                    intent = replace(intent, purpose='track_change', question_type='age_activity',
-                                     metric=parsed.metric, age_band=parsed.age_band,
-                                     age_bands=parsed.age_bands, age_scope_explicit=True,
-                                     needs=tuple(n for n in intent.needs if n not in {'연령'}))
-                elif '소비' in question and '날씨' in question:
-                    # 소비·날씨 맥락은 지역 배경 조회로 고정해 날씨 보조자료가 지역 유형 답변으로 바뀌지 않게 합니다.
-                    intent = replace(intent, purpose='plan_review', question_type='support', needs=())
                 self.last_source = "ai"
                 if intent.question_type == "age_activity":
                     bands, unsupported = comparison_ages(question)
@@ -353,10 +329,28 @@ class _ScopedResolver(IntentResolver):
                                  use_previous_scope=scoped, needs=())
             elif re.search(r"요약", question) and re.search(r"이\s*동|그\s*동", question):
                 intent = replace(intent, purpose="track_change", question_type="reason", use_previous_scope=True)
-        self.resolved_intent = self._defaults(intent, districts, memory, names, question)
+        # 현재 화면을 명시한 질문은 직전 대화보다 대시보드 선택을 우선한다.
+        # 질문에 직접 쓴 동·기간·연령은 다시 그보다 우선한다.
+        if _references_dashboard(question) and intent.question_type in CONTEXTUAL_TYPES:
+            district = self.context.get("district") if self.context.get("district") in districts else None
+            month = self.context.get("month") if MONTH.fullmatch(self.context.get("month", "")) else None
+            screen_age = _age_band(self.context.get("age"))
+            selected_names = names or ((district,) if district else ())
+            intent = replace(
+                intent,
+                dong=selected_names[0] if len(selected_names) == 1 else None,
+                dongs=tuple(selected_names),
+                start_month=parsed.start_month or month,
+                end_month=parsed.end_month or month,
+                age_band=parsed.age_band if parsed.age_scope_explicit else screen_age,
+                age_scope_explicit=parsed.age_scope_explicit or screen_age is not None,
+                use_previous_scope=False,
+                needs=tuple(item for item in intent.needs if item not in {"행정동", "기간"}),
+            )
+        self.resolved_intent = self._defaults(intent, districts, memory, names)
         return self.resolved_intent
 
-    def _defaults(self, intent, districts, memory, explicit_names, question):
+    def _defaults(self, intent, districts, memory, explicit_names):
         if intent.purpose == "dialogue" or intent.question_type in {"methodology", "capabilities", "consumption_criteria", "data_status"}:
             return intent
         previous = memory.last_scope()
@@ -373,13 +367,7 @@ class _ScopedResolver(IntentResolver):
         if not (start or end) and not intent.all_available_period:
             if previous and (intent.use_previous_scope or names and set(names).issubset(previous.districts)):
                 start, end = previous.start_month, previous.end_month
-            # 화면의 기준월은 사용자가 선택을 가리킬 때만 기본값입니다. 동만 명시한 질문은 따로 기준월이 필요합니다.
-            points_to_dashboard = bool(re.search(r"이\s*동|그\s*동|지금\s*선택|현재\s*선택|대시보드", question))
-            # 목록·연령별 활동·지표를 명시한 활동 질문은 화면 기준월을 씁니다(불필요한 기간 재질문 방지).
-            uses_visible_default = intent.question_type in (LIST_TYPES | {"age_activity"}) or (
-                intent.question_type == "activity" and bool(intent.metric))
-            if not (start or end) and (points_to_dashboard or uses_visible_default) \
-                    and MONTH.fullmatch(self.context.get("month", "")):
+            if not (start or end) and MONTH.fullmatch(self.context.get("month", "")):
                 start = end = self.context["month"]
         needs = tuple(item for item in intent.needs if not (item == "행정동" and names or item == "기간" and start and end))
         return replace(intent, dong=names[0] if len(names) == 1 else None, dongs=tuple(names),
@@ -390,36 +378,19 @@ def reply(question, history, context, use_ai=True, group=None):
     """질문 하나에 대한 v16 답변 dict(answer, mode, sources, followUps, notice)를 요청 단위 기억으로 만듭니다."""
     config = _configuration()
     model = config.model if config and config.provider == "gemini" else DEFAULT_MODEL
-    public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month", "age", "sex")}
-    question = _expand_visible_screen_question(question, context.get('screen'))
-    if not _bounded_history(history):
-        # 이어지는 대화에서는 앞 대화의 동·기간을 따르고(대화 기억), 첫 질문일 때만 화면 선택으로 보충합니다.
-        question = _expand_implicit_screen_info(question, public_context)
-    question = _expand_dashboard_metric_question(question, public_context)
-    # «이 사례»는 대시보드 선택값으로 보충하지 않습니다. 앞 대화에 동·사례가 없으면 대상을 다시 묻습니다.
-    if re.search(r"이\s*사례|그\s*사례", question) and re.search(r"탐지|신호|이유", question):
-        prior = ' '.join(str(item.get('content') or '') for item in (history or [])[-4:] if isinstance(item, dict))
-        if not re.search(r"[가-힣0-9]{2,8}동|전체\s*지역|강남구\s*전체", prior):
-            return {"answer": CASE_CLARIFICATION, "mode": "v16 · 사례 확인 필요", "sources": [],
-                    "intentSource": "clarification", "memoryMode": "request_history", "followUps": []}
+    public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month", "age")}
     resolver = _ScopedResolver(V16_ROOT, model, None, public_context, config, bool(use_ai))
     bot = Chatbot(V16_ROOT, model=model, intent_resolver=resolver, moderator=_SupervisorModerator(),
                   repository=_repository())
     bot.allow_ai_generation = False
-    resolver.available_period = bot.repo.available_period()
-    # 화면에서 고른 동·기준월·연령을 v16 질의 계획에도 넘깁니다.
     bot.activate_dashboard_context({
-        'dong': public_context.get('district'),
-        'label_month': public_context.get('month'),
-        'age_band': _age_band(public_context.get('age')),
+        "dong": public_context.get("district"),
+        "label_month": public_context.get("month"),
+        "age_band": _age_band(public_context.get("age")),
     }, None)
+    resolver.available_period = bot.repo.available_period()
     bot.memory = _RequestMemory(history, bot.repo.districts())
     try:
-        summary = _visible_evidence_summary(bot, context.get('screen')) if SCREEN_SUMMARY.search(question) else None
-        if summary:
-            return {"answer": summary, "mode": "v16 · 저장된 자료 답변 · DB1 근거",
-                    "sources": [{"label": "대시보드 선택 동 분석값"}],
-                    "intentSource": "dashboard_screen", "memoryMode": "request_history", "followUps": []}
         result = bot.answer(question)
     finally:
         # 요청이 끝나면 저장소 연결·캐시를 닫습니다(공개본 파일 핸들을 오래 잡지 않음).
@@ -434,7 +405,7 @@ def reply(question, history, context, use_ai=True, group=None):
         "mode": ("v16 · AI 의도 판단 · DB1 근거" if source == "ai"
                  else "v16 · 저장된 자료 답변 · DB1 근거" if source == "local_model_error"
                  else "v16 · 외부 AI 호출 없음 · DB1 근거"),
-        "sources": [{"label": label} for label in result.evidence.sources] or [{"label": "v16 · DB1"}],
+        "sources": [{"label": _display_source(label)} for label in result.evidence.sources] or [{"label": "지역 분석 자료"}],
         "intentSource": source, "memoryMode": "request_history", "followUps": list(result.follow_ups),
     }
     notices = []

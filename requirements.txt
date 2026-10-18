@@ -16,3 +16,5 @@ pydantic-settings>=2.4
 # Approved elder model runtime
 scikit-learn==1.7.2
 joblib>=1.4,<2
+
+truststore>=0.10

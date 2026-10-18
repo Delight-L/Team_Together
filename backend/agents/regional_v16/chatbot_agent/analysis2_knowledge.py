@@ -35,7 +35,7 @@ def is_methodology_question(question: str) -> bool:
         "robustz", "robust-z", "robustzscore", "이상신호기준",
         "이상신호탐지공식", "이상신호공식", "탐지공식", "신호공식",
         "판정기준", "판정원리", "탐지기준", "탐지원리", "계산원리",
-        "임계값", "왜-2", "왜2", "mad가", "mad는", "계산기준",
+        "임계값", "왜-2", "왜2", "mad가", "mad는", "계산기준", "연령별기준", "연령기준",
     )
     if any(term in q for term in exact_terms):
         return True
@@ -49,6 +49,8 @@ def is_methodology_question(question: str) -> bool:
 def methodology_answer(question: str = "") -> str:
     """Explain the method at the detail level requested by the user."""
     q = question.lower().replace(" ", "")
+    if "연령별기준" in q or "연령기준" in q:
+        return """연령별 이상신호도 기본 판정 원리는 동 전체 신호와 같습니다. 다만 동 전체를 한 번에 계산하지 않고, 20대·30대·40대·50대·60세 이상 각 연령대의 통화·문자·평일 이동·휴일 이동 변화를 따로 계산합니다.\n\n각 연령대의 과거 변화와 강남구 공통 변화를 기준으로 Robust Z를 계산하며, 해당 연령대의 조건이 기준을 충족할 때만 연령별 신호로 기록합니다. 따라서 동 전체에는 신호가 있어도 특정 연령대에는 없을 수 있고, 반대로 연령별 신호가 여러 건이어도 동 전체 신호 건수와 같지 않을 수 있습니다.\n\n이 결과는 해당 연령대의 지역 집계 변화에 대한 추가 확인 신호이며, 개인의 고립이나 원인을 확정하지 않습니다."""
     if "robust" in q or "mad" in q or "임계값" in q or "-2" in q:
         return """Robust Z는 이번 변화가 그 동의 과거 변화 범위에서 얼마나 이례적인지 나타내는 값입니다.
 

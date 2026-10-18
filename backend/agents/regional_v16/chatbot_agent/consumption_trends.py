@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 
 from .repository import AGE_LABEL
+from .period_matching import nearest_period
 
 
 def _finite(value):
@@ -26,6 +27,10 @@ def _previous_month(month):
 def _previous_quarter(period):
     year, number = int(period[:4]), int(period[-1])
     return f"{year}Q{number - 1}" if number > 1 else f"{year - 1}Q4"
+
+
+def _quarter_for(month):
+    return f"{month[:4]}Q{(int(month[5:]) - 1) // 3 + 1}"
 
 
 def _complete_quarters(months):
@@ -110,30 +115,56 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
     age_label = AGE_LABEL.get(age_band, age_band) if age_band else None
     result = []
     codes = repo.district_codes()
-    # 필요한 기간(이전 분기·이전 달 포함)·동·연령의 행만 읽는다. 조회에 쓰이지 않는 행은 결과에 영향이 없다.
+    # The selected period is often one dashboard month while local data is
+    # quarterly. Read the source's available periods so a nearest comparable
+    # reference can be shown instead of an empty answer.
     wanted_codes = [codes[name] for name in names if name in codes]
-    quarter_periods = sorted({*quarters, *(_previous_quarter(q) for q in quarters)})
     ages = [age_label] if age_label else None
     features = {(row["adm_cd"], row["period"], row["age"], row["domain"]): row
-                for row in repo.consumption_payloads("a3a_feature", periods=quarter_periods,
-                                                     adm_cds=wanted_codes, ages=ages)}
+                for row in repo.consumption_payloads("a3a_feature", adm_cds=wanted_codes, ages=ages)}
     comparisons = {(row["adm_cd"], row["period"], row["age"], row["domain"]): row
-                   for row in repo.consumption_payloads("a3a_comparison", periods=quarter_periods,
-                                                        adm_cds=wanted_codes, ages=ages)}
-    month_periods = sorted({*months, *(_previous_month(m) for m in months)})
+                   for row in repo.consumption_payloads("a3a_comparison", adm_cds=wanted_codes, ages=ages)}
     monthly = ({(row["period"], row["age"], row["domain"]): row
-                for row in repo.consumption_payloads("a3b_feature", periods=month_periods,
-                                                     districts=["11680"], ages=ages)
+                for row in repo.consumption_payloads("a3b_feature", districts=["11680"], ages=ages)
                 if row.get("district", "11680") == "11680"}
                if include_district else {})
+
+    def merchant_ready(code, quarter):
+        for (adm_cd, period, age, domain), current in features.items():
+            if adm_cd != code or period != quarter or age_label and age != age_label:
+                continue
+            previous = features.get((code, _previous_quarter(quarter), age, domain))
+            comparison = comparisons.get((code, quarter, age, domain), {})
+            if previous and not current.get("missing_domain") and not previous.get("missing_domain"):
+                if _finite(comparison.get("qoq_daily_change_pct")) and _finite(comparison.get("qoq_matched_industry_count")) and comparison["qoq_matched_industry_count"] > 0:
+                    return True
+        return False
+
+    def district_ready(month):
+        for (period, age, domain), current in monthly.items():
+            if period != month or age_label and age != age_label:
+                continue
+            previous = monthly.get((_previous_month(month), age, domain))
+            if previous and not current.get("missing_domain") and not previous.get("missing_domain"):
+                if _finite(current.get("matched_mom_daily_change_pct")) and _finite(current.get("matched_industry_count")) and current["matched_industry_count"] > 0:
+                    return True
+        return False
+
     for name in names:
-        if not quarters:
+        code = codes.get(name)
+        requested = quarters or [_quarter_for(end)]
+        selected_quarters = [quarter for quarter in requested if merchant_ready(code, quarter)]
+        if not selected_quarters:
+            available = {period for adm_cd, period, age, _ in features
+                         if adm_cd == code and (not age_label or age == age_label) and merchant_ready(code, period)}
+            closest = nearest_period(available, _quarter_for(end))
+            selected_quarters = [closest] if closest else []
+        if not selected_quarters:
             row = _base("merchant_dong", f"{start}~{end}", age=age_label, name=name)
             row["status"] = "quarter_not_fully_selected"
             result.append(row)
             continue
-        code = codes.get(name)
-        for quarter in quarters:
+        for quarter in selected_quarters:
             rows = []
             for key, current in features.items():
                 adm_cd, period, age, domain = key
@@ -146,6 +177,8 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
                 row.update(comparison_period=previous_period,
                            comparison_basis="previous_quarter_matched_industry_daily_count",
                            matched_industries=comparison.get("qoq_matched_industry_count"))
+                if quarter not in quarters:
+                    row.update(selection_alignment="nearest_comparable_period", requested_period=f"{start}~{end}")
                 rate = comparison.get("qoq_daily_change_pct")
                 matched = row["matched_industries"]
                 if current.get("missing_domain"):
@@ -163,7 +196,11 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
                 row["status"] = "current_period_unavailable"
                 rows.append(row)
             result.extend(_rank(rows, limit))
-    for month in months if include_district else ():
+    selected_months = list(months)
+    if include_district and not any(district_ready(month) for month in selected_months):
+        closest = nearest_period((period for period, _, _ in monthly if district_ready(period)), end)
+        selected_months = [closest] if closest else selected_months
+    for month in selected_months if include_district else ():
         rows = []
         for (period, age, domain), current in monthly.items():
             if period != month or age_label and age != age_label:
@@ -174,6 +211,8 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
             row.update(comparison_period=previous_period,
                        comparison_basis="previous_month_matched_industry_daily_count",
                        matched_industries=current.get("matched_industry_count"))
+            if month not in months:
+                row.update(selection_alignment="nearest_comparable_period", requested_period=f"{start}~{end}")
             rate = current.get("matched_mom_daily_change_pct")
             matched = row["matched_industries"]
             if current.get("missing_domain"):
