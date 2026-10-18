@@ -163,7 +163,18 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
         rows=_records(f,cols)
         for row in rows:
             row['signal_type']=_signal_type(row)
-        e=Evidence('신호가 나온 지역',f'조건에 맞는 {LABEL[intent.signal]} 신호는 {len(f)}건입니다.',rows,[source],limits)
+        supplementary={}
+        # “모든 케이스”를 물었을 때 동 단위 공개 신호와 연령별 공개
+        # 신호를 섞어 세지 않도록, 두 범위를 별도로 함께 알려 준다.
+        if not intent.age_scope_explicit:
+            try:
+                age_cases=repo.age_signal_cases(start,end,None,intent.signal,None)
+                supplementary['age_case_count']=len(age_cases)
+                supplementary['age_case_district_count']=age_cases['행정동'].nunique() if not age_cases.empty else 0
+            except (AttributeError, KeyError, ValueError):
+                pass
+        scope_label = '연령별' if intent.age_scope_explicit else '동 단위'
+        e=Evidence('신호가 나온 지역',f'{scope_label} 조건에 맞는 {LABEL[intent.signal]} 신호는 {len(f)}건입니다.',rows,[source],limits,supplementary)
     elif kind=='anomaly':
         f,rz=repo.anomalies(start,end,intent.metric,age,names)
         e=Evidence('이례적 감소 후보',f'{METRIC_LABEL.get(intent.metric,"평일 이동 횟수")}의 지역 공통변화를 제외한 Robust Z가 낮은 순입니다.',_records(f,['date','행정동','age_band',rz]),[source],limits)
@@ -224,7 +235,7 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
             e.supplementary['age_signal_changes']=signal_age_changes
         # A regional-background question without a selected signal month should
         # not expand into every available quarter of consumption data.
-        if kind == 'support' and dates:
+        if kind in {'support', 'context'} and dates:
             trends=[];quarters={}
             signal_observation_end=None
             if kind=='support' and dates:

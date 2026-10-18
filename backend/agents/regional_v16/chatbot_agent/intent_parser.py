@@ -85,6 +85,13 @@ def comparison_ages(text):
 def _all_period(text: str) -> bool:
     return bool(re.search(r"(전체|모든)\s*(기간|연도|월)|전\s+(기간|연도|월)|처음부터|전부", text))
 
+
+def _all_signal_cases(text: str) -> bool:
+    """모든 신호 케이스를 요구하면 연령별 사례까지 펼쳐 보인다."""
+    return bool(re.search(r"(?:모든|모두|전체|전부)\s*(?:이상\s*신호|신호)?\s*(?:탐지된|탐지된\s*)?(?:케이스|사례|기록)?", text)
+                and re.search(r"(?:이상\s*신호|신호|탐지)", text)
+                or re.search(r"이상\s*신호.*(?:모든|모두|전체|전부)", text))
+
 def _limit(text: str) -> int | None:
     # People often ask for "3곳" rather than "3개 동".
     # Do not read the number in a district name (for example, 삼성2동) as a rank limit.
@@ -104,7 +111,10 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
     metric = next((code for word,code in METRICS.items() if word in question), None)
     limit = _limit(question)
     age_words=bool(re.search(r'연령|나이|세대|[2-6]0\s*대|60\s*세',q))
-    incremental_follow_up = bool(re.search(r'같은\s*기준월|그럼\s*[2-6]0대|지금\s*선택한|현재\s*선택한', q))
+    incremental_follow_up = bool(re.search(
+        r'같은\s*기준월|그럼\s*[2-6]0대|지금\s*선택한|현재\s*선택한|'
+        r'(?:20\d{2}\s*년(?:도)?|전체\s*(?:기간|연도)|전\s*(?:기간|연도)).*(?:확대|넓혀|전체|전부)|'
+        r'(?:확대|넓혀).*(?:20\d{2}\s*년(?:도)?|전체\s*(?:기간|연도)|전\s*(?:기간|연도))', q))
     age_coverage_followup = bool(
         '자료' in q and any(word in q for word in ('다른 동', '다른 지역', '나머지 동', '나머지 지역'))
         and any(word in q for word in ('없', '왜', '차이'))
@@ -156,6 +166,7 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
         kind == "signals" and signal != "any"
         and any(word in q for word in ("구간", "언제", "시기", "기간"))
     )
+    all_signal_cases = _all_signal_cases(question) and kind in {"signals", "rank_regions"}
     global_signal_scope = bool(re.search(
         r"강남구\s*전체|전체\s*지역|모든\s*동|변화\s*신호가\s*나온\s*동|신호가\s*나온\s*동", question
     )) and kind in {"signals", "rank_regions"}
@@ -171,5 +182,5 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
     )
     return QueryIntent(purpose, kind, dong, start, end, signal, metric, tuple(needs), limit,
                        (), follow_up, all_period, age_band=age,
-                       age_scope_explicit=bool(age or bands or ambiguous or global_signal_scope or re.search(r'전\s*연령|전체\s*연령',question)),age_bands=bands,
+                       age_scope_explicit=bool(age or bands or ambiguous or global_signal_scope or all_signal_cases or re.search(r'전\s*연령|전체\s*연령',question)),age_bands=bands,
                        include_values=include_values)

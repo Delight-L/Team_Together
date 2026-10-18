@@ -14,10 +14,18 @@ from typing import Any
 import pandas as pd
 
 from .repository import AGE_LABEL, CORE
+from .period_matching import nearest_period
 
 
 ROOT = Path(__file__).resolve().parents[4]
 AGE_CSV = ROOT / "pipelines" / "db1" / "Analysis2" / "outputs" / "age_detection" / "analysis2_age_detection.csv"
+ANALYSIS3_OUTPUT = ROOT / "pipelines" / "db1" / "Analysis3" / "outputs"
+CONSUMPTION_CSV = {
+    "a3a_feature": ANALYSIS3_OUTPUT / "a3a_feature.csv",
+    "a3a_comparison": ANALYSIS3_OUTPUT / "a3a_comparison.csv",
+    "a3b_feature": ANALYSIS3_OUTPUT / "a3b_feature.csv",
+}
+WEATHER_CSV = ROOT / "pipelines" / "db1" / "Context" / "outputs" / "evidence" / "ctx_weather_window.csv"
 
 
 def _json(value: Any) -> dict:
@@ -58,6 +66,8 @@ class DashboardDb1Repository:
         self._district: pd.DataFrame | None = None
         self._age: pd.DataFrame | None = None
         self._run_id: str | None = None
+        self._consumption: dict[str, pd.DataFrame] = {}
+        self._weather: dict[str, dict] | None = None
 
     def close(self):
         return None
@@ -229,12 +239,81 @@ class DashboardDb1Repository:
             records.append(row)
         return pd.DataFrame(records)
 
+    def _consumption_frame(self, table: str) -> pd.DataFrame:
+        """Read the checked-in Analysis3 output only as a local read fallback.
+
+        The shared dashboard database currently publishes the core detection
+        tables but not Analysis3.  Keeping this here lets the UI explain the
+        same locally delivered Analysis3 output without writing to the shared
+        database or replacing any official detection result.
+        """
+        if table not in CONSUMPTION_CSV:
+            raise ValueError(f"지원하지 않는 소비 자료: {table}")
+        if table not in self._consumption:
+            path = CONSUMPTION_CSV[table]
+            self._consumption[table] = pd.read_csv(path, dtype={"adm_cd": str, "district": str}) if path.is_file() else pd.DataFrame()
+        return self._consumption[table].copy()
+
+    def _weather_rows(self) -> dict[str, dict]:
+        if self._weather is not None:
+            return {key: dict(value) for key, value in self._weather.items()}
+        rows: dict[str, dict] = {}
+        if WEATHER_CSV.is_file():
+            for source in pd.read_csv(WEATHER_CSV).to_dict("records"):
+                try:
+                    payload = _json(source.get("payload_json"))
+                    label = str(source.get("date", ""))[:7]
+                    if label and payload:
+                        # The answer renderer uses this stable field name.
+                        payload["observation_month_weather"] = [
+                            {"month": item.get("period"), "rain_days": item.get("rain_days"),
+                             "rainfall_mm": item.get("rainfall_mm"), "snow_days": item.get("snow_days")}
+                            for item in payload.get("monthly_values", [])
+                        ]
+                        rows[label] = payload
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    continue
+        self._weather = rows
+        return {key: dict(value) for key, value in rows.items()}
+
     def supplements(self, names, dates, age_band=None) -> dict[str, Any]:
+        weather_source = self._weather_rows()
+        weather = {}
+        for date in sorted({str(value)[:7] for value in dates}):
+            matched = date if date in weather_source else nearest_period(weather_source, date)
+            if not matched:
+                continue
+            item = dict(weather_source[matched])
+            if matched != date:
+                item.update(selection_alignment="nearest_available_period",
+                            requested_period=date, reference_period=matched)
+            weather[f"{date}-01"] = item
         return {"analysis1": [], "analysis3_dong": [], "analysis3_district_shared": [],
-                "weather": [], "regional_context": [], "shown_context_dongs": len(names)}
+                "weather": weather, "regional_context": [], "shown_context_dongs": len(names),
+                "scope_note": "행정동 상권 자료와 강남구 상점 소비 자료는 보조 맥락이며 해당 동 주민의 소비나 신호 원인을 뜻하지 않습니다.",
+                "district_rows_shared_once": True, "retrospective_only": True}
 
     def consumption_evidence(self, names, start, end, age):
         return [], {}
 
     def consumption_payloads(self, table, *, periods=None, adm_cds=None, ages=None, districts=None):
-        return []
+        frame = self._consumption_frame(table)
+        allowed = {
+            "a3a_feature": {"periods": "period", "adm_cds": "adm_cd", "ages": "age"},
+            "a3a_comparison": {"periods": "period", "adm_cds": "adm_cd", "ages": "age"},
+            "a3b_feature": {"periods": "period", "districts": "district", "ages": "age"},
+        }[table]
+        filters = {"periods": periods, "adm_cds": adm_cds, "ages": ages, "districts": districts}
+        for name, values in filters.items():
+            if values is None:
+                continue
+            if name not in allowed:
+                raise ValueError(f"{table}에는 {name} 조건을 사용할 수 없습니다")
+            if not values:
+                return []
+            if len(values) <= 500:
+                frame = frame.loc[frame[allowed[name]].astype(str).isin({str(value) for value in values})]
+        # Pandas NaN must not leak into response data: it otherwise becomes a
+        # non-standard JSON NaN in LLM prompts and can break a whole answer.
+        return [{key: (None if pd.isna(value) else value) for key, value in row.items()}
+                for row in frame.to_dict("records")]

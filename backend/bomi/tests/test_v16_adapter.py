@@ -92,6 +92,13 @@ class V16ServiceTest(unittest.TestCase):
         self.assertEqual((intent.start_month, intent.end_month), ("2025-07", "2025-12"))
         self.assertEqual(intent.dongs, ())
 
+    def test_all_signal_cases_use_age_level_cases_instead_of_region_only(self):
+        with patch("chatbot_agent.orchestrator.execute", return_value=Evidence("신호", "범위 확인")) as execute:
+            service.reply("2025년 다른 이상신호 탐지된 모든 케이스 찾아줘", [], CONTEXT, use_ai=False)
+        intent = execute.call_args.args[1]
+        self.assertEqual(intent.question_type, "signals")
+        self.assertTrue(intent.age_scope_explicit)
+
     def test_excluded_year_is_not_misread_as_range_start(self):
         with patch("chatbot_agent.orchestrator.execute", return_value=Evidence("신호", "범위 확인")) as execute:
             service.reply("2023년도 자료는 빼고 2025년도 이상신호만 알려줘", [], CONTEXT, use_ai=False)

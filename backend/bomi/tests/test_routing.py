@@ -34,6 +34,7 @@ class RuleRoutingTest(unittest.TestCase):
             '이상신호 판정 기준은?': 'region_analysis', '삼성1동은?': 'region_analysis',
             '후보 판정은 무슨 뜻인가요?': 'region_analysis', '자료 부족과 기준 미해당은 어떻게 다른가요?': 'region_analysis',
             '평소 대비 차이와 전월 변화율은 어떻게 다른가요?': 'region_analysis',
+            '고활동 청년유동, 1인가구 중심형이 뭐야?': 'region_analysis',
             '혼자 사는 어르신 돌봄 지원': 'welfare', '이 지역의 지원사업 후보를 찾아 줘': 'welfare',
             '사업 이용 조건에서 무엇을 확인해야 하나요?': 'welfare', '사업 연계 전에 확인할 일을 알려 줘': 'welfare',
             '세곡동행': 'welfare', '청년은?': 'welfare', '외로워요': 'welfare',
@@ -58,6 +59,13 @@ class RuleRoutingTest(unittest.TestCase):
         # 그룹이 없으면 «남성 비중»은 어느 업무에도 맞지 않습니다.
         self.assertEqual(by_rules('남성 비중은?'), 'guide')
 
+    def test_period_expansion_keeps_the_previous_regional_analysis(self):
+        history = [
+            {'role': 'user', 'content': '역삼2동의 이상신호에 대해 알려줘'},
+            {'role': 'assistant', 'content': '역삼2동의 2025년 11월 기준 변화 신호입니다.'},
+        ]
+        self.assertEqual(ROUTER.decide(make_request('2025년도로 확대해봐', history)).agent, 'region_analysis')
+
     def test_route_has_label(self):
         self.assertEqual(Route('region_analysis', '규칙').label, '지역 분석 에이전트')
         self.assertEqual(Route('guide', 'AI').label, '보미 안내')
@@ -79,6 +87,16 @@ class AiRoutingTest(unittest.TestCase):
         sent = complete.call_args.args[0]
         self.assertTrue(any('삼성1동' in entry['content'] for entry in sent))
         self.assertEqual(sent[-1]['content'], '그럼 어디부터 살펴보면 될까?')
+
+    def test_ai_router_receives_three_complete_recent_turns(self):
+        history = [item for index in range(3) for item in (
+            {'role': 'user', 'content': f'이전 질문 {index}'},
+            {'role': 'assistant', 'content': f'이전 답변 {index}'},
+        )]
+        _, complete = self.ask_ai('{"agent": "region_analysis"}', history=history)
+        sent = complete.call_args.args[0]
+        self.assertTrue(any(entry['content'] == '이전 질문 0' for entry in sent))
+        self.assertTrue(any(entry['content'] == '이전 답변 2' for entry in sent))
 
     def test_legacy_agent_names_are_accepted(self):
         for legacy in ('analysis', 'regional_v16'):

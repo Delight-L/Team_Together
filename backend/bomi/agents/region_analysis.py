@@ -50,6 +50,8 @@ class RegionAnalysisAgent(RegulatedAgent):
     def _uses_workspace(request: ChatRequest) -> bool:
         """동·그룹 분석 근거(workspace)가 답해야 하는지. 아니면 v16."""
         question = request.question
+        if questions.is_screen_summary(question):
+            return True
         if questions.is_screen_term_question(question):
             return True
         if request.group and questions.is_group_focused(question):

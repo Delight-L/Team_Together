@@ -138,6 +138,20 @@ def _displayed_months(text):
     return sorted(set(primary))
 
 
+def _display_source(label):
+    """Keep database table names out of the user-facing reply metadata."""
+    raw = str(label or "")
+    if "a1_context" in raw or "a1_input" in raw:
+        return "지역유형·지역 구조 자료"
+    if "a2_age_detection" in raw:
+        return "연령별 변화 신호 자료"
+    if "a2_detection" in raw:
+        return "지역 변화 신호 자료"
+    if "a3" in raw:
+        return "소비 보조자료"
+    return raw
+
+
 class _RequestMemory(ConversationMemory):
     def __init__(self, history, districts):
         super().__init__()
@@ -391,7 +405,7 @@ def reply(question, history, context, use_ai=True, group=None):
         "mode": ("v16 · AI 의도 판단 · DB1 근거" if source == "ai"
                  else "v16 · 저장된 자료 답변 · DB1 근거" if source == "local_model_error"
                  else "v16 · 외부 AI 호출 없음 · DB1 근거"),
-        "sources": [{"label": label} for label in result.evidence.sources] or [{"label": "v16 · DB1"}],
+        "sources": [{"label": _display_source(label)} for label in result.evidence.sources] or [{"label": "지역 분석 자료"}],
         "intentSource": source, "memoryMode": "request_history", "followUps": list(result.follow_ups),
     }
     notices = []

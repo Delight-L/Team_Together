@@ -297,6 +297,9 @@ JSON만 반환하세요:
             rule_intent.question_type in {"signals", "rank_regions"}
             and (
                 re.search(r"강남구\s*전체|전체\s*지역|모든\s*동|변화\s*신호가\s*나온\s*동|신호가\s*나온\s*동", question)
+                # “모든 이상신호/탐지된 케이스”는 지역 순위가 아니라
+                # 공개된 모든 사례(연령별 사례 포함)를 요청한 것이다.
+                or re.search(r"(?:모든|전체|전부)\s*(?:이상\s*)?신호.*(?:케이스|사례|기록)?|(?:이상\s*)?신호\s*(?:모든|전체|전부)|(?:모든|전체|전부)\s*(?:탐지된\s*)?(?:이상\s*)?신호", question)
                 # The bomi adapter calls this shared resolver without passing
                 # the source text. parse_intent already marks this exact
                 # global-list shape as explicit age scope, so retain the same
@@ -306,7 +309,9 @@ JSON만 반환하세요:
             )
         )
         if global_signal:
-            intent = replace(intent, dong=None, dongs=(), age_band=None,
+            all_cases = bool(re.search(r"(?:모든|전체|전부)\s*(?:이상\s*)?신호.*(?:케이스|사례|기록)?|(?:이상\s*)?신호\s*(?:모든|전체|전부)|(?:모든|전체|전부)\s*(?:탐지된\s*)?(?:이상\s*)?신호", question))
+            intent = replace(intent, question_type="signals" if all_cases else intent.question_type,
+                             dong=None, dongs=(), age_band=None,
                              age_scope_explicit=True, use_previous_scope=False,
                              start_month=rule_intent.start_month or intent.start_month,
                              end_month=rule_intent.end_month or intent.end_month)

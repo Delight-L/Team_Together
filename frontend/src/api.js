@@ -14,6 +14,7 @@ export async function api(path, body, options = {}) {
         }),
   });
   const data = await response.json();
+  if (response.status === 401) window.dispatchEvent(new Event('welfind-session-expired'));
   if (!response.ok) throw new Error(data.error || '요청에 실패했습니다.');
   return data;
 }
@@ -30,6 +31,7 @@ export async function streamChat(body, onEvent, signal, endpoint = '/api/chat') 
   });
   if (!response.ok) {
     const data = await response.json();
+    if (response.status === 401) window.dispatchEvent(new Event('welfind-session-expired'));
     throw new Error(data.error || '챗봇 요청에 실패했습니다.');
   }
   if (!response.body) throw new Error('스트리밍 응답을 받을 수 없습니다.');

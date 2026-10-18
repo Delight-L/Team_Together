@@ -6,6 +6,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 import json,threading
 import pandas as pd
+
+from .period_matching import nearest_period
 from .district_normalizer import ALIASES
 
 SOURCES={'detection':'DB1: a2_detection','evidence':'DB1: a2_evidence',
@@ -338,6 +340,8 @@ class SqlDb1Repository:
         with self.connection() as con:
             c=_Memo(con)
             tables=self._table_names(con)
+            weather_rows=c.all('SELECT date,payload_json FROM ctx_weather ORDER BY date') if 'ctx_weather' in tables else []
+            weather_by_date={str(date)[:7]:json.loads(payload) for date,payload in weather_rows}
             codes={ALIASES.get(n,n):code for code,n in c.all('SELECT DISTINCT adm_cd,adm_nm FROM a1_context')}
             year=int(max(dates)[:4]) if dates else 2025
             if 'ctx_survey_annual' in tables:
@@ -386,8 +390,15 @@ class SqlDb1Repository:
                         else:
                             r=c.one('SELECT payload_json FROM a3b_month_summary WHERE period=? AND district=?',(month,'11680'))
                             if r:shared[(month,'all','all')]={'district':'강남구','period':month,'scope':'merchant_district_shared',**json.loads(r[0])}
-                    r=c.one('SELECT payload_json FROM ctx_weather WHERE date=?',(date,))
-                    if r:weather[date]=json.loads(r[0])
+                    requested_weather=date[:7]
+                    matched_weather=requested_weather if requested_weather in weather_by_date else nearest_period(weather_by_date, requested_weather)
+                    if matched_weather:
+                        item=dict(weather_by_date[matched_weather])
+                        if matched_weather != requested_weather:
+                            item['selection_alignment']='nearest_available_period'
+                            item['requested_period']=requested_weather
+                            item['reference_period']=matched_weather
+                        weather[date]=item
                     if age_band and 'ctx_sns_index' in tables:
                         r=c.one('SELECT payload_json FROM ctx_sns_index WHERE adm_cd=? AND date=? AND age_band=?',(code,date,age_band))
                         if r:sns.append(json.loads(r[0]))

@@ -10,6 +10,7 @@ from collections.abc import AsyncIterator
 import re
 
 import anthropic
+import httpx
 from google.genai import errors as gemini_errors
 from openai import OpenAIError
 
@@ -27,7 +28,7 @@ class EmptyAnswer(Exception):
 
 
 # 제공사마다 오류 종류가 달라 한데 모아 둡니다. except LLM_ERRORS: 로 잡으세요.
-LLM_ERRORS = (OpenAIError, anthropic.AnthropicError, gemini_errors.APIError, AIUnavailable, EmptyAnswer)
+LLM_ERRORS = (OpenAIError, anthropic.AnthropicError, gemini_errors.APIError, httpx.HTTPError, AIUnavailable, EmptyAnswer)
 
 
 def ai_ready():

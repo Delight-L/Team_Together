@@ -115,9 +115,23 @@ class Chatbot:
  @staticmethod
  def _follow_ups(intent: QueryIntent, evidence: Evidence) -> tuple[str, ...]:
   """Offer the next useful question for the answer just shown, with its scope."""
+  if not evidence.rows and intent.question_type in {"reason", "support", "previous"}:
+   return (
+    "2025년 다른 이상신호 지역 찾아줘",
+    "2025년 하반기 이상신호 탐지 지역 알려줘",
+    "이상신호 기준은 무엇인가요?",
+   )
   first = evidence.rows[0] if evidence.rows else {}
   dong = first.get("행정동") or intent.dong
   prefix = f"{dong}" if dong else "선택한 지역"
+  # 전체 사례 조회는 첫 번째 행(예: 개포3동)을 현재 선택 지역으로
+  # 간주하면 안 된다. 결과 전체를 탐색할 수 있는 후속 질문을 제공한다.
+  if intent.question_type in {"signals", "rank_regions"} and intent.age_scope_explicit and len({r.get("행정동") for r in evidence.rows}) > 1:
+   return (
+    "이상신호가 탐지된 모든 동을 자세히 설명해줘",
+    "각 이상신호의 탐지 기준과 변화 수치 알려줘",
+    "2025년 이상신호가 없는 지역도 알려줘",
+   )
   if intent.question_type in {"signals", "rank_regions"} and dong:
    return (
     f"왜 {prefix}이 확인 대상인가요?",

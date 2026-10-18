@@ -88,6 +88,13 @@ class ProviderTest(unittest.TestCase):
         self.assertEqual(request['config'].system_instruction, '규칙')
         self.assertEqual(request['config'].response_mime_type, 'application/json')
 
+    def test_gemini_client_uses_windows_trust_store(self):
+        config = ai_settings.AIConfig(True, 'gemini', 'gemini-2.5-flash', 'k', '.env')
+        with patch.object(gemini_client.genai, 'Client', return_value=MagicMock()) as factory:
+            gemini_client._client(config)
+        options = factory.call_args.kwargs['http_options']
+        self.assertIn('verify', options.async_client_args)
+
 
 if __name__ == '__main__':
     unittest.main()
