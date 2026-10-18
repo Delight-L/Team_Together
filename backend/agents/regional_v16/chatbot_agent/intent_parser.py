@@ -153,6 +153,14 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
         purpose, kind = "find_region", "rank_regions"
     else:
         purpose, kind = "find_region", "signals"
+    # “이상신호가 탐지된 모든 동을 자세히 설명해줘”처럼 전체 목록과
+    # 설명 요청이 함께 오면 개별 동(reason)으로 축소하지 않는다.
+    all_detected_dongs = bool(re.search(
+        r"이상\s*신호.*탐지된\s*모든\s*동|모든\s*동.*이상\s*신호|모든\s*(?:이상\s*)?신호.*(?:동|케이스|사례)",
+        question
+    ))
+    if all_detected_dongs:
+        purpose, kind = "find_region", "signals"
     needs=[]
     age,ambiguous=age_condition(question)
     bands=()
