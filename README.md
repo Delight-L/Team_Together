@@ -447,15 +447,17 @@ DB2 정기 수집은 [DB2 지자체복지 정기 수집](docs/DB2_지자체복�
 ## 16. 검증
 
 ```powershell
+python scripts/audit_repository.py
 cd frontend
-node --test tests/*.test.mjs
 npm run build
 cd ..
-.venv/Scripts/python.exe -m unittest discover -s backend/api/tests
-.venv/Scripts/python.exe -m unittest discover -s backend/chatbot/tests -t .
 ```
 
-서버 테스트는 실제 분석 결과를 읽고, 공유 PostgreSQL 대신 메모리 SQLite에 `work` 스키마를 붙여 로그인·지역 접근·보미 답변·업무 순서·Word 보고서 저장을 검사합니다. 실제 DB 쓰기와 외부 AI 호출은 하지 않습니다. 화면을 브라우저로 직접 조작하는 검사는 `node tests/draft-browser.mjs`이며 Playwright와 Chrome이 필요합니다.
+테스트 파일은 Git 추적에서 제외되어 새 checkout에는 포함되지 않습니다. 별도로 보관한 로컬 테스트가 있을 때만
+`python -m pytest backend/api/tests backend/db/tests backend/chatbot/tests backend/bomi/tests -q` 또는
+`frontend`에서 `node --test tests/<파일명>`으로 실행합니다. 로컬 테스트 중 일부는 실제 분석·DB 자료를 읽으므로
+실행 전에 대상 DB와 mock 범위를 확인하세요. 현재 코드·파일 정리와 남은 검증 문제는
+[정리 기록](docs/repository-cleanup-2026-10-19.md)에 있습니다.
 
 ## 17. Team
 

@@ -2,15 +2,13 @@
 import json
 import os
 import re
-from datetime import datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import threading
 import time
 
-import backend.common
-from backend.chatbot.welfare.app.dialogue.query_rules import excludes_past, named_program
+from backend.common import seoul_now
+from backend.chatbot.welfare.app.dialogue.query_rules import compact, excludes_past, named_program
 
 from backend.db.welfare_chatbot_repository import (
     catalog_counts, database_id, load_dataset_rows, search_catalog,
@@ -89,11 +87,6 @@ def _read_resources():
     return list(by_name.values())
 
 
-def compact(text):
-    """띄어쓰기·문장부호를 지운 비교용 문자열입니다(예: '세곡 동행의' → '세곡동행의')."""
-    return re.sub(r"[^가-힣a-zA-Z0-9]", "", text).lower()
-
-
 def database_record(row):
     """API·검토 서비스·사업 회차를 챗봇의 공통 자료 형식으로 바꿉니다."""
     kind = row["kind"]
@@ -101,7 +94,7 @@ def database_record(row):
              [row["source_id"], row["region_id"], row["external_id"]])
     if kind == "session":
         parts.append(row["session_id"])
-    today = datetime.now(ZoneInfo("Asia/Seoul")).date()
+    today = seoul_now().date()
     start, end = row.get("effective_start"), row.get("effective_end")
     expired = bool(end and end < today)
     future = bool(start and start > today)

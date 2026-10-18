@@ -5,13 +5,14 @@
 
 ```text
 Team_Together/
-├─ frontend/                 React 화면·화면 테스트
+├─ frontend/                 React 화면
 ├─ backend/
 │  ├─ api/                   HTTP API·로그인·관리자·업무·대화 요청
-│  ├─ chatbot/               보미 대화·가드레일·AI 연결
-│  │  └─ welfare/app/dialogue/  복지사업 검색과 대화 처리
-│  ├─ agents/                총괄·보고서 작성·사업 매칭
-│  │  └─ regional_v16/       v16 지역 변화 신호 에이전트(근거 DB는 git 제외)
+│  ├─ bomi/                  챗봇 흐름·담당 선택·안전 검사·에이전트
+│  ├─ chatbot/               공용 AI 설정·가드레일·AI 연결
+│  │  └─ welfare/app/dialogue/  복지사업 검색·근거 표현
+│  ├─ agents/                보고서 작성·사업 매칭
+│  │  └─ regional_v16/       지역 변화 엔진·계산·평가 기록
 │  ├─ db/                    공유 DB 연결·조회·저장
 │  ├─ services/              계정·Word 보고서 생성
 │  └─ resources/             지도 자료·보고서 서식
@@ -23,7 +24,7 @@ Team_Together/
 │  └─ welfare/               DB2 복지사업 수집
 ├─ data/                     공통 원자료·가공 자료
 ├─ assets/brand/             로고·캐릭터·브랜드 원본
-├─ docs/                     팀 문서·아키텍처·외부 참고자료
+├─ docs/                     팀 문서·아키텍처·외부 참고자료·과거 안내(history/)
 ├─ scripts/                  실행·이관·정기 수집 도구
 ├─ deploy/                   배포 설정
 ├─ runtime/                  로컬 실행 로그
@@ -64,9 +65,10 @@ Analysis2 구현은 `pipelines/db1/Analysis2` 하나입니다. `python main.py -
 예전 복사본(`pipelines/regional_analysis/Analysis2`)은 2026-10-16에 정리했습니다. 같은 feature table로 실행한 탐지 결과·근거 카드가 바이트 단위로 같음을 확인했습니다.
 다만 통합본은 입력 검증이 더 엄격해(이력 검증, Analysis1 지역 유형 누락 검사) 앞으로 들어올 자료에 문제가 있으면 예전보다 일찍 멈출 수 있습니다.
 
-v16 지역 변화 신호 에이전트(`backend/agents/regional_v16`)는 답변 근거로 `outputs/db1.sqlite`(약 100MB, git 제외)를 읽습니다.
-다른 위치에 둘 때는 `DB1_DATABASE_PATH`로 지정하고, 파일이 없으면 보미가 기존 지역 분석 담당으로 답합니다.
-이 DB를 새로 만드는 작업기도 `pipelines/db1`의 분석 코드를 그대로 씁니다.
+v16 지역 변화 신호 에이전트는 PostgreSQL의 게시된 run(`db1_v16`)을 읽습니다.
+게시 테이블이 없으면 `DashboardDb1Repository`가 기존 DB1 서비스 테이블과 전달된 연령·소비·날씨 CSV를 읽습니다.
+`outputs/db1.sqlite`(Git 제외)는 계산·게시 입력이며 서빙용 SQLite 경로는 없습니다.
+`DB1_DATABASE_PATH`는 계산 산출물 위치를 지정합니다. 이 DB를 만드는 작업기도 `pipelines/db1`의 분석 코드를 그대로 씁니다.
 
 루트 `.env`, 가상환경 `.venv`, `frontend/node_modules`는 계속 같은 위치를 사용합니다.
 관리자 AI 설정은 공유 PostgreSQL `work.app_settings`에 보관합니다(배포 서버 재시작 후에도 유지).
@@ -86,11 +88,11 @@ python main.py --analysis --no-download
 python main.py --preprocess-analysis1 --raw-dir "pipelines/preprocessing/regional_types/raw_data"
 python -m pipelines.welfare.collect --help
 python pipelines/db1/run_db1.py --help
-python -m pytest backend/api/tests backend/db/tests backend/chatbot/tests -q
+python scripts/audit_repository.py
 ```
 
 DB1의 개별 분석 테스트는 서로 같은 이름의 내부 모듈을 사용하므로,
-`pipelines/db1/run_tests.ps1`처럼 분석별 폴더에서 별도 프로세스로 실행합니다.
+테스트 파일과 `pipelines/db1/run_tests.ps1`은 Git 추적에서 제외되어 새 checkout에 포함되지 않습니다. 별도로 보관한 로컬 테스트가 있을 때만 해당 파일의 안내에 따라 실행합니다.
 `pipelines/db1/outputs/db1.sqlite`가 `version https://git-lfs.github.com/spec/v1`로 시작하면
 실제 SQLite가 아닌 전달 포인터입니다. 해당 파일이 필요한 테스트는 실제 DB 전달본을 받은 뒤 실행해야 합니다.
 

@@ -18,10 +18,14 @@ Python 환경과 `.env` 준비는 [전체 실행 안내](../README.md#13-실행-
 
 ```powershell
 python main.py
-python -m pytest backend/api/tests backend/db/tests backend/chatbot/tests backend/bomi/tests -q
+python scripts/audit_repository.py
 ```
 
-웹 서비스의 분석·복지·업무 데이터와 v16 답변 근거는 모두 공유 PostgreSQL(`db1`·`db1_v16`·`db2`·`work` 스키마)에서 읽습니다.
+테스트는 Git 추적에서 제외되어 있습니다. 로컬 테스트를 별도로 보관한 환경에서는
+`python -m pytest backend/api/tests backend/db/tests backend/chatbot/tests backend/bomi/tests -q`로 실행할 수 있습니다.
+
+웹 서비스는 공유 PostgreSQL(`db1`·`db1_v16`·`db2`·`work` 스키마)을 사용합니다.
+v16 게시 테이블이 없으면 지역 분석 에이전트는 대시보드와 같은 DB1 조회 경로와 전달된 연령·소비·날씨 CSV를 사용합니다.
 구조와 설계 이유는 [보미 챗봇 구조](../docs/bomi-architecture.md), 재설계 과정은 [보미 재설계 보고서](../docs/bomi-redesign-report.md)를 보세요.
 
 ## 문서 목차
@@ -230,9 +234,9 @@ DB를 새로 만드는 작업기는 공식 분석 코드 `pipelines/db1`을 그�
 
 ### 근거 자료 (PostgreSQL)
 
-- 챗봇은 **PostgreSQL에서만** 읽습니다. 계산 파이프라인은 SQLite(`outputs/db1.sqlite`, git에 올리지 않음)에 결과를 쓰고, 게시가 이를 PostgreSQL의 `db1.v16_*` 테이블과 `db1_v16` 뷰로 옮깁니다.
+- 게시 모드의 챗봇은 **PostgreSQL에서** 읽습니다. 게시 테이블이 없으면 대시보드 호환 모드(DB1 서비스 테이블 + 전달 CSV)를 사용합니다. 계산 파이프라인은 SQLite(`outputs/db1.sqlite`, git에 올리지 않음)에 결과를 쓰고, 게시가 이를 PostgreSQL의 `db1.v16_*` 테이블과 `db1_v16` 뷰로 옮깁니다.
 - 게시는 `data_pipeline/publish_postgres.py`의 `publish(sqlite_path, engine)`, 이전 run으로 되돌리기는 `activate(engine, run_id)`입니다. 저장 구조는 [보미 챗봇 구조 6장](../docs/bomi-architecture.md#6-v16-근거-저장소)을 보세요.
-- 게시된 run이 없거나 DB에 연결하지 못하면 `data_ready()`가 False이고, 지역 분석 에이전트가 동·그룹 분석 근거로 답합니다.
+- 게시 테이블이 없을 때는 대시보드 호환 저장소의 자료 유무를 확인합니다. 사용할 자료가 없거나 DB에 연결하지 못하면 `data_ready()`가 False이고 동·그룹 분석 근거로 답합니다.
 - `DB1_REPOSITORY=sqlite` 같은 예전 설정은 오류로 알립니다(SQLite 서빙은 제거됨).
 
 ### 외부 AI

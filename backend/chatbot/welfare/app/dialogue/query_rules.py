@@ -1,6 +1,12 @@
 """검색 방식이 공유하는 질문 의도 규칙. 지원 항목과 고유 사업명을 구분합니다."""
 import re
 
+
+def compact(text):
+    """띄어쓰기·문장부호를 제거한 복지 검색용 비교 문자열."""
+    return re.sub(r'[^가-힣a-zA-Z0-9]', '', text).lower()
+
+
 GENERIC_NAMES = frozenset((
     '주거비', '주거지원', '생활비', '생활지원', '교통비', '의료비', '교육비',
     '학비', '식비', '생계비', '지원금', '장려금', '응시료', '상담', '돌봄',
@@ -25,8 +31,6 @@ def excludes_past(query):
 
 def named_program(query, name):
     """고유 사업명은 우선 검색하되 '주거비' 같은 일반 항목은 후보를 독점하지 않습니다."""
-    def compact(text):
-        return re.sub(r'[^가-힣a-zA-Z0-9]', '', text).lower()
     label, question = compact(name), compact(query)
     if len(label) < 3 or label not in question:
         return False

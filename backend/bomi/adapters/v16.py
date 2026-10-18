@@ -4,10 +4,12 @@
 그 sys.path 조정과 임포트는 이 파일 한 곳에만 둡니다.
 - AI 사용 여부·제공사·키는 관리자 «AI 설정»(chatbot/ai_settings.py)을 따릅니다. v16 전용 .env 키는 쓰지 않습니다.
   Gemini면 v16 원래 방식(JSON 스키마 지정)으로, 다른 제공사면 공용 llm 창구로 질문 의도를 분류합니다.
-- 근거 자료는 PostgreSQL의 활성 run입니다(scripts/publish_v16_to_postgres.py로 게시). SQLite는 계산 파이프라인의 산출물일 뿐 서빙에는 쓰지 않습니다.
-  게시된 자료가 없거나 저장소에 연결하지 못하면 data_ready()가 False이고, 지역 분석 에이전트가 동·그룹 분석 근거 설명으로 대신 답합니다.
-Historical text is restored without replaying old queries, and SQLite evidence uses v16's existing
-validated renderers. No process-global conversation or credential mutation.
+- 게시된 run은 PostgreSQL에서 읽습니다(data_pipeline/publish_postgres.py의 publish 함수).
+  게시 테이블이 없으면 기존 DB1 서비스 테이블과 전달 CSV를 읽는 대시보드 호환 저장소를 씁니다.
+  SQLite는 계산·게시 입력이며 서빙에는 쓰지 않습니다. 저장소에 사용 가능한 자료가 없으면
+  지역 분석 에이전트가 동·그룹 분석 근거 설명으로 대신 답합니다.
+Historical text is restored without replaying old queries. No process-global
+conversation or credential mutation.
 """
 from __future__ import annotations
 
@@ -95,14 +97,14 @@ def _engine():
 
 
 def _repository():
-    """PostgreSQL 저장소(활성 run을 읽는 읽기 전용 조회)."""
+    """게시 run 또는 기존 대시보드 자료를 읽는 저장소."""
     _check_configuration()
     from chatbot_agent.pg_repository import PostgresDb1Repository
     return PostgresDb1Repository(_engine())
 
 
 def data_ready():
-    """v16 근거 자료(게시된 활성 run)가 있는지. 없으면 지역 분석 에이전트가 동·그룹 분석 근거 설명으로 대신 답합니다."""
+    """게시 run 또는 대시보드 호환 자료를 사용할 수 있는지 확인합니다."""
     repository = None
     try:
         repository = _repository()

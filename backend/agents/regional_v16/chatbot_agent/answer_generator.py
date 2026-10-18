@@ -1,7 +1,6 @@
 """Render exact calculations and separately scoped contextual evidence."""
 from __future__ import annotations
 import json,math,os
-import pandas as pd
 from .schemas import Evidence,QueryIntent
 from .repository import CORE,AGE_LABEL
 from .llm_intent_resolver import _api_key

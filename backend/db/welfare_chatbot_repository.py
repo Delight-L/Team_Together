@@ -9,9 +9,7 @@ import argparse
 import hashlib
 import json
 import re
-from datetime import datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import (JSON, Boolean, Column, Date, DateTime, Integer, MetaData, Table,
                         Text, and_, case, func, literal, or_, select, text)
@@ -19,7 +17,7 @@ from sqlalchemy.dialects.postgresql import JSONB, insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.common import get_engine
+from backend.common import get_engine, seoul_now
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "chatbot/welfare/data"
 SCHEMA = "db2"
@@ -186,7 +184,7 @@ def search_catalog(query, terms=(), *, city="", include_reference=False, include
             pass
     if resource_ids is not None and not identities:
         return []
-    today = datetime.now(ZoneInfo("Asia/Seoul")).date()
+    today = seoul_now().date()
     result = []
     try:
         engine = engine if engine is not None else get_engine()

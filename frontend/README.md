@@ -17,14 +17,13 @@ npm run build
 ## 구성과 확인
 
 - `src/`: 화면·컴포넌트·스타일·지도 자료
-- `tests/`: 화면 로직과 지도 검증
+- `tests/`: 로컬 검증 파일이 있는 경우에만 사용(Git 추적 제외)
 - `public/`: 정적 파일
 - `vite.config.js`: 개발 서버와 빌드 설정
 
-```powershell
-npm run test:map
-npm run test:briefing
-```
+테스트 파일은 Git에서 제외하므로 새로 받은 저장소에는 포함되지 않습니다.
+로컬에 검증 파일을 별도로 보관한 경우 `node --test tests/<파일명>`으로 실행합니다.
+현재 소스의 기본 확인은 `npm run build`입니다.
 
 디자인 기준은 [디자인 규칙](../docs/design-rules.md), 전체 폴더 역할은 [폴더 구성](../docs/folder-organization.md)을 참고하세요.
 

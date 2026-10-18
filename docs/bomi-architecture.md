@@ -179,7 +179,7 @@ SQLite 공개본 ──publish──▶ db1.v16_<테이블>(run_id, 원래 열�
 | 설정 | PostgreSQL만 씀. 남은 `DB1_REPOSITORY=sqlite`·오타 값은 오류(`data_ready()`는 경고 후 «자료 없음») |
 | 장애 구분 | `data_ready()`가 «자료 없음»(활성 run 없음)과 «저장소 연결 실패»(오류 로그)를 구분 |
 
-게시된 run이 없으면 `data_ready()`가 False라 v16 대신 동·그룹 분석이 답합니다(오류는 아님).
+게시 테이블(`db1.v16_active_run`)이 없으면 대시보드 호환 저장소(DB1 서비스 테이블 + 전달 CSV)를 사용합니다. 사용할 자료가 없거나 조회가 실패하면 `data_ready()`가 False라 동·그룹 분석이 답합니다.
 계산 파이프라인(`monthly_worker`·`runner`·`snapshot_manager`)은 계속 SQLite에 결과를 쓰고, 게시가 PostgreSQL로 옮깁니다.
 
 ### 조회 순서 규칙

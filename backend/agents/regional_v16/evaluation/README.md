@@ -1,29 +1,33 @@
-# v16 답변 평가 실행기
+# v16 평가 자료와 검토 도구
 
-팀투게더 메인 프로젝트의 지역 변화 분석 챗봇을 평가합니다. 현재 데이터셋은 B01~B32의 32개이며 경로별 8개입니다. 한 사례에는 여러 대화·화면 선택 단계가 있을 수 있습니다.
+이 폴더는 질문 데이터셋과 과거 평가·사용자 검토 기록을 보관합니다.
+2026-10-14의 64개 결과와 10-15의 32개 데이터셋은 현재 병합된 보미의 검증 결과가 아닙니다.
+당시 실행기의 선행 대화·화면 선택 누락 등은 [평가 상태 기록](EVALUATION_STATUS.md)을 보세요.
 
-## 이전 결과 정정
+## 현재 사용할 수 있는 도구
 
-2026-10-14의 64개 실행은 선행 대화와 화면 선택 단계를 버린 실행기에서 생성됐습니다. 당시 정답률과 유사도 평균은 챗봇 최종 성능으로 사용하지 않습니다. 기존 결과와 사용자 리뷰는 비교 자료로 보존합니다. 해시만 변경한 가져오기도 근거 검증이 아니었으며 `import_dataset.py`는 사용 중지했습니다.
-
-## 실행
+아래 명령은 프로젝트 루트 기준입니다. 결과 변환은 입력 파일을 읽고 지정한 출력만 만듭니다.
 
 ```powershell
-cd "C:\Users\user\Desktop\together project\Team_Together\Team_Together-main"
-.venv\Scripts\python.exe agents\regional_analysis\chatbot_v16\evaluation\prepare_dataset32.py
-.venv\Scripts\python.exe agents\regional_analysis\chatbot_v16\evaluation\validate_dataset.py agents\regional_analysis\chatbot_v16\evaluation\datasets\v16_questions_32.jsonl
-.venv\Scripts\python.exe agents\regional_analysis\chatbot_v16\evaluation\run_eval.py agents\regional_analysis\chatbot_v16\evaluation\datasets\v16_questions_32.jsonl --output-dir agents\regional_analysis\chatbot_v16\evaluation\results
+python backend/agents/regional_v16/evaluation/validate_dataset.py backend/agents/regional_v16/evaluation/datasets/v16_questions_32.jsonl
+python backend/agents/regional_v16/evaluation/make_human_report.py --help
+python backend/agents/regional_v16/evaluation/make_case_guide.py --help
+python backend/agents/regional_v16/evaluation/report32.py --help
+python backend/agents/regional_v16/evaluation/summarize_human_review.py --help
 ```
 
-준비 도구는 별도 원본 폴더의 데이터셋·스냅샷을 읽고 메인 DB와 비교합니다. 준비 이후에는 검증된 32개 파일로 평가합니다. 메인 DB가 변경되면 답안 근거를 다시 확인해야 합니다.
+`validate_dataset.py`는 단계·필수 필드·사례 구성을 검사합니다. 실제 답변의 정확성을 검증하거나
+공유 DB와 데이터셋의 근거가 같은지 보장하지 않습니다.
 
-## 평가 조건과 범위
+## 과거 실행기
 
-- 사례마다 문맥을 초기화하고 `steps`를 순서대로 실행합니다.
-- 후속 질문에는 실제 선행 답변을 전달하며, 모범답안을 대화 기록으로 넣지 않습니다.
-- 화면 선택은 동·기준월·연령을 전달하여 자동 설명을 실행합니다.
-- 마지막 `score_target` 응답을 채점하고 선행 단계도 기록합니다.
-- 기본 모드는 외부 AI 호출 없는 DB/규칙 기반 평가입니다. AI를 사용하는 서비스 설정의 성능과 같다고 주장하지 않습니다.
-- 서비스 및 대시보드 구성요소를 통한 내부 평가입니다. 브라우저 클릭, 메인 `/api/chat` HTTP 연결, 캐시·revision까지 검증한 UI 종단간 테스트가 아닙니다.
+`run_eval.py`, `prepare_dataset32.py`, `import_dataset.py`는 [legacy/](legacy/README.md)로 옮겼습니다.
+제거된 SQLite 서비스 모듈과 개발자 PC 전용 경로에 의존해 현재 구조에서 동작하지 않던 코드입니다.
+새 PostgreSQL·대화 근거 계약으로 평가하려면 실행기를 다시 연결하고 근거 버전도 검증해야 합니다.
 
-BLEU·ROUGE는 표현 유사도입니다. 정답은 질문 의도, 조건, 사실·수치, 과도한 단정 여부로 판단합니다. 질문에 요구되지 않은 부가 정보 누락만으로 오답 처리하지 않습니다. 에이전트 판정과 사용자의 휴먼 리뷰를 구분합니다. DB 검증 상세는 `DATASET32_DB_AUDIT.md`와 `.json`을 참조하세요.
+## 결과 해석
+
+- `datasets/`, `DATASET32_DB_AUDIT.*`, `results/` 및 휴먼 리뷰는 그대로 보존합니다.
+- BLEU·ROUGE는 표현 유사도이며 정답률이 아닙니다.
+- 과거 사용자 판정은 새 답변에 자동으로 승계하지 않습니다.
+- 브라우저·HTTP·대화 상태까지 포함한 현재 서비스 검증과 과거 구성요소 평가를 구분합니다.

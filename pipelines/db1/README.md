@@ -28,8 +28,9 @@ DB1 폴더의 PowerShell에서 실행합니다.
 .\run_db1.ps1 -Command status
 .\run_db1.ps1 -Command scan
 .\run_db1.ps1 -Command export
-.\run_tests.ps1
 ```
+테스트 파일·fixture·`run_tests.ps1`은 Git 추적에서 제외되어 새 checkout에는 포함되지 않습니다.
+이 문서의 테스트 명령·건수는 로컬 검증 자료가 있는 환경 또는 당시 실행 기록을 설명합니다.
 `scan`은 새 자료를 전처리하고 DB에 통합한 후 CSV를 갱신합니다. `export`는 저장된 DB 결과를 다시 내보냅니다. `watch`는 실행 중 주기적으로 scan을 반복합니다. Analysis1 특정 반기는 `-Command analysis1 -Period 2026H1`, Analysis2 특정 월은 `-Command analysis2 -Month 2026-01`로 실행합니다. 해당 기간 원본과 공공자료가 준비되어야 합니다.
 
 ### 파일 위치

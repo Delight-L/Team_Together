@@ -5,7 +5,7 @@ from pathlib import Path
 from dataclasses import replace
 from threading import RLock
 from .schemas import AnswerResult, Evidence
-from .guardrails import validate_input, OUT_OF_SCOPE
+from .guardrails import validate_input
 from .content_moderation import InputModerator
 from .db1_repository import Db1Repository
 from .query_service import execute

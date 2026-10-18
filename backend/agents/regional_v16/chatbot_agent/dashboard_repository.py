@@ -13,7 +13,6 @@ from typing import Any
 
 import pandas as pd
 
-from .repository import AGE_LABEL, CORE
 from .period_matching import nearest_period
 
 

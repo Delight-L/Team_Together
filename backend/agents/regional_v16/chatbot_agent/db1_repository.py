@@ -1,8 +1,9 @@
 """DB1 근거 저장소의 계약. 챗봇 로직(query_service·consumption_trends·orchestrator)은 이 계약만 압니다.
 
 구현
-- pg_repository.PostgresDb1Repository : PostgreSQL에 게시된 활성 run을 읽기 전용으로 조회 (유일한 구현)
-  (조회 로직은 repository.SqlDb1Repository가 공통으로 가짐)
+- pg_repository.PostgresDb1Repository : 게시 run 조회 또는 대시보드 호환 저장소에 위임
+  (게시 run의 조회 로직은 repository.SqlDb1Repository가 공통으로 가짐)
+- dashboard_repository.DashboardDb1Repository : 기존 DB1 서비스 테이블·전달 CSV 조회
 
 계약을 지키면 챗봇 로직은 저장소가 바뀌어도 바뀌지 않습니다. SQL은 구현 안에만 둡니다.
 탐지·근거 조회는 pandas DataFrame, 소비·배경 조회는 dict 목록을 돌려줍니다(기존 동작 유지).
