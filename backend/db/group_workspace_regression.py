@@ -97,6 +97,17 @@ class ProvenanceAnswerTests(unittest.TestCase):
         answer = template_answer(intent, Evidence('선정 근거', '조건에 맞는 신호 기록은 0건입니다.', []), '')
         self.assertIn('개포3동의 조건에 맞는 신호 기록은 0건입니다.', answer)
 
+    def test_signal_presence_question_does_not_promote_proxy_changes_to_signals(self):
+        context = {'city': '강남구', 'district': '삼성1동', 'month': '2025-12'}
+        data = {'months': ['2025-11', '2025-12'], 'assessment': [
+            {'행정동명': '삼성1동', '기준연월': '2025-12', 'case_id': 's1',
+             'is_risk_signal': False, 'has_enough_history': True}
+        ]}
+        answer = explain_region(context, '삼성1동에 이상신호가 잡혔다는거야?', data)['answer']
+        self.assertIn('삼성1동', answer)
+        self.assertIn('공식 이상신호 탐지 0건', answer)
+        self.assertIn('보조 분석', answer)
+
 
 if __name__ == "__main__":
     unittest.main()

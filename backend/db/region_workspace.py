@@ -43,6 +43,28 @@ def region_status(data, city, month, district):
         status = '판단 보류' if any(not r.get('has_enough_history') for r in rows) else '기준 미해당'
     return dict(status=status, count=count, rows=rows)
 
+
+def _is_signal_presence_question(question):
+    """Detect questions asking whether the selected dong has an official signal."""
+    compact = str(question).replace(' ', '')
+    asks_presence = any(word in compact for word in ('이상신호가있', '이상신호가잡혔', '이상신호가탐지',
+                                                      '신호가있', '신호가잡혔', '신호가탐지'))
+    asks_definition = any(word in compact for word in ('기준', '방법', '뜻', '의미', '무엇'))
+    return asks_presence and not asks_definition
+
+
+def signal_presence_answer(context, data):
+    """Report the dashboard's official signal count, not a proxy change narrative."""
+    city, month, district = context.get('city', ''), context.get('month', ''), context.get('district')
+    if not district:
+        return '확인할 행정동이 선택되지 않았습니다. 대시보드에서 동을 먼저 선택해 주세요.'
+    if city not in ANALYZED_CITIES or not month or 'assessment' not in data:
+        return f'{district}의 공식 이상신호 탐지 여부를 현재 연결된 자료에서 확인할 수 없습니다. 보조 변화자료를 이상신호 탐지 결과로 대신하지 않습니다.'
+    status = region_status(data, city, month, district)
+    if status['count']:
+        return f'{month} 기준 {district}에는 공식 이상신호 탐지 {status["count"]}건이 있습니다. 아래 변화 설명은 이 탐지 기록의 근거를 기준으로 확인해야 하며, 개인의 고립이나 원인을 확정하는 결과는 아닙니다.'
+    return f'{month} 기준 {district}의 공식 이상신호 탐지 0건입니다. 보조 분석에서 변화가 보이더라도 공식 탐지 결과와는 다르므로 이상신호가 잡혔다고 해석하면 안 됩니다.'
+
 # 화면(지역 현황·지역 분석)과 같은 기준의 용어 설명입니다.
 STATUS_TERMS = ('세 가지는 판단할 수 있었는지가 다릅니다.\n'
                 '· «자료 없음»(자료 부족): 이번 달 이 동의 분석 자료가 없어 판단할 수 없는 상태입니다.\n'
@@ -297,7 +319,9 @@ def explain_region(context, question, data):
     # 근거·이유·변화를 물으면 용어 설명보다 이 동의 실제 수치를 먼저 답합니다.
     wants_evidence = any(word in question for word in ['요약', '어디', '근거', '이유', '왜', '변화'])
     asks_next = any(word in question for word in ['다음', '무엇을', '어떻게'])
-    if _is_tab_question(question):
+    if _is_signal_presence_question(question):
+        answer = signal_presence_answer(context, data)
+    elif _is_tab_question(question):
         answer = _tab_function_answer(context, question, data)
     elif any(term in question for term in ['자료 부족', '자료 없음', '이력 부족', '판단 보류', '기준 미해당']) \
             and any(word in question for word in ['뜻', '의미', '차이', '다른', '다르', '무엇', '뭐']):
@@ -340,6 +364,8 @@ def ai_explain_region(context, question, data, history):
     if _is_region_type_question(question):
         return grounded
     if _is_survey_metrics_question(question):
+        return grounded
+    if _is_signal_presence_question(question):
         return grounded
     if _is_tab_question(question):
         return grounded
