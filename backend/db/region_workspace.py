@@ -58,7 +58,11 @@ SCORE_TERMS = ('두 값은 비교하는 기준이 다릅니다.\n'
                '후보로 표시합니다. 그래서 전월 변화율이 작아도 후보일 수 있고, 크게 줄어도 후보가 아닐 수 있습니다.')
 
 REGION_TYPE_TERMS = ('지역유형', '고활동', '청년유동', '1인가구 중심형', '2인가구', '다인가구')
-SURVEY_METRIC_TERMS = ('사회적 연결', '관계망', '서울서베이', '다른 지표', '다른 항목', '추가 지표')
+SURVEY_METRIC_TERMS = (
+    '사회적 연결', '관계망', '서울서베이', '다른 지표', '다른 항목', '추가 지표',
+    '도움 관계', '도움받을 사람', '조언을 구할 사람', '금전적으로 도움', '아플 때 도움',
+    '외로움', '가족 외 관계', '복합 참고값', '동반자 부족', '혼자 남겨짐', '사람들 사이에서 고립',
+)
 REGION_TYPE_EXPLANATION = (
     '“고활동·청년유동·1인가구 중심형”은 **머신러닝 군집화 결과**로 붙인 지역유형 이름입니다. '
     '2025년 하반기 강남구 22개 동의 유동 활동·인구·가구 구성·구조적 복지 배경을 13개 지표로 요약하고, '
@@ -89,6 +93,87 @@ SURVEY_OTHER_METRICS_EXPLANATION = (
     '특히 2025년 별도 문항은 이전 연도와 문항이 같지 않아 장기 변화로 비교하지 않습니다. '
     '원하시는 항목을 말씀해 주시면 현재 선택한 연령대의 강남구 값과 서울 전체 비교값을 정리해 드릴게요.'
 )
+
+SURVEY_METRIC_LABELS = {
+    'no_support_parent': '중요하거나 어려운 일에 조언을 구할 사람 없음',
+    'no_support_sick': '몸이 아플 때 도움받을 사람 없음',
+    'no_support_money': '금전적으로 도움받을 사람 없음',
+    'no_support_emotion': '힘들 때 이야기할 사람 없음',
+    'no_support_all3': '질병·금전·정서 세 상황 모두 도움받을 사람 없음',
+    'loneliness_family_mean10': '가족 관계 외로움 평균',
+    'loneliness_family_agree': '가족 관계에서 외로움을 느낀 비율',
+    'loneliness_outside_mean10': '가족 외 관계 외로움 평균',
+    'loneliness_outside_agree': '가족 외 관계에서 외로움을 느낀 비율',
+    'no_support3_and_lonely_outside': '세 상황 지원 부재와 가족 외 관계 외로움이 함께 나타난 비율',
+    'loneliness_companionship_mean10': '동반자 부족 외로움 평균',
+    'loneliness_companionship_agree': '동반자가 부족하다고 느낀 비율',
+    'loneliness_left_alone_mean10': '혼자 남겨짐 외로움 평균',
+    'loneliness_left_alone_agree': '혼자 남겨졌다고 느낀 비율',
+    'loneliness_among_people_mean10': '사람들 사이 고립 외로움 평균',
+    'loneliness_among_people_agree': '사람들 사이에서 고립된다고 느낀 비율',
+}
+
+
+def _survey_metric_keys(question):
+    question = question.replace(' ', '')
+    if any(term in question for term in ('다른지표', '다른항목', '추가지표', '사회적연결', '관계망', '서울서베이')):
+        return ()
+    if any(term in question for term in ('복합참고값', '동시에', '교집합')):
+        return ('no_support3_and_lonely_outside',)
+    if any(term in question for term in ('동반자', '혼자남겨', '사람들사이', '2025년별도', '고립문항')):
+        return tuple(key for key in SURVEY_METRIC_LABELS if key.startswith(('loneliness_companionship', 'loneliness_left_alone', 'loneliness_among_people')))
+    if any(term in question for term in ('금전', '경제도움')):
+        return ('no_support_money',)
+    if any(term in question for term in ('아플때', '질병')):
+        return ('no_support_sick',)
+    if any(term in question for term in ('조언', '어려운일')):
+        return ('no_support_parent',)
+    if any(term in question for term in ('이야기할사람', '정서')):
+        return ('no_support_emotion',)
+    if any(term in question for term in ('도움관계', '도움받을사람', '지원부재')):
+        return ('no_support_parent', 'no_support_sick', 'no_support_money', 'no_support_emotion', 'no_support_all3')
+    if any(term in question for term in ('외로움', '가족외관계', '가족관계')):
+        return ('loneliness_family_mean10', 'loneliness_family_agree',
+                'loneliness_outside_mean10', 'loneliness_outside_agree')
+    return ()
+
+
+def _survey_value(row):
+    value = row.get('value') if row else None
+    if not isinstance(value, (int, float)):
+        return '자료 없음'
+    if row.get('unit') == 'proportion':
+        return f'{value * 100:.1f}%'
+    if row.get('unit') == 'score_0_10':
+        return f'{value:.1f}/10점'
+    return f'{value:.2f}'
+
+
+def survey_metrics_answer(context, question):
+    """Answer visible and non-visible Seoul Survey metric questions from DB1 values."""
+    from backend.db.survey_context import survey_metrics_for
+    snapshot = survey_metrics_for(context)
+    if not snapshot:
+        return ('현재 선택 범위에는 서울서베이 연령별 참고값이 없습니다. '
+                '이 값은 강남구·연령대별 연간 통계이므로 동별 수치나 개인별 고립 판정으로 바꿔 설명하지 않습니다.')
+    keys = _survey_metric_keys(question)
+    if not keys:
+        return SURVEY_OTHER_METRICS_EXPLANATION
+    lines = [f"{snapshot['year']}년 {snapshot['age']} 기준으로, 아래는 강남구 값과 같은 연령의 서울 전체 비교값입니다."]
+    for key in keys:
+        pair = snapshot['metrics'].get(key)
+        if not pair:
+            continue
+        lines.append(f"• **{SURVEY_METRIC_LABELS[key]}**: 강남구 {_survey_value(pair['gangnam'])} · 서울 전체 {_survey_value(pair['seoul'])}")
+    if len(lines) == 1:
+        return ('선택한 항목은 현재 DB1 서울서베이 추출 자료에 없습니다. '
+                '확인된 항목만 안내하며, 다른 조사나 추정값으로 대신하지 않습니다.')
+    if any(key.endswith('_mean10') for key in keys):
+        lines.append('외로움 평균은 1~5점 응답을 0~10점으로 환산한 가중 평균입니다.')
+    if any(key.endswith('_agree') for key in keys):
+        lines.append('외로움을 느낀 비율은 해당 문항에 4점 또는 5점으로 답한 비율입니다.')
+    lines.append('이 값은 강남구·연령대별 연간 설문 통계입니다. 동별 수치·개인별 고립 판정·탐지 신호의 입력값이 아니며, 2025년 별도 문항은 이전 연도와 같은 문항이 아니어서 장기 변화로 비교하지 않습니다.')
+    return '\n'.join(lines)
 
 
 def _finite(value):
@@ -147,7 +232,7 @@ def explain_region(context, question, data):
             and any(word in question for word in ['뜻', '의미', '차이', '다른', '다르', '무엇', '뭐']):
         answer = STATUS_TERMS
     elif _is_survey_metrics_question(question):
-        answer = SURVEY_OTHER_METRICS_EXPLANATION
+        answer = survey_metrics_answer(context, question)
     elif _is_region_type_question(question):
         answer = REGION_TYPE_EXPLANATION
     elif any(term in question for term in ['평소 대비', '전월 변화율']):

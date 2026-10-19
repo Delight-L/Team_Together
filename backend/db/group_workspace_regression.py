@@ -3,12 +3,15 @@
 Usage: ``python -m backend.db.group_workspace_regression``.
 """
 import unittest
+from pathlib import Path
 
 from backend.agents.regional_v16.chatbot_agent.answer_generator import _age_activity_answer, _reason_answer
+from backend.agents.regional_v16.chatbot_agent.conversation_memory import ConversationMemory
 from backend.agents.regional_v16.chatbot_agent.schemas import Evidence, QueryIntent
+from backend.bomi.adapters.v16 import _ScopedResolver
 from backend.db.group_workspace import _is_provenance_question, _provenance_answer
 from backend.db.region_workspace import (REGION_TYPE_EXPLANATION, SURVEY_OTHER_METRICS_EXPLANATION,
-                                         _is_region_type_question, _is_survey_metrics_question)
+                                         _is_region_type_question, _is_survey_metrics_question, survey_metrics_answer)
 
 
 class ProvenanceAnswerTests(unittest.TestCase):
@@ -35,6 +38,22 @@ class ProvenanceAnswerTests(unittest.TestCase):
         self.assertIn("금전적으로 도움받을 사람 없음", SURVEY_OTHER_METRICS_EXPLANATION)
         self.assertIn("2025년 별도 문항", SURVEY_OTHER_METRICS_EXPLANATION)
         self.assertIn("동별 수치나 개인별 고립 판정은 아닙니다", SURVEY_OTHER_METRICS_EXPLANATION)
+
+    def test_survey_detail_question_returns_stored_gangnam_and_seoul_values(self):
+        answer = survey_metrics_answer({'city': '강남구', 'age': '40대', 'month': '2025-10'}, '금전적으로 도움받을 사람 없음은?')
+        self.assertIn('2025년 40대 기준', answer)
+        self.assertIn('강남구 8.9%', answer)
+        self.assertIn('서울 전체 23.2%', answer)
+        self.assertIn('동별 수치·개인별 고립 판정·탐지 신호의 입력값', answer)
+
+    def test_selected_dashboard_case_reason_keeps_the_age_scope(self):
+        resolver = _ScopedResolver(Path('.'), 'test', ('2025-07', '2025-12'),
+                                   {'district': '개포3동', 'month': '2025-10', 'age': '40대'}, None, False)
+        intent = resolver.resolve('이 사례의 탐지 이유', {'개포3동'}, ConversationMemory())
+        self.assertEqual(intent.question_type, 'reason')
+        self.assertEqual(intent.dongs, ('개포3동',))
+        self.assertEqual((intent.start_month, intent.end_month, intent.age_band), ('2025-10', '2025-10', '40s'))
+        self.assertTrue(intent.age_scope_explicit)
 
     def test_overall_signal_omits_age_panel_but_explicit_age_keeps_its_scope(self):
         overall = _reason_answer(Evidence("signal", "", rows=[{"행정동": "역삼2동", "date": "2025-11", "signal_type": "communication"}]))[0]
