@@ -886,15 +886,15 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
 
 // 보고서 항목별 글자 수 상한입니다(서버 report_writer.LIMITS와 같음).
 const REPORT_LIMITS = { title: 80, summary: 350, situation: 900, proposal: 1200, next_steps: 600 };
-// 내용 수정 단계의 항목: 처음 보이는 높이(minHeight)와 한 줄 작성 안내입니다. 안내는 보고서 작성 규칙과 맞춥니다.
+// 내용 수정 단계의 항목과 처음 보이는 높이(minHeight)입니다.
 const reportFields = (planning) => [
-  { key: 'title', label: '보고서 제목', minHeight: 48, guide: '지역과 검토 주제가 드러나게 한 줄로 작성하세요.' },
-  { key: 'summary', label: '검토 요지', minHeight: 96, guide: '무엇을 왜 검토하는지 2~3문장으로 요약하세요.' },
-  { key: 'situation', label: '지역 현황', minHeight: 160, guide: '관측된 변화와 추가 확인 사항을 구분하고, 개인의 고립 여부나 변화 원인을 단정하지 마세요.' },
+  { key: 'title', label: '보고서 제목', minHeight: 48 },
+  { key: 'summary', label: '검토 요지', minHeight: 96 },
+  { key: 'situation', label: '지역 현황', minHeight: 160 },
   planning
-    ? { key: 'proposal', label: '사업 구상·추진 제안', minHeight: 160, guide: '구상한 사업의 대상·내용·운영 방식을 적고, 확인하지 않은 내용은 ‘확인 필요’로 남기세요.' }
-    : { key: 'proposal', label: '복지서비스 연계·추진 제안', minHeight: 160, guide: '사업마다 ‘사업명: 판단’ 순서를 지키고, 이용 조건은 운영기관 확인이 필요하다고 적으세요.' },
-  { key: 'next_steps', label: '향후 조치 및 담당자 의견', minHeight: 120, guide: '누가 무엇을 언제까지 확인할지 적으세요.' },
+    ? { key: 'proposal', label: '사업 구상·추진 제안', minHeight: 160 }
+    : { key: 'proposal', label: '복지서비스 연계·추진 제안', minHeight: 160 },
+  { key: 'next_steps', label: '향후 조치 및 담당자 의견', minHeight: 120 },
 ];
 const FIELD_MAX_HEIGHT = 480;
 
@@ -918,9 +918,8 @@ function ReportField({ field, limit, value, disabled, onChange }) {
   const id = 'report-field-' + field.key;
   return <div className={`full report-field ${problem ? 'invalid' : ''}`}>
     <label htmlFor={id}>{field.label}</label>
-    <p className="field-guide" id={id + '-guide'}>{field.guide}</p>
     <textarea ref={ref} id={id} rows={field.key === 'title' ? 1 : 3} maxLength={Math.max(limit, length)} disabled={disabled} value={value}
-      aria-invalid={!!problem || undefined} aria-describedby={`${id}-guide ${id}-count${problem || note ? ` ${id}-problem` : ''}`}
+      aria-invalid={!!problem || undefined} aria-describedby={`${id}-count${problem || note ? ` ${id}-problem` : ''}`}
       onChange={e => onChange(e.target.value)} />
     <div className="field-meta">
       {(problem || note) && <span id={id + '-problem'} className={problem ? 'field-problem' : 'field-note'} role={problem ? 'alert' : undefined}>{problem || note}</span>}
@@ -1050,7 +1049,7 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     {staleContent && <p className="notice">사업 검토 근거가 달라졌습니다. 제안 칸만 최신 검토로 갱신하면 다른 항목의 편집 내용은 그대로 남습니다. <button className="text-button" disabled={working} onClick={refreshProposal}>{draftBusy ? '갱신 중…' : '제안 칸만 최신 검토로 갱신'}</button></p>}
     {error && <p className="error" role="alert">{error}</p>}
     {step === 1 && <section className="report-stage" aria-label="초안 준비">
-      <h3>작성 정보 확인</h3><p className="hint">{planning ? '저장된 사업 검토가 없어 구상 보고서로 만듭니다. 제안 내용은 직접 작성하거나, 보미에게 "보고서 작성해줘"라고 요청해 대화 내용을 가져오세요.' : '분석 근거와 저장된 사업 검토로 1~2쪽 초안을 만듭니다.'}</p>
+      <h3>작성 정보 확인</h3>
       <div className="report-form">
         <label>작성 부서<input value={department} maxLength={100} disabled={working} onChange={e => setDepartment(e.target.value)} /></label>
         <label>작성자<input value={author} maxLength={60} disabled={working} onChange={e => setAuthor(e.target.value)} /></label>
@@ -1061,20 +1060,20 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
       <div className="form-actions">
         {!content ? <button className="primary" disabled={working || !context.district} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '보고서 초안 만들기'}</button> : <button className="primary" disabled={working} onClick={() => setStep(2)}>작성 중인 초안 이어서 수정</button>}
       </div>
-      {content && <div className="regenerate-section"><button className="text-button" disabled={working || !context.district} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '초안 새로 만들기'}</button><span className="hint">편집한 내용은 새 초안으로 바뀝니다.</span></div>}
+      {content && <div className="regenerate-section"><button className="text-button" disabled={working || !context.district} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '초안 새로 만들기'}</button></div>}
     </section>}
     {step === 2 && content && <section className="report-stage" aria-label="내용 수정">
       <div className="report-stage-head"><h3>내용 수정</h3>{content.mode && <span className={`bomi-badge ${content.mode.includes('AI') ? 'ai' : 'data'}`}>{content.mode}</span>}</div>
       {content.notice && <p className="notice">{content.notice}</p>}
       <div className="report-form report-editor">{reportFields(planning).map(field => <ReportField key={field.key} field={field} limit={REPORT_LIMITS[field.key]} value={content[field.key] || ''} disabled={working} onChange={value => setContent(prev => ({ ...prev, [field.key]: value }))} />)}</div>
       <ReportQuality content={content} workflow={qualityWorkflow} />
-      {content.previous_proposal && <details className="secondary-details"><summary>갱신 전 제안 내용</summary><p className="hint">필요한 문장을 위 제안 칸으로 옮겨 쓰세요.</p><pre className="previous-proposal">{content.previous_proposal}</pre><button className="text-button" disabled={working} onClick={() => setContent(prev => ({ ...prev, previous_proposal: undefined }))}>갱신 전 내용 닫기</button></details>}
+      {content.previous_proposal && <details className="secondary-details"><summary>갱신 전 제안 내용</summary><pre className="previous-proposal">{content.previous_proposal}</pre><button className="text-button" disabled={working} onClick={() => setContent(prev => ({ ...prev, previous_proposal: undefined }))}>갱신 전 내용 닫기</button></details>}
       <div className="form-actions report-sticky-actions">
         {fileBlockers.length > 0 && <div className="file-blockers" id="report-file-blockers"><strong>Word 파일을 만들려면 다음을 해결해 주세요.</strong><ul>{fileBlockers.map(text => <li key={text}>{text}</li>)}</ul></div>}
         <button className="primary" disabled={working || !canCreateFile} aria-describedby={fileBlockers.length ? 'report-file-blockers' : undefined} onClick={preview}>{draftBusy ? 'Word 파일 만드는 중…' : 'Word 파일 만들고 확인하기'}</button><button className="secondary" disabled={working} onClick={() => setStep(1)}>작성 정보 수정</button></div>
     </section>}
     {step === 3 && content && <section className="report-stage" aria-label="파일 확인·저장">
-      <h3>파일 확인·저장</h3><p className="hint">내려받은 Word 파일을 확인한 뒤 저장하세요.</p>
+      <h3>파일 확인·저장</h3>
       {draft ? <div className="report-file"><span><strong>{content.title}</strong><small>Word 문서 · 현재 편집 내용</small></span><a className="secondary" href={'/api/report/draft?' + query({ ...context, token: draft.token })}>내려받기</a></div> : <p className="notice">내용이나 근거가 변경되었습니다. 내용 수정 단계에서 Word 파일을 다시 만들어 주세요.</p>}
       <label className="confirmation report-confirm"><input type="checkbox" disabled={working || !draft || !!staleContent} checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />{planning ? '분석 근거와 구상·제안 내용을 확인했습니다(구상 보고서로 저장).' : '분석 근거와 사업 검토 내용을 확인했습니다.'}</label>
       <div className="form-actions"><button className="primary" disabled={working || !confirmed || !draft || !canCreateFile} onClick={save}>{busy ? '저장 중…' : '최종 보고서 저장'}</button><button className="secondary" disabled={working} onClick={() => setStep(2)}>내용 다시 수정</button></div>

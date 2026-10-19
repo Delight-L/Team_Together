@@ -78,7 +78,6 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 /* 보고서 내용 수정: 항목별 안내·자동 높이·칸 아래 경고, 하단 버튼 고정 */
 .report-editor .report-field { display: flex; flex-direction: column; gap: 6px; }
 .report-editor .report-field > label { font-weight: 600; }
-.report-editor .field-guide { margin: 0; font-size: 12px; color: var(--text-muted); }
 .report-editor .report-field textarea { min-height: 0; resize: vertical; line-height: 1.6; }
 .report-editor .report-field.invalid textarea { border-color: #d64550; }
 .report-editor .field-meta { display: flex; align-items: flex-start; gap: 12px; }
