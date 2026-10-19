@@ -1028,9 +1028,18 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   const planning = !workflow.reviews?.length;
   const qualityWorkflow = { ...workflow, analysis_evidence: workflow.analysis_evidence || content?.analysis_evidence, analysis_source: workflow.analysis_source || content?.analysis_source };
   const placeholderLeft = !!content?.proposal?.includes(PLANNING_PROPOSAL);
-  const overLimit = Object.entries(REPORT_LIMITS).some(([key, limit]) => (content?.[key] || '').length > limit);
-  const canCreateFile = content && !staleContent && !placeholderLeft && !overLimit &&
-    [author, department, ...['title', 'summary', 'situation', 'proposal', 'next_steps'].map(k => content?.[k] || '')].every(value => value.trim());
+  // Word 파일을 만들 수 없는 이유를 버튼 옆에 그대로 보여 주기 위해 하나씩 모읍니다.
+  const fieldLabels = Object.fromEntries(reportFields(planning).map(field => [field.key, field.label]));
+  const emptyFields = Object.keys(REPORT_LIMITS).filter(key => !(content?.[key] || '').trim()).map(key => fieldLabels[key]);
+  const longFields = Object.entries(REPORT_LIMITS).filter(([key, limit]) => (content?.[key] || '').length > limit).map(([key]) => fieldLabels[key]);
+  const fileBlockers = !content ? [] : [
+    staleContent && '사업 검토 근거가 달라졌습니다. 위의 ‘제안 칸만 최신 검토로 갱신’을 먼저 눌러 주세요.',
+    !(author.trim() && department.trim()) && '작성 부서와 작성자를 입력해 주세요.',
+    emptyFields.length && `비어 있는 항목: ${emptyFields.join(', ')}`,
+    longFields.length && `글자 수를 넘은 항목: ${longFields.join(', ')}`,
+    placeholderLeft && '제안 칸의 안내 문구를 지우고 내용을 직접 작성해 주세요.',
+  ].filter(Boolean);
+  const canCreateFile = content && !fileBlockers.length;
   return <div className="scroll-view"><section className="card info-card report-workspace">
     <WorkflowSteps context={context} workflow={workflow} current="report" onView={onView} />
     <div className="workspace-heading"><div><h2>{context.district || '지역 선택 필요'} · {planning ? '복지 사업 구상 검토보고' : '복지서비스 연계 검토보고'}</h2><p className="hint">{context.month} 기준</p></div></div>
@@ -1059,8 +1068,9 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
       <div className="report-form report-editor">{reportFields(planning).map(field => <ReportField key={field.key} field={field} limit={REPORT_LIMITS[field.key]} value={content[field.key] || ''} disabled={working} onChange={value => setContent(prev => ({ ...prev, [field.key]: value }))} />)}</div>
       <ReportQuality content={content} workflow={qualityWorkflow} />
       {content.previous_proposal && <details className="secondary-details"><summary>갱신 전 제안 내용</summary><p className="hint">필요한 문장을 위 제안 칸으로 옮겨 쓰세요.</p><pre className="previous-proposal">{content.previous_proposal}</pre><button className="text-button" disabled={working} onClick={() => setContent(prev => ({ ...prev, previous_proposal: undefined }))}>갱신 전 내용 닫기</button></details>}
-      {!(author.trim() && department.trim()) && <p className="hint">작성 부서와 작성자를 입력해야 Word 파일을 만들 수 있습니다. <button className="text-button" disabled={working} onClick={() => setStep(1)}>작성 정보 입력 →</button></p>}
-      <div className="form-actions report-sticky-actions"><button className="primary" disabled={working || !canCreateFile} onClick={preview}>{draftBusy ? 'Word 파일 만드는 중…' : 'Word 파일 만들고 확인하기'}</button><button className="secondary" disabled={working} onClick={() => setStep(1)}>작성 정보 수정</button></div>
+      <div className="form-actions report-sticky-actions">
+        {fileBlockers.length > 0 && <div className="file-blockers" id="report-file-blockers"><strong>Word 파일을 만들려면 다음을 해결해 주세요.</strong><ul>{fileBlockers.map(text => <li key={text}>{text}</li>)}</ul></div>}
+        <button className="primary" disabled={working || !canCreateFile} aria-describedby={fileBlockers.length ? 'report-file-blockers' : undefined} onClick={preview}>{draftBusy ? 'Word 파일 만드는 중…' : 'Word 파일 만들고 확인하기'}</button><button className="secondary" disabled={working} onClick={() => setStep(1)}>작성 정보 수정</button></div>
     </section>}
     {step === 3 && content && <section className="report-stage" aria-label="파일 확인·저장">
       <h3>파일 확인·저장</h3><p className="hint">내려받은 Word 파일을 확인한 뒤 저장하세요.</p>

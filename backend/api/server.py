@@ -147,7 +147,8 @@ class Handler(BaseHTTPRequestHandler):
             if (method, path) not in PUBLIC_ROUTES:
                 user = sessions.find_user(token)
             if (method, path) not in ROUTES:
-                self.send_json(404, {'error': 'API를 찾을 수 없습니다.'})
+                # 화면은 최신인데 서버를 다시 켜지 않았을 때 주로 생깁니다.
+                self.send_json(404, {'error': 'API를 찾을 수 없습니다. 서버를 최신 코드로 다시 실행했는지 확인하세요.'})
                 return
             handler = ROUTES[(method, path)]
             result = handler(Request(params, user, token))

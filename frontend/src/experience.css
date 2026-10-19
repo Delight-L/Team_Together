@@ -87,7 +87,9 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .report-editor .field-meta small.over { color: #b23a43; font-weight: 700; }
 .report-editor .field-problem { font-size: 12px; color: #b23a43; }
 .report-editor .field-note { font-size: 12px; color: #c96a12; }
-.report-sticky-actions { position: sticky; bottom: 0; z-index: 2; background: var(--surface); border-top: 1px solid var(--line); padding: 12px 0; margin-bottom: 0; }
+.report-sticky-actions { position: sticky; bottom: 0; z-index: 2; background: var(--surface); border-top: 1px solid var(--line); padding: 12px 0; margin-bottom: 0; flex-wrap: wrap; }
+.file-blockers { flex-basis: 100%; font-size: 13px; color: #8a4b0f; background: #fff7ec; border: 1px solid #f1d3a8; border-radius: 8px; padding: 8px 12px; }
+.file-blockers ul { margin: 4px 0 0; padding-left: 18px; }
 .previous-proposal { white-space: pre-wrap; font: inherit; font-size: 13px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; max-height: 240px; overflow: auto; }
 .secondary-details > button { margin: 12px 0; }
 .comparison-filters { display: grid; grid-template-columns: minmax(160px, 1.4fr) repeat(2, minmax(130px, 1fr)) auto; gap: 16px; align-items: end; margin: 24px 0 20px; }
