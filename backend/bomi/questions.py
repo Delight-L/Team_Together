@@ -16,6 +16,9 @@ ANALYSIS_WORDS = ('판정', '판단', '보류', '후보', '변화', '지표', '�
 # 그룹이 열린 화면에서 그룹 분석으로 보낼 말과, 그래도 지역 변화 신호 분석으로 보낼 말(띄어쓰기 없이 비교)
 GROUP_WORDS = ('이그룹', '그룹의', '유동', '성별', '남성', '여성', '시간대', '요일별', '이지표')
 REGIONAL_WORDS = ('이상신호', '탐지', 'robust', '군집', '지역배경', '소비', '상권', '통화', '문자', '이동')
+SURVEY_WORDS = ('사회적 연결', '관계망', '서울서베이', '도움받을 사람', '조언을 구할 사람', '금전적으로 도움',
+                '아플 때 도움', '외로움', '가족 외 관계', '동반자 부족', '혼자 남겨짐', '사람들 사이에서 고립',
+                '다른 지표', '추가 지표')
 # 대시보드 화면의 판정·수치 용어. 지역 변화 신호 분석은 이 용어를 모르므로 화면 기준을 아는 동 분석이 설명합니다.
 SCREEN_TERMS = ('판정', '신규 후보', '연속 후보', '변화 후보', '판단 보류', '기준 미해당', '자료 부족', '자료 없음',
                 '이력 부족', '평소 대비', '전월 변화율', '지역유형', '고활동', '청년유동', '1인가구 중심형', '2인가구', '다인가구')
@@ -51,6 +54,11 @@ def is_group_focused(question: str) -> bool:
     compact = question.replace(' ', '')
     focused = compact in {'요약', '변화요약'} or any(word in compact for word in GROUP_WORDS)
     return focused and not any(word in compact.lower() for word in REGIONAL_WORDS)
+
+
+def is_survey_metric_question(question: str) -> bool:
+    """Questions about the social-connection survey cards or their extra metrics."""
+    return any(word in question for word in SURVEY_WORDS)
 
 
 def program_name_hit(question: str, city: str = '') -> bool:

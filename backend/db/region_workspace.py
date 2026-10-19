@@ -112,6 +112,12 @@ SURVEY_METRIC_LABELS = {
     'loneliness_among_people_mean10': '사람들 사이 고립 외로움 평균',
     'loneliness_among_people_agree': '사람들 사이에서 고립된다고 느낀 비율',
 }
+SURVEY_SOURCE_EXPLANATION = (
+    '이 지표의 원본은 서울시 서울서베이 가구원 설문자료입니다. DB1에서 연도·자치구·연령대별로 '
+    '가중 집계한 `v_survey_annual` 자료 중 강남구와 서울 전체의 해당 연령 행을 추출해 표시합니다. '
+    '서울 열린데이터광장 서울서베이 자료(https://data.seoul.go.kr/dataList/OA-15564/F/1/datasetView.do)를 사용합니다. '
+    '따라서 동별 통신·이동 탐지 원본이나 개인 진단 자료가 아닙니다.\n\n'
+)
 
 
 def _survey_metric_keys(question):
@@ -154,19 +160,26 @@ def survey_metrics_answer(context, question):
     from backend.db.survey_context import survey_metrics_for
     snapshot = survey_metrics_for(context)
     if not snapshot:
-        return ('현재 선택 범위에는 서울서베이 연령별 참고값이 없습니다. '
+        return (SURVEY_SOURCE_EXPLANATION + '현재 선택 범위에는 서울서베이 연령별 참고값이 없습니다. '
                 '이 값은 강남구·연령대별 연간 통계이므로 동별 수치나 개인별 고립 판정으로 바꿔 설명하지 않습니다.')
     keys = _survey_metric_keys(question)
     if not keys:
-        return SURVEY_OTHER_METRICS_EXPLANATION
-    lines = [f"{snapshot['year']}년 {snapshot['age']} 기준으로, 아래는 강남구 값과 같은 연령의 서울 전체 비교값입니다."]
+        visible_keys = ('no_support_emotion', 'no_support_sick', 'loneliness_outside_agree')
+        visible = []
+        for key in visible_keys:
+            pair = snapshot['metrics'].get(key)
+            if pair:
+                visible.append(f"• **{SURVEY_METRIC_LABELS[key]}**: 강남구 {_survey_value(pair['gangnam'])} · 서울 전체 {_survey_value(pair['seoul'])}")
+        current = ('\n\n현재 화면의 선택 연령 카드 값은 다음과 같습니다.\n' + '\n'.join(visible)) if visible else ''
+        return SURVEY_SOURCE_EXPLANATION + SURVEY_OTHER_METRICS_EXPLANATION + current
+    lines = [SURVEY_SOURCE_EXPLANATION + f"{snapshot['year']}년 {snapshot['age']} 기준으로, 아래는 강남구 값과 같은 연령의 서울 전체 비교값입니다."]
     for key in keys:
         pair = snapshot['metrics'].get(key)
         if not pair:
             continue
         lines.append(f"• **{SURVEY_METRIC_LABELS[key]}**: 강남구 {_survey_value(pair['gangnam'])} · 서울 전체 {_survey_value(pair['seoul'])}")
     if len(lines) == 1:
-        return ('선택한 항목은 현재 DB1 서울서베이 추출 자료에 없습니다. '
+        return (SURVEY_SOURCE_EXPLANATION + '선택한 항목은 현재 DB1 서울서베이 추출 자료에 없습니다. '
                 '확인된 항목만 안내하며, 다른 조사나 추정값으로 대신하지 않습니다.')
     if any(key.endswith('_mean10') for key in keys):
         lines.append('외로움 평균은 1~5점 응답을 0~10점으로 환산한 가중 평균입니다.')
@@ -220,7 +233,7 @@ def elderly_background(structure):
 
 def explain_region(context, question, data):
     """외부 LLM 없이 조회한 동 분석 결과와 제한을 명시해 답한다."""
-    if context.get('age'):
+    if context.get('age') and 'assessment' in data:
         data = dict(data, assessment=[r for r in data['assessment'] if r.get('age_label') == context['age']])
     question = str(question).strip()
     if not question or len(question) > 2000:
