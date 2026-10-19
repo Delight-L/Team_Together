@@ -6,35 +6,61 @@ import { showToast } from './toast';
 import { useApiQuery } from './useApiQuery';
 import { useTransientMessage } from './useTransientMessage';
 
+// 업무는 사업 검토 → (업무 기록) → 보고서 순서입니다. 지역 분석은 업무 단계가 아닙니다.
 const nextStep = (workflow) => workflow?.workflow_complete || workflow?.done?.includes(2)
   ? ['report', '보고서 작성']
-  : workflow?.done?.includes(1) ? ['services', '사업 매칭 검토'] : ['chart', '지역 분석'];
-const statusOf = (workflow) => workflow.workflow_complete ? '보고서 저장 완료' : workflow.done?.includes(2) ? '보고서 대기' : '분석·검토 중';
+  : ['services', '사업 매칭 검토'];
+const statusOf = (workflow) => workflow.workflow_complete ? '보고서 저장 완료' : workflow.done?.includes(2) ? '보고서 대기' : '사업 검토 전';
+
+// 사업 매칭 검토 → 업무 기록(선택) → 보고서 순서를 보여 주고, 아직 하지 않은 앞 단계로 바로 이동하게 합니다.
+// 지역 분석은 참고 화면이며 업무 단계가 아닙니다. 첫 사업 검토를 저장할 때 서버가 분석 근거를 함께 기록합니다.
+// workflow.done: 2 사업 검토 저장, 3 보고서 저장(0·1은 사업 검토 저장 때 자동 기록)
+// recordSaved: 업무 기록(검토·후속 조치)을 저장했는지. 모르면 undefined로 두어 '선택'으로만 표시합니다.
+export function WorkflowSteps({ context, workflow, current, onView, recordSaved }) {
+  const steps = [
+    { key: 'services', label: '사업 매칭 검토', done: workflow.done?.includes(2) },
+    { key: 'records', label: '업무 기록', optional: true, done: !!recordSaved },
+    { key: 'report', label: '보고서 저장', done: !!workflow.workflow_complete },
+  ];
+  const index = steps.findIndex(s => s.key === current);
+  // 업무 기록은 선택 단계라 막힘 조건도 아니고, 사업 검토 전에도 쓸 수 있습니다. 보고서는 사업 검토 저장만 필요합니다.
+  const blocker = !context.district ? { key: 'map', label: '지역 선택' }
+    : steps[index]?.optional ? null : steps.slice(0, index).find(s => !s.optional && !s.done);
+  return <div className={`workflow-steps ${blocker ? 'blocked' : ''}`}>
+    <ol aria-label="업무 진행 단계">{steps.map((s, i) => <li key={s.key} className={`${s.done ? 'done' : ''} ${i === index ? 'current' : ''}`}>
+      <span aria-hidden="true">{s.done ? '✓' : i + 1}</span><b>{s.label}</b>{s.done ? <small>완료</small> : i === index ? <small>지금 단계</small> : s.optional ? <small>선택</small> : null}
+    </li>)}</ol>
+    {blocker && <p role="status"><span>{blocker.key === 'map' ? '먼저 살펴볼 동을 선택해야 이 단계를 진행할 수 있습니다.' : `‘${blocker.label}’ 단계를 먼저 저장해야 이 단계를 진행할 수 있습니다.`}</span>
+      <button className="primary" onClick={() => onView(blocker.key)}>{blocker.key === 'map' ? '지역 선택하러 가기' : `${blocker.label} 하러 가기`} →</button></p>}
+  </div>;
+}
 
 // 업무 기록: 왼쪽은 담당자가 저장한 지역 업무 목록, 오른쪽은 선택한 업무의 검토·후속 조치 기록입니다.
 // 목록에서 업무를 고르면 App의 지역·기준월이 함께 바뀌어 다른 메뉴도 같은 업무를 보게 됩니다.
-export function Records({ context, user, reviewSeed, onReviewSaved, onSelect, onView }) {
+export function Records({ context, workflow, user, reviewSeed, onReviewSaved, onSelect, onView }) {
   const { data, error, loading, reload } = useApiQuery('/missions');
   const items = (data?.items || []).filter(item => item.city === context.city);
   const isCurrent = (item) => item.city === context.city && item.district === context.district && item.month === context.month && (item.age || '') === (context.age || '');
   const current = items.find(isCurrent);
-  const [nextView, nextLabel] = nextStep(current?.workflow);
+  // 목록보다 App이 가진 현재 업무 상태가 최신입니다(다른 탭에서 방금 저장한 내용 포함).
+  const [nextView, nextLabel] = nextStep(workflow || current?.workflow);
+  const [recordSaved, setRecordSaved] = useState(undefined);
   return (
     <div className="scroll-view records-layout">
       <section className="card info-card records-list" aria-label="지역별 업무 목록">
         <h2>지역별 업무</h2>
-        <p className="hint">분석 확인을 저장한 지역·기준월이 여기에 쌓입니다.</p>
+        <p className="hint">사업 검토나 검토·후속 조치를 저장한 지역·기준월이 여기에 쌓입니다.</p>
         <button className="text-button" disabled={loading} onClick={reload}>업무 목록 새로고침</button>
         {error && <p className="error" role="alert">{error}</p>}
         {loading && <p className="hint" role="status">업무 목록을 불러오고 있습니다…</p>}
-        {!loading && !items.length && !error && <p className="hint">저장된 업무가 없습니다. 지역 분석에서 분석 확인을 저장하세요.</p>}
+        {!loading && !items.length && !error && <p className="hint">저장된 업무가 없습니다. 사업 매칭 검토에서 첫 검토를 저장하세요.</p>}
         <ul>
           {items.map((item) => (
             <li key={item.city + item.district + item.month + (item.age || '')}>
               <button className={isCurrent(item) ? 'selected' : ''} aria-current={isCurrent(item) || undefined} onClick={() => onSelect(item)}>
                 <span><b>{item.district}{item.age ? ` · ${item.age}` : ''}</b><small>{item.city} · {item.month}{item.workflow.previous_rounds?.length ? ` · ${item.workflow.previous_rounds.length + 1}회차` : ''}</small></span>
                 <span className={`record-status ${item.workflow.workflow_complete ? 'done' : ''}`}>{statusOf(item.workflow)}</span>
-                <span className="record-progress" title="근거 검토 → 사업 검토 → 보고서 중 마친 단계 수">{(item.workflow.done || []).filter((n) => n > 0).length}/3단계</span>
+                <span className="record-progress" title="사업 검토 → 보고서 중 마친 단계 수">{(item.workflow.done || []).filter((n) => n >= 2).length}/2단계</span>
               </button>
             </li>
           ))}
@@ -42,11 +68,12 @@ export function Records({ context, user, reviewSeed, onReviewSaved, onSelect, on
       </section>
       <div className="records-detail">
         {context.district ? <>
+          <WorkflowSteps context={context} workflow={workflow || current?.workflow || {}} current="records" onView={onView} recordSaved={recordSaved} />
           <div className="records-next card">
             <span>{context.district}{context.age ? ` · ${context.age}` : ''} · {context.month}{current ? ` · ${statusOf(current.workflow)}` : loading ? ' · 업무 목록 확인 중' : error ? ' · 업무 상태 조회 실패' : ' · 아직 저장된 업무 없음'}</span>
-            <button className="primary" disabled={loading || (!!error && !current)} onClick={() => onView(nextView)}>{current ? `${nextLabel} 이어서 하기` : '지역 분석에서 시작하기'} →</button>
+            <button className="primary" disabled={loading || (!!error && !current)} onClick={() => onView(nextView)}>{current?.workflow?.done?.length ? `${nextLabel} 이어서 하기` : '사업 매칭 검토에서 시작하기'} →</button>
           </div>
-          <ReviewWorkspace key={user.id + JSON.stringify(context) + (reviewSeed?.id || '')} context={context} user={user} onView={onView} seed={reviewSeed} onSaved={() => { reload(); onReviewSaved?.(); }} />
+          <ReviewWorkspace key={user.id + JSON.stringify(context) + (reviewSeed?.id || '')} context={context} user={user} onView={onView} seed={reviewSeed} onSaved={() => { reload(); onReviewSaved?.(); }} onRecord={setRecordSaved} />
         </> : <section className="card info-card empty">
           <h2>업무를 선택하세요</h2>
           <p>왼쪽 목록에서 업무를 고르거나, 지역 현황에서 살펴볼 동을 선택하면 검토·후속 조치를 기록할 수 있습니다.</p>

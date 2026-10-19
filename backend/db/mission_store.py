@@ -55,8 +55,12 @@ def load_all():
             items[key] = normalize(json.loads(value))
         return items
 
-def save_event(request, step, record=None):
-    """단계 순서를 검사하고 기록·Word 파일·보고서 이력을 함께 저장합니다."""
+def save_event(request, step, record=None, start=None):
+    """단계 순서를 검사하고 기록·Word 파일·보고서 이력을 함께 저장합니다.
+
+    start(run_id·evidence·source_note)를 주면 아직 시작하지 않은 업무의 분석 확인(0)·근거 확인(1)을
+    같은 트랜잭션에서 먼저 기록합니다. 사업 검토를 처음 저장할 때 업무가 생기게 하는 용도입니다.
+    """
     if step not in range(4):
         raise ValueError("유효하지 않은 업무 단계입니다.")
     if not request.get("district"):
@@ -68,6 +72,17 @@ def save_event(request, step, record=None):
         item = normalize(json.loads(row[0]) if row else {})
         done = set(item["done"])
         record = dict(record or {})
+        if start and 0 not in done:
+            if not start.get("run_id") or not start.get("evidence"):
+                raise ValueError("실제 DB1 분석 결과가 있어야 업무를 시작할 수 있습니다.")
+            item["analysis_run_id"] = start["run_id"]
+            item["analysis_evidence"] = start["evidence"]
+            item["analysis_source"] = start.get("source_note", "저장된 DB1 분석")
+            item["evidence_reviewed_at"] = timestamp()
+            done |= {0, 1}
+        elif start and 1 not in done:
+            item["evidence_reviewed_at"] = timestamp()
+            done.add(1)
         if step > 0 and not set(range(step)).issubset(done):
             raise ValueError("분석 확인 → 근거 검토 → 사업 매칭 검토 → 보고서 저장 순서로 진행하세요.")
         if item.get("workflow_complete") and step in (1, 2):

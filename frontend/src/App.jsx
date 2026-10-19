@@ -5,7 +5,7 @@ import { api, query, number } from './api';
 import { Icon, Bomi, EvidenceTable, Trend } from './components';
 import BomiChat from './BomiChat';
 import AISettings from './AISettings';
-import { Records, Activity, Upload } from './Workspace';
+import { Records, Activity, Upload, WorkflowSteps } from './Workspace';
 import { RegionalOverview, summarizeRegions, exampleQuestion } from './Briefing';
 import { DataDialog, Comparison, ReportQuality } from './Experience';
 import GuideTour from './GuideTour';
@@ -304,9 +304,6 @@ export default function App() {
   if (checking) return <div className="loading">복지탐정 업무 공간을 준비하고 있습니다…</div>;
   if (!user) return <Login onLogin={(nextUser) => { setSessionNotice(''); setUser(nextUser); }} sessionNotice={sessionNotice} />;
   const select = (name) => setDistrict(name);
-  const start = async () => {
-    if (await mutate('/workflow/start')) go('chart');
-  };
   const briefingProps = {
     regions,
     assessment: data?.assessment || [],
@@ -316,7 +313,6 @@ export default function App() {
     geometry: data?.geometry[city],
     selected: district,
     onSelect: select,
-    onStart: start,
     // 지역 상세의 «보미와 근거 살펴보기»: 그 동 기준으로 채팅을 맞추고 예시 질문을 입력란에 넣어 둡니다.
     onChat: (region) => {
       if (!region?.name) { expandChat(); return; }
@@ -487,10 +483,11 @@ export default function App() {
               {view === 'records' && <Records
                 key={user.id + city}
                 context={context}
+                workflow={workflow}
                 user={user}
                 reviewSeed={reviewSeed}
                 onReviewSaved={() => setReviewSeed(null)}
-                onSelect={(item) => { setCity(item.city); setDistrict(item.district); setMonth(item.month); }}
+                onSelect={(item) => { setCity(item.city); setDistrict(item.district); setMonth(item.month); setAge(item.age || ''); }}
                 onView={go}
               />}
               {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onActiveGroup={setChatGroup} onMonthChange={setMonth} />}
@@ -602,28 +599,6 @@ export default function App() {
 
 // 실제 DB2 사업을 조회한 뒤 serviceKey를 서버에 보내 검토 기록을 저장합니다.
 // .env의 DB 설정이 틀리면 조회 오류를 표시하며 가짜 사업으로 대체하지 않습니다.
-// 분석 확인 → 사업 검토 → 보고서 순서를 보여 주고, 아직 하지 않은 앞 단계로 바로 이동하게 합니다.
-// workflow.done: 0 분석 확인 저장, 1 근거 검토 완료, 2 사업 검토 저장
-export function WorkflowSteps({ context, workflow, current, onView }) {
-  const steps = [
-    { key: 'chart', label: '분석 확인·근거 검토', done: workflow.done?.includes(0) && workflow.done?.includes(1) },
-    { key: 'services', label: '사업 매칭 검토', done: workflow.done?.includes(2) },
-    { key: 'report', label: '보고서 저장', done: !!workflow.workflow_complete },
-  ];
-  const index = steps.findIndex(s => s.key === current);
-  // 사업 매칭 검토는 지역 분석 화면을 거치지 않아도 진행할 수 있습니다(검토 저장 때 앞 단계를 함께 기록).
-  const blocker = !context.district ? { key: 'map', label: '지역 선택' } : current === 'services' ? null : steps.slice(0, index).find(s => !s.done);
-  // 보고서 화면에는 자체 작성 단계가 있으므로, 앞 단계가 막혔을 때만 업무 단계를 보여 줍니다.
-  if (current === 'report' && !blocker) return null;
-  return <div className={`workflow-steps ${blocker ? 'blocked' : ''}`}>
-    <ol aria-label="업무 진행 단계">{steps.map((s, i) => <li key={s.key} className={`${s.done ? 'done' : ''} ${i === index ? 'current' : ''}`}>
-      <span aria-hidden="true">{s.done ? '✓' : i + 1}</span><b>{s.label}</b>{s.done ? <small>완료</small> : i === index ? <small>지금 단계</small> : null}
-    </li>)}</ol>
-    {blocker && <p role="status"><span>{blocker.key === 'map' ? '먼저 살펴볼 동을 선택해야 이 단계를 진행할 수 있습니다.' : `‘${blocker.label}’ 단계를 먼저 저장해야 이 단계를 진행할 수 있습니다.`}</span>
-      <button className="primary" onClick={() => onView(blocker.key)}>{blocker.key === 'map' ? '지역 선택하러 가기' : `${blocker.label} 하러 가기`} →</button></p>}
-  </div>;
-}
-
 export function Services({ context, workflow, mutate, busy, user, seed, onSeedUsed, onView }) {
   const [matches, setMatches] = useState([]),
     [error, setError] = useState(''),
@@ -697,6 +672,14 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
     <div className="scroll-view">
       <section className="card info-card service-review-workspace">
         <WorkflowSteps context={context} workflow={workflow} current="services" onView={onView} />
+        {workflow.analysis_changed && (
+          <p className="notice" role="status">
+            이 업무를 시작한 뒤 분석 자료가 새로 적재되었습니다. 저장된 사업 검토는 이전 분석 근거를 기준으로 합니다.{' '}
+            <button className="text-button" disabled={busy} onClick={async () => {
+              if (window.confirm('최신 분석으로 업무를 다시 시작할까요? 지금까지의 사업 검토는 이전 회차 기록으로 보관되고, 저장한 보고서는 이력에 남습니다.')) await mutate('/workflow/restart', { confirmed: true });
+            }}>최신 분석으로 다시 시작</button>
+          </p>
+        )}
         <span className="eyebrow">SERVICE REVIEW</span>
         <h2>{context.district || '지역 선택 필요'} · 사업 매칭 검토</h2>
         <p className="hint">{storageFailed ? '브라우저 임시 보관에 실패했습니다. 새로고침하기 전에 검토 기록을 저장하세요.' : '작성 중인 검토 내용은 이 탭에서 임시 보관됩니다. 다시 방문하면 관련 사업을 조회해 이어서 작성하세요. 로그아웃하면 임시 내용은 삭제됩니다.'}</p>
@@ -814,11 +797,7 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
                 </label>
                 <button className="primary" disabled={busy || !review.note.trim() || workflow.workflow_complete}
                   onClick={async () => {
-                    // 서버는 분석 확인 → 근거 검토 → 사업 검토 순서를 요구하므로, 아직 기록되지 않은 앞 단계를 먼저 저장합니다.
-                    let done = workflow.done || [];
-                    if (!done.includes(0)) done = (await mutate('/workflow/start'))?.done;
-                    if (done && !done.includes(1)) done = (await mutate('/workflow/confirm'))?.done;
-                    if (!done) return;
+                    // 첫 검토라면 서버가 지금 분석 근거를 업무에 함께 기록합니다.
                     const result = await mutate('/workflow/review', { serviceKey: m.key, ...review });
                     if (result) {
                       const remaining = { ...reviewDrafts }; delete remaining[m.key];
@@ -840,6 +819,12 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
       </section>
       <section className="card info-card">
         <h2>저장된 사업 검토 기록</h2>
+        {workflow.reviews?.length > 0 && (
+          <div className="form-actions">
+            <button className="primary" onClick={() => onView('report')}>보고서 작성으로 →</button>
+            <button className="secondary" onClick={() => onView('records')}>업무 기록에 의견 남기기 (선택)</button>
+          </div>
+        )}
         {workflow.reviews?.length ? (
           workflow.reviews.map((r, i) => (
             <article className="service-card" key={i}>
@@ -880,6 +865,10 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   // AI 문장 다듬기: AI 연결이 있을 때만 고를 수 있고, 저장된 근거와 대조를 통과한 문장만 씁니다.
   const [aiAvailable, setAiAvailable] = useState(false), [useAi, setUseAi] = useState(true);
   useEffect(() => { let live = true; api('/chat/config').then(d => live && setAiAvailable(!!d.aiAvailable)).catch(() => {}); return () => { live = false; }; }, []);
+  // 업무 기록(검토 의견·후속 조치)을 저장했다면 초안에 넣을지 고르게 합니다. 기본은 포함입니다.
+  const [record, setRecord] = useState(null), [includeRecord, setIncludeRecord] = useState(true);
+  useEffect(() => { let live = true; api('/experience?' + query(context)).then(r => live && setRecord(r)).catch(() => live && setRecord(null)); return () => { live = false; }; }, []);
+  const hasRecord = !!(record?.note?.trim() || record?.followup?.trim());
   useEffect(() => {
     setDraft(null);
     setConfirmed(false);
@@ -904,7 +893,7 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     setDraftBusy(true);
     setError('');
     try {
-      setContent(await api('/report/content', { ...context, ai: aiAvailable && useAi }));
+      setContent(await api('/report/content', { ...context, ai: aiAvailable && useAi, include_record: hasRecord && includeRecord }));
       setStep(2);
     } catch (e) {
       setError(e.message);
@@ -942,7 +931,7 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   const canCreateFile = workflow.done?.includes(2) && content && !staleContent &&
     [author, department, ...['title', 'summary', 'situation', 'proposal', 'next_steps'].map(k => content?.[k] || '')].every(value => value.trim());
   return <div className="scroll-view"><section className="card info-card report-workspace">
-    <WorkflowSteps context={context} workflow={workflow} current="report" onView={onView} />
+    <WorkflowSteps context={context} workflow={workflow} current="report" onView={onView} recordSaved={!!record?.history?.length} />
     <div className="workspace-heading"><div><span className="eyebrow">검토보고서</span><h2>{context.district || '지역 선택 필요'} · 복지서비스 연계 검토보고</h2><p className="hint">{context.month} · 초안을 다듬고 Word 파일을 확인한 뒤 저장하세요.</p></div></div>
     {workflow.workflow_complete && <div className="saved-report"><span>최종 보고서가 저장되어 있습니다. 새로 작성해도 이전 저장본은 이력에 남습니다.</span><a className="text-button" href={'/api/report?' + query(context)}>저장된 Word 보고서 내려받기 →</a></div>}
     <ol className="report-steps" aria-label="보고서 작업 순서">{['초안 준비', '내용 수정', '파일 확인·저장'].map((label, i) => <li key={label} className={step === i + 1 ? 'current' : ''}><button aria-current={step === i + 1 ? 'step' : undefined} disabled={working || (i > 0 && !content) || (i === 2 && !draft)} onClick={() => setStep(i + 1)}><span>{i + 1}</span>{label}</button></li>)}</ol>
@@ -950,7 +939,7 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     {staleContent && <p className="notice">사업 검토 근거가 달라졌습니다. 편집한 내용은 남아 있습니다. 필요한 문장을 복사해 둔 뒤 ‘초안 준비’에서 최신 근거로 다시 만들어 주세요.</p>}
     {error && <p className="error" role="alert">{error}</p>}
     {step === 1 && <section className="report-stage" aria-label="초안 준비">
-      <h3>작성 정보를 확인해 주세요.</h3><p className="hint">저장된 지역 분석과 사업 검토로 1~2쪽 분량의 초안을 만듭니다.</p>
+      <h3>작성 정보를 확인해 주세요.</h3><p className="hint">저장된 사업 검토와, 첫 검토 때 함께 저장된 분석 근거로 1~2쪽 분량의 초안을 만듭니다.</p>
       <div className="report-form">
         <label>작성 부서<input value={department} maxLength={100} disabled={working} onChange={e => setDepartment(e.target.value)} /></label>
         <label>작성자<input value={author} maxLength={60} disabled={working} onChange={e => setAuthor(e.target.value)} /></label>
@@ -958,6 +947,9 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
       </div>
       <label className="confirmation"><input type="checkbox" disabled={working || !aiAvailable} checked={aiAvailable && useAi} onChange={e => setUseAi(e.target.checked)} />
         AI로 문장 다듬기{aiAvailable ? ' · 전송 시 외부 AI 사용, 저장된 근거와 대조를 통과한 문장만 사용' : ' · 연결 설정 필요'}</label>
+      {hasRecord
+        ? <label className="confirmation"><input type="checkbox" disabled={working} checked={includeRecord} onChange={e => setIncludeRecord(e.target.checked)} />업무 기록의 검토 의견·후속 조치 포함</label>
+        : record && <p className="hint">업무 기록에 검토 의견이나 후속 조치를 남기면 보고서에 넣을 수 있습니다. <button className="text-button" onClick={() => onView('records')}>업무 기록으로 →</button></p>}
       <div className="form-actions">
         {!content ? <button className="primary" disabled={working || !workflow.done?.includes(2)} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '보고서 초안 만들기'}</button> : <button className="primary" disabled={working} onClick={() => setStep(2)}>작성 중인 초안 이어서 수정</button>}
       </div>

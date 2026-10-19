@@ -115,7 +115,7 @@ def generate_draft(context, workflow, selection=None, experience=None):
     if not context.get('district'):
         raise ValueError('보고서를 작성할 행정동을 먼저 선택하세요.')
     if 2 not in workflow.get('done', []) or not workflow.get('analysis_evidence'):
-        raise ValueError('분석 근거 확인과 사업 매칭 검토 기록 저장을 먼저 완료하세요.')
+        raise ValueError('사업 매칭 검토 기록을 먼저 저장하세요.')
     from backend.agents.report_material import select_material, record_sections
     rows, reviews, options = select_material(workflow, selection)
     chosen = selection is not None

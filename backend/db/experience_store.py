@@ -23,6 +23,18 @@ def load(context):
         return json.loads(row[0]) if row else {'version': 0, 'checks': {}, 'history': []}
 
 
+def saved_scopes():
+    """검토·후속 조치를 한 번이라도 저장한 (시, 동, 기준월, 연령대) 목록입니다. 업무 목록에 함께 보여 줍니다."""
+    with transaction() as db:
+        items = []
+        for key, value in db.execute(text('SELECT key,value FROM work.experience')):
+            parts = json.loads(key)
+            if parts[0] == 'team' and json.loads(value).get('history'):
+                items.append({'city': parts[1], 'district': parts[2], 'month': parts[3],
+                              **({'age': parts[4]} if len(parts) > 4 else {})})
+        return items
+
+
 def regional_history(context):
     namespace, city, district, _ = json.loads(scope(context))[:4]
     with transaction() as db:

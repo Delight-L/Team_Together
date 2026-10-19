@@ -38,7 +38,7 @@ export function DataSummary({ data, context, rows, user, expanded = false }) {
 }
 
 const blank = { version: 0, checks: {}, assignee: '', due: '', note: '', followup: '', status: '확인 예정', history: [] };
-export function ReviewWorkspace({ context, onView, seed, user, onSaved }) {
+export function ReviewWorkspace({ context, onView, seed, user, onSaved, onRecord }) {
   const [localDraft, setLocalDraft, clearLocalDraft, storageFailed] = useDraft(draftKey(user, context, 'review'), null);
   const [record, setRecord] = useState(blank), [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(true);
   const [timeline, setTimeline] = useState([]), [timelineLoaded, setTimelineLoaded] = useState(false), [section, setSection] = useState('review');
@@ -68,10 +68,11 @@ export function ReviewWorkspace({ context, onView, seed, user, onSaved }) {
       .finally(() => active && setBusy(false));
     return () => { active = false; };
   }, []);
+  // 업무 진행 표시에 업무 기록 저장 여부를 알려 줍니다.
+  useEffect(() => { if (!busy) onRecord?.(record.history.length > 0); }, [busy, record.history.length]);
   async function save() { setBusy(true); setError(''); try { setRecord({ ...blank, ...await api('/experience', { ...record, ...context }) }); clearLocalDraft(); onSaved?.(); setNotice('검토·후속 조치 기록을 저장했습니다.'); } catch (e) { setError(e.message); } finally { setBusy(false); } }
   return <section className="card info-card review-workspace">
-    <div className="workspace-heading"><div><h2>검토·후속 조치</h2><p>{context.district} · {context.month} <span className="status-caption">{record.status}</span></p></div>
-      <button className="text-button" onClick={() => onView('compare')}>월별 변화 비교 →</button></div>
+    <div className="workspace-heading"><div><h2>검토·후속 조치</h2><p>{context.district} · {context.month} <span className="status-caption">{record.status}</span></p></div></div>
     <p className="hint">{storageFailed ? '브라우저 임시 보관에 실패했습니다. 새로고침 전에 기록을 저장하세요.' : '작성 중인 내용은 이 탭에 임시 보관됩니다. 로그아웃 전에 저장해 주세요.'}</p>
     <div className="section-switch" role="group" aria-label="작성 구역">
       <button aria-pressed={section === 'review'} onClick={() => setSection('review')}>검토 기록</button>
@@ -89,7 +90,8 @@ export function ReviewWorkspace({ context, onView, seed, user, onSaved }) {
         <label className="full">실제 조치·다음 확인 내용<textarea rows={5} maxLength={2000} disabled={busy} value={record.followup} onChange={e => update('followup', e.target.value)} placeholder="기관 문의 결과와 다음에 확인할 내용을 적어 주세요." /></label></div>
     </div>
     {error && <p className="error" role="alert">{error}</p>}{notice && <p className="hint" role="status">{notice}</p>}
-    <div className="form-actions"><button className="primary" disabled={busy} onClick={save}>{busy ? '처리 중…' : '검토·후속 조치 저장'}</button><span className="hint">두 구역의 내용을 함께 저장합니다.</span></div>
+    <div className="form-actions"><button className="primary" disabled={busy} onClick={save}>{busy ? '처리 중…' : '검토·후속 조치 저장'}</button><span className="hint">두 구역의 내용을 함께 저장합니다. 저장한 내용은 보고서 작성에서 초안에 넣을 수 있습니다.</span>
+      {record.history.length > 0 && <button className="text-button" onClick={() => onView('report')}>보고서 작성으로 →</button>}</div>
     <details className="secondary-details"><summary>이전 기록·다시 불러오기</summary>
       <p className="hint">저장한 기록은 같은 지역 담당자와 공유합니다.</p>
       <button className="secondary" disabled={busy} onClick={reload}>최신 기록 다시 불러오기</button>

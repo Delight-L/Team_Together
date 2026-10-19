@@ -48,7 +48,10 @@ def work_context(request):
 # ── 조회(GET) ─────────────────────────────────────────────
 
 def missions(request):
-    """GET /api/missions: 로그인한 담당자가 저장한 지역 업무 목록(업무 기록 화면)."""
+    """GET /api/missions: 로그인한 담당자의 지역 업무 목록(업무 기록 화면).
+
+    사업 검토를 저장한 업무에 더해, 사업 검토 전에 검토·후속 조치만 저장한 지역도 빈 업무로 보여 줍니다.
+    """
     items = []
     for key, workflow in mission_store.load_all().items():
         parts = json.loads(key)
@@ -56,6 +59,10 @@ def missions(request):
         age = parts[4] if len(parts) > 4 else None
         if owner == request.user['id']:
             items.append({'city': city, 'district': district, 'month': month, **({'age':age} if age else {}), 'workflow': workflow})
+    seen = {(item['city'], item['district'], item['month'], item.get('age', '')) for item in items}
+    for scope in experience_store.saved_scopes():
+        if (scope['city'], scope['district'], scope['month'], scope.get('age', '')) not in seen:
+            items.append(scope | {'workflow': {}, 'record_only': True})
     return {'items': items}
 
 
@@ -146,6 +153,13 @@ def report_content(request):
     if use_ai:
         limits.check_chat(request.user)  # AI 문장 다듬기도 보미 사용량에 포함합니다.
     selection = request.params.get('selection')
+    if request.params.get('include_record') is True and selection is None:
+        # 보고서 탭의 '업무 기록 포함': 저장된 지표·사업 검토는 모두 넣고 업무 기록의 의견·후속 조치를 더합니다.
+        current = load_workflow(context)
+        from backend.agents.report_material import latest_reviews
+        selection = {'metrics': [row['metric_label'] for row in current.get('analysis_evidence', [])],
+                     'services': list(latest_reviews(current.get('reviews', []))),
+                     'include_note': True, 'include_followup': True}
     experience = experience_store.load(context) if isinstance(selection, dict) and (selection.get('include_note') or selection.get('include_followup')) else None
     return report_writer.write_draft(context, load_workflow(context), use_ai=use_ai, selection=selection, experience=experience)
 
@@ -256,7 +270,10 @@ def workflow_confirm(request):
 
 
 def workflow_review(request):
-    """POST /api/workflow/review: 조회한 복지사업 하나에 대한 검토 결과를 저장합니다."""
+    """POST /api/workflow/review: 조회한 복지사업 하나에 대한 검토 결과를 저장합니다.
+
+    첫 검토라면 지금 분석 결과를 업무 근거로 함께 저장합니다(지역 분석 화면을 거치지 않아도 됩니다).
+    """
     context, data, evidence = work_context(request)
     checks = request.params.get('checks', {})
     if not isinstance(checks, dict) or any(key not in {'residency', 'eligibility', 'application'} or type(value) is not bool for key, value in checks.items()):
@@ -267,7 +284,8 @@ def workflow_review(request):
     with sessions.write_lock:
         current = load_workflow(context)
         chosen = None
-        for match in service_matching.match_services(context['city'], current.get('analysis_evidence', [])):
+        # 사업 조회(GET /api/services)와 같은 근거로 사업을 찾아야 매칭 근거가 일치합니다.
+        for match in service_matching.match_services(context['city'], current.get('analysis_evidence') or evidence):
             if match['key'] == request.params.get('serviceKey'):
                 chosen = match
                 break
@@ -283,7 +301,7 @@ def workflow_review(request):
             'reasons': chosen['reasons'],
             'source_url': chosen['service'].get('source_url'),
             'service_snapshot': service_snapshot(chosen['service']),
-        })
+        }, start={'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']})
         return with_analysis_note(load_workflow(context), data)
 
 
