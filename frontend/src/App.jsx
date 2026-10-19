@@ -1,6 +1,6 @@
 import { useDraft } from './useDraft';
 import { draftKey, clearDrafts, hasDrafts } from './draftStore.mjs';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api, query, number } from './api';
 import { Icon, Bomi, EvidenceTable, Trend } from './components';
 import BomiChat from './BomiChat';
@@ -845,6 +845,48 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
 
 // 보고서 항목별 글자 수 상한입니다(서버 report_writer.LIMITS와 같음).
 const REPORT_LIMITS = { title: 80, summary: 350, situation: 900, proposal: 1200, next_steps: 600 };
+// 내용 수정 단계의 항목: 처음 보이는 높이(minHeight)와 한 줄 작성 안내입니다. 안내는 보고서 작성 규칙과 맞춥니다.
+const reportFields = (planning) => [
+  { key: 'title', label: '보고서 제목', minHeight: 48, guide: '지역과 검토 주제가 드러나게 한 줄로 작성하세요.' },
+  { key: 'summary', label: '검토 요지', minHeight: 96, guide: '무엇을 왜 검토하는지 2~3문장으로 요약하세요.' },
+  { key: 'situation', label: '지역 현황', minHeight: 160, guide: '관측된 변화와 추가 확인 사항을 구분하고, 개인의 고립 여부나 변화 원인을 단정하지 마세요.' },
+  planning
+    ? { key: 'proposal', label: '사업 구상·추진 제안', minHeight: 160, guide: '구상한 사업의 대상·내용·운영 방식을 적고, 확인하지 않은 내용은 ‘확인 필요’로 남기세요.' }
+    : { key: 'proposal', label: '복지서비스 연계·추진 제안', minHeight: 160, guide: '사업마다 ‘사업명: 판단’ 순서를 지키고, 이용 조건은 운영기관 확인이 필요하다고 적으세요.' },
+  { key: 'next_steps', label: '향후 조치 및 담당자 의견', minHeight: 120, guide: '누가 무엇을 언제까지 확인할지 적으세요.' },
+];
+const FIELD_MAX_HEIGHT = 480;
+
+// 보고서 항목 하나: 내용에 맞춰 높이가 늘고(최대 FIELD_MAX_HEIGHT), 글자 수·빈 항목·안내 문구 문제를 칸 바로 아래에 보여 줍니다.
+function ReportField({ field, limit, value, disabled, onChange }) {
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const height = Math.max(el.scrollHeight + 2, field.minHeight);
+    el.style.height = Math.min(height, FIELD_MAX_HEIGHT) + 'px';
+    el.style.overflowY = height > FIELD_MAX_HEIGHT ? 'auto' : 'hidden';
+  }, [value, field.minHeight]);
+  const length = value.length;
+  const problem = !value.trim() ? '비어 있습니다. 내용을 입력해야 Word 파일을 만들 수 있습니다.'
+    : length > limit ? `${length - limit}자를 줄여야 Word 파일을 만들 수 있습니다.`
+    : field.key === 'proposal' && value.includes(PLANNING_PROPOSAL) ? '안내 문구를 지우고 구상·제안 내용을 직접 작성해 주세요.'
+    : '';
+  const note = !problem && length >= limit ? `최대 ${limit}자라 더 입력되지 않습니다. 다른 문장을 줄이면 이어서 쓸 수 있습니다.` : '';
+  const id = 'report-field-' + field.key;
+  return <div className={`full report-field ${problem ? 'invalid' : ''}`}>
+    <label htmlFor={id}>{field.label}</label>
+    <p className="field-guide" id={id + '-guide'}>{field.guide}</p>
+    <textarea ref={ref} id={id} rows={field.key === 'title' ? 1 : 3} maxLength={Math.max(limit, length)} disabled={disabled} value={value}
+      aria-invalid={!!problem || undefined} aria-describedby={`${id}-guide ${id}-count${problem || note ? ` ${id}-problem` : ''}`}
+      onChange={e => onChange(e.target.value)} />
+    <div className="field-meta">
+      {(problem || note) && <span id={id + '-problem'} className={problem ? 'field-problem' : 'field-note'} role={problem ? 'alert' : undefined}>{problem || note}</span>}
+      <small id={id + '-count'} className={length > limit ? 'over' : length >= limit * 0.9 ? 'near' : ''}>{length} / {limit}자</small>
+    </div>
+  </div>;
+}
 
 // Word 문서 생성은 Python build_report(), 단계/해시 검증은 mission_store.py가 처리합니다.
 export function Report({ context, workflow, user, mutate, busy, seed, onSaved, onView }) {
@@ -992,11 +1034,11 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
       <h3>보고서 내용을 검토하고 다듬어 주세요.</h3><p className="hint">검토 요지 → 지역 현황 → {planning ? '사업 구상 제안' : '서비스 제안'} → 향후 조치 순서입니다.{content.mode ? ` · ${content.mode}` : ''}</p>
       {content.notice && <p className="notice">{content.notice}</p>}
       {hasRecord && !recordIncluded && <p className="hint">업무 기록에 저장한 검토 의견·후속 조치가 아직 초안에 없습니다. <button className="text-button" disabled={working} onClick={insertRecord}>업무 기록 의견 넣기</button></p>}
-      <div className="report-form report-editor">{[['title', '보고서 제목'], ['summary', '검토 요지'], ['situation', '지역 현황'], ['proposal', planning ? '사업 구상·추진 제안' : '복지서비스 연계·추진 제안'], ['next_steps', '향후 조치 및 담당자 의견']].map(([key, label]) => [key, label, REPORT_LIMITS[key]]).map(([key, label, limit]) => <label className="full" key={key}>{label}<textarea aria-label={label} rows={key === 'title' ? 2 : 4} maxLength={limit} disabled={working} value={content[key]} onChange={e => setContent(prev => ({ ...prev, [key]: e.target.value }))} /><small>{content[key].length} / {limit}자</small></label>)}</div>
+      <div className="report-form report-editor">{reportFields(planning).map(field => <ReportField key={field.key} field={field} limit={REPORT_LIMITS[field.key]} value={content[field.key] || ''} disabled={working} onChange={value => setContent(prev => ({ ...prev, [field.key]: value }))} />)}</div>
       <ReportQuality content={content} workflow={qualityWorkflow} />
       {content.previous_proposal && <details className="secondary-details"><summary>갱신 전 제안 내용</summary><p className="hint">필요한 문장을 위 제안 칸으로 옮겨 쓰세요.</p><pre className="previous-proposal">{content.previous_proposal}</pre><button className="text-button" disabled={working} onClick={() => setContent(prev => ({ ...prev, previous_proposal: undefined }))}>갱신 전 내용 닫기</button></details>}
-      {!canCreateFile && !staleContent && <p className="hint">{placeholderLeft ? '제안 칸의 안내 문구를 지우고 구상·제안 내용을 직접 작성하면 Word 파일을 만들 수 있습니다.' : overLimit ? '글자 수를 넘은 항목을 줄이면 Word 파일을 만들 수 있습니다.' : '작성자·부서와 보고서의 모든 항목을 입력하면 Word 파일을 만들 수 있습니다.'}</p>}
-      <div className="form-actions"><button className="primary" disabled={working || !canCreateFile} onClick={preview}>{draftBusy ? 'Word 파일 만드는 중…' : 'Word 파일 만들고 확인하기'}</button><button className="secondary" disabled={working} onClick={() => setStep(1)}>작성 정보 수정</button></div>
+      {!(author.trim() && department.trim()) && <p className="hint">작성 부서와 작성자를 입력해야 Word 파일을 만들 수 있습니다. <button className="text-button" disabled={working} onClick={() => setStep(1)}>작성 정보 입력 →</button></p>}
+      <div className="form-actions report-sticky-actions"><button className="primary" disabled={working || !canCreateFile} onClick={preview}>{draftBusy ? 'Word 파일 만드는 중…' : 'Word 파일 만들고 확인하기'}</button><button className="secondary" disabled={working} onClick={() => setStep(1)}>작성 정보 수정</button></div>
     </section>}
     {step === 3 && content && <section className="report-stage" aria-label="파일 확인·저장">
       <h3>파일을 내려받아 확인한 뒤 저장해 주세요.</h3><p className="hint">내용을 다시 수정하면 Word 파일도 새로 만들어야 합니다.</p>
