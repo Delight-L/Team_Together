@@ -178,32 +178,6 @@
 .group-shell .gd-files-panel .gd-file-list button > em { grid-column: 3; grid-row: 2; }
 .group-shell .gd-files-panel .gd-file-list button strong { font-size: 12px; }
 .group-shell .gd-files-panel .gd-file-list button small { font-size: 10px; }
-.group-shell .gd-files-panel .gd-source { padding-top: 5px; font-size: 9px; }
-.group-shell .gd-evidence-heading { padding: 8px 12px; }
-.group-shell .gd-evidence-heading h2 { font-size: 17px; }
-.group-shell .gd-evidence-heading p { font-size: 11px; }
-
-
-
-
-
-
-
-
-
-
-
-
-@container (max-height: 400px) {
-  .group-shell .gd-evidence-heading { padding: 5px 10px; }
-  .group-shell .gd-evidence-heading h2 { font-size: 15px; }
-
-
-
-
-
-
-}
 
 /* Keep the measured file grid and population cards aligned with the new cover. */
 .group-shell .gd-files-panel .gd-file-list {

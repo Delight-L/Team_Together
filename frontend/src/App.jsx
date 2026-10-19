@@ -1,3 +1,4 @@
+import {compareDistrictAge} from './caseOrder.mjs';
 import { useDraft } from './useDraft';
 import { draftKey, clearDrafts, hasDrafts } from './draftStore.mjs';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -13,8 +14,9 @@ import GroupDashboard from './GroupDashboard';
 import RegionAnalysis from './RegionAnalysis';
 import ServiceCase from './ServiceCase.jsx';
 import ServiceCandidate from './ServiceCandidate.jsx';
-import { selectedServiceContext, serviceDetection, confirmServiceEvidence, serviceCaseOptions, resolveServiceCase, dashboardCaseFocus } from './serviceCase.mjs';
+import { selectedServiceContext, serviceDetection, confirmServiceEvidence, dashboardCaseFocus } from './serviceCase.mjs';
 import { normalizeAgeNames } from './ageSignals.mjs';
+import {serviceReviewCases, selectedReviewCase, serviceReviewContext} from './serviceReview.mjs';
 import { userName } from './personas.mjs';
 import { PLANNING_PROPOSAL } from './experienceLogic.mjs';
 
@@ -181,19 +183,26 @@ export default function App() {
   // 메뉴 접힘 상태도 React가 관리합니다. 화면 내용/선택 지역은 그대로 유지됩니다.
   const [navCollapsed, setNavCollapsed] = useState(() => window.innerWidth <= 1100);
   const [analysisTab, setAnalysisTab] = useState('evidence');
-  const [chatScreenScope, setChatScreenScope] = useState(null);
   const [trackingSelection, setTrackingSelection] = useState(null);
   const [dashboardFocus, setDashboardFocus] = useState(null);
+  const [serviceSignalMonth, setServiceSignalMonth] = useState('');
+  const [serviceCaseFilter, setServiceCaseFilter] = useState('all');
+  const [serviceTracking, setServiceTracking] = useState(null);
+  const [serviceTrackingError, setServiceTrackingError] = useState('');
+  const inServices = view === 'services';
   // 모든 화면 이동은 go를 거칩니다. 좁은 화면에서는 이동 후 메뉴를 접어 본문을 가리지 않게 합니다.
-  function go(target) {
+  function go(target, selectedCase) {
     const [next, tab] = legacyViews[target] || [target];
     if (next === 'services') {
       setServiceChatContext(false);
-      const selected = selectedServiceContext(view, context, chatGroup, trackingSelection);
+      const selected = selectedCase ? selectedServiceContext('dashboard', context, selectedCase, null) : selectedServiceContext(view, context, chatGroup, trackingSelection);
       setCity(selected.city); setDistrict(selected.district); setAge(selected.age || ''); setMonth(selected.month);
+      setServiceSignalMonth(selected.month); setServiceCaseFilter('all');
     }
-    if (next === 'dashboard' && view === 'services') setDashboardFocus(dashboardCaseFocus(data, context, Date.now()));
-    else if (next === 'dashboard') setDashboardFocus(null);
+    if (view === 'services' && serviceSelection && !serviceChatContext && ['dashboard','report','chart'].includes(next)) {
+      setMonth(workflowContext.month);
+      if (next === 'dashboard') setDashboardFocus(dashboardCaseFocus(data, workflowContext, Date.now()));
+    } else if (next === 'dashboard') setDashboardFocus(null);
     if (next === 'chart') setAnalysisTab(tab || 'evidence');
     setView(next);
     if (window.innerWidth <= 760) setNavCollapsed(true);
@@ -248,15 +257,38 @@ export default function App() {
   }, [user]);
   // 지역/월을 단일 context로 관리해 지도와 챗봇이 같은 지역을 보도록 합니다.
   const context = useMemo(() => ({ city, district, month, ...(age ? {age} : {}) }), [city, district, month, age]);
+  useEffect(() => {
+    if (!inServices || !user) return;
+    let active = true;
+    setServiceTracking(null); setServiceTrackingError('');
+    api('/region-insights?' + query({city})).then(result => {
+      if (active) setServiceTracking({city, tracking:result.activityTracking});
+    }).catch(error => { if (active) setServiceTrackingError(error.message); });
+    return () => { active=false; };
+  }, [inServices, city, user?.id]);
+  useEffect(() => { setServiceCaseFilter('all'); }, [city, month]);
+  const serviceTrackingReady = inServices && serviceTracking?.city === city;
+  const serviceCases = useMemo(() => serviceTrackingReady ? serviceReviewCases(data, serviceTracking.tracking, context) : [],
+    [serviceTrackingReady, serviceTracking, data, city, month]);
+  const serviceSelection = serviceChatContext
+    ? serviceCases.find(item => item.district===district && item.age===age && item.signalMonth===month) || null
+    : selectedReviewCase(serviceCases, context, serviceSignalMonth);
+  const workflowContext = useMemo(() => inServices && !serviceChatContext ? serviceReviewContext(context, serviceSelection) : context,
+    [inServices, serviceChatContext, context, serviceSelection]);
+  const latestWorkflowContext = useRef(workflowContext);
+  latestWorkflowContext.current = workflowContext;
   function selectServiceCase(selected) {
     setServiceChatContext(false);
-    setCity(selected.city); setMonth(selected.month); setDistrict(selected.district); setAge(selected.age || '');
+    setCity(selected.city); setDistrict(selected.district); setAge(selected.age || '');
+    setServiceSignalMonth(selected.signalMonth);
   }
   useEffect(() => {
-    if (view !== 'services' || serviceChatContext || !data?.ageDetections) return;
-    const selected=resolveServiceCase(data, context);
-    if (selected.district !== context.district || (selected.age || '') !== (context.age || '')) selectServiceCase(selected);
-  }, [view, data, context, serviceChatContext]);
+    if (!inServices || serviceChatContext || !serviceTrackingReady) return;
+    if (serviceSelection) {
+      if (serviceSelection.district !== district || serviceSelection.age !== age || serviceSelection.signalMonth !== serviceSignalMonth) selectServiceCase(serviceSelection);
+    } else { setDistrict(''); setAge(''); setServiceSignalMonth(''); }
+  }, [inServices, serviceChatContext, serviceTrackingReady, serviceSelection, district, age, serviceSignalMonth]);
+
   const latestContext = useRef(context);
   latestContext.current = context;
   const rows = useMemo(
@@ -268,31 +300,31 @@ export default function App() {
     setWorkflow({});
     setWorkflowScope('');
     setNotice('');
-    if (!district) return;
+    if (!workflowContext.district) return;
     let active = true;
-    api('/workflow?' + query(context))
-      .then((d) => { if (active) { setWorkflow(d); setWorkflowScope(JSON.stringify(context)); } })
+    api('/workflow?' + query(workflowContext))
+      .then((d) => { if (active) { setWorkflow(d); setWorkflowScope(JSON.stringify(workflowContext)); } })
       .catch((e) => active && setNotice(e.message));
     return () => {
       active = false;
     };
-  }, [context, user?.id]);
+  }, [workflowContext, user?.id]);
   // 저장 공통 처리: 중복 클릭 방지 → 서버 저장 → 최신 업무 상태 반영.
   // 실제 저장 성공 여부와 단계 검증은 Python API 결과로 판단합니다.
   async function mutate(path, extra = {}) {
     setBusy(true);
     setNotice('');
     try {
-      const result = await api(path, { ...context, ...extra });
+      const result = await api(path, { ...workflowContext, ...extra });
       // 저장 중 지역을 바꿨다면 이전 지역의 상태를 새 지역 화면에 덮어쓰지 않습니다.
-      if (latestContext.current === context) {
+      if (latestWorkflowContext.current === workflowContext) {
         setWorkflow(result);
-        setWorkflowScope(JSON.stringify(context));
+        setWorkflowScope(JSON.stringify(workflowContext));
         setNotice('저장했습니다.');
       }
       return result;
     } catch (e) {
-      if (latestContext.current === context) setNotice(e.message);
+      if (latestWorkflowContext.current === workflowContext) setNotice(e.message);
       return null;
     } finally {
       setBusy(false);
@@ -515,14 +547,21 @@ export default function App() {
                 onSelect={(item) => { setCity(item.city); setDistrict(item.district); setMonth(item.month); setAge(item.age || ''); }}
                 onView={go}
               />}
-              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onActiveGroup={setChatGroup} onMonthChange={setMonth} focusCase={dashboardFocus} />}
+              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onActiveGroup={setChatGroup} onMonthChange={setMonth} focusCase={dashboardFocus} onServices={group => go('services', group)} />}
               {view === 'map' && <RegionalOverview {...briefingProps} />}
               {view === 'chart' && <div className="scroll-view"><RegionAnalysis city={city} district={district} onSelect={setDistrict} age={age} onAgeChange={setAge}/></div>}
               {view === 'services' && (
                 <Services
-                  key={user.id + JSON.stringify(context)}
-                  context={context}
-                  workflow={workflowScope === JSON.stringify(context) ? workflow : {}}
+                  key={user.id + JSON.stringify(workflowContext) + month}
+                  context={workflowContext}
+                  reviewMonth={month}
+                  cases={serviceCases}
+                  reviewSelection={serviceSelection}
+                  caseFilter={serviceCaseFilter}
+                  onCaseFilter={setServiceCaseFilter}
+                  casesLoading={!serviceTrackingReady && !serviceTrackingError}
+                  casesError={serviceTrackingError}
+                  workflow={workflowScope === JSON.stringify(workflowContext) ? workflow : {}}
                   analysis={data}
                   onCaseChange={selectServiceCase}
                   user={user}
@@ -561,7 +600,7 @@ export default function App() {
                     onChange={(e) => select(e.target.value)}
                   >
                     <option value="">읍·면·동 선택</option>
-                    {data.geometry[city]?.units.map((u) => (
+                    {[...(data.geometry[city]?.units || [])].sort(compareDistrictAge).map((u) => (
                       <option key={u.n}>{u.n}</option>
                     ))}
                   </select>
@@ -612,7 +651,6 @@ export default function App() {
           visible={true}
           context={view === 'dashboard' && chatGroup ? {city: chatGroup.city, district: chatGroup.district, month: chatGroup.month, age: chatGroup.age, sex: chatGroup.sex} : {
             ...context,
-            ...(view === 'chart' && analysisTab === 'compare' && chatScreenScope ? { screen: chatScreenScope } : {}),
             ...(view === 'chart' && analysisTab === 'evidence' && district && selectedRows.length ? {
               screen: { kind: 'evidence', from: month, to: month, districts: [district],
                 metrics: selectedRows.map(row => row.metric_label) },
@@ -649,11 +687,16 @@ function DetectionWorkflowSteps({ context, workflow, current, onView }) {
   </div>;
 }
 
-export function Services({ context, workflow, mutate, busy, user, seed, onSeedUsed, onView, analysis, onCaseChange, fromChatContext = false }) {
+export function Services({ context, workflow, mutate, busy, user, seed, onSeedUsed, onView, analysis, onCaseChange, fromChatContext = false, reviewMonth, cases, reviewSelection, casesLoading, casesError, caseFilter, onCaseFilter }) {
   const detection=serviceDetection(analysis, context);
   const [confirming, setConfirming]=useState(false);
   const requiresEvidence=Boolean(detection?.any_signal) && !fromChatContext;
   const reviewed=Boolean(workflow.done?.includes(1));
+  function filterCases(value) {
+    onCaseFilter(value);
+    const visible=value==='all' ? cases : cases.filter(item=>item.signalMonth===value);
+    if (!visible.some(item=>item===reviewSelection) && visible[0]) onCaseChange(visible[0]);
+  }
   async function confirmEvidence() {
     if (confirming || busy || !detection?.any_signal || workflow.analysis_changed) return;
     setConfirming(true);
@@ -699,7 +742,7 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
     </div>
   );
   async function load(fromChat = null) {
-    if (busy || confirming || !context.district || (requiresEvidence && (!reviewed || workflow.analysis_changed))) return;
+    if (busy || confirming || !context.district || (!fromChatContext && !detection?.any_signal) || (requiresEvidence && (!reviewed || workflow.analysis_changed))) return;
     setLoading(true);
     setError('');
     setSelected('');
@@ -733,9 +776,11 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
   }, [selected, focus]);
   return (
     <div className="scroll-view">
-      <ServiceCase context={context} detection={detection} assessment={analysis?.assessment || []} workflow={workflow} busy={busy || confirming} onConfirm={confirmEvidence} cases={serviceCaseOptions(analysis,context)} onCaseChange={onCaseChange} />
+      {casesError && <p className="error" role="alert">추적 자료를 불러오지 못했습니다. {casesError}</p>}
+      <ServiceCase context={context} detection={detection} assessment={analysis?.assessment || []} workflow={workflow} busy={busy || confirming} onConfirm={confirmEvidence} cases={cases} onCaseChange={onCaseChange}
+        reviewMonth={reviewMonth} reviewSelection={reviewSelection} casesLoading={casesLoading} casesError={casesError} caseFilter={caseFilter} onCaseFilter={filterCases} fromChatContext={fromChatContext} />
       <section className="card info-card service-review-workspace">
-        {!requiresEvidence && <WorkflowSteps context={context} workflow={workflow} current="services" onView={onView} />}
+        {fromChatContext && context.district && <WorkflowSteps context={context} workflow={workflow} current="services" onView={onView} />}
         {requiresEvidence && <DetectionWorkflowSteps context={context} workflow={workflow} current={reviewed ? 'services' : 'chart'} onView={onView} />}
         {requiresEvidence && <p className="service-review-gate" role="status">{reviewed ? '근거 검토가 저장되었습니다. 관련 사업을 조회해 조건을 확인하세요.' : '근거 검토 완료를 저장하면 관련 사업 조회가 활성화됩니다.'}</p>}
         {workflow.analysis_changed && (
@@ -749,7 +794,7 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
         <button
           className="primary"
           onClick={() => load()}
-          disabled={busy || confirming || loading || !context.district || (requiresEvidence && (!reviewed || workflow.analysis_changed))}
+          disabled={busy || confirming || loading || !context.district || (!fromChatContext && !detection?.any_signal) || (requiresEvidence && (!reviewed || workflow.analysis_changed))}
         >
           {loading ? '사업을 찾는 중…' : '관련 사업 조회'}
         </button>

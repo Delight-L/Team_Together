@@ -1,16 +1,3 @@
-import {detectionTabs} from './ageSignals.mjs';
-
-export function serviceCaseOptions(analysis, context) {
-  return context.city === '강남구' ? detectionTabs(analysis?.ageDetections || [],context.city,context.month) : [];
-}
-
-export function resolveServiceCase(analysis, context) {
-  const items=serviceCaseOptions(analysis,context);
-  const selected=items.find(item => item.district===context.district && item.age===context.age) || items[0];
-  return selected ? {city:context.city,month:context.month,district:selected.district,age:selected.age}
-    : {city:context.city,month:context.month,district:'',age:''};
-}
-
 export function dashboardCaseFocus(analysis, context, requestId) {
   const detection=serviceDetection(analysis,context);
   return {...context,code:detection?.code,sex:'통합',requestId};

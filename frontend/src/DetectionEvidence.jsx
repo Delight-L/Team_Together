@@ -1,3 +1,4 @@
+import DetectionCaseSelector from './DetectionCaseSelector';
 import React from 'react';
 import { Icon } from './components';
 const fmt=v=>Number.isFinite(v)?v.toLocaleString('ko-KR',{maximumFractionDigits:2}):'자료 없음';
@@ -24,7 +25,7 @@ function ScorePlot({row,path,state}) {
  </div><p className="ev-score-detail">기준과의 차이 <b style={{color}}>{fmt(distance)}</b> · {z<=threshold?'기준선보다 낮음':'기준선보다 높음'}</p></>;
 
 }
-export default function DetectionEvidence({rows,group,detection,onBack}) {
+export default function DetectionEvidence({rows,group,detection,onBack,caseOptions,onCaseChange}) {
  const payload=detection?.payload||{};
  const domains=[['communication','통신',['call_contacts','text_contacts']],['mobility','이동',['weekday_move_count','weekend_move_count']]].map(([key,label,metrics])=>{
   const domainRows=rows.filter(r=>metrics.includes(r.metric));
@@ -33,7 +34,7 @@ export default function DetectionEvidence({rows,group,detection,onBack}) {
   return {key,label,rows:domainRows,absolute,local,state:signalState(absolute,local)};
  }).filter(d=>d.state!=='none'&&d.rows.length);
  const single=domains.length===1;
- return <article className={`ev-screen ${single?'ev-single signal-'+domains[0].state:'ev-multiple'}`}><div className="ev-case-header"><header className="ev-heading gd-case-title"><h2>{group.district} · {group.age}</h2>{domains.map(d=><span key={d.key} className={`gd-domain-chip signal-${d.state}`}><Icon name={d.key==='communication'?'chat':'chart'} size={20}/>{d.key==='communication'?'전화·문자 연락':'평일·휴일 이동'} 감소 탐지</span>)}{onBack&&<button className="gd-evidence-back" onClick={onBack}>← 탐지 현황 보기</button>}</header>
+ return <article className={`ev-screen ${single?'ev-single signal-'+domains[0].state:'ev-multiple'}`}><div className="ev-case-header"><header className="ev-heading gd-case-title"><h2>{group.district} · {group.age}</h2>{domains.map(d=><span key={d.key} className={`gd-domain-chip signal-${d.state}`}><Icon name={d.key==='communication'?'chat':'chart'} size={20}/>{d.key==='communication'?'전화·문자 연락':'평일·휴일 이동'} 감소 탐지</span>)}<div className="gd-case-actions">{caseOptions && <DetectionCaseSelector items={caseOptions} selected={group} onSelect={onCaseChange}/>}{onBack&&<button className="gd-evidence-back" onClick={onBack}>← 탐지 현황 보기</button>}</div></header>
  {single&&<div className="gd-path-explanation"><SignalBadges absolute={domains[0].absolute} local={domains[0].local}/><p>{signalExplanation(domains[0].absolute, domains[0].local, group.city)}</p></div>}</div>
  {!single&&domains.length>1&&<h3>통신과 이동의 탐지 근거</h3>}
  <p className="ev-intro">변화율(%)은 실제 변화, 탐지 점수는 평소 대비 이례적인 정도입니다.</p>

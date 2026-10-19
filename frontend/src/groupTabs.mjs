@@ -29,7 +29,7 @@ export function availableWorkspace(state, catalog, preferredMonth) {
 }
 
 // 후보 판정 우선순위: 신규 → 연속 → 변화 후보. 그 밖의 판정은 같은 순위로 취급합니다.
-export const CANDIDATE_ORDER = ['신규 후보', '연속 후보', '변화 후보'];
+export const CANDIDATE_ORDER = ['신규 후보', '연속 후보', '판정 보류 후 탐지'];
 const candidateRank = status => { const i = CANDIDATE_ORDER.indexOf(status); return i < 0 ? CANDIDATE_ORDER.length : i; };
 const decline = g => (Number.isFinite(g.change_pct) ? g.change_pct : Infinity);
 

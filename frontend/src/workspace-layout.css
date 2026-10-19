@@ -26,12 +26,6 @@
 .group-shell .gd-case { border: 8px solid #eee5d6; border-top: 0; border-radius: 0 0 12px 12px; padding: 18px; }
 .gd-summary .gd-context-cards > article { border-color: #e7e8e9; background: #fff; }
 .gd-summary .gd-mini-trend, .gd-summary .gd-mini-share { background: #fff; border-color: #e7e8e9; }
-.gd-evidence-heading { grid-column: 1 / -1; background: #f1f6fd; padding: 12px 16px; border-radius: 9px; }
-.gd-evidence-heading h2 { font-size: 21px; margin: 0 0 5px; }
-.gd-evidence-heading p { margin: 0; font-size: 13px; color: #61718a; }
-.gd-files-panel .gd-directory-filters { max-width: none; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); align-items: end; }
-.gd-directory-filters label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
-.gd-files-panel .gd-directory-filters select { width: 100%; }
 /* 종합 현황의 긴 내용은 항목/페이지 이동으로 확인합니다. */
 .app-shell.group-shell .main-content { overflow: hidden; gap: 10px; padding: 12px 20px; display: flex; flex-direction: column; min-height: 0; }
 .group-shell .page-heading { flex-shrink: 0; }
@@ -50,14 +44,8 @@
 .gd-summary .gd-context-cards h4 { margin: 10px 0 8px; }
 .gd-summary .gd-senior { padding: 8px; margin: 8px 0; }
 .gd-summary .gd-senior strong { margin: 5px 0; }
-.gd-evidence-heading { padding: 8px 12px; flex-shrink: 0; }
-.gd-evidence-heading h2 { font-size: 17px; }
-.gd-evidence-heading p { font-size: 11px; }
-.gd-page-buttons { display: flex; align-items: center; gap: 12px; justify-content: flex-end; margin-top: 6px; font-size: 12px; }
-.gd-page-buttons button { padding: 6px 10px; border: 1px solid #e3e7ed; border-radius: 7px; }
 .gd-files-panel .gd-directory { padding: 10px; }
 .gd-files-panel .gd-directory h2 { font-size: 18px; }
-.gd-files-panel .gd-directory-filters { margin: 6px 0; }
 .gd-files-panel .gd-file-list button { padding: 10px; min-width: 0; }
 @media (max-height: 760px) {
   .group-shell .page-heading p { display: none; }
@@ -100,7 +88,6 @@
 /* 목록과 전체 근거는 사용 가능한 높이를 넉넉하게 활용합니다. */
 .gd-files-panel .gd-directory { display: flex; flex-direction: column; height: 100%; gap: 8px; padding: 16px; }
 .gd-files-panel .gd-directory > p { margin: 0; }
-.gd-files-panel .gd-directory-filters { margin: 0; }
 /* 칸·줄 수는 GroupDashboard.jsx의 useCardGrid가 목록 영역 크기로 계산해 --gd-cols, --gd-rows로 넘깁니다. */
 .gd-files-panel .gd-file-list { grid-template-columns: repeat(var(--gd-cols, 4), minmax(0,1fr)); grid-template-rows: repeat(var(--gd-rows, 3), minmax(0,1fr)); gap: 8px; flex: 1; min-height: 0; align-content: stretch; overflow: hidden; }
 .gd-files-panel .gd-file-list button { min-height: 0; padding: 8px 10px; overflow: hidden; }
@@ -110,14 +97,12 @@
 .gd-files-panel .gd-file-list button strong { font-size: 12px; }
 .gd-files-panel .gd-file-list button small { margin-top: 5px; line-height: 1.4; }
 .gd-files-panel .gd-directory footer { margin-top: auto; padding-top: 8px; }
-.gd-files-panel .gd-directory .gd-source { font-size: 10px; }
 @media (min-height: 850px) {
   .gd-files-panel .gd-directory { padding: 22px; gap: 14px; }
   .gd-files-panel .gd-file-list { gap: 14px; }
   .gd-files-panel .gd-file-list button { padding: 16px 12px; }
   .gd-files-panel .gd-file-list button strong { font-size: 14px; }
   .gd-files-panel .gd-file-list button small { font-size: 11px; }
-  .gd-evidence-heading { padding: 14px 18px; }
 }
 @media (max-height: 760px) {
   .gd-files-panel .gd-directory { gap: 5px; padding: 10px; }

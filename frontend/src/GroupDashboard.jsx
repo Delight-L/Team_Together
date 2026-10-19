@@ -1,3 +1,5 @@
+import DataQuality from './DataQuality.jsx';
+import {orderedCases} from './caseOrder.mjs';
 import DetectionCaseSelector from './DetectionCaseSelector';
 import DetectionEvidence, { SignalBadges, signalState, signalExplanation } from './DetectionEvidence';
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -6,7 +8,7 @@ import { api, query } from './api';
 import { Icon } from './components';
 import { useDraft } from './useDraft';
 import { draftKey } from './draftStore.mjs';
-import { groupKey, groupLabel, openGroup, restoreWorkspace, availableWorkspace, rankGroups, pickInitialGroup, CANDIDATE_ORDER } from './groupTabs.mjs';
+import { groupKey, groupLabel, openGroup, restoreWorkspace, availableWorkspace, pickInitialGroup, CANDIDATE_ORDER } from './groupTabs.mjs';
 import { summarizeRegions } from './Briefing';
 import './group-dashboard.css';
 import RegionContextCards from './RegionContextCards';
@@ -16,23 +18,7 @@ import { ageStatus, detectionTabs, observationWindow } from './ageSignals.mjs';
 const fmt = (n, digits = 1) => Number.isFinite(n) ? n.toLocaleString('ko-KR', { maximumFractionDigits: digits }) : '—';
 const pct = n => Number.isFinite(n) ? `${n > 0 ? '+' : ''}${fmt(n, 2)}%` : '비교 불가';
 const emptyTabs = { tabs: [], active: '' };
-const PAGE_SIZE = 12;
-
-function PageButtons({ page, pages, onPage, label }) {
-  return <div className="gd-page-buttons" aria-label={label}><button disabled={!page} onClick={() => onPage(page - 1)}>이전</button><span>{page + 1} / {pages}</span><button disabled={page + 1 >= pages} onClick={() => onPage(page + 1)}>다음</button></div>;
-}
-
-function ServiceResults({ matches }) {
-  const [page, setPage] = useState(0), [textPage, setTextPage] = useState(0);
-  const current = Math.min(page, Math.max(0, matches.items.length - 1));
-  const item = matches.items[current];
-  if (!item) return <p>선택한 지원 목적에 관련된 사업이 없습니다. 검토 목적을 바꿔 다시 찾아보세요.</p>;
-  const service = item.service;
-  const text = [item.reason, '대상: ' + (service.target_text || '원문 확인 필요'), '선정 조건: ' + (service.eligibility_text || '기관 확인 필요'), '신청 방법: ' + (service.application_text || '기관 확인 필요'), item.qualification].join('\n\n');
-  const pages = Math.max(1, Math.ceil(text.length / 400));
-  const part = Math.min(textPage, pages - 1);
-  return <article className="gd-service-result"><h3>{service.name}</h3><PageButtons page={current} pages={matches.items.length} onPage={value => {setPage(value);setTextPage(0);}} label="사업 이동"/><p style={{whiteSpace:'pre-wrap'}}>{text.slice(part * 400, part * 400 + 400)}</p>{pages > 1 && <PageButtons page={part} pages={pages} onPage={setTextPage} label="사업 상세 내용 이동"/>}{/^https?:\/\//i.test(service.source_url || '') && <a href={service.source_url} target="_blank" rel="noreferrer">공식 안내 확인 ↗</a>}</article>;
-}
+const PAGE_SIZE = 9;
 
 function LineChart({ points, label }) {
   const fillId = useId(), chartRef = useRef(null);
@@ -84,7 +70,7 @@ function DetectionHeading({group, detection, onEvidence, caseOptions, onCaseChan
 }
 
 // 조사 파일 카드가 글자 겹침 없이 들어가는 최소 폭입니다. 높이는 실제 카드 내용과 여백으로 잽니다.
-const CARD_MIN_WIDTH = 260, CARD_MIN_HEIGHT = 56;
+const CARD_MIN_WIDTH = 260, CARD_MIN_HEIGHT = 105;
 
 function cardHeight(list) {
   const card = list.firstElementChild, content = card?.querySelector('span');
@@ -97,14 +83,14 @@ function cardHeight(list) {
 // 목록 영역의 실제 크기로 칸·줄 수를 정합니다. 화면 폭이 아니라 영역 크기를 보므로
 // 챗봇 패널·메뉴 때문에 목록만 좁아져도 칸 수를 줄이고, 한 페이지 개수를 맞춰 스크롤 없이 보여 줍니다.
 function useCardGrid(list) {
-  const [grid, setGrid] = useState({ cols: 4, rows: 3 });
+  const [grid, setGrid] = useState({ cols: 3, rows: 3 });
   useEffect(() => {
     if (!list || typeof ResizeObserver === 'undefined') return;
     const measure = () => {
       if (!list.clientWidth || !list.clientHeight) return; // 숨겨진 탭에서는 크기를 재지 않습니다.
       const style = getComputedStyle(list);
       const columnGap = parseFloat(style.columnGap) || 0, rowGap = parseFloat(style.rowGap) || 0;
-      const cols = Math.max(1, Math.min(4, Math.floor((list.clientWidth + columnGap) / (CARD_MIN_WIDTH + columnGap))));
+      const cols = Math.max(1, Math.min(3, Math.floor((list.clientWidth + columnGap) / (CARD_MIN_WIDTH + columnGap))));
       const fits = Math.max(1, Math.floor((list.clientHeight + rowGap) / (cardHeight(list) + rowGap)));
       const rows = Math.min(fits, Math.ceil(PAGE_SIZE / cols));
       setGrid(old => old.cols === cols && old.rows === rows ? old : { cols, rows });
@@ -117,79 +103,50 @@ function useCardGrid(list) {
   return grid;
 }
 
-function Directory({ catalog, loading, error, retry, city, month, onOpen, state, searchRef, statusOf, detectionMode = false }) {
-  const [search, setSearch] = useState(''), [age, setAge] = useState(''), [sex, setSex] = useState(''), [district, setDistrict] = useState(''), [page, setPage] = useState(0);
-  const filtered = rankGroups((catalog?.groups || []).filter(g => (!district || g.code === district) && (!age || g.age === age) && (!sex || g.sex === sex) && `${g.district} ${g.age} ${g.sex}`.includes(search.trim())), statusOf);
-  useEffect(() => setPage(0), [search, age, sex, district, month, city]);
-  // 목록이 다시 그려져 요소가 바뀌어도 크기 감시를 새 요소에 연결하도록 state로 받습니다.
-  const [listElement, setListElement] = useState(null);
-  const { cols, rows } = useCardGrid(listElement);
-  const pageSize = cols * rows;
-  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const current = Math.min(page, pages - 1);
-  return <div className="gd-directory"><header><h2>조사 파일</h2><span>{month}</span></header><p>{detectionMode ? '선택한 월에 탐지된 행정동·연령대별 사례입니다.' : '살펴볼 읍·면·동·연령·성별 그룹을 고르면 옆에 브리핑 탭이 열립니다.'}</p>
-    <input ref={searchRef} aria-label="행정동·연령 검색" placeholder="행정동·연령 검색" value={search} onChange={e => setSearch(e.target.value)} />
-    <div className="gd-directory-filters"><label>읍·면·동<select aria-label="읍·면·동 필터" value={district} onChange={e => setDistrict(e.target.value)}><option value="">전체 읍·면·동</option>{catalog?.districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}</select></label><select aria-label="연령 필터" value={age} onChange={e => setAge(e.target.value)}><option value="">모든 연령</option>{catalog?.ages.map(a => <option key={a}>{a}</option>)}</select>{!detectionMode && <select aria-label="성별 필터" value={sex} onChange={e => setSex(e.target.value)}><option value="">모든 성별</option>{catalog?.sexes.map(s => <option key={s}>{s}</option>)}</select>}</div>
-    {loading ? <p role="status">그룹 자료를 읽고 있습니다…</p> : error ? <div role="alert" className="gd-error">{error}<button onClick={retry}>다시 연결</button></div> : !filtered.length ? <p className="gd-empty">선택 조건의 자료가 없습니다.{catalog?.months.length > 0 && <span> 제공 기간 {catalog.months[0]} ~ {catalog.months.at(-1)}</span>}</p> : <div className="gd-file-list" ref={setListElement} style={{ '--gd-cols': cols, '--gd-rows': rows }}>{filtered.slice(current * pageSize, current * pageSize + pageSize).map(g => {
-      const group = { city, code: g.code, district: g.district, age: g.age, sex: g.sex, month: g.month }, id = groupKey(group);
-      const opened = state.tabs.some(t => groupKey(t) === id);
-      return <button key={id} className={state.active === id ? 'selected' : ''} title={groupLabel(g)} onClick={() => onOpen(group)}><Icon name="report" size={21} /><span><strong>{groupLabel(g)}</strong><small>{g.month}{!detectionMode && ` · 구성비 ${fmt(g.share)}%`}</small></span>{CANDIDATE_ORDER.includes(statusOf(g)?.status) && <i className="gd-candidate">{statusOf(g).status}</i>}{opened ? <em>{state.active === id ? '현재 탭' : '열림'}</em> : <span aria-hidden="true">›</span>}</button>;
+function Directory({ catalog, loading, error, retry, city, month, onOpen, state, statusOf, detectionMode = false }) {
+  const [page,setPage]=useState(0);
+  const groups=orderedCases(catalog?.groups || []);
+  useEffect(()=>setPage(0),[month,city]);
+  const [listElement,setListElement]=useState(null);
+  const {cols,rows}=useCardGrid(listElement);
+  const pageSize=cols*rows,pages=Math.max(1,Math.ceil(groups.length/pageSize)),current=Math.min(page,pages-1);
+  return <div className="gd-directory gd-clean-directory"><header><h2>조사 파일</h2><span>{month}</span></header>
+    {loading?<p role="status">그룹 자료를 읽고 있습니다…</p>:error?<div role="alert" className="gd-error">{error}<button onClick={retry}>다시 연결</button></div>:<div ref={setListElement} className="gd-file-list" style={{'--gd-file-cols':cols,'--gd-file-rows':rows}}>{groups.slice(current*pageSize,current*pageSize+pageSize).map(g=>{
+      const group={city,code:g.code,district:g.district,age:g.age,sex:g.sex,month:g.month},id=groupKey(group),opened=state.tabs.some(t=>groupKey(t)===id);
+      return <button key={id} className={state.active===id?'selected':''} title={groupLabel(g)} onClick={()=>onOpen(group)}><Icon name="report" size={21}/><span><strong>{groupLabel(g)}</strong><small>{g.month}{!detectionMode&&` · 구성비 ${fmt(g.share)}%`}</small></span>{CANDIDATE_ORDER.includes(statusOf(g)?.status)&&<i className="gd-candidate">{statusOf(g).status}</i>}{opened?<em>{state.active===id?'현재 탭':'열림'}</em>:<span aria-hidden="true">›</span>}</button>;
     })}</div>}
-    <footer><span>{filtered.length}개 그룹 · {current + 1}/{pages}</span><button aria-label="이전 그룹 목록" disabled={current === 0} onClick={() => setPage(current - 1)}>‹</button><button aria-label="다음 그룹 목록" disabled={current + 1 >= pages} onClick={() => setPage(current + 1)}>›</button></footer>
-    <p className="gd-source">{detectionMode ? 'DB1 · Analysis2 동·연령별 이상 탐지 결과' : '유동인구 연령·성별 집계'}</p>
+    <footer><span>{groups.length}개 그룹 · {current+1}/{pages}</span><button aria-label="이전 그룹 목록" disabled={current===0} onClick={()=>setPage(current-1)}>‹</button><button aria-label="다음 그룹 목록" disabled={current+1>=pages} onClick={()=>setPage(current+1)}>›</button></footer>
   </div>;
 }
 
-function GroupCase({ group, shown, evidenceShown, summaryStep, user, onEvidence, analysis, onSummary, caseOptions, onCaseChange }) {
-  const [summaryPage, setSummaryPage] = useState(0);
-  useEffect(() => { setSummaryPage(0); }, [summaryStep]);
+function GroupCase({ group, shown, summaryStep, onEvidence, onSummary, onServices, analysis, caseOptions, onCaseChange, onEvidenceCaseChange }) {
+  const summaryPage = summaryStep === 3 ? 3 : 0;
   const [data, setData] = useState(null), [error, setError] = useState(''), [retry, setRetry] = useState(0);
-  const [draft, setDraft, clearDraft, storageFailed] = useDraft(draftKey(user, group, `group-review:${group.code}:${group.age}:${group.sex}`), { note: '', need: '' });
-  const [saved, setSaved] = useState(null), [status, setStatus] = useState(''), [saving, setSaving] = useState(false);
-  const [matches, setMatches] = useState(null), [serviceError, setServiceError] = useState(''), [searching, setSearching] = useState(false);
-  const serviceRequest = useRef(null);
   useEffect(() => {
     let live = true;
     api('/groups/detail?' + query(group)).then(d => { if (live) setData(d); }).catch(e => live && setError(e.message));
-    api('/groups/review?' + query(group)).then(d => { if (live) setSaved(d); }).catch(e => live && setStatus(e.message));
-    return () => { live = false; serviceRequest.current?.abort(); };
+    return () => { live = false; };
   }, [retry]);
-  const currentDraft = { note: draft.note || saved?.note || '', need: draft.need || saved?.need || '' };
-  // 사용자가 내용을 지운 경우도 저장할 수 있도록 편집 여부를 따로 보관한다.
-  const note = draft.edited ? draft.note : currentDraft.note, need = draft.edited ? draft.need : currentDraft.need;
-  const changeDraft = patch => setDraft({ note, need, ...patch, edited: true });
   const row = data?.current;
   const detection = data?.regional?.detection;
   const structure = data?.regional?.structure;
   const evidenceRows = (analysis?.assessment || []).filter(r => r['행정동코드'] === group.code && r.age_label === group.age && r['기준연월'] === group.month);
-  const openServices = () => onEvidence();
-  async function save() {
-    setSaving(true); setStatus('');
-    try { const result = await api('/groups/review', { ...group, note, need, sourceRun: data.runId }); setSaved(result); clearDraft(); setStatus('이 집단의 검토 메모를 저장했습니다.'); }
-    catch (e) { setStatus(e.message); } finally { setSaving(false); }
-  }
-  async function findServices() {
-    serviceRequest.current?.abort(); const controller = new AbortController(); serviceRequest.current = controller;
-    setSearching(true); setMatches(null); setServiceError('');
-    try { const result = await api('/groups/services?' + query({ ...group, need }), undefined, { signal: controller.signal }); if (!controller.signal.aborted) setMatches(result); }
-    catch (e) { if (e.name !== 'AbortError') setServiceError(e.message); } finally { if (serviceRequest.current === controller) setSearching(false); }
-  }
-  return <><section hidden={!shown && !evidenceShown} className={`gd-case ${evidenceShown ? 'gd-evidence-panel' : ''}`} role="tabpanel" id={'panel-' + groupKey(group)} aria-label={groupLabel(group)}>
+  return <><section hidden={!shown} className="gd-case" role="tabpanel" id={'panel-' + groupKey(group)} aria-label={groupLabel(group)}>
     {error ? <div role="alert" className="gd-error">{error}<button onClick={() => { setError(''); setRetry(r => r + 1); }}>다시 연결</button></div> : !row ? <p role="status">집단별 근거를 읽고 있습니다…</p> : <>
-      <div hidden={evidenceShown} className="gd-summary" data-summary-page={summaryPage}><div className="gd-overview gd-unified-overview"><DetectionHeading group={group} detection={detection} onEvidence={() => setSummaryPage(3)} caseOptions={shown ? caseOptions : undefined} onCaseChange={onCaseChange}/>
+      <div className="gd-summary" data-summary-page={summaryPage}><div className="gd-overview gd-unified-overview"><DetectionHeading group={group} detection={detection} onEvidence={onEvidence} caseOptions={shown ? caseOptions : undefined} onCaseChange={onCaseChange}/>
       {detection && <DetectionSummary detection={detection} group={group}/>}
       <section className="gd-unified-flow" aria-label="유동량 참고"><div className="gd-heading-with-note"><h3 className="gd-flow-reference-label">{group.district} {group.age} 유동량 변화</h3><small className="gd-period-note">직전 기준월 대비</small></div>
       <h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `${fmt(Math.abs(row.change_pct), 2)}% ${row.change_pct > 0 ? '증가' : row.change_pct < 0 ? '감소' : '변화 없음'}` : '비교 자료 부족'}</h3>
       <article className="gd-mini-trend"><LineChart points={data.series} label={`${groupLabel(group)} 월별 구역별 평균 유동량`}/></article>
-      <article className="gd-mini-share"><h4>{group.district} 전체 유동량 중 {group.age} 비율</h4><strong>{fmt(row.share, 2)}<small>%</small></strong><div className="gd-share-track"><i style={{width: `${Number.isFinite(row.share) ? Math.max(0, Math.min(100, row.share)) : 0}%`}}/></div></article></section><button className="primary gd-support-link gd-standalone-support" onClick={openServices}>지원사업 후보 확인 <Icon name="arrow" size={18}/></button><div className="gd-inline-background"><RegionContextCards structure={structure} survey={data.regional?.survey} group={group} /></div></div>
-      {evidenceRows.length > 0 && <div className="gd-signal-card"><DetectionEvidence rows={evidenceRows} group={group} detection={detection} onBack={() => { setSummaryPage(0); onSummary(); }}/></div>}
-      </div><section hidden={!evidenceShown} className="gd-support-panel" aria-label="지원 검토"><header className="gd-evidence-heading"><h2>지원 검토</h2><p>{groupLabel(group)} · {group.month}</p></header><details open className="gd-review"><summary>지원 필요 확인 · 메모와 사업 검토</summary><p>탐지 결과만으로 지원 필요나 이용 자격을 확정하지 않습니다. 검토 목적을 선택하고 실제 사업의 조건을 확인하세요.</p><label>검토할 지원 목적<select value={need} disabled={saving} onChange={e => { changeDraft({ need: e.target.value }); serviceRequest.current?.abort(); setMatches(null); setServiceError(''); }}><option value="">선택하세요</option>{['관계·사회참여', '안부·상담', '생활·경제'].map(n => <option key={n}>{n}</option>)}</select></label><label>이 집단의 검토 메모<textarea aria-label="집단 검토 메모" disabled={saving} rows="3" maxLength={3000} placeholder="관측 사실, 추가 확인 사항, 실제로 확인한 필요를 구분해서 기록하세요." value={note} onChange={e => changeDraft({ note: e.target.value })} /></label><div className="gd-review-actions"><button className="secondary" onClick={save} disabled={saving}>{saving ? '저장 중…' : '검토 메모 저장'}</button><button className="primary" disabled={!need || searching} onClick={findServices}>{searching ? '사업을 찾는 중…' : '조건 확인할 사업 찾기'}</button></div><p role="status">{storageFailed ? "임시 저장에 실패했습니다. 내용을 복사하거나 저장해 주세요." : status || (saved?.updatedAt ? `마지막 저장 ${saved.updatedAt.slice(0, 16).replace('T', ' ')}` : '')}</p>{serviceError && <p role="alert" className="gd-error">{serviceError}</p>}</details>{matches && <details open><summary>관련 사업 검색 결과</summary><ServiceResults matches={matches}/></details>}</section>
+      <article className="gd-mini-share"><h4>{group.district} 전체 유동량 중 {group.age} 비율</h4><strong>{fmt(row.share, 2)}<small>%</small></strong><div className="gd-share-track"><i style={{width: `${Number.isFinite(row.share) ? Math.max(0, Math.min(100, row.share)) : 0}%`}}/></div></article></section><button className="primary gd-support-link gd-standalone-support" onClick={onServices}><span>지원사업 후보 확인</span><Icon name="arrow" size={18}/></button><div className="gd-inline-background"><RegionContextCards structure={structure} survey={data.regional?.survey} group={group} /></div></div>
+      {evidenceRows.length > 0 && <div className="gd-signal-card"><DetectionEvidence rows={evidenceRows} group={group} detection={detection} onBack={onSummary} caseOptions={shown ? caseOptions : undefined} onCaseChange={onEvidenceCaseChange}/></div>}
+      </div>
 
     </>}
   </section></>;
 }
 
-export default function GroupDashboard({ city, month: preferredMonth, user, analysis, onActiveGroup, onMonthChange, focusCase }) {
+export default function GroupDashboard({ city, month: preferredMonth, user, analysis, onActiveGroup, onMonthChange, focusCase, onServices }) {
   const [catalog, setCatalog] = useState(null), [loading, setLoading] = useState(true), [error, setError] = useState(''), [retry, setRetry] = useState(0);
   // v2: 후보 우선 규칙(처음 방문 시 1순위 후보 동의 그룹)이 생기기 전에 저장된 탭 기록은 한 번 새로 시작합니다.
   const [stored, setStored, , workspaceStorageFailed] = useDraft(draftKey(user, { city }, 'group-workspace-v2'), emptyTabs);
@@ -203,7 +160,7 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
   const month = focusPending ? focusCase.month : migrate ? signalMonths.at(-1) || preferredMonth : state.month || preferredMonth;
   useEffect(() => { if (month) onMonthChange?.(month); }, [month, onMonthChange]);
   const setState = update => setStored(old => update(restoreWorkspace(old, city)));
-  const searchRef = useRef(null), tabRefs = useRef({});
+  const tabRefs = useRef({});
   // 종합 현황에서 고른 기준월로 동별 판정을 다시 계산해, 후보 동의 그룹을 먼저 보여 줍니다.
   const statusByDistrict = useMemo(() => {
     if (!analysis) return {};
@@ -236,7 +193,16 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
         const valid = availableWorkspace(migrate ? { ...old, month, initialized:false, analysisVersion } : old, result, month);
         if (cases.length) {
           const tabs = detectionTabs(cases, city, month);
-          return {...valid, tabs, initialized:true, active:tabs.some(g => groupKey(g) === valid.active) ? valid.active : tabs.length ? groupKey(tabs[0]) : ''};
+          if (!tabs.length) {
+            // Keep the basic screen and carry the selected group into the new month.
+            // These are actual monthly observations, never added to the detection list.
+            const previous=old.tabs.find(g=>groupKey(g)===old.active);
+            const observations=orderedCases(cases.filter(r=>r.month===month));
+            const row=observations.find(r=>r.code===previous?.code && r.age===previous?.age) || observations[0];
+            const group=row ? {city,code:row.code,district:row.district,age:row.age,sex:'통합',month} : null;
+            return {...valid,tabs:group?[group]:[],initialized:true,active:group?groupKey(group):''};
+          }
+          return {...valid, tabs, initialized:true, active:tabs.some(g => groupKey(g) === valid.active) ? valid.active : groupKey(tabs[0])};
         }
         if (valid.initialized || !result.groups.length || valid.month !== month) return valid;
         const first = pickInitialGroup(result.groups, statusOf);
@@ -245,23 +211,21 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
     }).catch(e => live && setError(e.message)).finally(() => live && setLoading(false));
     return () => { live = false; };
   }, [city, month, retry, analysisVersion]);
-  const open = group => { setState(s => openGroup({ ...s, initialized: true }, group)); setShowFiles(false); };
-  const openFiles = (focus = false) => { setShowFiles(true); if (focus) setTimeout(() => searchRef.current?.focus(), 0); };
+  const open = (group, keepEvidence = false) => { setState(s => openGroup({ ...s, initialized: true }, group)); setShowFiles(false); if (keepEvidence) setSummaryStep(3); };
   const active = state.tabs.find(g => groupKey(g) === state.active && g.month === month);
-  const evidenceShown = workspaceTab === 'support';
-  const filesShown = workspaceTab === 'files' || (!active && !evidenceShown);
+  const qualityShown = workspaceTab === 'quality';
+  const filesShown = workspaceTab === 'files';
   const activeKey = active ? groupKey(active) : '';
   useEffect(() => { onActiveGroup?.(active || null); }, [activeKey, onActiveGroup]);
-  const openEvidence = () => { setWorkspaceTab('support'); setSummaryStep(3); };
   // 파일 탭의 키보드 탐색 순서입니다.
   const changeTab = (event,index) => {
-    const ids=['overview','support','files'];let next=index;
+    const ids=['overview','files','quality'];let next=index;
     if(event.key==='ArrowRight') next=(index+1)%3;
     else if(event.key==='ArrowLeft') next=(index+2)%3;
     else if(event.key==='Home') next=0;
     else if(event.key==='End') next=2;
     else return;
-    event.preventDefault();setWorkspaceTab(['group','support','files'][next]);setSummaryStep(next===1?3:1);
+    event.preventDefault();setWorkspaceTab(['group','files','quality'][next]);setSummaryStep(1);
     requestAnimationFrame(()=>tabRefs.current[ids[next]]?.focus());
   };
   return <div className="gd-root">
@@ -271,11 +235,12 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
     {workspaceStorageFailed && <p className="gd-scope-note" role="status">탭 임시 저장에 실패했습니다. 새로고침 시 열린 탭을 복원하지 못할 수 있습니다.</p>}
     {active && active.month !== month && <p className="gd-scope-note">조사 파일 기준월은 {month}, 현재 열린 브리핑은 <b>{active.month} · {groupLabel(active)}</b>입니다.</p>}
     <div className="gd-workspace"><ol className="gd-process" aria-label="브리핑 읽는 순서">{[['연락·이동 변화 확인', '탐지된 변화와 감소 폭을 살펴봅니다.'], ['가구·관계망 함께 보기', '가구 구성과 사회적 연결을 함께 봅니다.'], ['필요한 지원 검토', '확인한 필요에 맞는 지원을 검토합니다.']].map(([title, text], i) => <li key={title}><div className="gd-step-guide"><b>{i + 1}</b><span className="gd-step-icon"><Icon name={['discover', 'neighborhood', 'support'][i]} size={26}/></span><div><strong>{title}</strong><span>{text}</span></div></div></li>)}</ol><div className="gd-tabbar"><div className="gd-tabs-window"><div className="gd-tabs-track" role="tablist" aria-label="사례 검토 파일">
-        {[['overview','탐지 현황','clipboard'],['support','지원 검토','services'],['files','조사 파일','report']].map(([id,label,icon],index)=>{const selected=id==='overview'?!filesShown&&!evidenceShown:id==='support'?evidenceShown:filesShown;return <div key={id} className={`gd-tab ${selected?'active':''}`}><button role="tab" id={'tab-'+id} aria-selected={selected} aria-controls={id==='files'?'panel-files':active?'panel-'+groupKey(active):'panel-evidence-empty'} tabIndex={selected?0:-1} ref={el=>{tabRefs.current[id]=el;}} onKeyDown={e=>changeTab(e,index)} onClick={()=>{setWorkspaceTab(['group','support','files'][index]);setSummaryStep(index===1?3:1);}}><Icon name={icon} size={22}/><span><b>{label}</b></span></button></div>;})}
+        {[['overview','탐지 현황','clipboard'],['files','조사 파일','report'],['quality','자료 확인','clipboard']].map(([id,label,icon],index)=>{const selected=id==='quality'?qualityShown:id==='files'?filesShown:!filesShown&&!qualityShown;return <div key={id} className={`gd-tab ${selected?'active':''}`}><button role="tab" id={'tab-'+id} aria-selected={selected} aria-controls={id==='quality'?'panel-quality':id==='files'?'panel-files':active?'panel-'+groupKey(active):'panel-evidence-empty'} tabIndex={selected?0:-1} ref={el=>{tabRefs.current[id]=el;}} onKeyDown={e=>changeTab(e,index)} onClick={()=>{setWorkspaceTab(['group','files','quality'][index]);setSummaryStep(1);}}><Icon name={icon} size={22}/><span><b>{label}</b></span></button></div>;})}
       </div></div></div>
-      <section className="gd-case gd-files-panel" role="tabpanel" id="panel-files" aria-labelledby="tab-files" hidden={!filesShown}><Directory catalog={catalog} city={city} month={month} loading={loading} error={error} retry={() => setRetry(n => n + 1)} onOpen={open} state={state} searchRef={searchRef} statusOf={statusOf} detectionMode={cases.length > 0} /></section>
-      {state.tabs.map(g => <GroupCase key={groupKey(g)} group={g} shown={!filesShown && !evidenceShown && groupKey(g) === state.active} evidenceShown={evidenceShown && groupKey(g) === state.active} onEvidence={openEvidence} caseOptions={state.tabs.filter(item => item.month === month)} onCaseChange={open} summaryStep={summaryStep} user={user} analysis={analysis} onSummary={() => {setWorkspaceTab('group'); setSummaryStep(1);}} />)}
-<section id="panel-evidence-empty" role="tabpanel" aria-labelledby="tab-support" className="gd-case" hidden={filesShown || !!active}><DetectionCaseSelector items={[]} selected={null} loading={loading} onSelect={open}/><h2>검토할 사례를 선택하세요</h2><p>선택한 월의 탐지 사례가 없습니다. 조사 파일에서 기준월과 사례를 확인하세요.</p><button className="primary" onClick={() => openFiles()}>조사 파일에서 그룹 선택</button></section>
+      <section className="gd-case gd-files-panel" role="tabpanel" id="panel-files" aria-labelledby="tab-files" hidden={!filesShown}><Directory catalog={catalog} city={city} month={month} loading={loading} error={error} retry={() => setRetry(n => n + 1)} onOpen={open} state={state} statusOf={statusOf} detectionMode={cases.length > 0} /></section>
+      <section className="gd-case gd-quality-panel" role="tabpanel" id="panel-quality" aria-labelledby="tab-quality" hidden={!qualityShown}><DataQuality analysis={analysis} city={city}/></section>
+      {state.tabs.map(g => <GroupCase key={groupKey(g)} group={g} shown={!filesShown && !qualityShown && groupKey(g) === state.active} onServices={() => onServices(g)} caseOptions={cases.length ? detectionTabs(cases,city,month) : state.tabs.filter(item => item.month === month)} onCaseChange={open} onEvidenceCaseChange={group => open(group, true)} onEvidence={() => setSummaryStep(3)} onSummary={() => setSummaryStep(1)} summaryStep={summaryStep} analysis={analysis} />)}
+<section id="panel-evidence-empty" role="tabpanel" aria-labelledby="tab-overview" className="gd-case" hidden={filesShown || qualityShown || !!active}/>
     </div>
   </div>;
 }

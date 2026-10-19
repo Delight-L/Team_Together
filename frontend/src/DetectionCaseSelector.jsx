@@ -1,7 +1,9 @@
+import {orderedCases} from './caseOrder.mjs';
 import React from 'react';
 import './detection-case-selector.css';
 
 export default function DetectionCaseSelector({items, selected, onSelect, disabled=false, loading=false}) {
+  items=orderedCases(items);
   const current=items.find(item => item.district===selected?.district && item.age===selected?.age);
   const key=item => `${item.code || item.district}/${item.age}`;
   return <label className="detection-case-selector">

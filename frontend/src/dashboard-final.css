@@ -64,7 +64,7 @@
 
 .app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-trend,.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-share { padding:0; }
 
-.app-shell.group-shell .gd-summary .gd-standalone-support { grid-column:2;grid-row:3;width:100%;font-size:15px;gap:12px; }
+.app-shell.group-shell .gd-summary .gd-standalone-support { grid-column:2;grid-row:3;width:100%;font-size:15px;gap:.25em;justify-content:center;align-items:center; }
 .app-shell.group-shell .gd-summary .gd-inline-background { grid-row:4; }
 .app-shell.group-shell .gd-summary .gd-inline-background .gd-context-cards > article {overflow:visible; }
 .app-shell.group-shell .gd-inline-background article > h4 { font-size:14px; }
@@ -76,16 +76,6 @@
 
 
 
-.app-shell.group-shell .gd-support-panel { height:100%;overflow:auto;padding:8px 18px; }
-.app-shell.group-shell .gd-support-panel .gd-evidence-heading h2 { font-size:26px; }
-.app-shell.group-shell .gd-support-panel .gd-evidence-heading p { font-size:15px; }
-.app-shell.group-shell .gd-support-panel > details { border:1px solid #e1e9f5;border-radius:12px;padding:20px;margin-top:16px; }
-.app-shell.group-shell .gd-support-panel > details > summary { font-size:18px;font-weight:700;margin-bottom:12px; }
-.app-shell.group-shell .gd-support-panel .gd-review label { display:block;margin:18px 0;font-size:15px; }
-.app-shell.group-shell .gd-support-panel .gd-review select { display:block;margin-top:8px;min-width:220px; }
-.app-shell.group-shell .gd-support-panel .gd-review textarea { display:block;width:100%;min-height:160px;margin-top:8px; }
-.app-shell.group-shell .gd-support-panel .gd-review-actions { display:flex;gap:12px; }
-.app-shell.group-shell .gd-support-panel p { font-size:14px;line-height:1.7; }
 .app-shell.group-shell .gd-files-panel .gd-directory h2 { font-size:25px; }
 .app-shell.group-shell .gd-files-panel .gd-file-list button strong { font-size:17px; }
 .app-shell.group-shell .gd-files-panel .gd-file-list button small { font-size:13px; }
@@ -364,7 +354,7 @@
 .app-shell.group-shell .gd-case-title {gap:10px;align-items:center;flex-wrap:wrap; }
 .app-shell.group-shell .gd-case-title h2 { margin:0;line-height:1.2;letter-spacing:-.8px; }
 .app-shell.group-shell .gd-case-title .gd-heading-evidence,
-.app-shell.group-shell .ev-heading .gd-evidence-back { position:static;box-sizing:border-box;flex:0 0 146px;width:146px;height:40px;min-height:40px;padding:8px 10px;margin:0 0 0 auto;align-self:center;text-align:center;font-size:var(--type-body);line-height:1.4; }
+.app-shell.group-shell .ev-heading .gd-evidence-back { display:inline-flex;align-items:center;justify-content:center;position:static;box-sizing:border-box;flex:0 0 146px;width:146px;height:40px;min-height:40px;padding:8px 10px;margin:0 0 0 auto;align-self:center;text-align:center;font-size:var(--type-body);line-height:1.4; }
 .app-shell.group-shell .gd-domain-chip { padding:5px 8px;line-height:1.3; }
 .app-shell.group-shell .gd-summary .gd-unified-overview {align-content:stretch;min-height:0; }
 .app-shell.group-shell .gd-path-explanation { gap:6px; }
@@ -545,12 +535,26 @@
 /* Case selection shares the evidence action row inside the overview card. */
 .app-shell.group-shell .gd-case-title { padding-right:460px; }
 .app-shell.group-shell .gd-case-title .gd-case-actions { position:absolute;right:0;top:calc(50% - 6px);transform:translateY(-50%);display:flex;align-items:center;gap:10px; }
-.app-shell.group-shell .gd-case-title .gd-case-actions .gd-heading-evidence { position:static;transform:none;margin:0; }
+.app-shell.group-shell .gd-case-title .gd-case-actions .gd-heading-evidence,
+.app-shell.group-shell .ev-heading .gd-case-actions .gd-evidence-back { position:static;transform:none;margin:0; }
 @media(max-width:1200px) {
  .app-shell.group-shell .gd-case-title { padding-right:0; }
  .app-shell.group-shell .gd-case-title .gd-case-actions { position:static;transform:none;flex-basis:100%;justify-content:flex-end;flex-wrap:wrap; }
 }
 
+/* Directory: the visible month's complete case grid, without duplicate filters. */
+.app-shell.group-shell .gd-files-panel .gd-clean-directory {display:flex;flex-direction:column;gap:14px;padding:14px;min-height:0;height:100%;}
+.app-shell.group-shell .gd-clean-directory>header {display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.app-shell.group-shell .gd-clean-directory>header h2 {margin:0;}
+.app-shell.group-shell .gd-clean-directory .gd-file-list {flex:1;min-height:0;max-height:none;grid-template-columns:repeat(var(--gd-file-cols),minmax(0,1fr));grid-template-rows:repeat(var(--gd-file-rows),minmax(0,1fr));gap:12px;overflow:hidden;}
+.app-shell.group-shell .gd-clean-directory .gd-file-list button {padding:14px;gap:10px;}
+.app-shell.group-shell .gd-clean-directory .gd-file-list button strong,
+.app-shell.group-shell .gd-clean-directory .gd-file-list button em {font-size:var(--type-section,20px);line-height:1.35;}
+.app-shell.group-shell .gd-clean-directory .gd-file-list button em {font-weight:600;white-space:nowrap;justify-self:end;text-align:right;}
+.app-shell.group-shell .gd-files-panel:not([hidden]) {height:min(100%,560px);align-self:start;}
+.app-shell.group-shell .gd-clean-directory .gd-file-list .gd-candidate {white-space:nowrap;}
+.app-shell.group-shell .gd-clean-directory footer {margin-top:0;}
+.app-shell.group-shell .gd-quality-panel {padding:10px 12px 8px;overflow:hidden;container-type:size;container-name:quality;}
 /* 보미 패널 너비 조절: 사용자가 정한 폭이 있으면 모든 화면에서 세 번째 열로 씁니다(서랍 모드 제외). */
 .app-shell.with-chat.chat-resized:not(.chat-drawer) { grid-template-columns:var(--nav-width) minmax(0,1fr) min(var(--chat-width),50vw); }
 .app-shell:not(.chat-drawer) .bomi-chat.panel { position:relative; }

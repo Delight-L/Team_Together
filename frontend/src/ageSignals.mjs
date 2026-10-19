@@ -1,3 +1,4 @@
+import {orderedCases} from './caseOrder.mjs';
 export function signalCount(rows) {
   const flagged = rows.filter(r => r.is_risk_signal);
   return rows.some(r => r.case_id) ? new Set(flagged.map(r => r.case_id)).size : flagged.length;
@@ -23,7 +24,7 @@ export function ageStatus(cases, group) {
   const band = { '20대':'20s', '30대':'30s', '40대':'40s', '50대':'50s', '60대 이상':'60plus' }[group.age];
   const row = cases.find(r => r.code === group.code && r.month === group.month && r.age_band === band);
   if (!row) return undefined;
-  return { status: row.any_signal ? (row.signal_status === 'Continuing' ? '연속 후보' : row.signal_status === 'New_after_gap' ? '변화 후보' : '신규 후보') : row.assessment_status !== 'assessed' ? '판단 보류' : '기준 미해당',
+  return { status: row.any_signal ? (row.signal_status === 'Continuing' ? '연속 후보' : row.signal_status === 'New_after_gap' ? '판정 보류 후 탐지' : '신규 후보') : row.assessment_status !== 'assessed' ? '판단 보류' : '기준 미해당',
     count: row.any_signal ? 1 : 0, scope:'dong_age', sex_scope:'성별 통합', age:row.age };
 }
 
@@ -33,7 +34,7 @@ export function detectionTabs(cases, city, month) {
     const g = {city, code:r.code, district:r.district, age:r.age, sex:'통합', month};
     unique.set([g.code,g.age].join('/'),g);
   }
-  return [...unique.values()].sort((a,b) => a.district.localeCompare(b.district,'ko') || a.age.localeCompare(b.age,'ko'));
+  return orderedCases([...unique.values()]);
 }
 
 export function observationWindow(month) {

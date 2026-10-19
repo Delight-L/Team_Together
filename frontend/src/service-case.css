@@ -1,7 +1,6 @@
 .service-case { padding:20px;flex-shrink:0; }
 .app-shell .service-case > .service-case-heading { padding:0;display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:0 0 12px; }
 .app-shell .service-case-heading h2 { margin:0;font-size:28px;line-height:1.2;letter-spacing:-.8px;color:#10234c; }
-.service-case-month { padding:7px 12px;border-radius:8px;background:#eef5ff;color:#476796;font-size:14px;font-weight:600; }
 .service-case-chip { display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--case-border);border-radius:8px;background:var(--case-soft);color:var(--case-ink);font-size:14px;font-weight:700; }
 .service-case .absolute { --case-ink:#946200;--case-border:#f2d37b;--case-soft:#fffbeb; }
 .service-case .local { --case-ink:#0f766e;--case-border:#99e2d8;--case-soft:#f0fdfa; }
@@ -24,3 +23,19 @@
 .service-review-gate { padding:12px 14px;border-radius:9px;background:#eef5ff;color:#2563eb;font-size:14px;margin:12px 0; }
 @media(max-width:1400px) { .service-case-values {gap:10px;grid-template-columns:1fr 1fr}.service-case-values aside{grid-column:1/-1;border-left:0;padding:0;flex-direction:row;align-items:center;justify-content:flex-start}.app-shell .service-case-heading h2{font-size:25px} }
 @media(max-width:760px) { .service-case {padding:14px}.service-case-actions{align-items:stretch;flex-direction:column}.service-case-values strong{font-size:24px} }
+
+
+.service-review-picker {display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #e5edf7;}
+.service-review-filters {display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.service-review-filters button {padding:8px 12px;border:1px solid #dce6f4;border-radius:8px;background:#f7faff;color:#536d90;font-size:14px;min-height:38px;}
+.service-review-filters button.active {background:#edf4ff;color:#215dcc;border-color:#a9c9ff;font-weight:700;}
+.service-case .service-review-select {display:flex;flex-direction:row;align-items:center;gap:10px;margin:0 0 0 auto;max-width:100%;font-size:14px;color:#607695;}
+.service-review-select > span {white-space:nowrap;}
+.service-review-select select {width:340px;max-width:100%;min-height:42px;border:1px solid #cbdcf4;border-radius:8px;background:white;padding:8px 12px;color:#173052;font-size:15px;font-weight:600;}
+.service-review-lifecycle {font-size:14px;font-weight:600;padding:6px 10px;border-radius:20px;white-space:nowrap;}
+.service-review-lifecycle.new {background:#edf4ff;color:#2563c8;}
+.service-review-lifecycle.tracking {background:#eef2f7;color:#52647d;}
+.service-review-dates {display:flex;gap:22px;flex-wrap:wrap;color:#607695;font-size:14px;margin:0 0 18px;}
+.service-review-dates b {color:#173052;margin-left:6px;font-weight:600;}
+.service-original-values {font-size:14px;font-weight:700;color:#476796;margin:0 0 10px;}
+@media(max-width:760px) {.service-case .service-review-select {margin-left:0;flex-wrap:wrap;width:100%}.service-review-select select {width:100%}.service-review-dates{gap:10px}}
