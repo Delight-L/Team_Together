@@ -53,6 +53,18 @@ def _is_signal_presence_question(question):
     return asks_presence and not asks_definition
 
 
+def _is_signal_list_question(question):
+    compact = str(question).replace(' ', '')
+    return any(term in compact for term in ('후보지역', '이상신호탐지지역', '신호가나온동', '탐지된동'))
+
+
+def signal_list_answer(context, data):
+    month = context.get('month', '선택한 기준월')
+    return (f'{month} 기준 공식 이상신호 탐지 목록을 확인해야 후보 지역을 안내할 수 있습니다. '
+            '현재 연결된 지역 보조자료의 변화·후보 표시는 공식 탐지 건수와 다른 기준일 수 있어 후보 지역으로 단정하지 않습니다. '
+            '대시보드의 탐지 건수가 0건이면 해당 기준월의 공식 후보 지역도 없습니다.')
+
+
 def signal_presence_answer(context, data):
     """Report the dashboard's official signal count, not a proxy change narrative."""
     city, month, district = context.get('city', ''), context.get('month', ''), context.get('district')
@@ -319,7 +331,9 @@ def explain_region(context, question, data):
     # 근거·이유·변화를 물으면 용어 설명보다 이 동의 실제 수치를 먼저 답합니다.
     wants_evidence = any(word in question for word in ['요약', '어디', '근거', '이유', '왜', '변화'])
     asks_next = any(word in question for word in ['다음', '무엇을', '어떻게'])
-    if _is_signal_presence_question(question):
+    if _is_signal_list_question(question):
+        answer = signal_list_answer(context, data)
+    elif _is_signal_presence_question(question):
         answer = signal_presence_answer(context, data)
     elif _is_tab_question(question):
         answer = _tab_function_answer(context, question, data)
@@ -364,6 +378,8 @@ def ai_explain_region(context, question, data, history):
     if _is_region_type_question(question):
         return grounded
     if _is_survey_metrics_question(question):
+        return grounded
+    if _is_signal_list_question(question):
         return grounded
     if _is_signal_presence_question(question):
         return grounded

@@ -108,6 +108,14 @@ class ProvenanceAnswerTests(unittest.TestCase):
         self.assertIn('공식 이상신호 탐지 0건', answer)
         self.assertIn('보조 분석', answer)
 
+    def test_signal_list_question_does_not_treat_proxy_candidates_as_official(self):
+        context = {'city': '강남구', 'month': '2025-12'}
+        answer = explain_region(context, '이번 달 후보 지역을 알려 줘', {
+            'months': ['2025-12'], 'assessment': []
+        })['answer']
+        self.assertIn('공식 이상신호 탐지 목록', answer)
+        self.assertIn('대시보드의 탐지 건수가 0건이면', answer)
+
 
 if __name__ == "__main__":
     unittest.main()
