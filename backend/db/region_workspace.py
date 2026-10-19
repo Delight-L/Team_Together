@@ -112,8 +112,19 @@ TAB_EXPLANATION = (
 
 
 def _is_tab_question(question):
-    return any(term in question for term in ('어느 지역을 살펴볼까요', '탭에 대해', '탭 설명', '이 탭', '자체 과거 비교', '공통 변화 제거 후 비교', '두 비교 모두', '탐지 이후',
+    return any(term in question for term in ('어느 지역을 살펴볼까요', '우리 동은 어떤 지역', '어떤 지역일까', '소비는 어떻게 달라졌', '탭에 대해', '탭 설명', '이 탭', '자체 과거 비교', '공통 변화 제거 후 비교', '두 비교 모두', '탐지 이후',
                                              '탐지월', '통신 지표 흐름', '이동 지표 흐름', '실제 활동량', '계절성 고려', '강남구 흐름 고려'))
+
+
+def _tab_function_answer(context, question, data):
+    compact = question.replace(' ', '')
+    if '우리동은어떤지역' in compact or '어떤지역일까' in compact:
+        return region_type_explanation(context, data)
+    if '소비는어떻게달라졌' in compact:
+        return ('소비는 어떻게 달라졌을까? 탭은 선택한 동에 소재한 상점의 결제 건수를 소비 분야와 고객 연령별로 묶어, '
+                '과거 같은 분기 평균과 비교해 보여주는 화면입니다. 증가·감소는 해당 동 주민 전체의 소비나 복지 필요를 뜻하지 않고, '
+                '상점 소재지 기준의 거래 변화입니다. 신호 관측기간과 분기 자료가 완전히 같지 않으면 참고 비교로 표시하며, 소비 변화만으로 신호의 원인을 확정하지 않습니다.')
+    return TAB_EXPLANATION
 
 
 SURVEY_OTHER_METRICS_EXPLANATION = (
@@ -287,7 +298,7 @@ def explain_region(context, question, data):
     wants_evidence = any(word in question for word in ['요약', '어디', '근거', '이유', '왜', '변화'])
     asks_next = any(word in question for word in ['다음', '무엇을', '어떻게'])
     if _is_tab_question(question):
-        answer = TAB_EXPLANATION
+        answer = _tab_function_answer(context, question, data)
     elif any(term in question for term in ['자료 부족', '자료 없음', '이력 부족', '판단 보류', '기준 미해당']) \
             and any(word in question for word in ['뜻', '의미', '차이', '다른', '다르', '무엇', '뭐']):
         answer = STATUS_TERMS

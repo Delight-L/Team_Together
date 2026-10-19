@@ -11,7 +11,8 @@ from backend.agents.regional_v16.chatbot_agent.schemas import Evidence, QueryInt
 from backend.bomi.adapters.v16 import _ScopedResolver
 from backend.db.group_workspace import _is_provenance_question, _provenance_answer
 from backend.db.region_workspace import (REGION_TYPE_EXPLANATION, SURVEY_OTHER_METRICS_EXPLANATION,
-                                         _is_region_type_question, _is_survey_metrics_question, survey_metrics_answer)
+                                         _is_region_type_question, _is_survey_metrics_question, explain_region,
+                                         survey_metrics_answer)
 
 
 class ProvenanceAnswerTests(unittest.TestCase):
@@ -73,6 +74,23 @@ class ProvenanceAnswerTests(unittest.TestCase):
             "call_contacts_change_pct": -2.25, "text_contacts_change_pct": -4.0,
         }]))
         self.assertIn("30대", explicit)
+
+    def test_regional_analysis_tab_questions_return_function_summaries(self):
+        context = {'city': '강남구', 'district': '개포3동', 'month': '2025-12', 'age': '40대'}
+        data = {'assessment': [], 'regionalStructures': [{
+            'dong_name': '개포3동', 'cluster_type': '중간활동·다인가구 중심형'
+        }]}
+
+        region_answer = explain_region(context, '우리 동은 어떤 지역일까?', data)['answer']
+        self.assertIn('중간활동·다인가구 중심형', region_answer)
+        self.assertIn('머신러닝 군집화 결과', region_answer)
+
+        consumption_answer = explain_region(context, '소비는 어떻게 달라졌을까?', data)['answer']
+        self.assertIn('상점 소재지 기준', consumption_answer)
+        self.assertIn('같은 분기 평균', consumption_answer)
+
+        tab_answer = explain_region(context, '어느 지역을 살펴볼까요? 탭에 대해 설명해줘', data)['answer']
+        self.assertIn('탐지월 전후의 지역 변화 흐름', tab_answer)
 
 
 if __name__ == "__main__":
