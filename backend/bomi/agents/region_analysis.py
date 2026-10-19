@@ -59,6 +59,8 @@ class RegionAnalysisAgent(RegulatedAgent):
         # 관계없는 탐지 요약이 될 수 있다.
         if region_workspace._is_survey_metrics_question(question):
             return True
+        if questions.is_tab_question(question):
+            return True
         # 원본·다운로드 출처 질문은 화면에 열린 그룹의 실제 입력 메타데이터로
         # 답해야 한다. v16의 일반 신호 설명이나 외부 AI가 이를 대신하면,
         # 현재 화면과 무관한 탐지 요약으로 흘러갈 수 있다.
@@ -95,6 +97,10 @@ class RegionAnalysisAgent(RegulatedAgent):
         # even when the dashboard also has a group selection.  Do not let the
         # generic group explanation or welfare agent turn them into a refusal.
         if region_workspace._is_survey_metrics_question(question):
+            if use_ai:
+                return region_workspace.ai_explain_region(request.context, question, request.data, _recent(request))
+            return region_workspace.explain_region(request.context, question, request.data)
+        if questions.is_tab_question(question):
             if use_ai:
                 return region_workspace.ai_explain_region(request.context, question, request.data, _recent(request))
             return region_workspace.explain_region(request.context, question, request.data)

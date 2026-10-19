@@ -19,6 +19,8 @@ REGIONAL_WORDS = ('이상신호', '탐지', 'robust', '군집', '지역배경', 
 SURVEY_WORDS = ('사회적 연결', '사회적 연결 마음', '사회적 연결마음', '마음 지표', '마음지표', '관계망', '서울서베이', '도움받을 사람', '조언을 구할 사람', '금전적으로 도움',
                 '아플 때 도움', '외로움', '가족 외 관계', '동반자 부족', '혼자 남겨짐', '사람들 사이에서 고립',
                 '다른 지표', '추가 지표')
+TAB_WORDS = ('자체 과거 비교', '공통 변화 제거 후 비교', '두 비교 모두', '탐지 이후', '탐지월',
+             '통신 지표 흐름', '이동 지표 흐름', '실제 활동량', '계절성 고려', '강남구 흐름 고려')
 # 대시보드 화면의 판정·수치 용어. 지역 변화 신호 분석은 이 용어를 모르므로 화면 기준을 아는 동 분석이 설명합니다.
 SCREEN_TERMS = ('판정', '신규 후보', '연속 후보', '변화 후보', '판단 보류', '기준 미해당', '자료 부족', '자료 없음',
                 '이력 부족', '평소 대비', '전월 변화율', '지역유형', '고활동', '청년유동', '1인가구 중심형', '2인가구', '다인가구')
@@ -59,6 +61,11 @@ def is_group_focused(question: str) -> bool:
 def is_survey_metric_question(question: str) -> bool:
     """Questions about the social-connection survey cards or their extra metrics."""
     return any(word in question for word in SURVEY_WORDS)
+
+
+def is_tab_question(question: str) -> bool:
+    """Questions about labels and comparison methods shown in a dashboard tab."""
+    return any(word in question for word in TAB_WORDS)
 
 
 def program_name_hit(question: str, city: str = '') -> bool:

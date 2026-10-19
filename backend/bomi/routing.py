@@ -63,6 +63,8 @@ class Router:
             return 'region_analysis'
         if questions.is_survey_metric_question(question):
             return 'region_analysis'
+        if questions.is_tab_question(question):
+            return 'region_analysis'
         return None
 
     def by_rules(self, request: ChatRequest) -> str:
@@ -70,6 +72,8 @@ class Router:
         if self._continues_regional_analysis(request):
             return 'region_analysis'
         if questions.is_survey_metric_question(question):
+            return 'region_analysis'
+        if questions.is_tab_question(question):
             return 'region_analysis'
         if any(word in question for word in questions.WELFARE_WORDS):
             return 'welfare'

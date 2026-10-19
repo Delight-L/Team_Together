@@ -100,6 +100,22 @@ def _is_survey_metrics_question(question):
     return any(term in question for term in SURVEY_METRIC_TERMS)
 
 
+TAB_EXPLANATION = (
+    '이 탭은 탐지월 전후의 지역 변화 흐름을 확인하는 화면입니다.\n\n'
+    '• **자체 과거 비교**: 해당 동의 과거 변화 범위와 현재 변화를 비교합니다.\n'
+    '• **공통 변화 제거 후 비교**: 강남구 전체에서 함께 움직인 공통 흐름을 먼저 제외한 뒤, 해당 동의 변화가 평소와 얼마나 다른지 비교합니다.\n'
+    '• **두 비교 모두**: 위 두 방식에서 모두 확인된 경우입니다. 실제 증감률 자체가 아니라, 각 비교 기준에서 추가 확인이 필요한 수준인지 보여주는 표시입니다.\n\n'
+    '통신 지표 흐름은 통화·문자 상대 수, 이동 지표 흐름은 평일·휴일 이동 횟수의 기준화된 흐름입니다. '
+    '탐지월은 결과가 표시된 기준월이고, 그래프의 직전 구간은 비교에 사용한 관측기간입니다. '
+    '이 표시는 개인의 고립이나 변화 원인을 확정하는 진단이 아닙니다.'
+)
+
+
+def _is_tab_question(question):
+    return any(term in question for term in ('자체 과거 비교', '공통 변화 제거 후 비교', '두 비교 모두', '탐지 이후',
+                                             '탐지월', '통신 지표 흐름', '이동 지표 흐름', '실제 활동량', '계절성 고려', '강남구 흐름 고려'))
+
+
 SURVEY_OTHER_METRICS_EXPLANATION = (
     '현재 화면에는 사회적 연결과 직접 관련된 세 지표만 먼저 보여드려요. '
     'DB1에 같은 서울서베이 원자료로 정리된 추가 지표는 다음과 같습니다.\n\n'
@@ -270,7 +286,9 @@ def explain_region(context, question, data):
     # 근거·이유·변화를 물으면 용어 설명보다 이 동의 실제 수치를 먼저 답합니다.
     wants_evidence = any(word in question for word in ['요약', '어디', '근거', '이유', '왜', '변화'])
     asks_next = any(word in question for word in ['다음', '무엇을', '어떻게'])
-    if any(term in question for term in ['자료 부족', '자료 없음', '이력 부족', '판단 보류', '기준 미해당']) \
+    if _is_tab_question(question):
+        answer = TAB_EXPLANATION
+    elif any(term in question for term in ['자료 부족', '자료 없음', '이력 부족', '판단 보류', '기준 미해당']) \
             and any(word in question for word in ['뜻', '의미', '차이', '다른', '다르', '무엇', '뭐']):
         answer = STATUS_TERMS
     elif _is_survey_metrics_question(question):
@@ -311,6 +329,8 @@ def ai_explain_region(context, question, data, history):
     if _is_region_type_question(question):
         return grounded
     if _is_survey_metrics_question(question):
+        return grounded
+    if _is_tab_question(question):
         return grounded
     district = context.get('district')
     fields = ['행정동명', '기준연월', 'metric_label', 'change_pct', 'relative_change_pp', 'is_risk_signal', 'has_enough_history']
