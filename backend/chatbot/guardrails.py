@@ -8,6 +8,7 @@
 - blocked_words: 욕설·위험한 요청·지시 무력화 시도를 단어 규칙으로 막습니다(외부 검사 API가 없어도 동작).
 """
 import re
+import unicodedata
 
 PHONE = re.compile(r'(?<!\d)(?:01[016789]|0(?:2|[3-6][1-5]|70))[-.\s)]?\d{3,4}[-.\s]?\d{4}(?!\d)')
 # 기관 대표번호(1588-0000 등)는 개인정보가 아니므로 답변 검사에서만 씁니다.
@@ -136,15 +137,44 @@ class StreamRedactor:
 BLOCKED_WORDS = (
     ('욕설', ('씨발', '씨바', 'ㅅㅂ', '병신', '개새끼', '좆', '지랄', '미친놈', '미친년', '닥쳐')),
     ('위험한 요청', ('폭탄만드', '폭탄제조', '마약구하', '마약구매', '필로폰', '총기제작', '해킹하는법', '해킹방법')),
-    ('지시 무력화', ('이전지시무시', '지시를무시', '지시는무시', '규칙을무시', '시스템프롬프트', '프롬프트를보여',
-                    '탈옥', 'jailbreak', 'ignorepreviousinstructions', 'ignoreallprevious')),
+)
+
+# These are intent patterns, not a claim that all prompt injection can be detected.
+# Match after removing Unicode format characters and punctuation so common visual
+# obfuscations (zero-width spaces, separators, full-width forms) do not evade them.
+INJECTION_PATTERNS = (
+    re.compile(r'(?:이전|기존|앞선|지금까지의|모든)(?:시스템|개발자)?(?:지시|규칙|명령)(?:사항)?(?:을|를)?무시(?:하고|한채|한후)?'),
+    re.compile(r'(?:지시|규칙|명령)(?:사항)?(?:을|를)?무시(?:하고|해|한다|하세요)'),
+    re.compile(r'(?:시스템|개발자)(?:프롬프트|지침|메시지)(?:을|를)?(?:보여|공개|출력|복사|알려|누설)'),
+    re.compile(r'(?:숨겨진|비밀)(?:지시|프롬프트|규칙)(?:을|를)?(?:보여|공개|출력|복사|알려)'),
+    re.compile(r'(?:안전|보안)(?:규칙|정책|제약)(?:을|를)?무시(?:하고|한채)?'),
+    re.compile(r'(?:이제부터|지금부터)(?:너는|당신은)?(?:제한|규칙|안전장치)?없는(?:모델|AI|보미|챗봇)'),
+    re.compile(r'(?:ignore|disregard|override)(?:all|any|the|previous|prior|above|earlier|system|developer)*(?:instructions|rules|prompt)'),
+    re.compile(r'(?:reveal|print|show|disclose|repeat)(?:the|your|system|developer|hidden|secret|initial)*(?:prompt|instructions|rules)'),
+    re.compile(r'(?:jailbreak|danmode|bypasssafety|ignoreallsafetyrules)'),
 )
 
 
+def _injection_compact(text):
+    """Normalize common Unicode/punctuation obfuscations for phrase matching."""
+    normalized = unicodedata.normalize('NFKC', text).casefold()
+    # Drop format chars such as zero-width joiners, then keep only letters/digits.
+    return ''.join(char for char in normalized
+                   if not unicodedata.category(char).startswith('C')
+                   and (char.isalnum()))
+
+
 def blocked_words(text):
-    """단어 규칙에 걸린 분류 이름 목록. 빈 목록이면 통과입니다. 띄어쓰기·대소문자는 무시합니다."""
+    """규칙에 걸린 분류 이름 목록. 빈 목록이면 통과합니다.
+
+    인젝션 탐지는 알려진 지시 무력화 표현의 휴리스틱일 뿐, 완전한 방어가 아닙니다.
+    """
     compact = re.sub(r'\s+', '', text).lower()
-    return [kind for kind, words in BLOCKED_WORDS if any(word in compact for word in words)]
+    flagged = [kind for kind, words in BLOCKED_WORDS if any(word in compact for word in words)]
+    normalized = _injection_compact(text)
+    if any(pattern.search(normalized) for pattern in INJECTION_PATTERNS):
+        _add_once(flagged, '지시 무력화')
+    return flagged
 
 
 def _add_once(items, item):

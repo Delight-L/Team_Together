@@ -56,13 +56,25 @@ def rule_flagged(question: str) -> list[str]:
     return guardrails.blocked_words(question)
 
 
+def history_rule_flagged(request: ChatRequest) -> list[str]:
+    """Apply deterministic rules to every client-supplied user turn."""
+    flagged = []
+    for message in request.messages:
+        if message.get('role') != 'user':
+            continue
+        for kind in rule_flagged(message.get('content', '')):
+            if kind not in flagged:
+                flagged.append(kind)
+    return flagged
+
+
 async def moderate_async(text: str) -> list[str]:
-    """moderate API에 걸린 분류. 검사가 실패하면 통과(빈 목록)로 봅니다."""
+    """moderate API 결과. API 오류는 통과시키지 않고 검사 실패로 표시합니다."""
     try:
         return await llm.moderate(text)
-    except (*LLM_ERRORS, AttributeError, IndexError) as exc:
-        LOGGER.warning('moderate API 실패, 검사 없이 진행: %s', type(exc).__name__)
-        return []
+    except (*LLM_ERRORS, AttributeError, IndexError, TimeoutError) as exc:
+        LOGGER.warning('moderate API 실패, 현재 AI 처리를 안전하게 중단: %s', type(exc).__name__)
+        return ['검사 실패']
 
 
 class Regulator:
@@ -71,7 +83,7 @@ class Regulator:
     def screen_input(self, request: ChatRequest, policy: Policy) -> list[str]:
         """걸린 분류 목록. 비어 있지 않으면 에이전트는 답하지 않고 차단 안내를 보냅니다."""
         if policy.blocked_words:
-            flagged = rule_flagged(request.question)
+            flagged = history_rule_flagged(request)
             if flagged:
                 return flagged
         if policy.moderate_input and request.use_ai:
