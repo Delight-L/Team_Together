@@ -56,9 +56,20 @@ def evidence_sentence(row):
     return f'{label}: 전월 변화율은 계산할 수 없어 상세 근거 확인 필요'
 
 
+def _split_items(text):
+    """원문을 항목 목록으로 나눕니다. "- 지원대상 : …- 지원내용 : …"처럼 붙은 항목도 나눕니다(frontend serviceText.mjs splitItems와 같은 규칙)."""
+    text = re.sub(r'[ \t\u00a0]+', ' ', str(text or ''))
+    text = re.sub(r'\s*-\s+(?=[가-힣A-Za-z ]{1,15}:)', '\n', text)
+    text = re.sub(r'\s*[○●■□▶•※]\s*', '\n', text)
+    text = re.sub(r'\s*(?=[①-⑳])', '\n', text)
+    text = re.sub(r'(?<=[)\]])\s*-\s*(?=\S)', '\n', text)  # "…31.)- 부·모…"처럼 괄호 뒤에 붙은 항목
+    items = [re.sub(r'\s+:\s*', ' : ', re.sub(r'^[-·*\s①-⑳]+', '', item)).strip() for item in text.split('\n')]
+    return [item for item in items if item]
+
+
 def _brief(text, limit=70):
-    """사업 원문 한 칸을 한 줄로 줄입니다. 원문 기호(○, ※, ①)와 줄바꿈을 걷어내고 단어 경계에서 자릅니다."""
-    line = re.sub(r'\s+', ' ', re.sub(r'[○●※■□▶]|[①-⑳]', ' ', str(text or ''))).strip(' -·:')
+    """사업 원문 한 칸을 항목별로 나눠 ' · '로 잇고, 길면 단어 경계에서 자릅니다."""
+    line = ' · '.join(_split_items(text))
     if len(line) <= limit:
         return line
     cut = line[:limit].rsplit(' ', 1)[0].rstrip(' ,·/(')
@@ -126,10 +137,12 @@ def _review_proposal(review):
     # 검토 당시 저장한 사업 원문에서 무엇을 누구에게 지원하는지 한 줄씩 붙입니다.
     snapshot = review.get('service_snapshot') or {}
     support = _brief(snapshot.get('benefit_text') or snapshot.get('support_text'))
-    target = _brief(snapshot.get('eligibility_text') or snapshot.get('target_text'))
+    # 대상은 지원 대상과 이용 조건 중 짧은 쪽이 보통 핵심만 담고 있습니다(화면의 serviceBrief와 같음).
+    who = [value for value in (snapshot.get('eligibility_text'), snapshot.get('target_text')) if value]
+    target = _brief(min(who, key=len)) if who else ''
     if support:
         lines.append('- 지원 내용: ' + support)
-    if target:
+    if target and target != support:
         lines.append('- 지원 대상: ' + target)
     lines.append(f"- 검토 근거: {review.get('note') or '확인 필요'}")
     checks = review.get('checks')
@@ -365,7 +378,9 @@ def check_grounding(polished, draft):
             problems.append(f'{label}: 근거에 없는 숫자 ' + ', '.join(new_numbers[:5]))
     # 한글 수량·단정 표현은 기초 초안보다 많이 나오면 새로 쓴 것으로 봅니다.
     problems += [f'근거에 없는 수량 표현 «{w}»' for w in sorted(set(KOREAN_COUNT.findall(text))) if text.count(w) > material.count(w)]
-    problems += [f'근거에 없는 단정 표현 «{w}»' for w in ASSERTIVE_WORDS if text.count(w) > material.count(w)]
+    # '미확인됨'·'미확정'처럼 부정하는 말은 단정이 아니므로 세지 않습니다.
+    assertive = lambda source, word: len(re.findall('(?<!미)' + re.escape(word), source))
+    problems += [f'근거에 없는 단정 표현 «{w}»' for w in ASSERTIVE_WORDS if assertive(text, w) > assertive(material, w)]
     if any(url not in material for url in URL.findall(text)):
         problems.append('확인되지 않은 링크')
     names = _draft_names(draft)
