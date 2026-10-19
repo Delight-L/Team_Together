@@ -40,6 +40,13 @@ function Typing() {
   </article>;
 }
 
+// 대화 중 기준(대상·기준월)이 바뀐 지점에 넣는 칩. next: 아직 질문하지 않은 새 기준.
+function BasisChip({ basis, next = false }) {
+  return <div className="bomi-basis-change" role="status">
+    <span className="bomi-chip target">{next ? '다음 질문부터' : '기준 변경'} · {basis}</span>
+  </div>;
+}
+
 // 이전 대화는 최근 3쌍(질문·답 6개)만 함께 보냅니다.
 const HISTORY_SIZE = 6;
 // AI 스위치 상태는 사용자별로 이 브라우저에 기억합니다. 저장소를 쓸 수 없으면 기본(꺼짐)으로 둡니다.
@@ -52,8 +59,11 @@ function saveAiSwitch(userId, on) {
 }
 export { usedAi };
 
-function useChat(context, group, userId) {
-  const contextKey = JSON.stringify([context, group || null]);
+// 서버의 대화 근거는 지역·연령·기준월 조건마다 서명됩니다(backend/bomi/conversation.py scope).
+const scopeKey = body => JSON.stringify(['city', 'district', 'age', 'month'].map(k => body[k] || ''));
+
+// basis: 질문할 때의 대화 기준(대상·기준월). 메뉴를 옮겨 기준이 바뀌어도 대화는 남기고, 말풍선 사이에 칩으로 표시합니다.
+function useChat(context, group, userId, basis) {
   const [messages, setMessages] = useState([]), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [config, setConfig] = useState(null);
   const [configError, setConfigError] = useState(''), [configRevision, setConfigRevision] = useState(0);
@@ -61,7 +71,8 @@ function useChat(context, group, userId) {
   // AI 사용 스위치: 기본 꺼짐. 관리자가 AI를 허용했고 사용자가 켰을 때만 외부 AI를 씁니다.
   const [aiOn, setAiOn] = useState(() => loadAiSwitch(userId));
   const request = useRef(null);
-  const conversation = useRef(null);
+  // 대화 근거는 조건별로 따로 기억해, 다른 메뉴에 갔다 돌아와도 같은 조건의 근거를 이어 씁니다.
+  const conversation = useRef({});
   useEffect(() => {
     let active = true;
     let generation = 0;
@@ -77,10 +88,8 @@ function useChat(context, group, userId) {
   }, [configRevision]);
   const mode = aiOn && config?.aiAvailable ? 'ai' : 'data';
   function setAi(on) { setAiOn(on); saveAiSwitch(userId, on); }
-  useEffect(() => {
-    request.current?.abort(); request.current = null; conversation.current = null; setMessages([]); setError(''); setRetryQuestion(''); setBusy(false);
-    return () => { request.current?.abort(); request.current = null; };
-  }, [contextKey]);
+  // 대화는 '새 대화'를 눌렀을 때만 지웁니다. 화면을 떠날 때(로그아웃 등)만 받던 답변을 멈춥니다.
+  useEffect(() => () => { request.current?.abort(); request.current = null; }, []);
   function stop() {
     request.current?.abort(); request.current = null; setBusy(false);
     setMessages(previous => previous.map((m, i) => i === previous.length - 1 && m.role === 'assistant'
@@ -93,7 +102,7 @@ function useChat(context, group, userId) {
     const base = retry ? messages.slice(0, Math.max(0, messages.length - 2)) : messages;
     const kept = base.filter(m => m.text && !m.interrupted);
     const recent = kept.slice(-HISTORY_SIZE);
-    const next = [...base, { role: 'user', text: question }];
+    const next = [...base, { role: 'user', text: question, basis }];
     const index = next.length;
     setMessages([...next, { role: 'assistant', text: '', sources: [] }]);
     setError(''); setRetryQuestion(''); setBusy(true);
@@ -103,15 +112,18 @@ function useChat(context, group, userId) {
     const sources = [...new Set(recent.flatMap(m => (m.sources || []).map(r => r.id)))].slice(0, 10);
     try {
       const body = {
-        ...context, mode, sources, conversation: conversation.current,
+        ...context, mode, sources,
         messages: [...recent, { role: 'user', text: question }].map(m => ({ role: m.role, content: m.text.slice(0, 6000) })),
         ...(group ? { group } : {}),
       };
       if (body.age && !['20대', '30대', '40대', '50대', '60대 이상'].includes(body.age)) delete body.age;
       if (/(이상\s*신호|탐지.*지역|지역.*목록|순위)/.test(question)) delete body.age;
+      // 서버는 다른 조건으로 서명된 근거를 거절하므로, 지금 조건의 근거만 보냅니다.
+      const scope = scopeKey(body);
+      body.conversation = conversation.current[scope] || null;
       await streamChat(body, (event, payload) => {
         if (request.current !== controller) return;
-        if (event === 'conversation') conversation.current = payload.state;
+        if (event === 'conversation') conversation.current[scope] = payload.state;
         else if (event === 'route') update(m => ({ ...m, agent: payload.label }));
         else if (event === 'token') update(m => ({ ...m, text: m.text + payload.text }));
         else if (event === 'sources') update(m => ({ ...m, sources: payload.records, mode: payload.mode }));
@@ -133,7 +145,7 @@ function useChat(context, group, userId) {
       if (request.current === controller) { request.current = null; setBusy(false); }
     }
   }
-  const reset = () => { request.current?.abort(); request.current = null; conversation.current = null; setMessages([]); setError(''); setRetryQuestion(''); setBusy(false); };
+  const reset = () => { request.current?.abort(); request.current = null; conversation.current = {}; setMessages([]); setError(''); setRetryQuestion(''); setBusy(false); };
   return { messages, busy, error, send, reset, stop, config, configError, reloadConfig: () => setConfigRevision(value => value + 1), retryQuestion, mode, aiOn, setAi };
 }
 
@@ -142,13 +154,19 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
   const [input, setInput] = useState('');
   // guided: 다른 화면에서 예시 질문을 넣어 준 상태. 입력란을 강조하고 보내는 방법을 안내합니다.
   const [guided, setGuided] = useState(false);
-  const chat = useChat(context, group, userId);
-  const end = useRef(null), field = useRef(null), appliedDraft = useRef(null);
+  const place = group ? `${group.district} · ${group.age}${group.sex === '통합' ? '' : ` · ${group.sex}`}` : `${context.city} ${context.district || '전체'}${context.age ? ` · ${context.age}` : ''}`;
+  const month = group?.month || context.month;
+  const targetName = group || context.age ? place : context.district || `${context.city} 전체`;
+  const basis = `${targetName}${month ? ` · ${month}` : ''}`;
+  const chat = useChat(context, group, userId, basis);
+  const end = useRef(null), field = useRef(null), appliedDraft = useRef(null), guidedRef = useRef(false);
+  guidedRef.current = guided;
   const contextKey = JSON.stringify(context);
   const targetKey = JSON.stringify([context, group || null]);
   useEffect(() => { if (chat.messages.length) end.current?.scrollIntoView({ block: 'nearest' }); }, [chat.messages, chat.busy]);
-  // 지역이 바뀌면 안내를 지웁니다. 아래 예시 질문 효과보다 먼저 실행되어야 같은 순간에 넣은 안내가 남습니다.
-  useEffect(() => { setGuided(false); setInput(''); }, [targetKey]);
+  // 지역이 바뀌면 예전 지역용 예시 질문만 지웁니다. 직접 쓰던 질문은 남깁니다.
+  // 아래 예시 질문 효과보다 먼저 실행되어야 같은 순간에 넣은 안내가 남습니다.
+  useEffect(() => { if (guidedRef.current) { setGuided(false); setInput(''); } }, [targetKey]);
   useEffect(() => {
     if (draft?.contextKey === contextKey && appliedDraft.current !== draft.id) {
       appliedDraft.current = draft.id;
@@ -165,11 +183,10 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
     setInput(''); setGuided(false); chat.send(question);
   }
   const target = group || context.age ? 'group' : context.district ? 'district' : 'city';
-  const place = group ? `${group.district} · ${group.age}${group.sex === '통합' ? '' : ` · ${group.sex}`}` : `${context.city} ${context.district || '전체'}${context.age ? ` · ${context.age}` : ''}`;
   const suggestions = group || !context.district ? SUGGESTIONS[target] : MENU_SUGGESTIONS[view] || SUGGESTIONS[target];
-  const month = group?.month || context.month;
   const aiAvailable = !!chat.config?.aiAvailable;
-  const targetName = group || context.age ? place : context.district || `${context.city} 전체`;
+  // 마지막 질문 뒤에 기준이 바뀌었으면, 다음 질문은 새 기준으로 답한다고 대화 끝에 알려 줍니다.
+  const lastBasis = chat.messages.findLast(m => m.role === 'user')?.basis;
   const modeTitle = chat.mode === 'ai'
     ? `질문과 최근 대화가 외부 AI(${chat.config?.aiProvider || '관리자 설정'})로 전송돼요`
     : aiAvailable ? '외부로 전송하지 않고 저장된 자료로 답해요. 위 스위치로 AI를 켤 수 있어요'
@@ -212,7 +229,12 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
         <h3>{group || context.age ? '선택한 사례를 함께 살펴볼까요?' : '무엇을 도와드릴까요?'}</h3>
         <p>분석 근거부터 관련 복지사업과 보고서 초안까지 물어보세요.</p><div className="bomi-welcome-character"><div className="bomi-welcome-art" role="img" aria-label="돋보기와 태블릿을 든 복지탐정 보미" style={{backgroundImage:`url(${welcomeArtwork})`}}/><p>궁금한 내용을 물어보시면<br/>보미가 함께 찾아드릴게요.</p></div>
       </div>}
-      {chat.messages.map((m, i) => m.role === 'assistant' && !m.text && chat.busy && i === chat.messages.length - 1 ? <Typing key={i} /> : <article key={i} className={`bomi-message ${m.role}`}>
+      {chat.messages.map((m, i) => {
+        const before = m.role === 'user' && chat.messages.slice(0, i).findLast(p => p.role === 'user');
+        const changed = before && m.basis && before.basis && m.basis !== before.basis;
+        return <React.Fragment key={i}>
+        {changed && <BasisChip basis={m.basis} />}
+        {m.role === 'assistant' && !m.text && chat.busy && i === chat.messages.length - 1 ? <Typing /> : <article className={`bomi-message ${m.role}`}>
         <small>{m.role === 'user' ? '나' : m.agent ? `보미 · ${m.agent}` : '보미'}</small>
         <p>{m.text || '답변을 완료하지 못했습니다.'}</p>
         {m.interrupted && <span className="bomi-notice">완료되지 않은 응답입니다.</span>}
@@ -231,7 +253,10 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
             {!r.pages && /^https?:\/\//i.test(r.url || '') && <> · <a href={r.url} target="_blank" rel="noopener noreferrer">원문 보기</a></>}</p><small>{r.status}</small></div>)}
         </details>}
         {onAction && m.actions?.map(a => <button key={a.label} className="bomi-action" onClick={() => onAction(a)}>{a.label} →</button>)}
-      </article>)}
+      </article>}
+        </React.Fragment>;
+      })}
+      {!chat.busy && lastBasis && lastBasis !== basis && <BasisChip basis={basis} next />}
       {chat.error && <div role="alert" className="bomi-error">{chat.error}{chat.retryQuestion && <button className="text-button" disabled={chat.busy} onClick={() => chat.send(chat.retryQuestion, true)}>실패한 질문 다시 보내기</button>}</div>}
       <div ref={end} />
     </div>
