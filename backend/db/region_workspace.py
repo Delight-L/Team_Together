@@ -112,7 +112,7 @@ TAB_EXPLANATION = (
 
 
 def _is_tab_question(question):
-    return any(term in question for term in ('자체 과거 비교', '공통 변화 제거 후 비교', '두 비교 모두', '탐지 이후',
+    return any(term in question for term in ('어느 지역을 살펴볼까요', '탭에 대해', '탭 설명', '이 탭', '자체 과거 비교', '공통 변화 제거 후 비교', '두 비교 모두', '탐지 이후',
                                              '탐지월', '통신 지표 흐름', '이동 지표 흐름', '실제 활동량', '계절성 고려', '강남구 흐름 고려'))
 
 
