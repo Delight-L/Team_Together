@@ -1,9 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { api, query, number } from './api';
-import { useDraft } from './useDraft';
-import { draftKey } from './draftStore.mjs';
+import { number } from './api';
 import { reportChecks } from './experienceLogic.mjs';
-import { personName } from './personas.mjs';
 
 // 데이터 기준 창: 지역 분석·데이터 관리의 «데이터 기준 보기»에서 엽니다.
 export function DataDialog({ onClose, data, context, rows, user }) {
@@ -35,70 +32,6 @@ export function DataSummary({ data, context, rows, user, expanded = false }) {
       <dt>연결 확인</dt><dd>{data.dataCheckedAt || '미확인'}</dd>
     </dl></details>}
   </details>;
-}
-
-const blank = { version: 0, checks: {}, assignee: '', due: '', note: '', followup: '', status: '확인 예정', history: [] };
-export function ReviewWorkspace({ context, onView, seed, user, onSaved, onRecord }) {
-  const [localDraft, setLocalDraft, clearLocalDraft, storageFailed] = useDraft(draftKey(user, context, 'review'), null);
-  const [record, setRecord] = useState(blank), [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(true);
-  const [timeline, setTimeline] = useState([]), [timelineLoaded, setTimelineLoaded] = useState(false), [section, setSection] = useState('review');
-  async function loadTimeline() { try { setTimeline((await api('/experience/history?' + query(context))).items); setTimelineLoaded(true); } catch (e) { setError(e.message); } }
-  const update = (key, value) => { const next = { ...record, [key]: value }; setRecord(next); setLocalDraft({ record: next, seedId: localDraft?.seedId }); setNotice('작성 내용을 임시 보관했습니다.'); };
-  async function reload() {
-    if (localDraft && !window.confirm('작성 중인 내용을 버리고 서버에 저장된 기록을 불러올까요?')) return;
-    setBusy(true); setError('');
-    try { setRecord({ ...blank, ...await api('/experience?' + query(context)) }); clearLocalDraft(); setNotice('최신 기록을 불러왔습니다.'); }
-    catch (e) { setError(e.message); } finally { setBusy(false); }
-  }
-  useEffect(() => {
-    let active = true;
-    api('/experience?' + query(context)).then(r => {
-      if (!active) return;
-      const restored = localDraft?.record;
-      const imported = seed && seed.id !== localDraft?.seedId && ['city','district','month'].every(k => seed.context[k] === context[k]);
-      const next = { ...blank, ...(restored || r) };
-      if (imported) next.note = [next.note, seed.text].filter(Boolean).join('\n\n').slice(0, 2000);
-      setRecord(next);
-      if (imported) setLocalDraft({ record: next, seedId: seed.id });
-      if (restored) setNotice(restored.version !== r.version
-        ? '작성 중인 내용을 복원했습니다. 서버 기록이 변경되어 바로 저장할 수 없습니다. 작성 내용을 복사해 둔 뒤 최신 기록을 불러오세요.'
-        : '작성 중인 내용을 복원했습니다.');
-      else if (imported) setNotice('챗봇 답변을 검토 의견에 가져왔습니다. 내용을 검토한 뒤 저장하세요.');
-    }).catch(e => { if (active) { if (localDraft?.record) setRecord(localDraft.record); setError(e.message); } })
-      .finally(() => active && setBusy(false));
-    return () => { active = false; };
-  }, []);
-  // 업무 진행 표시에 업무 기록 저장 여부를 알려 줍니다.
-  useEffect(() => { if (!busy) onRecord?.(record.history.length > 0); }, [busy, record.history.length]);
-  async function save() { setBusy(true); setError(''); try { setRecord({ ...blank, ...await api('/experience', { ...record, ...context }) }); clearLocalDraft(); onSaved?.(); setNotice('검토·후속 조치 기록을 저장했습니다.'); } catch (e) { setError(e.message); } finally { setBusy(false); } }
-  return <section className="card info-card review-workspace">
-    <div className="workspace-heading"><div><h2>검토·후속 조치</h2><p>{context.district} · {context.month} <span className="status-caption">{record.status}</span></p></div></div>
-    <p className="hint">{storageFailed ? '브라우저 임시 보관에 실패했습니다. 새로고침 전에 기록을 저장하세요.' : '작성 중인 내용은 이 탭에 임시 보관됩니다. 로그아웃 전에 저장해 주세요.'}</p>
-    <div className="section-switch" role="group" aria-label="작성 구역">
-      <button aria-pressed={section === 'review'} onClick={() => setSection('review')}>검토 기록</button>
-      <button aria-pressed={section === 'followup'} onClick={() => setSection('followup')}>후속 조치</button>
-    </div>
-    <div className="review-section" hidden={section !== 'review'}>
-      <h3>변화의 근거를 확인하고 의견을 남겨 주세요.</h3>
-      <fieldset disabled={busy}><legend>확인한 사항만 체크하세요</legend>{[['season', '계절에 따른 변화 확인'], ['event', '지역 행사·휴일 영향 확인'], ['definition', '집계 기준 변경 확인'], ['source', '분석 출처·기간 확인']].map(([key, label]) => <label className="confirmation" key={key}><input type="checkbox" checked={!!record.checks[key]} onChange={e => update('checks', { ...record.checks, [key]: e.target.checked })} />{label}</label>)}</fieldset>
-      <label>검토 의견·인계 내용<textarea rows={5} maxLength={2000} disabled={busy} value={record.note} onChange={e => update('note', e.target.value)} placeholder="변화의 원인으로 살펴본 내용과 추가로 확인할 사항을 적어 주세요." /></label>
-    </div>
-    <div className="review-section" hidden={section !== 'followup'}>
-      <h3>누가, 언제, 무엇을 확인할지 정리해 주세요.</h3>
-      <div className="report-form"><label>담당자·인계 대상<input maxLength={80} disabled={busy} value={record.assignee} onChange={e => update('assignee', e.target.value)} /></label><label>확인 기한<input type="date" disabled={busy} value={record.due} onChange={e => update('due', e.target.value)} /></label>
-        <label className="full">후속 조치 상태<select disabled={busy} value={record.status} onChange={e => update('status', e.target.value)}>{['확인 예정', '기관 문의 중', '조치 진행', '후속 확인 완료'].map(s => <option key={s}>{s}</option>)}</select></label>
-        <label className="full">실제 조치·다음 확인 내용<textarea rows={5} maxLength={2000} disabled={busy} value={record.followup} onChange={e => update('followup', e.target.value)} placeholder="기관 문의 결과와 다음에 확인할 내용을 적어 주세요." /></label></div>
-    </div>
-    {error && <p className="error" role="alert">{error}</p>}{notice && <p className="hint" role="status">{notice}</p>}
-    <div className="form-actions"><button className="primary" disabled={busy} onClick={save}>{busy ? '처리 중…' : '검토·후속 조치 저장'}</button><span className="hint">두 구역의 내용을 함께 저장합니다. 저장한 내용은 보고서 작성에서 초안에 넣을 수 있습니다.</span>
-      {record.history.length > 0 && <button className="text-button" onClick={() => onView('report')}>보고서 작성으로 →</button>}</div>
-    <details className="secondary-details"><summary>이전 기록·다시 불러오기</summary>
-      <p className="hint">저장한 기록은 같은 지역 담당자와 공유합니다.</p>
-      <button className="secondary" disabled={busy} onClick={reload}>최신 기록 다시 불러오기</button>
-      <details><summary>변경 이력 {record.history.length}건</summary>{record.history.length === 0 && <p className="hint">아직 저장된 변경 이력이 없습니다.</p>}{[...record.history].reverse().map((h, i) => <article className="service-card" key={i}><strong>{h.at} · {personName(h.actor)} · {h.status}</strong><p>담당자 {personName(h.assignee) || '미지정'} · 기한 {h.due || '미지정'}</p><p>{h.note}</p><p>{h.followup}</p></article>)}</details>
-      <details><summary>다른 기준월의 후속 조치</summary><button className="secondary" onClick={loadTimeline}>월별 기록 불러오기</button>{timelineLoaded && !timeline.length && <p className="hint">저장된 월별 기록이 없습니다.</p>}{timeline.map(item => <article className="service-card" key={item.month}><b>{item.month} · {item.record.status}</b><p>담당자 {personName(item.record.assignee) || '미지정'} · 기한 {item.record.due || '미지정'}</p><p>{item.record.followup || '후속 조치 내용 미입력'}</p></article>)}</details>
-    </details>
-  </section>;
 }
 
 // 비교 차트 계열 색상입니다. 동을 빼도 남은 동의 색은 바뀌지 않습니다(색은 순위가 아니라 지역을 따릅니다).

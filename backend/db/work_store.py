@@ -1,4 +1,4 @@
-"""업무 기록(미션·보고서·협업·집단 검토) 공통 저장소. 공유 PostgreSQL의 work 스키마를 사용합니다."""
+"""업무 기록(미션·보고서·집단 검토) 공통 저장소. 공유 PostgreSQL의 work 스키마를 사용합니다."""
 import threading
 from contextlib import contextmanager
 
@@ -15,7 +15,6 @@ report_files = Table("report_files", metadata, Column("key", Text, primary_key=T
 report_versions = Table("report_versions", metadata, Column("key", Text, primary_key=True),
                         Column("revision", Integer, primary_key=True),
                         Column("document", LargeBinary, nullable=False), Column("record", Text, nullable=False))
-experience = Table("experience", metadata, Column("key", Text, primary_key=True), Column("value", Text, nullable=False))
 group_reviews = Table("group_reviews", metadata, Column("identity", Text, primary_key=True),
                       Column("payload", Text, nullable=False))
 # 관리자 설정(예: AI 설정). 서버 파일은 재배포·재시작 때 지워지므로 DB에 둡니다.

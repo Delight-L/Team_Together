@@ -24,7 +24,7 @@ class ReportAgent(RegulatedAgent):
         yield from self.deliver(reply)
 
     def _draft(self, request: ChatRequest) -> dict:
-        """대화에서 찾은 사업·신규 구상안이 있으면 대화 기반 초안, 없으면 업무 기록 초안."""
+        """대화에서 찾은 사업·신규 구상안이 있으면 대화 기반 초안, 없으면 저장된 근거(분석·사업 검토) 초안."""
         workflow, rows = {}, []
         if request.district:
             workflow = mission_store.load(request.context)

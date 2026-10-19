@@ -4,16 +4,14 @@
 .experience-steps li { border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; }
 .experience-steps li.current { border-color: #2563eb; background: var(--surface-tint); }
 .guide-instructions { line-height: 1.7; }
-.data-summary summary,.feedback summary, .review-workspace summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+.data-summary summary,.feedback summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
 .data-summary dl { display: grid; grid-template-columns: 140px 1fr; gap: 8px; }
 .data-summary dd { margin: 0; overflow-wrap: anywhere; }
 .feedback form { display: grid; gap: 12px; margin-top: 16px; }
 .feedback label { display: grid; gap: 8px; }
 .feedback textarea { min-height: 90px; }
-.review-workspace fieldset,.comparison-options { display: flex; flex-wrap: wrap; gap: 12px; }
-.review-workspace fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
-.review-workspace input[type=checkbox],.comparison-options input { width: auto; margin-right: 6px; }
-.review-workspace .experience-toolbar { margin: 16px 0; }
+.comparison-options { display: flex; flex-wrap: wrap; gap: 12px; }
+.comparison-options input { width: auto; margin-right: 6px; }
 .report-quality { border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 16px 0; line-height: 1.7; }
 .change-direction { font-size: 28px; font-weight: 700; margin-left: auto; }
 .mission-legend .missing { background: var(--line); border: 1px dashed var(--text-sub); }
@@ -92,15 +90,6 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .report-sticky-actions { position: sticky; bottom: 0; z-index: 2; background: var(--surface); border-top: 1px solid var(--line); padding: 12px 0; margin-bottom: 0; }
 .previous-proposal { white-space: pre-wrap; font: inherit; font-size: 13px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; max-height: 240px; overflow: auto; }
 .secondary-details > button { margin: 12px 0; }
-.section-switch { display: flex; width: fit-content; max-width: 100%; gap: 4px; padding: 4px; margin: 24px 0; border-radius: 12px; background: var(--line); }
-.section-switch button { padding: 10px 24px; border-radius: 9px; color: var(--text-muted); background: transparent; border: 0; }
-.section-switch button[aria-pressed='true'] { background: white; color: #234c95; box-shadow: 0 1px 4px #23365016; font-weight: 700; }
-.review-section h3 { font-size: 16px; margin: 0 0 20px; }
-.review-workspace .review-section fieldset { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; padding: 16px; margin: 0 0 24px; }
-.review-workspace .review-section .confirmation { margin: 0; gap: 8px; }
-.review-section textarea { min-height: 140px; }
-.review-section[hidden] { display: none; }
-.status-caption { font-size: 12px; border-radius: 20px; padding: 4px 10px; margin-left: 8px; background: var(--line); color: var(--text-sub); }
 .comparison-filters { display: grid; grid-template-columns: minmax(160px, 1.4fr) repeat(2, minmax(130px, 1fr)) auto; gap: 16px; align-items: end; margin: 24px 0 20px; }
 .comparison-selection { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .region-chip { display: flex; align-items: center; gap: 14px; background: var(--surface-tint); color: #30588d; border: 1px solid var(--line); border-radius: 24px; padding: 8px 14px; }
@@ -128,7 +117,6 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 }
 @media (max-width: 600px) {
   .report-steps button { padding: 10px 8px; font-size: 12px; }
-  .review-workspace .review-section fieldset { grid-template-columns: 1fr; }
   .form-actions { gap: 12px; }
   .form-actions button { width: 100%; justify-content: center; }
   .report-file { padding: 16px; }
@@ -159,7 +147,7 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 @media (max-width: 760px) { .app-shell:not(.briefing-shell) .page-heading h1 { font-size: 21px; } .app-shell:not(.briefing-shell) .page-heading p { font-size: 12px; } }
 /* 사업 검토·보고서 상단의 진행 단계와 앞 단계 바로 가기 */
 .workflow-steps { margin-bottom: 18px; }
-.workflow-steps ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; list-style: none; margin: 0; padding: 0; }
+.workflow-steps ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; list-style: none; margin: 0; padding: 0; }
 .workflow-steps li { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); color: var(--text-sub); font-size: 13px; min-width: 0; }
 .workflow-steps li > span { display: grid; place-items: center; flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--line); font-size: 12px; font-weight: 700; }
 .workflow-steps li b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -179,21 +167,6 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .trend-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .trend-grid .trend-card { margin: 0; min-width: 0; }
 @media (max-width: 1100px) { .trend-grid { grid-template-columns: 1fr; } }
-/* 업무 기록: 목록 + 상세 */
-.records-layout { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 16px; align-items: start; }
-.records-list { position: sticky; top: 0; }
-.records-list ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.records-list li button { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
-.records-list li button.selected { background: var(--surface-tint); border-color: #4b89ff; }
-.records-list li button > span:first-child { flex: 1; min-width: 0; }
-.records-list b { display: block; font-size: 14px; color: var(--text-strong); }
-.records-list small { display: block; margin-top: 3px; font-size: 11px; color: var(--text-muted); }
-.record-status { font-size: 11px; padding: 4px 8px; border-radius: 20px; background: #fff4e0; color: #9a5b00; white-space: nowrap; }
-.record-status.done { background: #e1f7ef; color: #087c65; }
-.record-progress { font-size: 11px; color: var(--text-sub); }
-.records-detail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.records-next { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 18px; font-size: 14px; font-weight: 600; color: var(--text-strong); }
-@media (max-width: 900px) { .records-layout { grid-template-columns: 1fr; } .records-list { position: static; } }
 /* 처음 쓰는 사람을 위한 안내 요소 */
 .help-button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid #bcd3f5; border-radius: 18px; background: var(--surface-tint); color: #1d4ed8; font-size: 12px; font-weight: 700; }
 .help-button:hover:not(:disabled) { background: var(--line); }

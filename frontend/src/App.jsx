@@ -6,7 +6,7 @@ import { api, query } from './api';
 import { Icon, Bomi, EvidenceTable } from './components';
 import BomiChat from './BomiChat';
 import AISettings from './AISettings';
-import { Records, Activity, Upload, WorkflowSteps } from './Workspace';
+import { Activity, Upload, WorkflowSteps } from './Workspace';
 import { RegionalOverview, summarizeRegions, exampleQuestion } from './Briefing';
 import { DataDialog, ReportQuality } from './Experience';
 import GuideTour from './GuideTour';
@@ -25,18 +25,17 @@ const menus = [
   ['map', '지역 현황'],
   ['chart', '지역 분석'],
   ['services', '사업 매칭 검토'],
-  ['records', '업무 기록'],
   ['report', '보고서 작성'],
 ];
 // 예전 메뉴 이름으로 이동을 요청해도 합쳐진 메뉴의 해당 탭으로 연결합니다.
-const legacyViews = { compare: ['chart', 'compare'], followup: ['records'], missions: ['records'] };
+// 없어진 업무 기록 메뉴(records·followup·missions)로 이동하면 보고서 작성으로 연결합니다.
+const legacyViews = { compare: ['chart', 'compare'], records: ['report'], followup: ['report'], missions: ['report'] };
 const adminMenus = [['data', '데이터 관리'], ['activity', '활동 이력'], ['ai', 'AI 설정']];
 // 메뉴마다 서로 다른 아이콘을 써서 메뉴를 접었을 때도 구분되게 합니다.
-const menuIcons = { records: 'clipboard', activity: 'history' };
+const menuIcons = { activity: 'history' };
 const subtitles = {
   map: '지도에서 지역을 고르고, 탐지 이후 변화를 추적합니다.',
   chart: '지역 유형과 소비 변화, 주민들의 사회적 연결을 함께 살펴봅니다.',
-  records: '진행 중인 지역 업무를 고르고, 검토 의견과 후속 조치를 기록합니다.',
   services: '확인한 필요에 맞는 복지사업을 찾아 조건을 검토합니다.',
   report: '분석과 사업 검토 결과를 보고서 초안으로 정리합니다.',
   data: '새 분석 자료를 검사한 뒤 반영합니다.',
@@ -52,7 +51,6 @@ const titles = {
   report: '검토 결과를 보고서로 정리하세요',
   data: '자료를 검사하고 반영하세요',
   chat: '보미에게 질문 · 복지사업 안내',
-  records: '지역별 업무와 후속 조치를 이어서 기록하세요',
   activity: '자료 반영 이력을 확인하세요',
 };
 
@@ -209,7 +207,6 @@ export default function App() {
   }
   const [workflow, setWorkflow] = useState({}),
     [reportSeed, setReportSeed] = useState(null),
-    [reviewSeed, setReviewSeed] = useState(null),
     [serviceSeed, setServiceSeed] = useState(null),
     [serviceChatContext, setServiceChatContext] = useState(false),
     [notice, setNotice] = useState(''),
@@ -236,7 +233,6 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     setReportSeed(null);
-    setReviewSeed(null);
     let active = true;
     setData(null);
     setError('');
@@ -537,16 +533,6 @@ export default function App() {
                 </div>
               )}
               {!rows.length && view !== 'dashboard' && <div className="notice" role="status">{city} · {month}의 분석 자료가 없습니다. 지역 또는 기준월을 확인해 주세요.</div>}
-              {view === 'records' && <Records
-                key={user.id + city}
-                context={context}
-                workflow={workflow}
-                user={user}
-                reviewSeed={reviewSeed}
-                onReviewSaved={() => setReviewSeed(null)}
-                onSelect={(item) => { setCity(item.city); setDistrict(item.district); setMonth(item.month); setAge(item.age || ''); }}
-                onView={go}
-              />}
               {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onActiveGroup={setChatGroup} onMonthChange={setMonth} focusCase={dashboardFocus} onServices={group => go('services', group)} />}
               {view === 'map' && <RegionalOverview {...briefingProps} />}
               {view === 'chart' && <div className="scroll-view"><RegionAnalysis city={city} district={district} onSelect={setDistrict} age={age} onAgeChange={setAge}/></div>}
@@ -878,7 +864,6 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
         {workflow.reviews?.length > 0 && (
           <div className="form-actions">
             <button className="primary" onClick={() => onView('report')}>보고서 작성으로 →</button>
-            <button className="secondary" onClick={() => onView('records')}>업무 기록에 의견 남기기 (선택)</button>
           </div>
         )}
         {workflow.reviews?.length ? (
@@ -966,10 +951,6 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   // AI 문장 다듬기: AI 연결이 있을 때만 고를 수 있고, 저장된 근거와 대조를 통과한 문장만 씁니다.
   const [aiAvailable, setAiAvailable] = useState(false), [useAi, setUseAi] = useState(true);
   useEffect(() => { let live = true; api('/chat/config').then(d => live && setAiAvailable(!!d.aiAvailable)).catch(() => {}); return () => { live = false; }; }, []);
-  // 업무 기록(검토 의견·후속 조치)을 저장했다면 초안에 넣을지 고르게 합니다. 기본은 포함입니다.
-  const [record, setRecord] = useState(null), [includeRecord, setIncludeRecord] = useState(true);
-  useEffect(() => { let live = true; api('/experience?' + query(context)).then(r => live && setRecord(r)).catch(() => live && setRecord(null)); return () => { live = false; }; }, []);
-  const hasRecord = !!(record?.note?.trim() || record?.followup?.trim());
   useEffect(() => {
     setDraft(null);
     setConfirmed(false);
@@ -994,7 +975,7 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     setDraftBusy(true);
     setError('');
     try {
-      setContent(await api('/report/content', { ...context, ai: aiAvailable && useAi, include_record: hasRecord && includeRecord }));
+      setContent(await api('/report/content', { ...context, ai: aiAvailable && useAi }));
       setStep(2);
     } catch (e) {
       setError(e.message);
@@ -1015,14 +996,6 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     } finally {
       setDraftBusy(false);
     }
-  }
-  // 업무 기록의 검토 의견은 지역 현황 끝에, 후속 조치는 향후 조치 끝에 덧붙입니다(서버 record_sections와 같은 형식).
-  function insertRecord() {
-    const followup = [record.followup, record.assignee && '담당자·인계 대상: ' + record.assignee,
-      record.due && '확인 기한: ' + record.due, record.status && '후속 조치 상태: ' + record.status].filter(Boolean).join('\n');
-    setContent(prev => ({ ...prev,
-      situation: record.note?.trim() && !prev.situation.includes(record.note.trim()) ? prev.situation + '\n담당자 검토 의견: ' + record.note.trim() : prev.situation,
-      next_steps: record.followup?.trim() && !prev.next_steps.includes(record.followup.trim()) ? prev.next_steps + '\n' + followup : prev.next_steps }));
   }
   async function preview() {
     setDraftBusy(true);
@@ -1056,12 +1029,10 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   const qualityWorkflow = { ...workflow, analysis_evidence: workflow.analysis_evidence || content?.analysis_evidence, analysis_source: workflow.analysis_source || content?.analysis_source };
   const placeholderLeft = !!content?.proposal?.includes(PLANNING_PROPOSAL);
   const overLimit = Object.entries(REPORT_LIMITS).some(([key, limit]) => (content?.[key] || '').length > limit);
-  const recordIncluded = !!content && (content.selection?.include_note || content.selection?.include_followup ||
-    [record?.note, record?.followup].filter(text => text?.trim()).every(text => (content.situation + content.next_steps).includes(text.trim())));
   const canCreateFile = content && !staleContent && !placeholderLeft && !overLimit &&
     [author, department, ...['title', 'summary', 'situation', 'proposal', 'next_steps'].map(k => content?.[k] || '')].every(value => value.trim());
   return <div className="scroll-view"><section className="card info-card report-workspace">
-    <WorkflowSteps context={context} workflow={workflow} current="report" onView={onView} recordSaved={!!record?.history?.length} />
+    <WorkflowSteps context={context} workflow={workflow} current="report" onView={onView} />
     <div className="workspace-heading"><div><h2>{context.district || '지역 선택 필요'} · {planning ? '복지 사업 구상 검토보고' : '복지서비스 연계 검토보고'}</h2><p className="hint">{context.month} 기준</p></div></div>
     {workflow.workflow_complete && <div className="saved-report"><span>{workflow.reviews_after_report ? '보고서를 저장한 뒤 사업 검토가 추가되었습니다. 초안을 다시 만들어 저장하면 다음 차수 보고서가 됩니다.' : '최종 보고서가 저장되어 있습니다. 새로 작성해도 이전 저장본은 이력에 남습니다.'}</span><a className="text-button" href={'/api/report?' + query(context)}>저장된 Word 보고서 내려받기 →</a></div>}
     <ol className="report-steps" aria-label="보고서 작업 순서">{['초안 준비', '내용 수정', '파일 확인·저장'].map((label, i) => <li key={label} className={step === i + 1 ? 'current' : ''}><button aria-current={step === i + 1 ? 'step' : undefined} disabled={working || (i > 0 && !content) || (i === 2 && !draft)} onClick={() => setStep(i + 1)}><span>{i + 1}</span>{label}</button></li>)}</ol>
@@ -1077,9 +1048,6 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
       </div>
       <label className="confirmation"><input type="checkbox" disabled={working || !aiAvailable} checked={aiAvailable && useAi} onChange={e => setUseAi(e.target.checked)} />
         <span>AI로 문장 다듬기<small>{aiAvailable ? '외부 AI 사용 · 근거와 대조를 통과한 문장만 반영' : 'AI 연결 설정 필요'}</small></span></label>
-      {hasRecord
-        ? <label className="confirmation"><input type="checkbox" disabled={working} checked={includeRecord} onChange={e => setIncludeRecord(e.target.checked)} /><span>업무 기록 포함<small>검토 의견·후속 조치를 지역 현황과 향후 조치에 넣습니다</small></span></label>
-        : record && <p className="hint">업무 기록에 남긴 의견도 넣을 수 있습니다. <button className="text-button" onClick={() => onView('records')}>업무 기록으로 →</button></p>}
       <div className="form-actions">
         {!content ? <button className="primary" disabled={working || !context.district} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '보고서 초안 만들기'}</button> : <button className="primary" disabled={working} onClick={() => setStep(2)}>작성 중인 초안 이어서 수정</button>}
       </div>
@@ -1088,7 +1056,6 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     {step === 2 && content && <section className="report-stage" aria-label="내용 수정">
       <div className="report-stage-head"><h3>내용 수정</h3>{content.mode && <span className={`bomi-badge ${content.mode.includes('AI') ? 'ai' : 'data'}`}>{content.mode}</span>}</div>
       {content.notice && <p className="notice">{content.notice}</p>}
-      {hasRecord && !recordIncluded && <p className="hint">업무 기록의 의견이 아직 초안에 없습니다. <button className="text-button" disabled={working} onClick={insertRecord}>업무 기록 의견 넣기</button></p>}
       <div className="report-form report-editor">{reportFields(planning).map(field => <ReportField key={field.key} field={field} limit={REPORT_LIMITS[field.key]} value={content[field.key] || ''} disabled={working} onChange={value => setContent(prev => ({ ...prev, [field.key]: value }))} />)}</div>
       <ReportQuality content={content} workflow={qualityWorkflow} />
       {content.previous_proposal && <details className="secondary-details"><summary>갱신 전 제안 내용</summary><p className="hint">필요한 문장을 위 제안 칸으로 옮겨 쓰세요.</p><pre className="previous-proposal">{content.previous_proposal}</pre><button className="text-button" disabled={working} onClick={() => setContent(prev => ({ ...prev, previous_proposal: undefined }))}>갱신 전 내용 닫기</button></details>}

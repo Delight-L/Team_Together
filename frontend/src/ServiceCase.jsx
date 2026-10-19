@@ -31,7 +31,7 @@ export default function ServiceCase({context,detection,assessment,workflow,busy,
       })}<aside>{domains.length===1&&<span className="service-case-neutral">{d.key==='communication'?'이동':'통신'} 미탐지</span>}<p>탐지 방식: {METHODS[d.state]}</p></aside></div>
     </div>)}
     {!hasCase&&!fromChatContext&&!casesLoading&&!casesError&&<p className="service-case-empty">선택한 기준월에는 신규 탐지 또는 추적 중인 사례가 없습니다.</p>}
-    {hasCase&&<footer className="service-case-actions"><p><Icon name="clipboard" size={22}/>{stale?'저장된 분석과 현재 분석이 다릅니다. 기존 업무 기록을 확인해 주세요.':reviewed?'탐지 근거 검토를 완료했습니다. 아래에서 관련 사업을 조회하세요.':'탐지 근거를 확인한 뒤 검토 완료를 눌러주세요.'}</p>
+    {hasCase&&<footer className="service-case-actions"><p><Icon name="clipboard" size={22}/>{stale?'저장된 분석과 현재 분석이 다릅니다. 저장된 검토 기록을 확인해 주세요.':reviewed?'탐지 근거 검토를 완료했습니다. 아래에서 관련 사업을 조회하세요.':'탐지 근거를 확인한 뒤 검토 완료를 눌러주세요.'}</p>
       <button className="primary" disabled={busy||reviewed||stale||!detection?.any_signal} onClick={onConfirm}>{busy?'저장 중…':reviewed?'✓ 근거 검토 완료됨':'✓ 근거 검토 완료'}</button></footer>}
   </section>;
 }

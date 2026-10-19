@@ -48,20 +48,13 @@ def load(request):
         row = db.execute(text("SELECT value FROM work.missions WHERE key=:key"), {"key": identity(request)}).fetchone()
         return normalize(json.loads(row[0])) if row else {}
 
-def load_all():
-    with transaction() as db:
-        items = {}
-        for key, value in db.execute(text("SELECT key,value FROM work.missions")):
-            items[key] = normalize(json.loads(value))
-        return items
-
 def save_event(request, step, record=None, start=None):
     """단계 순서를 검사하고 기록·Word 파일·보고서 이력을 함께 저장합니다.
 
     start(run_id·evidence·source_note)를 주면 아직 시작하지 않은 업무의 분석 확인(0)·근거 확인(1)을
     같은 트랜잭션에서 먼저 기록합니다. 사업 검토나 보고서를 처음 저장할 때 업무가 생기게 하는 용도입니다.
 
-    사업 검토(2)와 업무 기록은 선택 단계라, 보고서(3)는 분석 근거(0)만 있으면 저장할 수 있습니다.
+    사업 검토(2)는 선택 단계라, 보고서(3)는 분석 근거(0)만 있으면 저장할 수 있습니다.
     보고서를 저장한 뒤에도 사업 검토를 더할 수 있고, 그 경우 reviews_after_report로 표시합니다.
     """
     if step not in range(4):
@@ -138,7 +131,7 @@ def save_event(request, step, record=None, start=None):
                                                 record=json.dumps(item.get('report', {}), ensure_ascii=False)))
             record['revision'] = revision + 1
             record['analysis_run_id'] = item.get('analysis_run_id')
-            # 사업 검토 없이 대화·구상·업무 기록으로 만든 보고서는 구상 보고서로 구분합니다.
+            # 사업 검토 없이 대화·구상으로 만든 보고서는 구상 보고서로 구분합니다.
             record['kind'] = 'service_review' if item.get('reviews') else 'planning'
             item["reviews_after_report"] = False
             db.execute(insert_version, dict(key=key, revision=record['revision'], document=document,
@@ -187,9 +180,6 @@ def restart(request, record):
         db.execute(text("""INSERT INTO work.missions (key,value) VALUES (:key,:value)
             ON CONFLICT (key) DO UPDATE SET value=excluded.value"""),
                    {"key": key, "value": json.dumps(restarted, ensure_ascii=False)})
-        # 검토·후속 조치 기록도 같은 트랜잭션에서 회차를 나눕니다(순환 import를 피해 여기서 불러옵니다).
-        from backend.db import experience_store
-        experience_store.start_new_round(db, request, item.get("analysis_run_id"))
     return restarted
 
 

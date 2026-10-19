@@ -1,4 +1,4 @@
-"""업무 API: 분석 확인 → 근거 검토 → 사업 검토 → 보고서 저장, 그리고 업무 기록(검토·후속 조치).
+"""업무 API: 분석 확인 → 근거 검토 → 사업 검토 → 보고서 저장.
 
 업무 단계 번호(mission_store에 저장되는 done 값)
   0 분석 확인 저장 / 1 근거 검토 완료 / 2 사업 검토 저장 / 3 보고서 최종 저장
@@ -10,7 +10,7 @@ import logging
 from datetime import date, datetime
 
 from backend.agents import report_writer, service_matching, service_eligibility
-from backend.db import experience_store, mission_store
+from backend.db import mission_store
 from backend.services import report
 from backend.api import limits, sessions
 from backend.api.common import ApiError, Response, dashboard_data, evidence_for, region_context
@@ -47,25 +47,6 @@ def work_context(request):
 
 # ── 조회(GET) ─────────────────────────────────────────────
 
-def missions(request):
-    """GET /api/missions: 로그인한 담당자의 지역 업무 목록(업무 기록 화면).
-
-    사업 검토를 저장한 업무에 더해, 사업 검토 전에 검토·후속 조치만 저장한 지역도 빈 업무로 보여 줍니다.
-    """
-    items = []
-    for key, workflow in mission_store.load_all().items():
-        parts = json.loads(key)
-        owner, city, district, month = parts[:4]
-        age = parts[4] if len(parts) > 4 else None
-        if owner == request.user['id']:
-            items.append({'city': city, 'district': district, 'month': month, **({'age':age} if age else {}), 'workflow': workflow})
-    seen = {(item['city'], item['district'], item['month'], item.get('age', '')) for item in items}
-    for scope in experience_store.saved_scopes():
-        if (scope['city'], scope['district'], scope['month'], scope.get('age', '')) not in seen:
-            items.append(scope | {'workflow': {}, 'record_only': True})
-    return {'items': items}
-
-
 def with_analysis_note(current, data):
     """저장된 근거가 지금 화면의 분석 버전과 다르면 analysis_changed로 알려 줍니다."""
     saved = current.get('analysis_run_id')
@@ -77,18 +58,6 @@ def workflow(request):
     data = dashboard_data()
     context = region_context(request, data)
     return with_analysis_note(load_workflow(context), data)
-
-
-def experience(request):
-    """GET /api/experience: 선택한 동의 검토·후속 조치 기록."""
-    context = region_context(request, dashboard_data())
-    return experience_store.load(context)
-
-
-def experience_history(request):
-    """GET /api/experience/history: 같은 동의 다른 기준월 기록."""
-    context = region_context(request, dashboard_data())
-    return {'items': experience_store.regional_history(context)}
 
 
 def services(request):
@@ -137,12 +106,6 @@ def report_draft_file(request):
 
 # ── 저장(POST) ────────────────────────────────────────────
 
-def experience_save(request):
-    """POST /api/experience: 검토·후속 조치 기록을 저장합니다."""
-    context = region_context(request, dashboard_data())
-    return experience_store.save(context, request.params)
-
-
 def analysis_start(data, evidence):
     """업무를 처음 저장할 때 근거로 기록할 지금 분석 결과(mission_store.save_event의 start)."""
     return {'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']}
@@ -151,7 +114,7 @@ def analysis_start(data, evidence):
 def report_workflow(context, data, evidence):
     """보고서에 쓸 업무 상태입니다. 아직 업무가 없으면 지금 분석 결과를 근거로 둡니다(저장하지 않음).
 
-    사업 검토 없이도 대화·구상·업무 기록으로 보고서를 만들 수 있게 합니다.
+    사업 검토 없이도 대화·구상으로 보고서를 만들 수 있게 합니다.
     두 번째 값은 최종 저장 때 업무 근거로 기록할 start이며, 이미 근거가 있으면 None입니다.
     """
     current = load_workflow(context)
@@ -163,7 +126,7 @@ def report_workflow(context, data, evidence):
 
 
 def report_content(request):
-    """POST /api/report/content: 분석 근거·사업 검토·업무 기록으로 보고서 문장 초안을 만듭니다.
+    """POST /api/report/content: 분석 근거·사업 검토로 보고서 문장 초안을 만듭니다.
 
     ai=true이면 AI가 문장을 다듬고, 저장된 근거와 대조를 통과한 경우에만 그 문장을 씁니다.
     """
@@ -173,14 +136,7 @@ def report_content(request):
         limits.check_chat(request.user)  # AI 문장 다듬기도 보미 사용량에 포함합니다.
     selection = request.params.get('selection')
     current, _ = report_workflow(context, data, evidence)
-    if request.params.get('include_record') is True and selection is None:
-        # 보고서 탭의 '업무 기록 포함': 저장된 지표·사업 검토는 모두 넣고 업무 기록의 의견·후속 조치를 더합니다.
-        from backend.agents.report_material import latest_reviews
-        selection = {'metrics': [row['metric_label'] for row in current.get('analysis_evidence', [])],
-                     'services': list(latest_reviews(current.get('reviews', []))),
-                     'include_note': True, 'include_followup': True}
-    experience = experience_store.load(context) if isinstance(selection, dict) and (selection.get('include_note') or selection.get('include_followup')) else None
-    draft = report_writer.write_draft(context, current, use_ai=use_ai, selection=selection, experience=experience)
+    draft = report_writer.write_draft(context, current, use_ai=use_ai, selection=selection)
     # 업무를 아직 저장하지 않았어도 보고서 탭의 검토 도움말이 수치를 대조할 수 있게 쓴 근거를 함께 돌려줍니다.
     return dict(draft, analysis_evidence=current['analysis_evidence'], analysis_source=current['analysis_source'])
 
@@ -189,7 +145,7 @@ def report_proposal(request):
     """POST /api/report/proposal: 편집 중인 초안의 제안 칸만 최신 사업 검토로 다시 만듭니다.
 
     초안을 만든 뒤 사업 검토가 바뀌었을 때, 나머지 항목의 편집 내용을 지키며 근거 버전만 맞추는 용도입니다.
-    업무 기록 포함 여부 등 초안의 선택은 유지하고, 사업은 지금 저장된 검토를 모두 넣습니다.
+    초안의 지표 선택은 유지하고, 사업은 지금 저장된 검토를 모두 넣습니다.
     """
     context, data, evidence = work_context(request)
     current, _ = report_workflow(context, data, evidence)
@@ -199,9 +155,8 @@ def report_proposal(request):
         selection = dict(selection, services=list(latest_reviews(current.get('reviews', []))))
     elif selection is not None:
         raise ValueError('보고서 포함 항목이 올바르지 않습니다.')
-    uses_record = isinstance(selection, dict) and (selection.get('include_note') or selection.get('include_followup'))
-    draft = report_writer.generate_draft(context, current, selection, experience_store.load(context) if uses_record else None)
-    return {key: draft.get(key) for key in ('proposal', 'review_id', 'review_snapshot', 'kind', 'selection', 'experience_version')}
+    draft = report_writer.generate_draft(context, current, selection)
+    return {key: draft.get(key) for key in ('proposal', 'review_id', 'review_snapshot', 'kind', 'selection')}
 
 
 def report_preview(request):
@@ -237,11 +192,6 @@ def report_preview(request):
         selection = request.params['content'].get('selection')
         from backend.agents.report_material import select_material
         select_material(current, selection)
-        if selection and (selection.get('include_note') or selection.get('include_followup')):
-            version = experience_store.load(context).get('version', 0)
-            if request.params['content'].get('experience_version') != version:
-                raise ValueError('업무 기록이 변경되었습니다. 저장한 최신 기록으로 초안을 갱신하세요.')
-            content['experience_version'] = version
         if selection is not None:
             content['selection'] = selection
     contact = request.text('contact')

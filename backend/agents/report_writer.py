@@ -1,7 +1,7 @@
 """보고서 탭과 챗봇이 공유하는 근거 기반 약식보고서 에이전트.
 
 기초 초안(외부 AI 없음)은 두 가지입니다.
-- generate_draft: 저장된 업무 기록(분석 근거 확인·사업 매칭 검토)으로 만든 초안
+- generate_draft: 저장된 분석 근거와 사업 매칭 검토로 만든 초안
 - conversation_draft: 보미 대화에서 찾은 기존 사업·신규 구상안과 그 동의 분석 수치로 만든 «담당자 검토 전» 초안
 선택하면 AI가 기초 초안을 공문서 문체로 다듬고(polish), 결과를 기초 초안과 대조합니다.
 대조에서 새 숫자·URL·사업명·단정 표현이 생기거나 사업·판단 문구가 빠지거나 다른 사업으로 옮겨지면
@@ -188,17 +188,17 @@ def _next_steps(reviews, planning):
     return lines + ['현장 수요와 담당 기관 의견을 확인한 후 연계·추진 여부 최종 검토']
 
 
-def generate_draft(context, workflow, selection=None, experience=None):
+def generate_draft(context, workflow, selection=None):
     """외부 AI 없이 저장된 기록을 구성합니다. 첨부 예시는 업무 사실로 쓰지 않습니다.
 
-    사업 검토가 없으면 지역 현황과 업무 기록으로 구상 보고서 초안을 만들고, 제안 칸은 담당자가 채우게 둡니다.
+    사업 검토가 없으면 지역 현황으로 구상 보고서 초안을 만들고, 제안 칸은 담당자가 채우게 둡니다.
     """
     if not context.get('district'):
         raise ValueError('보고서를 작성할 행정동을 먼저 선택하세요.')
     if not workflow.get('analysis_evidence'):
         raise ValueError('이 동의 분석 결과가 없어 보고서 초안을 만들 수 없습니다.')
     planning = not workflow.get('reviews')
-    from backend.agents.report_material import select_material, record_sections
+    from backend.agents.report_material import select_material
     rows, reviews, options = select_material(workflow, selection)
     chosen = selection is not None
     situation = _situation(context, rows, '이번 초안에 포함한 후보 지표 상세 없음. 전체 분석은 지역 분석 화면에서 확인' if chosen else
@@ -210,16 +210,10 @@ def generate_draft(context, workflow, selection=None, experience=None):
         proposals.append(PLANNING_PROPOSAL)
     elif not proposals:
         proposals.append('이번 초안에 사업 상세를 포함하지 않음. 저장된 사업 검토 기록에서 확인 필요' if chosen else '저장된 사업 검토 내용 확인 필요')
-    note, followup = record_sections(experience or {}, options)
-    if note:
-        situation.append('담당자 검토 의견: ' + note)
-    next_steps = followup or '\n'.join(_next_steps(reviews, planning))
     summary = _summary(context, rows, reviews, planning)
-    uses_record = options.get('include_note') or options.get('include_followup')
     return _draft(context, workflow, title_note='', summary=summary, situation=situation, proposals=proposals,
-                  next_steps=next_steps.split('\n'), mode='저장된 근거로 구성 · 외부 AI 호출 없음',
-                  selection=options if chosen else None,
-                  experience_version=(experience or {}).get('version') if uses_record else None)
+                  next_steps=_next_steps(reviews, planning), mode='저장된 근거로 구성 · 외부 AI 호출 없음',
+                  selection=options if chosen else None)
 
 
 def latest_plan(history):
@@ -452,15 +446,15 @@ def polish(draft, use_ai=False, request=''):
     return result
 
 
-def write_draft(context, workflow, use_ai=False, request='', selection=None, experience=None):
-    """업무 기록으로 기초 초안을 만들고, use_ai이면 AI로 문장을 다듬습니다(보고서 탭)."""
-    return polish(generate_draft(context, workflow, selection, experience), use_ai, request)
+def write_draft(context, workflow, use_ai=False, request='', selection=None):
+    """저장된 분석 근거·사업 검토로 기초 초안을 만들고, use_ai이면 AI로 문장을 다듬습니다(보고서 탭)."""
+    return polish(generate_draft(context, workflow, selection), use_ai, request)
 
 
 def report_reply(context, workflow, use_ai=False, request='', evidence_rows=(), history=(), sources=()):
     """챗봇용 답: 초안 본문과 «보고서 탭에서 수정» 버튼(초안 포함)을 돌려줍니다.
 
-    대화에서 찾은 사업(sources)이나 신규 구상안이 있으면 대화 기반 초안을, 없으면 업무 기록 초안을 만듭니다.
+    대화에서 찾은 사업(sources)이나 신규 구상안이 있으면 대화 기반 초안을, 없으면 저장된 근거(분석·사업 검토) 초안을 만듭니다.
     """
     workflow = workflow or {}
     from_chat = bool(sources) or bool(latest_plan(history))
