@@ -33,6 +33,39 @@ def _replace_text(paragraph, text, preferred_font=None):
     node.text = text
 
 
+def _hanging(paragraph, left, hanging):
+    """줄이 넘칠 때 둘째 줄이 기호(ㅇ, -) 뒤 글자 위치에 맞춰 들여쓰이게 합니다(단위: 1/20pt)."""
+    ind = paragraph.find('w:pPr/w:ind', NS)
+    if ind is None:
+        ind = etree.SubElement(paragraph.find('w:pPr', NS), _tag('ind'))
+    for name in ('firstLine', 'hanging'):
+        ind.attrib.pop(_tag(name), None)
+    ind.set(_tag('left'), str(left))
+    ind.set(_tag('hanging'), str(hanging))
+
+
+def _fit_title(paragraph, text):
+    """제목이 한 줄(약 470pt)에 들어가도록 글자 크기를 줄입니다. 최소 18pt, 더 길면 두 줄로 넘어갑니다."""
+    size = max(36, min(54, int(2 * 470 / max(len(text), 1))))
+    for node in paragraph.findall('.//w:sz', NS):
+        node.set(_tag('val'), str(size))
+    spacing = paragraph.find('w:pPr/w:spacing', NS)
+    if spacing is not None:
+        spacing.set(_tag('line'), str(size * 10))
+        spacing.set(_tag('lineRule'), 'atLeast')
+
+
+def _widen_date_column(table, width=2200):
+    """날짜 칸이 ’26. 10. 19.(월) 한 줄에 들어가도록 넓히고, 옆 칸을 그만큼 줄입니다."""
+    columns = table.findall('w:tblGrid/w:gridCol', NS)
+    total = sum(int(column.get(_tag('w'))) for column in columns)
+    for column, value in zip(columns, (width, total - width)):
+        column.set(_tag('w'), str(value))
+    for row in table.findall('w:tr', NS)[1:]:
+        for cell, value in zip(row.findall('w:tc', NS), (width, total - width)):
+            cell.find('w:tcPr/w:tcW', NS).set(_tag('w'), str(value))
+
+
 def _allow_growth(element):
     # 원본의 고정 행 높이는 입력 내용이 길어질 때 잘릴 수 있습니다.
     for height in element.findall('.//w:trHeight', NS):
@@ -64,6 +97,8 @@ def build_report(context, rows, author, department, opinion, source_note, workfl
         metadata = f'{department} / 담당: {author}' + (f' / 연락처: {contact}' if contact else '')
         for paragraph, text in zip(title.findall('.//w:p', NS), [draft['title'], date, metadata]):
             _replace_text(paragraph, text)
+        _fit_title(title.find('.//w:p', NS), draft['title'])
+        _widen_date_column(title)
         _allow_growth(title)
         body.append(title)
         _replace_text(overview.find('.//w:p', NS), draft['summary'])
@@ -72,8 +107,11 @@ def build_report(context, rows, author, department, opinion, source_note, workfl
             cell.remove(paragraph)
         _allow_growth(overview)
         body.append(overview)
+        # 검토 요지는 위 요약 상자에 들어가므로 본문에는 다시 쓰지 않습니다.
         # 사업 검토가 없는 구상 보고서는 제안 항목 이름을 '사업 구상·추진 제안'으로 씁니다.
         for key, label in section_labels(not workflow.get('reviews')):
+            if key == 'summary':
+                continue
             paragraph = deepcopy(heading)
             _replace_text(paragraph, '□ ' + label)
             etree.SubElement(paragraph.find('w:pPr', NS), _tag('keepNext'))
@@ -85,6 +123,7 @@ def build_report(context, rows, author, department, opinion, source_note, workfl
                 paragraph = deepcopy(explanation if lower else detail)
                 _replace_text(paragraph, '   - ' + line.lstrip('- ').strip() if lower else ' ㅇ ' + line.strip(),
                               preferred_font='휴먼명조' if lower else None)
+                _hanging(paragraph, *((580, 580) if lower else (400, 400)))
                 body.append(paragraph)
         paragraph = deepcopy(note)
         _replace_text(paragraph, '     ※ 자료 출처: ' + report_source_label(source_note))

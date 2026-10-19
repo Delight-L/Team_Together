@@ -1007,33 +1007,33 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     [author, department, ...['title', 'summary', 'situation', 'proposal', 'next_steps'].map(k => content?.[k] || '')].every(value => value.trim());
   return <div className="scroll-view"><section className="card info-card report-workspace">
     <WorkflowSteps context={context} workflow={workflow} current="report" onView={onView} recordSaved={!!record?.history?.length} />
-    <div className="workspace-heading"><div><span className="eyebrow">검토보고서</span><h2>{context.district || '지역 선택 필요'} · {planning ? '복지 사업 구상 검토보고' : '복지서비스 연계 검토보고'}</h2><p className="hint">{context.month} · 초안을 다듬고 Word 파일을 확인한 뒤 저장하세요.</p></div></div>
+    <div className="workspace-heading"><div><h2>{context.district || '지역 선택 필요'} · {planning ? '복지 사업 구상 검토보고' : '복지서비스 연계 검토보고'}</h2><p className="hint">{context.month} 기준</p></div></div>
     {workflow.workflow_complete && <div className="saved-report"><span>{workflow.reviews_after_report ? '보고서를 저장한 뒤 사업 검토가 추가되었습니다. 초안을 다시 만들어 저장하면 다음 차수 보고서가 됩니다.' : '최종 보고서가 저장되어 있습니다. 새로 작성해도 이전 저장본은 이력에 남습니다.'}</span><a className="text-button" href={'/api/report?' + query(context)}>저장된 Word 보고서 내려받기 →</a></div>}
     <ol className="report-steps" aria-label="보고서 작업 순서">{['초안 준비', '내용 수정', '파일 확인·저장'].map((label, i) => <li key={label} className={step === i + 1 ? 'current' : ''}><button aria-current={step === i + 1 ? 'step' : undefined} disabled={working || (i > 0 && !content) || (i === 2 && !draft)} onClick={() => setStep(i + 1)}><span>{i + 1}</span>{label}</button></li>)}</ol>
-    <p className="hint draft-caption">{storageFailed ? '브라우저 임시 보관에 실패했습니다. 새로고침 전에 내용을 복사해 두세요.' : '작성 내용은 이 탭에 임시 보관됩니다. 로그아웃 전에 저장해 주세요.'}</p>
+    {storageFailed && <p className="error" role="alert">브라우저 임시 보관에 실패했습니다. 새로고침 전에 내용을 복사해 두세요.</p>}
     {staleContent && <p className="notice">사업 검토 근거가 달라졌습니다. 제안 칸만 최신 검토로 갱신하면 다른 항목의 편집 내용은 그대로 남습니다. <button className="text-button" disabled={working} onClick={refreshProposal}>{draftBusy ? '갱신 중…' : '제안 칸만 최신 검토로 갱신'}</button></p>}
     {error && <p className="error" role="alert">{error}</p>}
     {step === 1 && <section className="report-stage" aria-label="초안 준비">
-      <h3>작성 정보를 확인해 주세요.</h3><p className="hint">이 동의 분석 근거와 저장된 사업 검토·업무 기록으로 1~2쪽 분량의 초안을 만듭니다. {planning ? '저장된 사업 검토가 없어 구상 보고서 초안을 만들고, 제안 내용은 직접 작성합니다. 보미와 나눈 구상은 보미에게 "보고서 작성해줘"라고 요청해 가져올 수 있습니다.' : ''}</p>
+      <h3>작성 정보 확인</h3><p className="hint">{planning ? '저장된 사업 검토가 없어 구상 보고서로 만듭니다. 제안 내용은 직접 작성하거나, 보미에게 "보고서 작성해줘"라고 요청해 대화 내용을 가져오세요.' : '분석 근거와 저장된 사업 검토로 1~2쪽 초안을 만듭니다.'}</p>
       <div className="report-form">
         <label>작성 부서<input value={department} maxLength={100} disabled={working} onChange={e => setDepartment(e.target.value)} /></label>
         <label>작성자<input value={author} maxLength={60} disabled={working} onChange={e => setAuthor(e.target.value)} /></label>
         <label className="full">연락처 (선택)<input value={contact} maxLength={80} disabled={working} onChange={e => setContact(e.target.value)} /></label>
       </div>
       <label className="confirmation"><input type="checkbox" disabled={working || !aiAvailable} checked={aiAvailable && useAi} onChange={e => setUseAi(e.target.checked)} />
-        AI로 문장 다듬기{aiAvailable ? ' · 전송 시 외부 AI 사용, 저장된 근거와 대조를 통과한 문장만 사용' : ' · 연결 설정 필요'}</label>
+        <span>AI로 문장 다듬기<small>{aiAvailable ? '외부 AI 사용 · 근거와 대조를 통과한 문장만 반영' : 'AI 연결 설정 필요'}</small></span></label>
       {hasRecord
-        ? <label className="confirmation"><input type="checkbox" disabled={working} checked={includeRecord} onChange={e => setIncludeRecord(e.target.checked)} />업무 기록의 검토 의견·후속 조치 포함</label>
-        : record && <p className="hint">업무 기록에 검토 의견이나 후속 조치를 남기면 보고서에 넣을 수 있습니다. <button className="text-button" onClick={() => onView('records')}>업무 기록으로 →</button></p>}
+        ? <label className="confirmation"><input type="checkbox" disabled={working} checked={includeRecord} onChange={e => setIncludeRecord(e.target.checked)} /><span>업무 기록 포함<small>검토 의견·후속 조치를 지역 현황과 향후 조치에 넣습니다</small></span></label>
+        : record && <p className="hint">업무 기록에 남긴 의견도 넣을 수 있습니다. <button className="text-button" onClick={() => onView('records')}>업무 기록으로 →</button></p>}
       <div className="form-actions">
         {!content ? <button className="primary" disabled={working || !context.district} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '보고서 초안 만들기'}</button> : <button className="primary" disabled={working} onClick={() => setStep(2)}>작성 중인 초안 이어서 수정</button>}
       </div>
-      {content && <div className="regenerate-section"><span className="hint">최신 근거로 다시 만들면 편집한 내용이 바뀝니다.</span><button className="text-button" disabled={working || !context.district} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '저장된 근거로 초안 다시 만들기'}</button></div>}
+      {content && <div className="regenerate-section"><button className="text-button" disabled={working || !context.district} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '초안 새로 만들기'}</button><span className="hint">편집한 내용은 새 초안으로 바뀝니다.</span></div>}
     </section>}
     {step === 2 && content && <section className="report-stage" aria-label="내용 수정">
-      <h3>보고서 내용을 검토하고 다듬어 주세요.</h3><p className="hint">검토 요지 → 지역 현황 → {planning ? '사업 구상 제안' : '서비스 제안'} → 향후 조치 순서입니다.{content.mode ? ` · ${content.mode}` : ''}</p>
+      <div className="report-stage-head"><h3>내용 수정</h3>{content.mode && <span className={`bomi-badge ${content.mode.includes('AI') ? 'ai' : 'data'}`}>{content.mode}</span>}</div>
       {content.notice && <p className="notice">{content.notice}</p>}
-      {hasRecord && !recordIncluded && <p className="hint">업무 기록에 저장한 검토 의견·후속 조치가 아직 초안에 없습니다. <button className="text-button" disabled={working} onClick={insertRecord}>업무 기록 의견 넣기</button></p>}
+      {hasRecord && !recordIncluded && <p className="hint">업무 기록의 의견이 아직 초안에 없습니다. <button className="text-button" disabled={working} onClick={insertRecord}>업무 기록 의견 넣기</button></p>}
       <div className="report-form report-editor">{reportFields(planning).map(field => <ReportField key={field.key} field={field} limit={REPORT_LIMITS[field.key]} value={content[field.key] || ''} disabled={working} onChange={value => setContent(prev => ({ ...prev, [field.key]: value }))} />)}</div>
       <ReportQuality content={content} workflow={qualityWorkflow} />
       {content.previous_proposal && <details className="secondary-details"><summary>갱신 전 제안 내용</summary><p className="hint">필요한 문장을 위 제안 칸으로 옮겨 쓰세요.</p><pre className="previous-proposal">{content.previous_proposal}</pre><button className="text-button" disabled={working} onClick={() => setContent(prev => ({ ...prev, previous_proposal: undefined }))}>갱신 전 내용 닫기</button></details>}
@@ -1041,10 +1041,10 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
       <div className="form-actions report-sticky-actions"><button className="primary" disabled={working || !canCreateFile} onClick={preview}>{draftBusy ? 'Word 파일 만드는 중…' : 'Word 파일 만들고 확인하기'}</button><button className="secondary" disabled={working} onClick={() => setStep(1)}>작성 정보 수정</button></div>
     </section>}
     {step === 3 && content && <section className="report-stage" aria-label="파일 확인·저장">
-      <h3>파일을 내려받아 확인한 뒤 저장해 주세요.</h3><p className="hint">내용을 다시 수정하면 Word 파일도 새로 만들어야 합니다.</p>
-      {draft ? <div className="report-file"><span><strong>{content.title}</strong><small>Word 문서 · 현재 편집 내용으로 생성</small></span><a className="secondary" href={'/api/report/draft?' + query({ ...context, token: draft.token })}>보고서 내려받아 확인 →</a></div> : <p className="notice">내용이나 근거가 변경되었습니다. 내용 수정 단계에서 Word 파일을 다시 만들어 주세요.</p>}
-      <label className="confirmation report-confirm"><input type="checkbox" disabled={working || !draft || !!staleContent} checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />{planning ? '분석 근거·구상 및 제안 내용·최종 의견을 확인했습니다. 사업 매칭 검토 없이 구상 보고서로 저장합니다.' : '분석 근거·사업 검토 내역·최종 의견을 확인했습니다.'}</label>
-      <div className="form-actions"><button className="primary" disabled={working || !confirmed || !draft || !canCreateFile} onClick={save}>{busy ? '저장 중…' : '확인한 최종 보고서 저장'}</button><button className="secondary" disabled={working} onClick={() => setStep(2)}>내용 다시 수정</button></div>
+      <h3>파일 확인·저장</h3><p className="hint">내려받은 Word 파일을 확인한 뒤 저장하세요.</p>
+      {draft ? <div className="report-file"><span><strong>{content.title}</strong><small>Word 문서 · 현재 편집 내용</small></span><a className="secondary" href={'/api/report/draft?' + query({ ...context, token: draft.token })}>내려받기</a></div> : <p className="notice">내용이나 근거가 변경되었습니다. 내용 수정 단계에서 Word 파일을 다시 만들어 주세요.</p>}
+      <label className="confirmation report-confirm"><input type="checkbox" disabled={working || !draft || !!staleContent} checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />{planning ? '분석 근거와 구상·제안 내용을 확인했습니다(구상 보고서로 저장).' : '분석 근거와 사업 검토 내용을 확인했습니다.'}</label>
+      <div className="form-actions"><button className="primary" disabled={working || !confirmed || !draft || !canCreateFile} onClick={save}>{busy ? '저장 중…' : '최종 보고서 저장'}</button><button className="secondary" disabled={working} onClick={() => setStep(2)}>내용 다시 수정</button></div>
     </section>}
   </section></div>;
 }

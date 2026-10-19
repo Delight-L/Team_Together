@@ -42,16 +42,24 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .workspace-heading p { margin-bottom: 0; }
 .form-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding-top: 24px; margin-top: 24px; border-top: 1px solid var(--border, var(--line)); }
 .form-actions .hint { margin: 0; }
-.report-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; gap: 12px; margin: 28px 0 12px; padding: 0; }
-.report-steps button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); color: var(--text-sub); text-align: left; }
-.report-steps button > span { display: grid; place-items: center; flex: 0 0 26px; height: 26px; background: var(--line); border-radius: 50%; font-size: 13px; }
-.report-steps .current button { border-color: #547dd0; background: var(--surface-tint); color: #234c95; font-weight: 700; }
-.report-steps .current button > span { background: #345db0; color: white; }
-.report-stage { padding-top: 24px; }
-.report-stage > h3 { margin: 0 0 8px; font-size: 18px; }
-.report-stage > .report-form { margin-top: 24px; }
-.report-workspace .draft-caption { font-size: 12px; }
-.report-workspace .regenerate-section { margin-top: 28px; padding-top: 20px; border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+/* 보고서 작업 순서: 위의 업무 단계와 겹쳐 보이지 않도록 작은 탭 모양으로 둡니다. */
+.report-steps { display: flex; list-style: none; gap: 4px; margin: 24px 0 0; padding: 0; border-bottom: 1px solid var(--line); }
+.report-steps li { flex: 0 1 auto; }
+.report-steps button { display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: -1px; border-bottom: 2px solid transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; }
+.report-steps button:hover:not(:disabled) { color: var(--text-strong); }
+.report-steps button > span { display: grid; place-items: center; width: 20px; height: 20px; background: var(--line); border-radius: 50%; font-size: 11px; color: var(--text-sub); }
+.report-steps .current button { border-bottom-color: var(--blue); color: var(--blue); }
+.report-steps .current button > span { background: var(--blue); color: var(--surface); }
+.report-stage { padding-top: 20px; }
+.report-stage > h3, .report-stage-head h3 { margin: 0 0 6px; font-size: 15px; color: var(--text-strong); }
+.report-stage-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.report-stage-head h3 { margin: 0; }
+.report-stage > .report-form { margin-top: 20px; }
+.report-workspace > .error { margin-top: 16px; }
+.report-stage .confirmation { align-items: flex-start; margin: 16px 0 0; gap: 10px; color: var(--text); font-weight: 600; }
+.report-stage .confirmation input { margin-top: 2px; flex-shrink: 0; }
+.report-stage .confirmation small { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--text-muted); }
+.report-workspace .regenerate-section { margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .saved-report { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 20px; margin-top: 20px; background: var(--line); border-radius: 12px; font-size: 13px; line-height: 1.6; }
 .analysis-changed { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .analysis-changed p { margin: 0; flex: 1 1 280px; }
@@ -119,9 +127,7 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
   .comparison-charts { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
-  .report-steps { gap: 6px; }
-  .report-steps button { flex-direction: column; gap: 8px; padding: 10px 4px; text-align: center; font-size: 12px; }
-  .report-steps button > span { flex-basis: auto; width: 24px; height: 24px; }
+  .report-steps button { padding: 10px 8px; font-size: 12px; }
   .review-workspace .review-section fieldset { grid-template-columns: 1fr; }
   .form-actions { gap: 12px; }
   .form-actions button { width: 100%; justify-content: center; }
