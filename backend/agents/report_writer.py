@@ -16,6 +16,18 @@ LOGGER = logging.getLogger(__name__)
 SECTIONS = (('summary', '검토 요지'), ('situation', '지역 현황'),
             ('proposal', '복지서비스 연계·추진 제안'), ('next_steps', '향후 조치'))
 SECTION_KEYS = [key for key, label in SECTIONS]  # summary, situation, proposal, next_steps
+# 사업 검토 없이 만든 구상 보고서는 제목과 제안 항목 이름이 다릅니다.
+PLANNING_SECTION = '사업 구상·추진 제안'
+
+
+def section_labels(planning=False):
+    """보고서 항목 (키, 이름) 목록입니다. 구상 보고서는 제안 항목 이름만 바뀝니다."""
+    return [(key, PLANNING_SECTION if planning and key == 'proposal' else label) for key, label in SECTIONS]
+
+
+def report_title(context, planning=False):
+    district = context['district'] + (' ' + context['age'] if context.get('age') else '')
+    return f"{district} {'복지 사업 구상 검토보고' if planning else '복지서비스 연계 검토보고'}"
 LIMITS = {'title': 80, 'summary': 350, 'situation': 900, 'proposal': 1200, 'next_steps': 600}
 DECISION_TEXT = {'적합': '연계 가능성 검토 제안', '보류': '운영 조건 확인 후 재검토', '부적합': '현재 연계 제안에서 제외'}
 PENDING_TEXT = '담당자 검토 전'
@@ -86,15 +98,15 @@ def _situation(context, rows, empty_text):
 def _draft(context, workflow, *, title_note, summary, situation, proposals, next_steps, mode, **extra):
     """두 초안이 함께 쓰는 형식: 항목별 글자 수 맞추기와 보고서 탭이 쓰는 근거 버전 정보."""
     from backend.db.mission_store import review_revision
-    district = context['district'] + (' ' + context['age'] if context.get('age') else '')
-    return {'title': f'{district} 복지서비스 연계 검토보고{title_note}', 'summary': summary,
+    planning = not workflow.get('reviews')
+    return {'title': report_title(context, planning) + title_note, 'summary': summary,
             'situation': _fit_blocks(situation, LIMITS['situation']),
             'proposal': _fit_blocks(proposals, LIMITS['proposal']),
             'next_steps': _fit_blocks(next_steps, LIMITS['next_steps']),
             'context': {k: context[k] for k in ('city', 'district', 'month', 'age') if k in context},
             # 보고서 탭이 지금 업무 기록과 같은 근거로 인식하도록 현재 검토 기록 버전을 넣습니다.
             'review_id': review_revision(workflow), 'review_snapshot': workflow.get('reviews', []),
-            'mode': mode, **extra}
+            'kind': 'planning' if planning else 'service_review', 'mode': mode, **extra}
 
 
 def _review_proposal(review):
@@ -399,7 +411,7 @@ def report_reply(context, workflow, use_ai=False, request='', evidence_rows=(), 
         return {'answer': str(exc), 'mode': '보고서 작성 에이전트 · 준비 필요',
                 'actions': [{'label': '보고서 작성 열기', 'view': 'report'}]}
     answer = draft['title'] + '\n\n' + '\n\n'.join(
-        f'□ {label}\n{draft[key]}' for key, label in SECTIONS)
+        f'□ {label}\n{draft[key]}' for key, label in section_labels(draft.get('kind') == 'planning'))
     notices = [draft['notice']] if draft.get('notice') else []
     if from_chat:
         notices.append('대화 내용으로 만든 검토 전 초안입니다. 보고서 작성 탭에서 내용을 확인·수정한 뒤 최종 저장하세요.')

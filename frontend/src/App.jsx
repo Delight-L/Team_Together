@@ -14,6 +14,7 @@ import RegionAnalysis from './RegionAnalysis';
 import { normalizeAgeNames } from './ageSignals.mjs';
 import { userName } from './personas.mjs';
 import { serviceBrief, serviceSections } from './serviceText.mjs';
+import { PLANNING_PROPOSAL } from './experienceLogic.mjs';
 
 const menus = [
   ['dashboard', '종합 현황'],
@@ -842,6 +843,9 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
   );
 }
 
+// 보고서 항목별 글자 수 상한입니다(서버 report_writer.LIMITS와 같음).
+const REPORT_LIMITS = { title: 80, summary: 350, situation: 900, proposal: 1200, next_steps: 600 };
+
 // Word 문서 생성은 Python build_report(), 단계/해시 검증은 mission_store.py가 처리합니다.
 export function Report({ context, workflow, user, mutate, busy, seed, onSaved, onView }) {
   const initial = { author: userName(user), department: context.city + ' 복지정책과', contact: '', content: null, seedId: null };
@@ -901,6 +905,28 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
       setDraftBusy(false);
     }
   }
+  // 사업 검토가 바뀌었을 때 제안 칸만 최신 검토로 다시 만들고, 나머지 항목의 편집 내용은 그대로 둡니다.
+  async function refreshProposal() {
+    setDraftBusy(true);
+    setError('');
+    try {
+      const fresh = await api('/report/proposal', { ...context, selection: content.selection ?? null });
+      setContent(prev => ({ ...prev, ...fresh, previous_proposal: prev.proposal,
+        notice: fresh.kind !== prev.kind ? (fresh.kind === 'planning' ? '저장된 사업 검토가 없어 구상 보고서로 바뀌었습니다. 제목을 확인해 주세요.' : '사업 검토가 추가되어 연계 검토보고로 바뀌었습니다. 제목을 확인해 주세요.') : prev.notice }));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setDraftBusy(false);
+    }
+  }
+  // 업무 기록의 검토 의견은 지역 현황 끝에, 후속 조치는 향후 조치 끝에 덧붙입니다(서버 record_sections와 같은 형식).
+  function insertRecord() {
+    const followup = [record.followup, record.assignee && '담당자·인계 대상: ' + record.assignee,
+      record.due && '확인 기한: ' + record.due, record.status && '후속 조치 상태: ' + record.status].filter(Boolean).join('\n');
+    setContent(prev => ({ ...prev,
+      situation: record.note?.trim() && !prev.situation.includes(record.note.trim()) ? prev.situation + '\n담당자 검토 의견: ' + record.note.trim() : prev.situation,
+      next_steps: record.followup?.trim() && !prev.next_steps.includes(record.followup.trim()) ? prev.next_steps + '\n' + followup : prev.next_steps }));
+  }
   async function preview() {
     setDraftBusy(true);
     setConfirmed(false);
@@ -931,15 +957,19 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   // 사업 검토가 없으면 구상 보고서입니다. 검토 도움말은 업무 근거가 아직 없을 때 초안에 담긴 분석 근거로 대조합니다.
   const planning = !workflow.reviews?.length;
   const qualityWorkflow = { ...workflow, analysis_evidence: workflow.analysis_evidence || content?.analysis_evidence, analysis_source: workflow.analysis_source || content?.analysis_source };
-  const canCreateFile = content && !staleContent &&
+  const placeholderLeft = !!content?.proposal?.includes(PLANNING_PROPOSAL);
+  const overLimit = Object.entries(REPORT_LIMITS).some(([key, limit]) => (content?.[key] || '').length > limit);
+  const recordIncluded = !!content && (content.selection?.include_note || content.selection?.include_followup ||
+    [record?.note, record?.followup].filter(text => text?.trim()).every(text => (content.situation + content.next_steps).includes(text.trim())));
+  const canCreateFile = content && !staleContent && !placeholderLeft && !overLimit &&
     [author, department, ...['title', 'summary', 'situation', 'proposal', 'next_steps'].map(k => content?.[k] || '')].every(value => value.trim());
   return <div className="scroll-view"><section className="card info-card report-workspace">
     <WorkflowSteps context={context} workflow={workflow} current="report" onView={onView} recordSaved={!!record?.history?.length} />
-    <div className="workspace-heading"><div><span className="eyebrow">검토보고서</span><h2>{context.district || '지역 선택 필요'} · 복지서비스 연계 검토보고</h2><p className="hint">{context.month} · 초안을 다듬고 Word 파일을 확인한 뒤 저장하세요.</p></div></div>
+    <div className="workspace-heading"><div><span className="eyebrow">검토보고서</span><h2>{context.district || '지역 선택 필요'} · {planning ? '복지 사업 구상 검토보고' : '복지서비스 연계 검토보고'}</h2><p className="hint">{context.month} · 초안을 다듬고 Word 파일을 확인한 뒤 저장하세요.</p></div></div>
     {workflow.workflow_complete && <div className="saved-report"><span>{workflow.reviews_after_report ? '보고서를 저장한 뒤 사업 검토가 추가되었습니다. 초안을 다시 만들어 저장하면 다음 차수 보고서가 됩니다.' : '최종 보고서가 저장되어 있습니다. 새로 작성해도 이전 저장본은 이력에 남습니다.'}</span><a className="text-button" href={'/api/report?' + query(context)}>저장된 Word 보고서 내려받기 →</a></div>}
     <ol className="report-steps" aria-label="보고서 작업 순서">{['초안 준비', '내용 수정', '파일 확인·저장'].map((label, i) => <li key={label} className={step === i + 1 ? 'current' : ''}><button aria-current={step === i + 1 ? 'step' : undefined} disabled={working || (i > 0 && !content) || (i === 2 && !draft)} onClick={() => setStep(i + 1)}><span>{i + 1}</span>{label}</button></li>)}</ol>
     <p className="hint draft-caption">{storageFailed ? '브라우저 임시 보관에 실패했습니다. 새로고침 전에 내용을 복사해 두세요.' : '작성 내용은 이 탭에 임시 보관됩니다. 로그아웃 전에 저장해 주세요.'}</p>
-    {staleContent && <p className="notice">사업 검토 근거가 달라졌습니다. 편집한 내용은 남아 있습니다. 필요한 문장을 복사해 둔 뒤 ‘초안 준비’에서 최신 근거로 다시 만들어 주세요.</p>}
+    {staleContent && <p className="notice">사업 검토 근거가 달라졌습니다. 제안 칸만 최신 검토로 갱신하면 다른 항목의 편집 내용은 그대로 남습니다. <button className="text-button" disabled={working} onClick={refreshProposal}>{draftBusy ? '갱신 중…' : '제안 칸만 최신 검토로 갱신'}</button></p>}
     {error && <p className="error" role="alert">{error}</p>}
     {step === 1 && <section className="report-stage" aria-label="초안 준비">
       <h3>작성 정보를 확인해 주세요.</h3><p className="hint">이 동의 분석 근거와 저장된 사업 검토·업무 기록으로 1~2쪽 분량의 초안을 만듭니다. {planning ? '저장된 사업 검토가 없어 구상 보고서 초안을 만들고, 제안 내용은 직접 작성합니다. 보미와 나눈 구상은 보미에게 "보고서 작성해줘"라고 요청해 가져올 수 있습니다.' : ''}</p>
@@ -959,11 +989,13 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
       {content && <div className="regenerate-section"><span className="hint">최신 근거로 다시 만들면 편집한 내용이 바뀝니다.</span><button className="text-button" disabled={working || !context.district} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '저장된 근거로 초안 다시 만들기'}</button></div>}
     </section>}
     {step === 2 && content && <section className="report-stage" aria-label="내용 수정">
-      <h3>보고서 내용을 검토하고 다듬어 주세요.</h3><p className="hint">검토 요지 → 지역 현황 → 서비스 제안 → 향후 조치 순서입니다.{content.mode ? ` · ${content.mode}` : ''}</p>
+      <h3>보고서 내용을 검토하고 다듬어 주세요.</h3><p className="hint">검토 요지 → 지역 현황 → {planning ? '사업 구상 제안' : '서비스 제안'} → 향후 조치 순서입니다.{content.mode ? ` · ${content.mode}` : ''}</p>
       {content.notice && <p className="notice">{content.notice}</p>}
-      <div className="report-form report-editor">{[['title', '보고서 제목', 80], ['summary', '검토 요지', 350], ['situation', '지역 현황', 900], ['proposal', '복지서비스 연계·추진 제안', 1200], ['next_steps', '향후 조치 및 담당자 의견', 600]].map(([key, label, limit]) => <label className="full" key={key}>{label}<textarea aria-label={label} rows={key === 'title' ? 2 : 4} maxLength={limit} disabled={working} value={content[key]} onChange={e => setContent(prev => ({ ...prev, [key]: e.target.value }))} /><small>{content[key].length} / {limit}자</small></label>)}</div>
+      {hasRecord && !recordIncluded && <p className="hint">업무 기록에 저장한 검토 의견·후속 조치가 아직 초안에 없습니다. <button className="text-button" disabled={working} onClick={insertRecord}>업무 기록 의견 넣기</button></p>}
+      <div className="report-form report-editor">{[['title', '보고서 제목'], ['summary', '검토 요지'], ['situation', '지역 현황'], ['proposal', planning ? '사업 구상·추진 제안' : '복지서비스 연계·추진 제안'], ['next_steps', '향후 조치 및 담당자 의견']].map(([key, label]) => [key, label, REPORT_LIMITS[key]]).map(([key, label, limit]) => <label className="full" key={key}>{label}<textarea aria-label={label} rows={key === 'title' ? 2 : 4} maxLength={limit} disabled={working} value={content[key]} onChange={e => setContent(prev => ({ ...prev, [key]: e.target.value }))} /><small>{content[key].length} / {limit}자</small></label>)}</div>
       <ReportQuality content={content} workflow={qualityWorkflow} />
-      {!canCreateFile && !staleContent && <p className="hint">작성자·부서와 보고서의 모든 항목을 입력하면 Word 파일을 만들 수 있습니다.</p>}
+      {content.previous_proposal && <details className="secondary-details"><summary>갱신 전 제안 내용</summary><p className="hint">필요한 문장을 위 제안 칸으로 옮겨 쓰세요.</p><pre className="previous-proposal">{content.previous_proposal}</pre><button className="text-button" disabled={working} onClick={() => setContent(prev => ({ ...prev, previous_proposal: undefined }))}>갱신 전 내용 닫기</button></details>}
+      {!canCreateFile && !staleContent && <p className="hint">{placeholderLeft ? '제안 칸의 안내 문구를 지우고 구상·제안 내용을 직접 작성하면 Word 파일을 만들 수 있습니다.' : overLimit ? '글자 수를 넘은 항목을 줄이면 Word 파일을 만들 수 있습니다.' : '작성자·부서와 보고서의 모든 항목을 입력하면 Word 파일을 만들 수 있습니다.'}</p>}
       <div className="form-actions"><button className="primary" disabled={working || !canCreateFile} onClick={preview}>{draftBusy ? 'Word 파일 만드는 중…' : 'Word 파일 만들고 확인하기'}</button><button className="secondary" disabled={working} onClick={() => setStep(1)}>작성 정보 수정</button></div>
     </section>}
     {step === 3 && content && <section className="report-stage" aria-label="파일 확인·저장">

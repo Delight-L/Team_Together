@@ -69,6 +69,7 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .report-quality summary, .secondary-details > summary, .region-picker > summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
 .secondary-details { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 12px; }
 .secondary-details > details { margin-top: 16px; }
+.previous-proposal { white-space: pre-wrap; font: inherit; font-size: 13px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; max-height: 240px; overflow: auto; }
 .secondary-details > button { margin: 12px 0; }
 .section-switch { display: flex; width: fit-content; max-width: 100%; gap: 4px; padding: 4px; margin: 24px 0; border-radius: 12px; background: var(--line); }
 .section-switch button { padding: 10px 24px; border-radius: 9px; color: var(--text-muted); background: transparent; border: 0; }

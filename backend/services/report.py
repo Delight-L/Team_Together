@@ -4,7 +4,7 @@ from io import BytesIO
 from pathlib import Path
 from zipfile import ZipFile
 from lxml import etree
-from backend.agents.report_writer import SECTIONS, generate_draft, validate_content, report_source_label
+from backend.agents.report_writer import section_labels, generate_draft, validate_content, report_source_label
 from backend.common import seoul_now
 
 TEMPLATE = Path(__file__).resolve().parents[1] / 'resources' / 'templates' / '약식보고서_서식_보고서.docx'
@@ -72,7 +72,8 @@ def build_report(context, rows, author, department, opinion, source_note, workfl
             cell.remove(paragraph)
         _allow_growth(overview)
         body.append(overview)
-        for key, label in SECTIONS:
+        # 사업 검토가 없는 구상 보고서는 제안 항목 이름을 '사업 구상·추진 제안'으로 씁니다.
+        for key, label in section_labels(not workflow.get('reviews')):
             paragraph = deepcopy(heading)
             _replace_text(paragraph, '□ ' + label)
             etree.SubElement(paragraph.find('w:pPr', NS), _tag('keepNext'))

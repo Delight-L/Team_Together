@@ -76,6 +76,7 @@ ROUTES = {
     ('GET', '/api/report/draft'): routes_work.report_draft_file,
     ('POST', '/api/experience'): routes_work.experience_save,
     ('POST', '/api/report/content'): routes_work.report_content,
+    ('POST', '/api/report/proposal'): routes_work.report_proposal,
     ('POST', '/api/report/preview'): routes_work.report_preview,
     ('POST', '/api/workflow/start'): routes_work.workflow_start,
     ('POST', '/api/workflow/restart'): routes_work.workflow_restart,

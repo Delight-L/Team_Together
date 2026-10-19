@@ -185,6 +185,25 @@ def report_content(request):
     return dict(draft, analysis_evidence=current['analysis_evidence'], analysis_source=current['analysis_source'])
 
 
+def report_proposal(request):
+    """POST /api/report/proposal: 편집 중인 초안의 제안 칸만 최신 사업 검토로 다시 만듭니다.
+
+    초안을 만든 뒤 사업 검토가 바뀌었을 때, 나머지 항목의 편집 내용을 지키며 근거 버전만 맞추는 용도입니다.
+    업무 기록 포함 여부 등 초안의 선택은 유지하고, 사업은 지금 저장된 검토를 모두 넣습니다.
+    """
+    context, data, evidence = work_context(request)
+    current, _ = report_workflow(context, data, evidence)
+    selection = request.params.get('selection')
+    if isinstance(selection, dict):
+        from backend.agents.report_material import latest_reviews
+        selection = dict(selection, services=list(latest_reviews(current.get('reviews', []))))
+    elif selection is not None:
+        raise ValueError('보고서 포함 항목이 올바르지 않습니다.')
+    uses_record = isinstance(selection, dict) and (selection.get('include_note') or selection.get('include_followup'))
+    draft = report_writer.generate_draft(context, current, selection, experience_store.load(context) if uses_record else None)
+    return {key: draft.get(key) for key in ('proposal', 'review_id', 'review_snapshot', 'kind', 'selection', 'experience_version')}
+
+
 def report_preview(request):
     """POST /api/report/preview: 작성 내용으로 Word 파일을 만들고, 확인용 토큰을 돌려줍니다.
 
@@ -206,6 +225,8 @@ def report_preview(request):
     content = None
     if 'content' in request.params:
         content = report_writer.validate_content(request.params['content'])
+        if report_writer.PLANNING_PROPOSAL in content['proposal']:
+            raise ValueError('제안 칸의 안내 문구를 지우고 구상·제안 내용을 직접 작성하세요.')
     if content:
         evidence_token = request.params['content'].get('evidence_token')
         if evidence_token:
