@@ -276,6 +276,17 @@ def _query_story_period(intent):
         if start==end:return observation_period_text(start)+' 자료에서는'
     return '조회한 자료에서는'
 
+def _previous_month_label(value):
+    """Return the calendar month immediately before a YYYY-MM result month."""
+    month=str(value or '')[:7]
+    try:
+        year, number=map(int,month.split('-'))
+        if not 1 <= number <= 12: raise ValueError
+    except ValueError:
+        return '전월'
+    index=year*12+number-2
+    return f'{index // 12}년 {index % 12 + 1}월'
+
 def _group_signal_rows_by_dong(rows):
     """답변에 표시할 신호 행을 행정동별로 입력 순서대로 묶는다."""
     groups={}
@@ -548,11 +559,12 @@ def template_answer(intent:QueryIntent,evidence:Evidence,knowledge:str,explanati
         return '\n'.join(_reason_answer(evidence))
     if intent.question_type=='previous':
         if not evidence.rows:return '조회 기간에 전월과 비교할 탐지 결과가 없습니다.'
-        lines=['직전 기준월 신호 여부:']
-        for r in evidence.rows[:10]:
-            flag=r.get('consecutive_signal');label='확인 불가' if flag is None else '탐지됨' if flag else '미탐지'
-            lines.append(f"- {r.get('행정동')} · {observation_period_text(r.get('date'))}: {label}")
-        return '\n'.join(lines)
+        # “전월에도 탐지됐나요?” is a follow-up about the current result, not
+        # a request for every historical row inherited from the prior scope.
+        # Use the most recent result month and state only its prior-month flag.
+        r=max(evidence.rows,key=lambda row:str(row.get('date') or ''))
+        flag=r.get('consecutive_signal');label='확인 불가' if flag is None else '탐지됨' if flag else '미탐지'
+        return f"{r.get('행정동','선택한 지역')}의 전월({_previous_month_label(r.get('date'))}) 탐지 여부: {label}"
     lines=[evidence.summary]
     if evidence.rows:
         lines+=['']+[ '- '+_format_row(r) for r in evidence.rows[:10]]
