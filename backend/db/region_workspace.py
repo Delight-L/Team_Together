@@ -59,11 +59,17 @@ SCORE_TERMS = ('두 값은 비교하는 기준이 다릅니다.\n'
 
 REGION_TYPE_TERMS = ('지역유형', '고활동', '청년유동', '1인가구 중심형', '2인가구', '다인가구')
 REGION_TYPE_EXPLANATION = (
-    '“고활동·청년유동·1인가구 중심형”은 지도에서 비슷한 지역 특성을 묶어 부르는 이름입니다. '
-    '청년층의 유동 활동과 1인 가구 비중이 다른 지역 유형보다 상대적으로 두드러진다는 뜻이에요. '
-    '이 이름만으로 특정 주민의 고립 위험, 복지 필요, 이상신호가 있다고 판단하는 것은 아닙니다. '
-    '선택한 동을 지도에서 고르면 그 동의 실제 변화 지표와 함께 확인할 수 있어요.'
+    '“고활동·청년유동·1인가구 중심형”은 **머신러닝 군집화 결과**로 붙인 지역유형 이름입니다. '
+    '2025년 하반기 강남구 22개 동의 유동 활동·인구·가구 구성·구조적 복지 배경을 13개 지표로 요약하고, '
+    'PCA로 비교 기준을 정리한 뒤 K-means(k=3)로 특성이 비슷한 동을 세 묶음으로 나눴습니다. '
+    '이 동은 그중 청년층 유동 활동과 1인 가구 비중이 다른 묶음보다 상대적으로 두드러진 군집에 속해 이 이름을 받았습니다. '
+    '군집 이름은 결과를 이해하기 위한 요약일 뿐, 특정 주민의 고립 위험·복지 필요·이상신호 원인이나 우열을 판정하지 않습니다. '
+    '실제 변화 여부는 별도의 통화·문자·이동 분석 결과로 확인해야 합니다.'
 )
+
+
+def _is_region_type_question(question):
+    return any(term in question for term in REGION_TYPE_TERMS)
 
 
 def _finite(value):
@@ -121,7 +127,7 @@ def explain_region(context, question, data):
     if any(term in question for term in ['자료 부족', '자료 없음', '이력 부족', '판단 보류', '기준 미해당']) \
             and any(word in question for word in ['뜻', '의미', '차이', '다른', '다르', '무엇', '뭐']):
         answer = STATUS_TERMS
-    elif any(term in question for term in REGION_TYPE_TERMS) and any(word in question for word in ['뜻', '의미', '뭐', '무엇', '설명', '뭔']):
+    elif _is_region_type_question(question):
         answer = REGION_TYPE_EXPLANATION
     elif any(term in question for term in ['평소 대비', '전월 변화율']):
         answer = SCORE_TERMS
@@ -152,6 +158,10 @@ def ai_explain_region(context, question, data, history):
         data = dict(data, assessment=[r for r in data['assessment'] if r.get('age_label') == context['age']])
     from backend.chatbot.explain_ai import ask_with_evidence
     grounded = explain_region(context, question, data)  # 질문 길이 검사
+    # 군집의 학습·분류 방식은 DB1의 고정 모델 설명으로만 답한다. AI가
+    # 근거에 없는 이유나 변수 비중을 보태지 않도록 생성 단계를 건너뛴다.
+    if _is_region_type_question(question):
+        return grounded
     district = context.get('district')
     fields = ['행정동명', '기준연월', 'metric_label', 'change_pct', 'relative_change_pp', 'is_risk_signal', 'has_enough_history']
     if district:

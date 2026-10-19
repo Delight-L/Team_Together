@@ -7,6 +7,7 @@ import unittest
 from backend.agents.regional_v16.chatbot_agent.answer_generator import _age_activity_answer, _reason_answer
 from backend.agents.regional_v16.chatbot_agent.schemas import Evidence, QueryIntent
 from backend.db.group_workspace import _is_provenance_question, _provenance_answer
+from backend.db.region_workspace import REGION_TYPE_EXPLANATION, _is_region_type_question
 
 
 class ProvenanceAnswerTests(unittest.TestCase):
@@ -21,6 +22,12 @@ class ProvenanceAnswerTests(unittest.TestCase):
     def test_does_not_treat_a_service_source_as_dashboard_provenance(self):
         self.assertFalse(_is_provenance_question("이 복지사업의 출처를 알려줘"))
         self.assertTrue(_is_provenance_question("위 화면 데이터는 어디서 다운받았어?"))
+        self.assertTrue(_is_provenance_question("위 자료의 원본데이터를 설명해줘"))
+
+    def test_cluster_question_uses_the_fixed_machine_learning_explanation(self):
+        self.assertTrue(_is_region_type_question("고활동·청년유동·1인가구 중심형은 왜 나온 거야?"))
+        self.assertIn("머신러닝 군집화 결과", REGION_TYPE_EXPLANATION)
+        self.assertIn("K-means(k=3)", REGION_TYPE_EXPLANATION)
 
     def test_overall_signal_omits_age_panel_but_explicit_age_keeps_its_scope(self):
         overall = _reason_answer(Evidence("signal", "", rows=[{"행정동": "역삼2동", "date": "2025-11", "signal_type": "communication"}]))[0]

@@ -54,6 +54,11 @@ class RegionAnalysisAgent(RegulatedAgent):
             return True
         if questions.is_screen_term_question(question):
             return True
+        # 원본·다운로드 출처 질문은 화면에 열린 그룹의 실제 입력 메타데이터로
+        # 답해야 한다. v16의 일반 신호 설명이나 외부 AI가 이를 대신하면,
+        # 현재 화면과 무관한 탐지 요약으로 흘러갈 수 있다.
+        if request.group and group_workspace._is_provenance_question(question):
+            return True
         if request.group and questions.is_group_focused(question):
             return True
         return not v16.data_ready()
