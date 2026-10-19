@@ -59,6 +59,13 @@ class RegionAnalysisAgent(RegulatedAgent):
         if (region_workspace._is_signal_list_question(question)
                 or region_workspace._is_signal_presence_question(question)):
             return True
+        if region_workspace._is_signal_reason_question(question):
+            # A selected dashboard case is authoritative only for that same dong.
+            # Explicit questions about another dong, missing selections, or missing
+            # assessment payloads remain on v16 where their scope can be resolved.
+            named = {match.group() for match in questions.DISTRICT_NAME.finditer(question)}
+            return bool(request.district and 'assessment' in request.data
+                        and (not named or request.district in named))
         # 연령대가 선택된 사회적 연결 카드의 추가 지표는 DB1 서울서베이
         # 집계 목록으로 답한다. 일반 v16 신호 설명으로 보내면 현재 카드와
         # 관계없는 탐지 요약이 될 수 있다.
@@ -100,6 +107,10 @@ class RegionAnalysisAgent(RegulatedAgent):
         question = request.question
         if (region_workspace._is_signal_list_question(question)
                 or region_workspace._is_signal_presence_question(question)):
+            return region_workspace.explain_region(request.context, question, request.data)
+        if region_workspace._is_signal_reason_question(question):
+            if use_ai:
+                return region_workspace.ai_explain_region(request.context, question, request.data, _recent(request))
             return region_workspace.explain_region(request.context, question, request.data)
         # Social-connection survey questions use the DB1 annual survey context,
         # even when the dashboard also has a group selection.  Do not let the

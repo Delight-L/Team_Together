@@ -47,11 +47,23 @@ def region_status(data, city, month, district):
 def _is_signal_presence_question(question):
     """Detect questions asking whether the selected dong has an official signal."""
     compact = str(question).replace(' ', '')
+    if _is_signal_reason_question(compact):
+        return False
     asks_presence = any(word in compact for word in ('이상신호가있', '이상신호가잡혔', '이상신호가탐지',
                                                       '신호가있', '신호가잡혔', '신호가탐지',
                                                       '확인대상인가', '확인대상이야', '후보인가', '후보야'))
     asks_definition = any(word in compact for word in ('기준', '방법', '뜻', '의미', '무엇'))
     return asks_presence and not asks_definition
+
+
+def _is_signal_reason_question(question):
+    """Detect requests for the selected dashboard case's detection evidence."""
+    compact = str(question).replace(' ', '')
+    has_signal_subject = any(term in compact for term in ('신호', '탐지', '후보', '확인대상', '이사례'))
+    asks_reason = any(term in compact for term in ('왜', '이유', '근거'))
+    # “왜 잡혔나요?” is meaningful as a follow-up while a dashboard case is selected.
+    contextual_short = any(term in compact for term in ('왜잡혔', '왜잡힌'))
+    return (has_signal_subject and asks_reason) or contextual_short
 
 
 def _is_signal_list_question(question):
@@ -342,6 +354,9 @@ def explain_region(context, question, data):
     asks_next = any(word in question for word in ['다음', '무엇을', '어떻게'])
     if _is_signal_list_question(question):
         answer = signal_list_answer(context, data)
+    elif _is_signal_reason_question(question):
+        status = region_status(data, context.get('city', ''), context.get('month', ''), context.get('district'))
+        answer = _summary(data, context) if status['count'] else signal_presence_answer(context, data)
     elif _is_signal_presence_question(question):
         answer = signal_presence_answer(context, data)
     elif _is_tab_question(question):

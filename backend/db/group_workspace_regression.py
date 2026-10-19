@@ -9,9 +9,12 @@ from backend.agents.regional_v16.chatbot_agent.answer_generator import _age_acti
 from backend.agents.regional_v16.chatbot_agent.conversation_memory import ConversationMemory
 from backend.agents.regional_v16.chatbot_agent.schemas import Evidence, QueryIntent
 from backend.bomi.adapters.v16 import _ScopedResolver
+from backend.bomi.agents.region_analysis import RegionAnalysisAgent
+from backend.bomi.request import ChatRequest
 from backend.db.group_workspace import _is_provenance_question, _provenance_answer
 from backend.db.region_workspace import (REGION_TYPE_EXPLANATION, SURVEY_OTHER_METRICS_EXPLANATION,
-                                         _is_region_type_question, _is_survey_metrics_question, explain_region,
+                                         _is_region_type_question, _is_signal_presence_question,
+                                         _is_signal_reason_question, _is_survey_metrics_question, explain_region,
                                          survey_metrics_answer)
 
 
@@ -110,13 +113,58 @@ class ProvenanceAnswerTests(unittest.TestCase):
         answer = explain_region(context, '왜 삼성1동이 확인 대상인가요?', data)['answer']
         self.assertIn('공식 이상신호 탐지 0건', answer)
 
+    def test_signal_reason_phrasings_use_selected_dashboard_evidence(self):
+        reason_phrases = ('왜 신호로 잡혔나요?', '왜 신호가 잡혔나요?', '왜 신호로 잡힌 거야?',
+                          '왜 신호가 나온 거야?', '이 사례의 탐지 이유', '탐지 이유가 뭐야?',
+                          '왜 탐지됐나요?', '왜 잡혔어요?', '이 동은 왜 후보인가요?',
+                          '왜 확인 대상인가요?', '후보 선정 이유가 뭐예요?',
+                          '확인 대상으로 선정된 이유', '이상 신호가 발생한 이유가 뭐야?',
+                          '어떤 근거로 탐지된 거예요?', '왜 탐지되지 않았나요?')
+        for question in reason_phrases:
+            with self.subTest(question=question):
+                self.assertTrue(_is_signal_reason_question(question))
+                self.assertFalse(_is_signal_presence_question(question))
+
+        context = {'city': '강남구', 'district': '역삼2동', 'month': '2025-11', 'age': '30대'}
+        data = {'months': ['2025-10', '2025-11'], 'assessment': [
+            {'행정동명': '역삼2동', '기준연월': '2025-11', 'age_label': '30대', 'age_band': '30s',
+             'case_id': 'ys2-30', 'metric_label': '전화 연락', 'change_pct': -2.25,
+             'is_risk_signal': True, 'has_enough_history': True},
+            {'행정동명': '역삼2동', '기준연월': '2025-11', 'age_label': '30대', 'age_band': '30s',
+             'case_id': 'ys2-30', 'metric_label': '문자 연락', 'change_pct': -4.0,
+             'is_risk_signal': True, 'has_enough_history': True},
+        ]}
+        answer = explain_region(context, '왜 신호로 잡혔나요?', data)['answer']
+        self.assertIn('역삼2동', answer)
+        self.assertIn('전화 연락 -2.2%', answer)
+        self.assertIn('문자 연락 -4.0%', answer)
+        self.assertIn('후보 기준에 해당하는 연령집단은 1개', answer)
+
+    def test_signal_reason_workspace_scope_stays_on_selected_dashboard_case(self):
+        selected = ChatRequest(messages=({'role': 'user', 'content': '왜 신호로 잡혔나요?'},),
+                               context={'city': '강남구', 'district': '역삼2동', 'month': '2025-11'},
+                               data={'assessment': []})
+        self.assertTrue(RegionAnalysisAgent._uses_workspace(selected))
+
+        other_dong = ChatRequest(messages=({'role': 'user', 'content': '삼성1동은 왜 탐지됐나요?'},),
+                                 context=selected.context, data=selected.data)
+        self.assertFalse(RegionAnalysisAgent._uses_workspace(other_dong))
+        no_district = ChatRequest(messages=({'role': 'user', 'content': '탐지 이유가 뭐야?'},),
+                                  context={'city': '강남구', 'month': '2025-11'}, data=selected.data)
+        self.assertFalse(RegionAnalysisAgent._uses_workspace(no_district))
+        no_assessment = ChatRequest(messages=selected.messages, context=selected.context, data={})
+        self.assertFalse(RegionAnalysisAgent._uses_workspace(no_assessment))
+
+        self.assertFalse(_is_signal_reason_question('지역유형 선정 근거를 알려줘'))
+        self.assertFalse(_is_signal_reason_question('복지사업 선정 근거를 알려줘'))
+
     def test_signal_list_question_does_not_treat_proxy_candidates_as_official(self):
         context = {'city': '강남구', 'month': '2025-12'}
         answer = explain_region(context, '이번 달 후보 지역을 알려 줘', {
             'months': ['2025-12'], 'assessment': []
         })['answer']
-        self.assertIn('공식 이상신호 탐지 목록', answer)
-        self.assertIn('대시보드의 탐지 건수가 0건이면', answer)
+        self.assertIn('공식 이상신호 탐지 0건', answer)
+        self.assertIn('이번 달 후보 지역은 없습니다', answer)
 
 
 if __name__ == "__main__":
