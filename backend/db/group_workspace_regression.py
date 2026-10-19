@@ -5,7 +5,7 @@ Usage: ``python -m backend.db.group_workspace_regression``.
 import unittest
 from pathlib import Path
 
-from backend.agents.regional_v16.chatbot_agent.answer_generator import _age_activity_answer, _reason_answer
+from backend.agents.regional_v16.chatbot_agent.answer_generator import _age_activity_answer, _reason_answer, template_answer
 from backend.agents.regional_v16.chatbot_agent.conversation_memory import ConversationMemory
 from backend.agents.regional_v16.chatbot_agent.schemas import Evidence, QueryIntent
 from backend.bomi.adapters.v16 import _ScopedResolver
@@ -91,6 +91,11 @@ class ProvenanceAnswerTests(unittest.TestCase):
 
         tab_answer = explain_region(context, '어느 지역을 살펴볼까요? 탭에 대해 설명해줘', data)['answer']
         self.assertIn('탐지월 전후의 지역 변화 흐름', tab_answer)
+
+    def test_empty_reason_answer_names_the_selected_dong(self):
+        intent = QueryIntent(purpose='track_change', question_type='reason', dong='개포3동', age_band='40s', age_scope_explicit=True)
+        answer = template_answer(intent, Evidence('선정 근거', '조건에 맞는 신호 기록은 0건입니다.', []), '')
+        self.assertIn('개포3동의 조건에 맞는 신호 기록은 0건입니다.', answer)
 
 
 if __name__ == "__main__":
