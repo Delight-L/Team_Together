@@ -20,6 +20,22 @@ const MENU_SUGGESTIONS = {
   records: ['검토 의견에 어떤 내용을 기록해야 하나요?', '현장에서 추가로 확인할 사항을 알려 줘', '사업 연계 전에 확인할 일을 알려 줘'],
   report: ['보고서 초안 만들어 줘', '지역 집계자료를 보고서에 어떻게 설명해야 하나요?', '보고서에 단정하면 안 되는 내용을 알려 줘'],
 };
+
+// 서버 답변에 이미 들어 있는 문단·목록 줄바꿈은 유지하고,
+// 줄바꿈 없이 이어진 설명만 두 문장 단위로 나눠 읽기 쉽게 표시합니다.
+function formatAssistantText(text) {
+  if (!text) return text;
+  return text.split('\n').map((line) => {
+    if (!line.trim() || /^\s*[•·\-*]/.test(line)) return line;
+    let sentenceCount = 0;
+    return line.replace(/([.!?。！？])(?=\s+|$)/g, (match, punctuation, offset, source) => {
+      sentenceCount += 1;
+      if (sentenceCount % 2 !== 0 || offset + match.length >= source.length) return match;
+      return `${match}\n\n`;
+    });
+  }).join('\n');
+}
+
 // 답변을 기다리는 동안 보이는 말풍선: 움직이는 보미와 «. → .. → ...» 점.
 // 운영체제의 움직임 줄이기 설정을 켠 사용자에게는 멈춘 그림과 고정된 «…»을 보여 줍니다.
 function useReducedMotion() {
@@ -214,7 +230,7 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
       </div>}
       {chat.messages.map((m, i) => m.role === 'assistant' && !m.text && chat.busy && i === chat.messages.length - 1 ? <Typing key={i} /> : <article key={i} className={`bomi-message ${m.role}`}>
         <small>{m.role === 'user' ? '나' : m.agent ? `보미 · ${m.agent}` : '보미'}</small>
-        <p>{m.text || '답변을 완료하지 못했습니다.'}</p>
+        <p>{m.role === 'assistant' ? formatAssistantText(m.text || '답변을 완료하지 못했습니다.') : (m.text || '답변을 완료하지 못했습니다.')}</p>
         {m.interrupted && <span className="bomi-notice">완료되지 않은 응답입니다.</span>}
         {m.role === 'assistant' && m.mode && <div className="bomi-meta">
           <span className={`bomi-badge ${usedAi(m.mode) ? 'ai' : 'data'}`}>{usedAi(m.mode) ? 'AI 답변' : '자료 기반'}</span>
