@@ -54,6 +54,11 @@ class RegionAnalysisAgent(RegulatedAgent):
             return True
         if questions.is_screen_term_question(question):
             return True
+        # 후보·이상신호 목록과 확인 여부는 화면 헤더와 같은 공식 탐지
+        # 집계에서 답해야 합니다. v16 별도 저장소 결과를 섞지 않습니다.
+        if (region_workspace._is_signal_list_question(question)
+                or region_workspace._is_signal_presence_question(question)):
+            return True
         # 연령대가 선택된 사회적 연결 카드의 추가 지표는 DB1 서울서베이
         # 집계 목록으로 답한다. 일반 v16 신호 설명으로 보내면 현재 카드와
         # 관계없는 탐지 요약이 될 수 있다.
@@ -93,6 +98,9 @@ class RegionAnalysisAgent(RegulatedAgent):
 
     def _explain(self, request: ChatRequest, use_ai: bool) -> dict:
         question = request.question
+        if (region_workspace._is_signal_list_question(question)
+                or region_workspace._is_signal_presence_question(question)):
+            return region_workspace.explain_region(request.context, question, request.data)
         # Social-connection survey questions use the DB1 annual survey context,
         # even when the dashboard also has a group selection.  Do not let the
         # generic group explanation or welfare agent turn them into a refusal.

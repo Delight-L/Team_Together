@@ -60,10 +60,18 @@ def _is_signal_list_question(question):
 
 
 def signal_list_answer(context, data):
-    month = context.get('month', '선택한 기준월')
-    return (f'{month} 기준 공식 이상신호 탐지 목록을 확인해야 후보 지역을 안내할 수 있습니다. '
-            '현재 연결된 지역 보조자료의 변화·후보 표시는 공식 탐지 건수와 다른 기준일 수 있어 후보 지역으로 단정하지 않습니다. '
-            '대시보드의 탐지 건수가 0건이면 해당 기준월의 공식 후보 지역도 없습니다.')
+    city, month = context.get('city', ''), context.get('month', '')
+    if city not in ANALYZED_CITIES or not month or 'assessment' not in data:
+        return (f'{month or "선택한 기준월"}의 공식 이상신호 목록을 현재 연결된 대시보드 자료에서 확인할 수 없습니다. '
+                '지역 보조자료의 변화만으로 후보 지역을 안내하지 않습니다.')
+    units = sorted({row.get('행정동명') for row in _rows(data, city, month) if row.get('행정동명')})
+    found = [(name, region_status(data, city, month, name)) for name in units]
+    candidates = [(name, status) for name, status in found if status['count']]
+    if not candidates:
+        return f'{month} 기준 공식 이상신호 탐지 0건입니다. 이번 달 후보 지역은 없습니다.'
+    details = ' · '.join(f'{name} {status["count"]}건' for name, status in candidates)
+    total = sum(status['count'] for _, status in candidates)
+    return f'{month} 기준 공식 이상신호는 {len(candidates)}개 동, {total}건입니다: {details}. 개인별 상태나 신호 발생 원인을 확정하는 결과는 아닙니다.'
 
 
 def signal_presence_answer(context, data):
