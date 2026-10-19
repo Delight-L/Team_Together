@@ -55,6 +55,15 @@ class ProvenanceAnswerTests(unittest.TestCase):
         self.assertEqual((intent.start_month, intent.end_month, intent.age_band), ('2025-10', '2025-10', '40s'))
         self.assertTrue(intent.age_scope_explicit)
 
+    def test_dashboard_case_count_question_expands_to_all_cases(self):
+        resolver = _ScopedResolver(Path('.'), 'test', ('2025-07', '2025-12'),
+                                   {'district': '개포3동', 'month': '2025-10', 'age': '40대'}, None, False)
+        intent = resolver.resolve('탐지가 9건인데 왜 이것만 나와?', {'개포3동', '삼성1동'}, ConversationMemory())
+        self.assertEqual(intent.question_type, 'signals')
+        self.assertEqual(intent.dongs, ())
+        self.assertEqual((intent.start_month, intent.end_month, intent.age_band), ('2025-10', '2025-10', '40s'))
+        self.assertTrue(intent.age_scope_explicit)
+
     def test_overall_signal_omits_age_panel_but_explicit_age_keeps_its_scope(self):
         overall = _reason_answer(Evidence("signal", "", rows=[{"행정동": "역삼2동", "date": "2025-11", "signal_type": "communication"}]))[0]
         self.assertNotIn("같은 기준월의 연령별 변화도 함께 볼게요.", overall)
