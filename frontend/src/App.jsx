@@ -622,11 +622,16 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
     [loaded, setLoaded] = useState(false),
     [pageSize, setPageSize] = useState(5),
     [page, setPage] = useState(1),
-    [selected, setSelected] = useState('');
+    [selected, setSelected] = useState(''),
+    [showAll, setShowAll] = useState(false);
   const [reviewDrafts, setReviewDrafts, clearReviewDrafts, storageFailed] = useDraft(draftKey(user, context, 'services'), {});
-  const pageCount = Math.max(1, Math.ceil(matches.length / pageSize));
+  // 이번 달 신호와 연결 근거가 있는 사업을 먼저 보여 주고, 나머지 같은 시·도 사업은 요청할 때만 펼칩니다.
+  // 근거 있는 사업이 하나도 없으면 전체 후보를 그대로 보여 줍니다.
+  const related = matches.filter((m) => m.reasons.length);
+  const shown = showAll || !related.length ? matches : related;
+  const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
   const pageStart = (page - 1) * pageSize;
-  const visibleMatches = matches.slice(pageStart, pageStart + pageSize);
+  const visibleMatches = shown.slice(pageStart, pageStart + pageSize);
   function changePage(nextPage) {
     setPage(nextPage);
     setSelected('');
@@ -651,6 +656,7 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
     try {
       setMatches((await api('/services?' + query(context))).matches);
       setLoaded(true);
+      setShowAll(false);
       setPage(1);
     } catch (e) {
       setError(e.message);
@@ -682,6 +688,16 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
           </p>
         )}
         {matches.length > 0 && (
+          <p className="hint service-match-scope" role="status">
+            {related.length
+              ? <>이번 달 신호와 연결 근거가 있는 사업 {related.length}개{showAll ? `와 같은 시·도의 다른 후보 ${matches.length - related.length}개를 함께` : '를 먼저'} 보여 줍니다.{' '}
+                  <button className="text-button" disabled={busy || loading} onClick={() => { setShowAll(!showAll); changePage(1); }}>
+                    {showAll ? '근거 있는 사업만 보기' : `근거 없는 후보 ${matches.length - related.length}개도 보기`}
+                  </button></>
+              : `이번 달 신호와 직접 연결되는 사업이 없어 같은 시·도 후보 ${matches.length}개를 모두 보여 줍니다. 사업 조건을 보고 지역 필요와 맞는지 판단하세요.`}
+          </p>
+        )}
+        {matches.length > 0 && (
           <div className="service-list-toolbar">
             <label className="service-page-size">
               표시 개수
@@ -690,7 +706,7 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
                 {[5, 10, 15].map((size) => <option key={size} value={size}>{size}개씩</option>)}
               </select>
             </label>
-            <span className="service-result-count">총 {matches.length}개 · {pageStart + 1}–{Math.min(pageStart + pageSize, matches.length)}개 표시</span>
+            <span className="service-result-count">총 {shown.length}개 · {pageStart + 1}–{Math.min(pageStart + pageSize, shown.length)}개 표시</span>
             {pagination}
           </div>
         )}
