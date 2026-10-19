@@ -13,6 +13,46 @@ NEEDS = {
     '생활·경제': ['생계', '긴급', '경제', '지원금', '생활'],
 }
 
+_DIRECT_PROVENANCE_TERMS = ('원데이터', '원본데이터', '원본 데이터', '원본자료', '원본 자료', '데이터 출처', '자료 출처',
+                            '어떤 컬럼', '무슨 컬럼', '추출한 항목', '추출한 필드')
+_SOURCE_REQUEST_TERMS = ('출처', '어디서 다운', '어디서 내려', '어디서 받')
+_DASHBOARD_DATA_TERMS = ('자료', '데이터', '화면', '지표', '카드', '유동', '통화', '문자', '이동', '가구', '독거', '설문')
+
+
+def _is_provenance_question(question):
+    question = str(question).lower()
+    return (any(word in question for word in _DIRECT_PROVENANCE_TERMS) or
+            (any(word in question for word in _SOURCE_REQUEST_TERMS) and
+             any(word in question for word in _DASHBOARD_DATA_TERMS)))
+
+
+def _provenance_answer(detail):
+    """Explain the actual group-dashboard inputs without inventing a download URL.
+
+    The snapshot stores input hashes but not the provider's distribution URL.
+    This makes the missing URL an explicit fact, rather than a guessed link.
+    """
+    files = ', '.join(sorted(detail.get('sourceFiles', {}))) or '적재된 원본 파일'
+    return (
+        '이 화면의 유동량 카드는 DB1에 적재된 SKT 유동인구 원본에서 만든 집계입니다. '
+        f'이번 화면의 입력 파일 종류는 {files}입니다.\n\n'
+        '• 연령·성별 유동량과 오른쪽 월별 추이는 `age_pop`에서 가져옵니다. '
+        '`STD_YM`, `BLOCK_CD`, `X_COORD`, `Y_COORD`와 남성·여성별 10·20·30·40·50·60대 유동인구 열을 추출합니다. '
+        '블록코드 앞 7자리로 행정동을 연결한 뒤, 같은 동·월·연령·성별의 값을 합산합니다. '
+        '전월 변화율은 두 달 모두 있는 같은 블록·좌표만 비교해 계산합니다.\n\n'
+        '• 요일·시간대 그래프는 각각 `wkdy_pop`, `time_pop`에서 같은 식별 열과 '
+        '`FLOW_POP_CNT_MON`~`FLOW_POP_CNT_SUN`, `TMST_00`~`TMST_23`를 추출해 동 전체로 합산합니다. '
+        '그래프의 요일·시간대 자료는 선택한 연령·성별 자료가 아니라 동 전체의 별도 집계입니다.\n\n'
+        '• 화면에 함께 보이는 통화·문자·평일·휴일 이동 신호는 위 유동인구와 다른 DB1 동·연령별 탐지 자료입니다. '
+        '서울 열린데이터광장의 29개 통신정보(https://data.seoul.go.kr/dataList/OA-22267/F/1/datasetView.do)에서 행정동·성별·연령대·총인구수, 평균 통화대상자 수, 평균 문자대상자 수, '
+        '평일 총 이동 횟수, 휴일 총 이동 횟수 평균을 사용하며 성별 통합 값으로 판정합니다.\n\n'
+        '• 가구 구성은 서울시 공공통계의 세대원수별 세대수, 독거노인 비율은 동별 독거노인 현황과 65세 이상 등록인구, 관계망 카드는 '
+        '서울서베이(https://data.seoul.go.kr/dataList/OA-15564/F/1/datasetView.do)를 사용한 지역 배경 자료입니다. '
+        '이 값들은 선택 집단 유동량에서 역산한 값이 아닙니다. '
+        '현재 적재 메타데이터에는 SKT 원본의 외부 다운로드 URL이나 제공기관 배포 페이지가 기록돼 있지 않습니다. '
+        '그래서 확인되지 않은 링크·파일명은 안내하지 않으며, 화면의 조사 파일에서 실제 적재 파일과 실행 이력을 확인할 수 있습니다.'
+    )
+
 
 def context_key(user, context):
     """담당자·동·월·연령·성별이 다르면 별도의 검토 기록으로 저장합니다."""
@@ -69,7 +109,9 @@ def explain(context, question, detail=None):
     detail = group_detail(context) if detail is None else detail
     row = detail['current']
     label = f"{row['district']} · {row['age']} · {row['sex']}"
-    if any(word in question for word in ['독거', '지역 배경', '장애인']):
+    if _is_provenance_question(question):
+        answer = _provenance_answer(detail)
+    elif any(word in question for word in ['독거', '지역 배경', '장애인']):
         from backend.db.region_workspace import elderly_background
         answer = elderly_background(detail.get('regional', {}).get('structure'))
     elif any(word in question for word in ['뜻', '지표', '의미']):
@@ -107,6 +149,10 @@ def ai_explain(context, question, detail, history):
     """AI 사용 모드: 조회한 집단 자료를 근거로 AI가 설명합니다."""
     from backend.chatbot.explain_ai import ask_with_evidence
     grounded = explain(context, question, detail)  # 질문 길이와 근거 검사
+    # 출처 답변은 저장소가 확인한 항목만 그대로 보여 준다. 생성형 답변이
+    # 그럴듯한 다운로드 URL·원본 파일명·열을 보태지 않게 한다.
+    if _is_provenance_question(question):
+        return grounded
     evidence = {k: detail[k] for k in ['current', 'series', 'activity', 'note', 'runId']}
     evidence['regional_background'] = detail.get('regional', {}).get('structure')
     evidence['age_detection'] = detail.get('ageDetection')

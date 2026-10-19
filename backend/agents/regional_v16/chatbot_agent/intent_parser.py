@@ -132,7 +132,13 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
         '자료' in q and any(word in q for word in ('다른 동', '다른 지역', '나머지 동', '나머지 지역'))
         and any(word in q for word in ('없', '왜', '차이'))
     )
-    if age_coverage_followup:
+    direct_provenance_words=('원데이터','원본데이터','원본 데이터','원본자료','원본 자료','데이터 출처','자료 출처','어떤 컬럼','무슨 컬럼','추출한 항목','추출한 필드')
+    source_request_words=('출처','어디서 다운','어디서 내려','어디서 받')
+    dashboard_data_words=('자료','데이터','화면','지표','카드','유동','통화','문자','이동','가구','독거','설문')
+    if (any(word in q for word in direct_provenance_words) or
+            (any(word in q for word in source_request_words) and any(word in q for word in dashboard_data_words))):
+        purpose, kind = 'track_change', 'provenance'
+    elif age_coverage_followup:
         purpose, kind = 'track_change', 'age_data_coverage'
         dong = None
     elif any(word in q for word in ('소비','상권','거래')) and any(word in q for word in ('기준','급증 판단','급증 판정')):

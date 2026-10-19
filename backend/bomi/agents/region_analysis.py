@@ -54,6 +54,18 @@ class RegionAnalysisAgent(RegulatedAgent):
             return True
         if questions.is_screen_term_question(question):
             return True
+        # 연령대가 선택된 사회적 연결 카드의 추가 지표는 DB1 서울서베이
+        # 집계 목록으로 답한다. 일반 v16 신호 설명으로 보내면 현재 카드와
+        # 관계없는 탐지 요약이 될 수 있다.
+        if region_workspace._is_survey_metrics_question(question):
+            return True
+        if questions.is_tab_question(question):
+            return True
+        # 원본·다운로드 출처 질문은 화면에 열린 그룹의 실제 입력 메타데이터로
+        # 답해야 한다. v16의 일반 신호 설명이나 외부 AI가 이를 대신하면,
+        # 현재 화면과 무관한 탐지 요약으로 흘러갈 수 있다.
+        if request.group and group_workspace._is_provenance_question(question):
+            return True
         if request.group and questions.is_group_focused(question):
             return True
         return not v16.data_ready()
@@ -81,6 +93,17 @@ class RegionAnalysisAgent(RegulatedAgent):
 
     def _explain(self, request: ChatRequest, use_ai: bool) -> dict:
         question = request.question
+        # Social-connection survey questions use the DB1 annual survey context,
+        # even when the dashboard also has a group selection.  Do not let the
+        # generic group explanation or welfare agent turn them into a refusal.
+        if region_workspace._is_survey_metrics_question(question):
+            if use_ai:
+                return region_workspace.ai_explain_region(request.context, question, request.data, _recent(request))
+            return region_workspace.explain_region(request.context, question, request.data)
+        if questions.is_tab_question(question):
+            if use_ai:
+                return region_workspace.ai_explain_region(request.context, question, request.data, _recent(request))
+            return region_workspace.explain_region(request.context, question, request.data)
         if request.group:
             context, detail = request.group.context, request.group.detail
             if use_ai:

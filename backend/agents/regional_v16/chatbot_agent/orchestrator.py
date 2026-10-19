@@ -125,7 +125,7 @@ class Chatbot:
   explanation=retrieve_explanation(intent,evidence)
   # These answers are displayed first in the dashboard. Keep their structure
   # predictable and concise even when an optional language model is configured.
-  concise_types={"signals","rank_regions","reason","support","age_activity","consumption"}
+  concise_types={"signals","rank_regions","reason","support","age_activity","consumption","provenance"}
   text=(template_answer(intent,evidence,knowledge,explanation) if intent.question_type in concise_types or not self.allow_ai_generation
         else try_gemini(question,intent,evidence,knowledge,explanation,self.model,self.project_root) or template_answer(intent,evidence,knowledge,explanation))
   # 4. 답변 필터링. 실패하면 검증된 템플릿으로 되돌린다.

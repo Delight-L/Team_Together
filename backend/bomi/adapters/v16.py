@@ -47,6 +47,8 @@ SCREEN_SUMMARY = re.compile(
 SCREEN_REFERENCE = re.compile(
     r"대시보드|현재\s*(?:화면|선택)|지금\s*(?:화면|선택)|선택된\s*(?:화면|지역|동|연령)"
 )
+SELECTED_CASE_REFERENCE = re.compile(r"(?:이|현재\s*선택한)\s*(?:사례|케이스|신호|탐지)|탐지\s*이유")
+CASE_COUNT_REFERENCE = re.compile(r"(?:탐지|신호).{0,20}\d+\s*건|\d+\s*건.{0,20}(?:탐지|신호)")
 
 
 DEFAULT_MODEL = "gemini-2.5-flash-lite"
@@ -68,6 +70,18 @@ def _is_dashboard_summary(question: str) -> bool:
 def _references_dashboard(question: str) -> bool:
     """질문이 직전 대화가 아니라 현재 화면 선택을 명시적으로 가리키는지 확인한다."""
     return bool(SCREEN_REFERENCE.search(question))
+
+
+def _references_selected_case(question: str) -> bool:
+    """Whether the question refers to the dashboard's currently open case."""
+    return bool(SELECTED_CASE_REFERENCE.search(question))
+
+
+def _asks_for_all_selected_cases(question: str) -> bool:
+    """Whether the user is questioning a dashboard count rather than one case."""
+    compact = question.replace(' ', '')
+    return bool(CASE_COUNT_REFERENCE.search(question)) and any(
+        word in compact for word in ('왜', '이것만', '전체', '다른', '나머지', '모두'))
 
 
 def _configuration():
@@ -277,6 +291,37 @@ class _ScopedResolver(IntentResolver):
                              age_band=age, age_scope_explicit=age is not None,
                              use_previous_scope=False)
             self.last_source = "rule_dashboard_summary"
+            self.resolved_intent = self._defaults(intent, districts, memory, names)
+            return self.resolved_intent
+        # “탐지가 9건인데 왜 이것만 나와?” refers to the whole dashboard
+        # result set.  Keep the selected month and age, but clear the selected
+        # dong so the age-level repository returns all cases in the 1/9 list.
+        if parsed.question_type == "reason" and _asks_for_all_selected_cases(question):
+            screen_age = _age_band(self.context.get("age"))
+            intent = replace(parsed, purpose="find_region", question_type="signals", signal="any", needs=(),
+                             dong=None, dongs=(), start_month=parsed.start_month or self.context.get("month"),
+                             end_month=parsed.end_month or parsed.start_month or self.context.get("month"),
+                             age_band=parsed.age_band if parsed.age_scope_explicit else screen_age,
+                             age_scope_explicit=parsed.age_scope_explicit or screen_age is not None,
+                             use_previous_scope=False)
+            self.last_source = "rule_dashboard_case_count"
+            self.resolved_intent = self._defaults(intent, districts, memory, names)
+            return self.resolved_intent
+        # The group-dashboard suggestion "이 사례의 탐지 이유" refers to one
+        # dong×age detection row.  Without this rule it falls through to the
+        # legacy dong-only evidence table, which can truthfully have zero rows
+        # while the selected age-level dashboard case is detected.
+        if parsed.question_type == "reason" and _references_selected_case(question):
+            district = names[0] if len(names) == 1 else self.context.get("district")
+            month = parsed.start_month or self.context.get("month")
+            screen_age = _age_band(self.context.get("age"))
+            intent = replace(parsed, purpose="track_change", question_type="reason", signal="any", needs=(),
+                             dong=district, dongs=(district,) if district else (),
+                             start_month=month, end_month=parsed.end_month or month,
+                             age_band=parsed.age_band if parsed.age_scope_explicit else screen_age,
+                             age_scope_explicit=parsed.age_scope_explicit or screen_age is not None,
+                             use_previous_scope=False)
+            self.last_source = "rule_selected_dashboard_case"
             self.resolved_intent = self._defaults(intent, districts, memory, names)
             return self.resolved_intent
         if self.use_ai and self.config:

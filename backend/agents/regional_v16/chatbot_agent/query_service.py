@@ -51,37 +51,12 @@ def _metric_change(row,metric):
     valid=_signal_flag(row.get(metric+'_valid'))
     return math.expm1(value)*100 if isinstance(value,(int,float)) and math.isfinite(value) and valid is not False else None
 
-def _age_signal_changes(repo,signal_rows):
-    """Attach only the ages at each displayed overall signal's dong/month."""
-    changes=[]
-    for signal_row in signal_rows:
-        dong,date=signal_row.get('행정동'),signal_row.get('date')
-        if not dong or not date:
-            continue
-        kind=str(signal_row.get('signal_type',''))
-        metrics=CORE[:2] if kind=='communication' else CORE[2:] if kind=='mobility' else CORE
-        flag={'communication':'communication_signal','mobility':'mobility_signal',
-              'combined':'combined_signal'}.get(kind,'any_signal')
-        for band in AGE_LABEL:
-            frame=repo.activity(dong,date,date,band)
-            row=frame.iloc[0] if not frame.empty else {}
-            changes.append({
-                '행정동':dong,'date':date,'age_band':band,'signal_type':kind,
-                'changes':{metric:_metric_change(row,metric) for metric in metrics},
-                'age_signal':_signal_flag(row.get(flag)),
-                'assessment_status':row.get('assessment_status','missing'),
-                'signal_status':row.get('signal_status','not_available'),
-                'component_signals':{domain:_signal_flag(row.get(domain+'_signal'))
-                                     for domain in ('communication','mobility','combined')},
-                'any_signal':_signal_flag(row.get('any_signal')),
-            })
-    return changes
-
 def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
     names=intent.dongs or ((intent.dong,) if intent.dong else ())
     start,end,age=intent.start_month,intent.end_month,intent.age_band
     kind=intent.question_type
-    signal_age_changes=None
+    if kind=='provenance':
+        return Evidence('원본 데이터 출처', '화면 지표별 원본·추출 항목·가공 범위를 안내합니다.')
     if kind=='data_status':
         data=repo.pipeline_status()
         return Evidence('데이터 처리 상태','초기 이력과 새 원본 처리 범위입니다.',
@@ -228,10 +203,7 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
              'consumption_trends':consumption_trends(repo,names,start,end,age),
              'requested_period':{'start':start,'end':end}})
         return e
-    else:
-        raise ValueError('지원하지 않는 질문 유형입니다.')
-    if age is None and kind in {'signals','reason'} and e.rows and not intent.age_scope_explicit:
-        signal_age_changes=_age_signal_changes(repo,e.rows)
+    else:raise ValueError('지원하지 않는 질문 유형입니다.')
     if age:
         assessed=selected(repo.activity,age)
         statuses=assessed.get('assessment_status',pd.Series(dtype=object)).value_counts()
@@ -244,8 +216,6 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
         dates=[available_end]
     if context_names:
         e.supplementary=repo.supplements(context_names[:10],dates,age)
-        if signal_age_changes is not None:
-            e.supplementary['age_signal_changes']=signal_age_changes
         # A regional-background question without a selected signal month should
         # not expand into every available quarter of consumption data.
         if kind in {'support', 'context'} and dates:
