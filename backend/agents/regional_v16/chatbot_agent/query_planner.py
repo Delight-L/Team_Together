@@ -25,6 +25,7 @@ _REQUIRED_SLOTS = {
     "consumption_criteria": (),
     "data_status": (),
     "methodology": (),
+    "provenance": (),
 }
 
 

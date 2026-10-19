@@ -31,6 +31,27 @@ def consumption_criteria_answer():
             '다만 ‘이례적인 급증’으로 판정하려면 비교 기간·최소 거래량·계절성 등을 고려한 기준을 따로 정해야 합니다. '
             '지금 보여드리는 것은 증가율 비교이며, 공식 이상신호 판정은 아닙니다.')
 
+def provenance_answer():
+    """Describe only source facts that are recorded in the DB1 configuration/code.
+
+    The dashboard joins several source families.  A source URL or a physical
+    raw-file name is intentionally omitted when the repository has no verified
+    record for it; presenting a plausible-looking link would be misleading.
+    """
+    return '''이 화면은 하나의 원본 파일이 아니라, 카드별로 다른 원본을 가공해 보여줍니다.
+
+**통화·문자·평일·휴일 이동 변화**는 서울 열린데이터광장의 [29개 통신정보](https://data.seoul.go.kr/dataList/OA-22267/F/1/datasetView.do) 월별 파일에서 만들었습니다. 원본에서 `행정동코드`, `행정동`, `성별`, `연령대`, `총인구수`, `평균 통화대상자 수`, `평균 문자대상자 수`, `평일 총 이동 횟수`, `휴일 총 이동 횟수 평균`과 각 이동 지표의 미추정 인구수를 읽습니다. 화면값은 성별·연령 셀을 인구 가중해 행정동(또는 선택 연령) 단위로 만든 값이고, 기준월은 직전 3개월 관측을 가리킵니다.
+
+**오른쪽 유동량·연령 비율과 가구 구성 카드**는 프로젝트에 보관된 SKT 유동인구 원본 `flow_age_pop_YYYYMM`, `flow_time_pop_YYYYMM`, `flow_wkdy_pop_YYYYMM`과 서울시 등록인구·세대원수별 세대수 파일을 사용합니다. SKT 쪽에서는 연령별 유동량, 시간대별 유동량, 평일/휴일 유동량을 행정동 경계에 맞춰 집계하고, 등록인구에서는 연령 구성, 세대수에서는 1·2·3·4인 이상 가구 비율을 추출합니다. 이 저장소에는 해당 SKT 원본의 외부 다운로드 URL이나 공급자 배포 페이지가 기록돼 있지 않아, 링크를 임의로 안내하지 않습니다.
+
+**65세 이상 독거 비율**은 서울 열린데이터광장의 [독거노인 현황(성별/동별)](https://data.seoul.go.kr/bsp/wgs/dataView/data300View/91.do)과 같은 연도 4분기 65세 이상 등록인구를 결합한 값입니다. 원본에서는 동·연도·구분·성별별 독거노인 수를 읽고, 화면에는 `독거노인 수 ÷ 65세 이상 등록인구`를 사용합니다.
+
+**관계망·외로움 같은 설문 배경값**은 2022~2025 서울서베이 가구원 조사에서 가져옵니다. 자치구, 연령, 가구 식별자, 가중치와 연도별 설문 문항(도움 요청 가능 여부·가족 밖 외로움 관련 문항)을 추출해 강남구·연령대 참고값으로 계산합니다. 동 단위 추정치나 개인별 추적 자료는 아닙니다.
+
+**소비 카드가 있을 때**는 별도 신한카드 상권 원본에서 상점 소재지·기간·고객 연령·소비 분야·거래 건수를 추출해 일평균 거래 건수 변화를 계산합니다. 이 프로젝트에 보관된 설정에는 그 원본의 외부 다운로드 URL이 없어, 확인되지 않은 출처 링크는 표시하지 않습니다.
+
+화면에 실제 적재 파일명·기간·열을 보여 주는 기능은 아직 연결돼 있지 않습니다. 원본 파일이나 열 구성이 갱신되면, 적재 메타데이터를 읽는 방식으로 이 안내도 함께 갱신해야 합니다.'''
+
 def _age_activity_answer(intent,evidence):
     if not evidence.rows:return '선택한 지역과 기간에는 연령별 활동 자료가 없어 변화를 비교하기 어려워요.'
     paragraphs=['연령별로 활동이 얼마나 달라졌는지 살펴볼게요. 각 수치는 바로 앞 3개월 관측기간과 비교한 변화율이에요.']
@@ -242,18 +263,6 @@ def _age_status_story(rows,signal):
     sentences.append('연령별 증감과 이상신호 여부는 달라요. 각 연령대의 과거 변화와 판정 기준으로 따로 살펴봐요.')
     return ' '.join(sentences)
 
-def _age_changes_story(row,evidence):
-    dong,date=row.get('행정동'),row.get('date')
-    rows=[r for r in evidence.supplementary.get('age_signal_changes',[]) if r.get('행정동')==dong and r.get('date')==date]
-    if not rows:return ''
-    metrics=_signal_metrics(str(row.get('signal_type','')).lower())
-    lines=['같은 기준월의 연령별 변화도 함께 볼게요.']
-    for item in rows:
-        clauses=[_change_clause(METRICS[m],item.get('changes',{}).get(m)) for m in metrics]
-        lines.append(f"{_age_label(item.get('age_band'))}에서는 "+_join_change_clauses(clauses))
-    lines+=['',_age_status_story(rows,str(row.get('signal_type','')).lower())]
-    return '\n'.join(lines)
-
 def _reason_answer(evidence):
     if not evidence.rows:
         return ['선택한 지역·기간에는 이상신호 기록이 0건입니다. 이 결과는 해당 기준월에 추가 확인 기준에 해당하는 변화가 없었다는 뜻이며, 지역의 문제가 없다고 단정하는 것은 아닙니다.\n\n'
@@ -261,8 +270,6 @@ def _reason_answer(evidence):
     paragraphs=[]
     for row in evidence.rows[:3]:
         paragraphs+=_signal_story(row)
-        ages=_age_changes_story(row,evidence)
-        if ages:paragraphs.append(ages)
     if len(evidence.rows)>3:paragraphs.append(f"먼저 {len(evidence.rows)}건 중 3건을 보여드렸어요. 지역이나 기준월을 좁히면 나머지도 확인할 수 있어요.")
     paragraphs.append('지역 집계만으로 개인의 고립 여부나 변화의 원인을 판단할 수는 없어요.')
     return ['\n\n'.join(paragraphs)]
@@ -305,8 +312,6 @@ def _numbered_signal_groups(rows,evidence):
                 details.append(f"선택한 기간에 변화 신호가 {row['신호 건수']}건 확인됐어요.")
                 continue
             details+=_signal_story(row)
-            ages=_age_changes_story(row,evidence)
-            if ages:details.append(ages)
         cluster=_cluster_story(dong_rows[0],evidence)
         if cluster:details.append(cluster)
         blocks.append(f"{index}. {dong}\n"+'\n\n'.join(details))
@@ -332,8 +337,6 @@ def _concise_signal_list(intent,evidence):
             paragraphs+=_signal_story(row)
             cluster=_cluster_story(row,evidence)
             if cluster:paragraphs.append(cluster)
-            ages=_age_changes_story(row,evidence)
-            if ages:paragraphs.append(ages)
     if len(rows)>10:paragraphs.append(f"전체 {len(rows)}건 중 먼저 10건을 보여드렸어요.")
     if intent.limit and len(names)<intent.limit:
         paragraphs.append(f"요청하신 {intent.limit}곳보다 적은 이유는, 이번 조건에서 신호가 확인된 지역이 {len(names)}곳이기 때문이에요.")
@@ -524,6 +527,7 @@ def _context_lines(evidence,skip_regions=False,skip_local=False):
     return lines
 
 def template_answer(intent:QueryIntent,evidence:Evidence,knowledge:str,explanation:str='')->str:
+    if intent.question_type=='provenance':return provenance_answer()
     if intent.question_type=='age_activity':return _age_activity_answer(intent,evidence)
     if intent.question_type=='age_data_coverage':
         if not evidence.rows:return '직전 신호 사례와 같은 기준월의 연령별 자료를 찾지 못했습니다.'
