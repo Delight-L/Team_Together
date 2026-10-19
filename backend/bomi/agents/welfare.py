@@ -41,6 +41,7 @@ ELIGIBILITY_NOTICE = '현재 자격이 미확인인 사업의 신청 가능·불
 ELIGIBILITY_DECISIONS = ('신청할수없', '신청하실수없', '신청할수있', '신청하실수있', '신청가능합니다',
                          '신청가능해요', '현재모집중입니다', '현재접수중입니다', '상시모집입니다',
                          '신청불가', '신청불가능', '신청대상입니다', '자격이있습니다', '자격이없습니다')
+REVIEW_ACTION_LABEL = '사업 매칭 검토에서 검토하기'
 PLANNING_REQUEST = re.compile(
     r'기존(?:의)?(?:복지)?사업(?:말고|대신|이아닌)|'
     r'(?:새로운|새|신규)(?:복지)?(?:사업|프로그램).*(?:구상|기획|아이디어|설계|추천|제안)|'
@@ -80,6 +81,38 @@ def unverified_eligibility_answer(question: str, answer: str, records: list[dict
     return '\n\n'.join(lines) + source_footer(records)
 
 
+def review_key(record: dict) -> str | None:
+    """챗봇 자료 id(db:[...])를 사업 매칭 검토의 service key(mission_store.service_key)로 바꿉니다. 팀 문서는 None."""
+    if not str(record.get('id', '')).startswith('db:'):
+        return None
+    try:
+        parts = json.loads(record['id'][3:])
+    except ValueError:
+        return None
+    if parts[0] == 'api' and len(parts) == 2:
+        return json.dumps(['local_welfare_api', parts[1]], ensure_ascii=False)
+    if parts[0] in ('service', 'session') and len(parts) >= 4:
+        return json.dumps(parts[1:4], ensure_ascii=False)
+    return None
+
+
+def review_action(records: list[dict], context: dict) -> dict | None:
+    """답변에 든 선택 지역 사업을 사업 매칭 검토 탭으로 넘기는 버튼. 넘길 사업이 없으면 None.
+
+    다른 지역 참고 사례·종료된 사업은 검토 후보가 아니므로 넘기지 않습니다.
+    """
+    names = {}
+    for record in records:
+        key = None if record.get('reference_only') or record.get('expired') else review_key(record)
+        if key and key not in names:
+            names[key] = record['name']
+    if not names:
+        return None
+    scope = {key: context[key] for key in ('city', 'district', 'month') if context.get(key)}
+    return {'label': REVIEW_ACTION_LABEL, 'view': 'services', 'serviceKeys': list(names),
+            'serviceNames': names, 'context': scope}
+
+
 def signal_summary(request: ChatRequest) -> dict | None:
     """신규 사업 구상이 이 동의 분석 근거를 반영하도록 넘기는 위험 신호 요약. 분석 결과가 없으면 None."""
     if not request.district:
@@ -112,8 +145,27 @@ class WelfareAgent(RegulatedAgent):
         analysis = signal_summary(request) if request.use_ai else None
         if analysis:
             context['analysis'] = analysis
-        return aio.iterate(self._converse(list(request.messages), context, request.use_ai,
-                                          state=request.welfare_state, prefetched=request.retrieval))
+        conversation = self._converse(list(request.messages), context, request.use_ai,
+                                      state=request.welfare_state, prefetched=request.retrieval)
+        if is_planning_request(request.messages[-1]['content']):
+            return aio.iterate(conversation)
+        return aio.iterate(self._with_review_action(conversation, context))
+
+    async def _with_review_action(self, inner: AsyncIterator[Event], context: dict) -> AsyncIterator[Event]:
+        """기존 답변을 그대로 보낸 뒤, 안내한 사업을 사업 매칭 검토 탭으로 넘기는 버튼을 붙입니다(차단된 답변 제외)."""
+        records, blocked = [], False
+        try:
+            async for name, payload in inner:
+                if name == events.SOURCES:
+                    records = payload['records']
+                elif name == events.REPLACE:
+                    blocked = payload.get('mode') == BLOCKED_MODE
+                yield name, payload
+        finally:
+            await inner.aclose()
+        action = None if blocked else review_action(records, context)
+        if action:
+            yield events.actions([action])
 
     async def _converse(self, messages: list[dict], context: dict, use_ai: bool,
                         *, state=None, prefetched=None) -> AsyncIterator[Event]:
