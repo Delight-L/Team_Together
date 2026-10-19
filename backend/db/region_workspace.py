@@ -59,7 +59,7 @@ SCORE_TERMS = ('두 값은 비교하는 기준이 다릅니다.\n'
 
 REGION_TYPE_TERMS = ('지역유형', '고활동', '청년유동', '1인가구 중심형', '2인가구', '다인가구')
 SURVEY_METRIC_TERMS = (
-    '사회적 연결', '관계망', '서울서베이', '다른 지표', '다른 항목', '추가 지표',
+    '사회적 연결', '사회적 연결 마음', '사회적 연결마음', '마음 지표', '마음지표', '관계망', '서울서베이', '다른 지표', '다른 항목', '추가 지표',
     '도움 관계', '도움받을 사람', '조언을 구할 사람', '금전적으로 도움', '아플 때 도움',
     '외로움', '가족 외 관계', '복합 참고값', '동반자 부족', '혼자 남겨짐', '사람들 사이에서 고립',
 )
@@ -122,7 +122,7 @@ SURVEY_SOURCE_EXPLANATION = (
 
 def _survey_metric_keys(question):
     question = question.replace(' ', '')
-    if any(term in question for term in ('다른지표', '다른항목', '추가지표', '사회적연결', '관계망', '서울서베이')):
+    if any(term in question for term in ('다른지표', '다른항목', '추가지표', '사회적연결', '마음지표', '관계망', '서울서베이')):
         return ()
     if any(term in question for term in ('복합참고값', '동시에', '교집합')):
         return ('no_support3_and_lonely_outside',)
@@ -160,6 +160,8 @@ def survey_metrics_answer(context, question):
     from backend.db.survey_context import survey_metrics_for
     snapshot = survey_metrics_for(context)
     if not snapshot:
+        if not context.get('age'):
+            return SURVEY_SOURCE_EXPLANATION + SURVEY_OTHER_METRICS_EXPLANATION + '\n\n현재 화면 요청에 연령대가 포함되지 않아 특정 연령의 수치는 임의로 고르지 않았습니다. 연령대를 지정하면 강남구와 서울 전체 값을 함께 보여드릴게요.'
         return (SURVEY_SOURCE_EXPLANATION + '현재 선택 범위에는 서울서베이 연령별 참고값이 없습니다. '
                 '이 값은 강남구·연령대별 연간 통계이므로 동별 수치나 개인별 고립 판정으로 바꿔 설명하지 않습니다.')
     keys = _survey_metric_keys(question)
