@@ -1,5 +1,5 @@
 {
-  "database": "outputs/db1.sqlite",
+  "database": "db1_pipeline",
   "exports": "outputs/integrated",
   "analysis1": {
     "skt_source": "${TEAM_TOGETHER_DATA_ROOT}/공모전 원본 데이터/2026빅콘테스트_sk통신인구_데이터_레이아웃",

@@ -22,16 +22,8 @@ frontend/dist/
 *.log
 *.tmp
 .tmp/
-# SQLite 작업 파일(본 DB 파일은 그대로 둡니다)
-*.sqlite-wal
-*.sqlite-shm
-*.sqlite-journal
 # 담당자 업무 기록 DB와 관리자 «AI 설정»(서버에만 보관)
-backend/db/runtime/*.sqlite3*
 backend/db/runtime/ai_settings.json
-# v16 지역 분석 에이전트의 로컬 DB1 SQLite(약 100MB)는 따로 전달합니다. 위치는 DB1_DATABASE_PATH로 바꿀 수 있습니다.
-backend/agents/regional_v16/outputs/*.sqlite
-backend/agents/regional_v16/outputs/*.sqlite-*
 backend/agents/regional_v16/outputs/runtime/
 # DB1 파이프라인의 실행 상태·로컬 설정·백업
 pipelines/db1/outputs/runtime/

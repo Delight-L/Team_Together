@@ -26,7 +26,7 @@ def chat(request):
             yield 'notice', {'message': '개인정보로 보이는 내용을 가리고 처리했어요.', 'question': question}
         yield 'route', {'agent': 'regional_v16', 'label': '지역 변화 신호 에이전트 (v16)', 'by': '직접 호출'}
         if not v16_service.data_ready():
-            yield 'error', {'message': 'v16 근거 자료(DB1 SQLite)가 이 서버에 없습니다. 관리자에게 자료 배치를 요청하세요.'}
+            yield 'error', {'message': '지역 분석 근거 자료를 조회하지 못했습니다. 관리자에게 DB 연결과 게시 상태 확인을 요청하세요.'}
             yield 'done', {}
             return
         try:

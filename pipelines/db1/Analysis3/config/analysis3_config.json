@@ -1,7 +1,7 @@
 {
   "card_root": "${TEAM_TOGETHER_DATA_ROOT}/공모전 원본 데이터/2026빅콘테스트_신한카드_데이터_레이아웃",
   "market_root": "${TEAM_TOGETHER_DATA_ROOT}/서울시 공공데이터/서울 상권분석 데이터",
-  "database": "../../outputs/db1.sqlite",
+  "database": "db1_pipeline",
   "exports": "outputs",
   "first_detection_quarter": "2025Q3",
   "minimum_same_quarter_history": 3,

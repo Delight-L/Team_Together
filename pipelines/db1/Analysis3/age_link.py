@@ -1,28 +1,32 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 """Age-specific behavior/consumption context; never changes detection scores."""
 from pathlib import Path
-import argparse,calendar,json,sqlite3
+import argparse,calendar,json
 import pandas as pd
 
 AGES={'20s':'20대','30s':'30대','40s':'40대','50s':'50대','60plus':'60대이상'}
 VERSION='a23_age_link_v1'
 TABLES=['a23_age_detail','a23_age_monthly','a23_age_quarter','a23_age_available_context']
-SCHEMA='\n'.join(f'''CREATE TABLE IF NOT EXISTS {t}(adm_cd TEXT,date TEXT,age_band TEXT,model_version TEXT,payload_json TEXT NOT NULL{',domain TEXT' if t in ('a23_age_detail','a23_age_available_context') else ''},PRIMARY KEY(adm_cd,date,age_band,model_version{',domain' if t in ('a23_age_detail','a23_age_available_context') else ''}));
-CREATE VIEW IF NOT EXISTS v_{t} AS SELECT * FROM {t};''' for t in TABLES)
+SCHEMA='\n'.join(f"""CREATE TABLE IF NOT EXISTS {t}(adm_cd TEXT,date TEXT,age_band TEXT,model_version TEXT,payload_json TEXT NOT NULL{',domain TEXT' if t in ('a23_age_detail', 'a23_age_available_context') else ''},PRIMARY KEY(adm_cd,date,age_band,model_version{',domain' if t in ('a23_age_detail', 'a23_age_available_context') else ''}));
+CREATE OR REPLACE VIEW v_{t} AS SELECT * FROM {t};""" for t in TABLES)
 
 def dumps(v):return json.dumps(v,ensure_ascii=False,allow_nan=False,sort_keys=True)
 def negative(value):return None if value is None else value<0
 def available(con,source,event):
     cutoff=event[:7]+'-'+str(calendar.monthrange(int(event[:4]),int(event[5:7]))[1])
     maximum=event[:7] if source=='card' else str(pd.Period(event[:7],freq='M').asfreq('Q'))
-    for period, in con.execute('SELECT period FROM a3_run WHERE source=? AND period<=? AND available_from IS NOT NULL AND substr(available_from,1,10)<=? ORDER BY period DESC',(source,maximum,cutoff)):
+    for period, in con.execute('SELECT period FROM a3_run WHERE source=%s AND period<=%s AND available_from IS NOT NULL AND substr(available_from,1,10)<=%s ORDER BY period DESC',(source,maximum,cutoff)):
         end=pd.Period(period,freq='M' if source=='card' else 'Q').end_time.strftime('%Y-%m-%d')
         if end<=cutoff:return period
     return None
 
 def run(db,directory):
     directory=Path(directory);directory.mkdir(parents=True,exist_ok=True)
-    with sqlite3.connect(db) as con:
-        if not con.execute("SELECT 1 FROM sqlite_master WHERE name='a2_age_detection'").fetchone():return {'status':'age_detection_unavailable'}
+    with database.connect(db) as con:
+        if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_detection'").fetchone():return {'status':'age_detection_unavailable'}
         con.executescript(SCHEMA)
         def load(table,keys):
             return {tuple(r[:-1]):json.loads(r[-1]) for r in con.execute(f'SELECT {keys},payload_json FROM {table}')}
@@ -66,8 +70,8 @@ def run(db,directory):
                 con.execute('DELETE FROM '+table)
                 for r in rows:
                     keys=[r[k] for k in ('adm_cd','date','age_band','model_version')]
-                    if table in ('a23_age_detail','a23_age_available_context'):con.execute('INSERT INTO '+table+' VALUES(?,?,?,?,?,?)',(*keys,dumps(r),r['domain']))
-                    else:con.execute('INSERT INTO '+table+' VALUES(?,?,?,?,?)',(*keys,dumps(r)))
+                    if table in ('a23_age_detail','a23_age_available_context'):con.execute('INSERT INTO '+table+' VALUES(%s,%s,%s,%s,%s,%s)',(*keys,dumps(r),r['domain']))
+                    else:con.execute('INSERT INTO '+table+' VALUES(%s,%s,%s,%s,%s)',(*keys,dumps(r)))
         def export(name,rows):
             frame=pd.DataFrame(rows)
             for column in frame:

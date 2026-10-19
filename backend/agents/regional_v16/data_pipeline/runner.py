@@ -1,5 +1,8 @@
 """Portable, locked coordinator for isolated Analysis1/Analysis2 workers."""
 from __future__ import annotations
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
 import argparse
 from contextlib import contextmanager
 import json
@@ -8,45 +11,30 @@ from pathlib import Path
 import subprocess
 import sys
 
+from pipelines.db1 import database
+
 ROOT = Path(__file__).resolve().parents[1]
 
 def settings(root=ROOT, db=None, exports=None):
     root=Path(root).resolve()
     cfg=json.loads((root/'config/data_pipeline.json').read_text(encoding='utf-8'))
     cfg['root']=str(root)
-    default_db_path=root/cfg['database']
-    override=db or os.getenv('DB1_DATABASE_PATH')
-    cfg['database']=str(Path(override).resolve() if override else root/cfg['database'])
-    if exports:export_path=Path(exports).resolve()
-    elif override and Path(cfg['database'])!=default_db_path:
-        database_path=Path(cfg['database']);export_path=database_path.parent/(database_path.stem+'_exports')
-    else:export_path=root/cfg['exports']
+    cfg['database']=database.workspace(db or os.getenv('DB1_PIPELINE_SCHEMA') or cfg['database'])
+    export_path=Path(exports).resolve() if exports else root/cfg['exports']
     cfg['exports']=str(export_path)
     cfg['analysis2']={key:str(root/value) for key,value in cfg['analysis2'].items()}
     return cfg
 
-@contextmanager
 def locked(db):
-    path=Path(str(db)+'.lock'); path.parent.mkdir(parents=True,exist_ok=True)
-    with path.open('a+b') as handle:
-        if sys.platform=='win32':
-            import msvcrt
-            handle.seek(0); handle.write(b'0'); handle.flush(); handle.seek(0)
-            msvcrt.locking(handle.fileno(),msvcrt.LK_LOCK,1)
-        else:
-            import fcntl
-            fcntl.flock(handle.fileno(),fcntl.LOCK_EX)
-        try: yield
-        finally:
-            if sys.platform=='win32':
-                handle.seek(0); msvcrt.locking(handle.fileno(),msvcrt.LK_UNLCK,1)
-            else: fcntl.flock(handle.fileno(),fcntl.LOCK_UN)
+    return database.locked(db)
+
 
 def run(root=ROOT, db=None, exports=None, initialize_only=False, through=None,
         analysis1_input=None, analysis1_period=None):
     cfg=settings(root,db,exports)
     with locked(cfg['database']):
-        work=Path(str(cfg['database'])+'.runtime.json')
+        work=Path(cfg['exports'])/'pipeline.runtime.json'
+        work.parent.mkdir(parents=True,exist_ok=True)
         work.write_text(json.dumps(cfg,ensure_ascii=False,indent=2),encoding='utf-8')
         def worker(name,*args):
             subprocess.run([sys.executable,str(Path(cfg['root'])/'data_pipeline'/name),
@@ -62,14 +50,13 @@ def run(root=ROOT, db=None, exports=None, initialize_only=False, through=None,
     return status(cfg['database'])
 
 def status(db):
-    import sqlite3
-    path=Path(db)
-    if not path.is_file(): return {'status':'uninitialized','version':15}
-    with sqlite3.connect(path) as con:
+    if not database.exists(db): return {'status':'uninitialized','version':16}
+    with database.connect(db,readonly=True) as con:
+        if 'pipeline_state' not in con.table_names(): return {'status':'ready','version':16,'workspace':database.workspace(db)}
         row=con.execute('SELECT payload_json FROM pipeline_state WHERE id=1').fetchone()
         result=json.loads(row[0]) if row else {'status':'uninitialized'}
         try:
-            from data_pipeline.snapshot_manager import active_snapshot
+            from data_pipeline.publication import active_snapshot
             snapshot=active_snapshot(db)
         except Exception: snapshot=None
         result.update(version=16,initial_end='2025-06',active_snapshot_id=(snapshot or {}).get('snapshot_id'),

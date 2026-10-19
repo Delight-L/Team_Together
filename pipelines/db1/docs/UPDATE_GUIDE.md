@@ -14,7 +14,7 @@ DB1 폴더의 PowerShell에서 실행합니다.
 
 ## 파일 위치
 - `config/db1_config.json`: 공통 DB, 원본 및 Analysis1·2 설정.
-- `outputs/db1.sqlite`: 세 분석이 공유하는 운영 DB. 유일한 운영 기준입니다.
+- `db1_pipeline`: 세 분석이 공유하는 운영 DB. 유일한 운영 기준입니다.
 - `outputs/integrated/`: Analysis1·2 통합 CSV와 Analysis1·2·3 연결 CSV.
 - `outputs/figures/`: 기존 분석 그래프 PNG·SVG. CSV 갱신과 별도로 보존된 시각화입니다.
 - `Analysis1/data/reference/`: 고정 기준 입력; `models/2025H2/`: 기준 모델.

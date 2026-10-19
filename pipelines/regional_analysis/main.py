@@ -14,7 +14,7 @@ def main():
         'service-preview', 'initialize', 'scan', 'status', 'export', 'analysis1', 'analysis2',
         'analysis1-elder', 'analysis2-age', 'analysis2-age-detect', 'analysis2-activity'])
     parser.add_argument('--publish', action='store_true', help='서비스 DB에 분석 결과 반영')
-    parser.add_argument('--db', help='Git LFS 실파일 또는 별도 운영 SQLite 경로')
+    parser.add_argument('--db', help='PostgreSQL 분석 작업 스키마')
     parser.add_argument('--config')
     parser.add_argument('--period')
     parser.add_argument('--month')
@@ -34,9 +34,9 @@ def main():
         if args.command != 'service-preview' and not snapshot:
             from pipelines.db1.db1_settings import load_settings
             settings = load_settings(args.config or ROOT / 'pipelines/db1/config/db1_config.json')
-            snapshot = str(ROOT / 'pipelines' / 'db1' / settings['database'])
+            snapshot = settings['database']
         if snapshot:
-            command.extend(['--sqlite', snapshot])
+            command.extend(['--workspace', snapshot])
         if args.publish:
             command.append('--publish')
         subprocess.run(command, check=True)

@@ -6,7 +6,7 @@
   Gemini면 v16 원래 방식(JSON 스키마 지정)으로, 다른 제공사면 공용 llm 창구로 질문 의도를 분류합니다.
 - 게시된 run은 PostgreSQL에서 읽습니다(data_pipeline/publish_postgres.py의 publish 함수).
   게시 테이블이 없으면 기존 DB1 서비스 테이블과 전달 CSV를 읽는 대시보드 호환 저장소를 씁니다.
-  SQLite는 계산·게시 입력이며 서빙에는 쓰지 않습니다. 저장소에 사용 가능한 자료가 없으면
+  저장소에 사용 가능한 자료가 없으면
   지역 분석 에이전트가 동·그룹 분석 근거 설명으로 대신 답합니다.
 Historical text is restored without replaying old queries. No process-global
 conversation or credential mutation.
@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import re
 import sys
 from dataclasses import replace
@@ -81,16 +80,6 @@ def ai_available():
     return _configuration() is not None
 
 
-REMOVED_ENV = "DB1_REPOSITORY"  # 예전에 postgres|sqlite를 고르던 값. 이제 PostgreSQL뿐이라 sqlite 같은 값은 오류로 알림
-
-
-def _check_configuration():
-    """남아 있는 예전 설정(DB1_REPOSITORY=sqlite 등)을 조용히 무시하지 않고 알려 줍니다."""
-    value = os.getenv(REMOVED_ENV, "").strip().lower()
-    if value and value not in {"postgres", "postgresql"}:
-        raise ValueError(f"{REMOVED_ENV}={value!r}: SQLite 서빙은 제거되어 PostgreSQL만 쓸 수 있습니다. 이 환경변수를 지우세요.")
-
-
 def _engine():
     from backend.db.connection import engine
     return engine
@@ -98,7 +87,6 @@ def _engine():
 
 def _repository():
     """게시 run 또는 기존 대시보드 자료를 읽는 저장소."""
-    _check_configuration()
     from chatbot_agent.pg_repository import PostgresDb1Repository
     return PostgresDb1Repository(_engine())
 

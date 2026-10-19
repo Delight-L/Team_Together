@@ -37,27 +37,26 @@ Analysis1·2 결과를 같은 트랜잭션으로 추가하고 `service_imports`�
 외부 실행기로 반영한 경우 기존 서버의 최신 실행 캐시 갱신은 최대 60초 걸립니다.
 `WELFIND_DATA_SOURCE=csv`는 로컬 전달본을 읽는 개발 설정입니다.
 
-운영 SQLite에 업데이트된 결과를 읽어 반영할 때:
+PostgreSQL 분석 작업 영역의 갱신 결과를 반영할 때:
 
 ```powershell
-python scripts/import_db1.py --sqlite "pipelines/db1/outputs/db1.sqlite"
-python scripts/import_db1.py --sqlite "pipelines/db1/outputs/db1.sqlite" --publish
+python scripts/import_db1.py --workspace "db1_pipeline"
+python scripts/import_db1.py --workspace "db1_pipeline" --publish
 ```
 
-`pipelines/db1/outputs/db1.sqlite`는 약 380MB의 Git LFS 자산입니다. 실파일이 없는 체크아웃에서는
-`git lfs pull`로 받아야 합니다. 포인터를 SQLite로 열거나 덮어쓰는 실행은 거절합니다.
-CSV 전달본 검사·반영은 대용량 SQLite 다운로드 없이도 가능합니다.
+`db1_pipeline`은 `.env`의 PostgreSQL 서버에 있는 분석 작업 스키마입니다.
+파일 다운로드나 Git LFS가 필요하지 않습니다. [현재 저장소 구성](postgresql-storage.md)을 참고하세요.
 
 신규 반기·월 원천자료 갱신은 독립된 기존 DB1 실행기를 사용합니다.
 
 ```powershell
 $env:TEAM_TOGETHER_DATA_ROOT = "D:/Team_Together-data"
 python pipelines/db1/tools/configure_db1.py --source-root $env:TEAM_TOGETHER_DATA_ROOT --output pipelines/db1/config/db1_config.local.json
-python main.py --analysis --command analysis1 --period 2026H1 --config pipelines/db1/config/db1_config.local.json --db pipelines/db1/outputs/runtime/db1.sqlite
+python main.py --analysis --command analysis1 --period 2026H1 --config pipelines/db1/config/db1_config.local.json --db db1_pipeline
 ```
 
-별도 새 운영 파일은 필요한 원천자료를 갖춘 상태에서 `initialize`로 먼저 구성해야 합니다.
-`--publish`를 추가하면 실행 성공 후 해당 SQLite 결과를 서비스 DB로 연결합니다.
+새 PostgreSQL 작업 스키마는 필요한 원천자료를 갖춘 상태에서 `initialize`로 먼저 구성해야 합니다.
+`--publish`를 추가하면 실행 성공 후 해당 작업 스키마의 결과를 서비스 DB로 연결합니다.
 원천자료가 없는 새 연도는 합성 데이터나 임의 분모로 대체하지 않습니다.
 
 ## 검증 범위
@@ -65,7 +64,7 @@ python main.py --analysis --command analysis1 --period 2026H1 --config pipelines
 서비스 DB의 기존 두 테이블 열·타입·기본키는 읽기 전용으로 확인했습니다.
 새 결과 변환, 22개 동의 기존 군집 배정 유지, Q4 분모, 이전 월 보존, 트랜잭션 롤백,
 관리자 반영 후 조회는 로컬 테스트로 확인합니다. 운영 DB에 실제 반영하지 않았습니다.
-원본 SQLite와 외부 원천자료가 필요한 DB1 배포 회귀검사는 실파일을 받은 환경에서 별도로 실행합니다.
+전체 원천자료 재계산은 원천 CSV·XLSX와 모델을 준비한 환경에서 별도로 실행합니다.
 
 2026-10-13 검증 결과:
 

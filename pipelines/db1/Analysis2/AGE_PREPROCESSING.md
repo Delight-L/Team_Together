@@ -24,7 +24,7 @@
 
 ## DB와 결과 파일
 
-DB1의 `outputs/db1.sqlite`에 다음 표를 추가한다.
+DB1의 `db1_pipeline`에 다음 표를 추가한다.
 
 - `a2_age_feature`: `(adm_cd,date,age_scheme,age_band)` 기본키, 버전·기준선/업데이트 구간·품질 상태·지표 JSON.
 - `a2_age_raw`: `(date,kind,adm_cd,sex,age_code)` 기본키, 원본 집계 셀 JSON.

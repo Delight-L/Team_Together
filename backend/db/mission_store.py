@@ -33,7 +33,7 @@ def review_revision(item):
     return hashlib.sha256(reviews.encode()).hexdigest()
 
 def identity(request):
-    """SQLite 시절의 키 형식을 유지하여 옮겨 온 업무를 계속 찾습니다."""
+    """분석 DB 시절의 키 형식을 유지하여 옮겨 온 업무를 계속 찾습니다."""
     owner = request["user"]["id"]
     if request.get("workflow_mode") == "demo":
         owner = "demo:" + owner

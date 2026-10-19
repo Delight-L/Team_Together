@@ -31,7 +31,7 @@ skt6.to_csv(out/'skt_period.csv',index=False,encoding='utf-8-sig')
 full=build_analysis1_pca_input(skt_feature=out/'skt_period.csv',resident_file=a.resident,household_file=a.household,welfare_file=a.welfare,year=year,quarters=quarters)
 from elder_context import attach_cluster_feature
 settings=load_settings(a.config)
-full,_=attach_cluster_feature(a.db or Path(__file__).resolve().parents[1]/settings['database'],settings,full,a.period)
+full,_=attach_cluster_feature(a.db or settings['database'],settings,full,a.period)
 full.to_csv(out/'pca_input.csv',index=False,encoding='utf-8-sig')
 report={'monthly_shape':list(monthly.shape),'skt_6m_shape':list(skt6.shape),'pca_input_shape':list(full.shape),'months':months}
 ref=Path(a.reference)

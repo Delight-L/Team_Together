@@ -12,7 +12,7 @@ def main():
     p=argparse.ArgumentParser()
     p.add_argument('--input',required=True);p.add_argument('--baseline',required=True);p.add_argument('--period',required=True)
     p.add_argument('--out-dir',default=str(ROOT/'Analysis1/data/results/analysis1_detection'))
-    p.add_argument('--db',default=str(ROOT/'outputs/db1.sqlite'));p.add_argument('--effective-from')
+    p.add_argument('--db',default=str('db1_pipeline'));p.add_argument('--effective-from')
     a=p.parse_args();_,_,dates=halfyear(a.period)
     effective=pd.Timestamp(a.effective_from or dates[-1]+pd.offsets.MonthBegin(1))
     if effective<dates[-1]+pd.offsets.MonthBegin(1):raise ValueError('Context cannot apply before period completion')

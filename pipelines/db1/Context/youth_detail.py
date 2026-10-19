@@ -1,17 +1,17 @@
 """Verified item-level summaries of 2022 youth surveys, separate from detection inputs."""
 from pathlib import Path
 from contextlib import closing
-import sqlite3,json,hashlib,re
+import json,hashlib,re
 import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
 from survey import metric_row
 VERSION='youth_detail_v1'
-SCHEMA='''
+SCHEMA="""
 CREATE TABLE IF NOT EXISTS ctx_youth_source(source_id TEXT PRIMARY KEY,kind TEXT,year INTEGER,sha256 TEXT,method_version TEXT,payload_json TEXT);
-CREATE TABLE IF NOT EXISTS ctx_youth_metric(source_id TEXT,district TEXT,age_band TEXT,metric TEXT,value REAL,unit TEXT,n_total INTEGER,n_valid INTEGER,n_event INTEGER,n_households INTEGER,effective_n REAL,quality_status TEXT,payload_json TEXT,PRIMARY KEY(source_id,district,age_band,metric));
-CREATE VIEW IF NOT EXISTS v_youth_detail AS SELECT s.kind,s.year,s.method_version,m.* FROM ctx_youth_metric m JOIN ctx_youth_source s USING(source_id);
-'''
+CREATE TABLE IF NOT EXISTS ctx_youth_metric(source_id TEXT,district TEXT,age_band TEXT,metric TEXT,value DOUBLE PRECISION,unit TEXT,n_total INTEGER,n_valid INTEGER,n_event INTEGER,n_households INTEGER,effective_n DOUBLE PRECISION,quality_status TEXT,payload_json TEXT,PRIMARY KEY(source_id,district,age_band,metric));
+CREATE OR REPLACE VIEW v_youth_detail AS SELECT s.kind,s.year,s.method_version,m.* FROM ctx_youth_metric m JOIN ctx_youth_source s USING(source_id);
+"""
 def dump(x):return json.dumps(x,ensure_ascii=False,sort_keys=True,allow_nan=False,default=str)
 def codebook(sheet):
     blocks={};key=None
@@ -112,13 +112,13 @@ def run(c,config):
     count=0
     for kind,opt in config.get('survey_context',{}).get('youth_reference',{}).items():
         path=Path(opt['path']);sha=hashlib.sha256(path.read_bytes()).hexdigest();sid='youth2022_'+kind
-        original=c.execute('SELECT fingerprint FROM ctx_survey_source WHERE source_id=?',(sid,)).fetchone()
+        original=c.execute('SELECT fingerprint FROM ctx_survey_source WHERE source_id=%s',(sid,)).fetchone()
         if not original or original[0]!=sha:raise ValueError('Youth original source not registered or changed')
-        old=c.execute('SELECT sha256,method_version FROM ctx_youth_source WHERE source_id=?',(sid,)).fetchone()
+        old=c.execute('SELECT sha256,method_version FROM ctx_youth_source WHERE source_id=%s',(sid,)).fetchone()
         if old:
             if tuple(old)!=(sha,VERSION):raise ValueError('Youth detail correction requires explicit migration')
             continue
         sid,meta,rows=packet(kind,path)
-        c.execute('INSERT INTO ctx_youth_source VALUES(?,?,?,?,?,?)',(sid,kind,2022,sha,VERSION,dump(meta)))
-        c.executemany('INSERT INTO ctx_youth_metric VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',rows);count+=len(rows)
+        c.execute('INSERT INTO ctx_youth_source VALUES(%s,%s,%s,%s,%s,%s)',(sid,kind,2022,sha,VERSION,dump(meta)))
+        c.executemany('INSERT INTO ctx_youth_metric VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',rows);count+=len(rows)
     return count

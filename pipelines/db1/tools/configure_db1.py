@@ -14,7 +14,7 @@ def configure(source_root,output):
     canonical=[p.parent for p in skt if '전처리' not in str(p.parent)]
     if len(canonical)!=1: raise ValueError('Set the canonical SKT source directory explicitly')
     settings={
-      'database':'outputs/db1.sqlite','exports':'outputs/integrated',
+      'database':'db1_pipeline','exports':'outputs/integrated',
       'analysis1':{'skt_source':str(canonical[0]),'public_root':str(public),'boundary':one('서울_행정동_경계_2017_EPSG5179.geojson'),
         'public':{'resident':one('등록인구(연령별_동별)*.csv'),'household':one('세대원수별*.csv'),
         'welfare':one('국민기초생활 수급자 동별 현황*.xlsx')},

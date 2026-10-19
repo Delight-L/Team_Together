@@ -7,7 +7,7 @@
 |---|---|---|
 | group    | 열어 둔 연령·성별 그룹 자료 (db/group_workspace) | 그룹 화면에서 그 그룹을 묻거나, v16 자료가 없을 때 |
 | district | 동 분석 결과 (db/region_workspace)               | 화면 판정 용어를 묻거나, v16 자료가 없을 때 |
-| v16      | DB1 SQLite 근거 (bomi/adapters/v16)              | 이상신호 목록·기준·연령별·지역 배경·소비 질문 |
+| v16      | PostgreSQL·대시보드 근거 (bomi/adapters/v16)              | 이상신호 목록·기준·연령별·지역 배경·소비 질문 |
 
 v16 자료가 없는 서버에서는 group/district가 대신 답합니다. AI 해석이 실패하면 외부 AI 없이 같은 근거로 다시 답합니다.
 """

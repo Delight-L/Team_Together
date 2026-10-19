@@ -1,9 +1,12 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 """Transactional, period-aware storage shared by the two analysis workers."""
 from contextlib import contextmanager
 from pathlib import Path
 import hashlib
 import json
-import sqlite3
 import pandas as pd
 
 BASELINE_VERSION = "analysis1_2025H2"
@@ -35,7 +38,7 @@ CREATE TABLE IF NOT EXISTS a2_evidence (
  adm_cd TEXT NOT NULL,date TEXT NOT NULL,evidence_json TEXT NOT NULL,
  PRIMARY KEY(adm_cd,date), FOREIGN KEY(adm_cd,date) REFERENCES a2_detection(adm_cd,date));
 CREATE INDEX IF NOT EXISTS idx_a1_effective ON a1_context(effective_from);
-CREATE VIEW IF NOT EXISTS v_db1_integrated AS
+CREATE OR REPLACE VIEW v_db1_integrated AS
  SELECT d.date,d.adm_cd,c.adm_nm,d.any_signal,d.communication_signal,
  d.mobility_signal,d.combined_signal,d.signal_status,d.context_period,
  d.model_version,c.cluster AS a1_cluster,c.cluster_type AS a1_cluster_type,
@@ -48,21 +51,12 @@ CREATE VIEW IF NOT EXISTS v_db1_integrated AS
 """
 
 
-@contextmanager
-def connect(path):
-    """with 블록이 끝나면 커밋(오류 시 롤백)하고 연결도 닫습니다. Windows에서 DB 파일이 잠겨 남지 않게 합니다."""
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(path, timeout=60)
-    con.execute("PRAGMA foreign_keys=ON")
-    try:
-        with con:
-            yield con
-    finally:
-        con.close()
+def connect(name):
+    return database.connect(name)
 
 
 def initialize(path):
+    database.ensure_workspace(path)
     with connect(path) as con:
         con.executescript((Path(__file__).parent / "Analysis1/db/schema.sql").read_text(encoding="utf-8"))
         con.executescript(SCHEMA)
@@ -88,7 +82,7 @@ def fingerprint(frame, keys):
 
 
 def already_processed(con, analysis, period, digest):
-    found = con.execute("SELECT fingerprint FROM db1_run WHERE analysis=? AND period=?", (analysis,period)).fetchone()
+    found = con.execute('SELECT fingerprint FROM db1_run WHERE analysis=%s AND period=%s', (analysis,period)).fetchone()
     if not found:
         return False
     if found[0] != digest:
@@ -105,11 +99,11 @@ def history(con):
 
 
 def context_for(con, date):
-    selected = con.execute("SELECT period FROM a1_context WHERE effective_from<=? GROUP BY period ORDER BY MAX(effective_from) DESC LIMIT 1", (str(pd.Timestamp(date).date()),)).fetchone()
+    selected = con.execute('SELECT period FROM a1_context WHERE effective_from<=%s GROUP BY period ORDER BY MAX(effective_from) DESC LIMIT 1', (str(pd.Timestamp(date).date()),)).fetchone()
     if selected is None:
         raise ValueError(f"No applicable Analysis1 Context for {date}")
     period = selected[0]
-    rows = con.execute("SELECT adm_cd,adm_nm,cluster,cluster_type,model_version FROM a1_context WHERE period=?", (period,)).fetchall()
+    rows = con.execute('SELECT adm_cd,adm_nm,cluster,cluster_type,model_version FROM a1_context WHERE period=%s', (period,)).fetchall()
     return period, pd.DataFrame(rows, columns=["adm_cd","dong_name","cluster","cluster_type","model_version"])
 
 
@@ -117,7 +111,7 @@ def commit_a1(path, input_df, features, clusters, period, effective_from, baseli
     digest = fingerprint(input_df, ["adm_cd"])
     initialize(path)
     with connect(path) as con:
-        con.execute("BEGIN IMMEDIATE")
+        con.execute('SELECT pg_advisory_xact_lock(hashtext(current_schema()));')
         if already_processed(con,"analysis1",period,digest):
             return False
         if len(input_df)!=22 or len(features)!=22 or len(clusters)!=22:
@@ -126,32 +120,32 @@ def commit_a1(path, input_df, features, clusters, period, effective_from, baseli
         features["adm_cd"] = features.adm_cd.astype(str)
         by_code = {str(r["adm_cd"]): r for r in records(features)}
         for row in records(input_df):
-            con.execute("INSERT INTO a1_input VALUES(?,?,?)", (str(row["adm_cd"]),period,payload(row)))
+            con.execute('INSERT INTO a1_input VALUES(%s,%s,%s)', (str(row["adm_cd"]),period,payload(row)))
         for row in records(clusters):
             code = str(row["adm_cd"])
             f = by_code[code]
-            con.execute("INSERT INTO a1_context VALUES(?,?,?,?,?,?,?,?)",(code,period,row["dong_name"],effective_from,(metadata or {}).get("model_version",BASELINE_VERSION),int(row["cluster"]),row["cluster_type"],payload(f)))
+            con.execute('INSERT INTO a1_context VALUES(%s,%s,%s,%s,%s,%s,%s,%s)',(code,period,row["dong_name"],effective_from,(metadata or {}).get("model_version",BASELINE_VERSION),int(row["cluster"]),row["cluster_type"],payload(f)))
             if baseline:
-                con.execute("INSERT INTO a1_region_baseline(adm_cd,adm_nm,baseline_period,cluster_id,cluster_label,centroid_distance) VALUES(?,?,?,?,?,?) ON CONFLICT(adm_cd,baseline_period) DO UPDATE SET adm_nm=excluded.adm_nm,cluster_id=excluded.cluster_id,cluster_label=excluded.cluster_label,centroid_distance=excluded.centroid_distance",(code,row["dong_name"],period,int(row["cluster"]),row["cluster_type"],row.get("centroid_distance")))
+                con.execute('INSERT INTO a1_region_baseline(adm_cd,adm_nm,baseline_period,cluster_id,cluster_label,centroid_distance) VALUES(%s,%s,%s,%s,%s,%s) ON CONFLICT(adm_cd,baseline_period) DO UPDATE SET adm_nm=excluded.adm_nm,cluster_id=excluded.cluster_id,cluster_label=excluded.cluster_label,centroid_distance=excluded.centroid_distance',(code,row["dong_name"],period,int(row["cluster"]),row["cluster_type"],row.get("centroid_distance")))
             for name, domain in (metadata or {})["feature_domains"].items():
-                con.execute("INSERT INTO a1_region_feature(adm_cd,adm_nm,period,feature_name,domain,feature_value,is_baseline) VALUES(?,?,?,?,?,?,?) ON CONFLICT(adm_cd,period,feature_name) DO UPDATE SET feature_value=excluded.feature_value",(code,row["dong_name"],period,name,domain,float(f[name]),int(baseline)))
+                con.execute('INSERT INTO a1_region_feature(adm_cd,adm_nm,period,feature_name,domain,feature_value,is_baseline) VALUES(%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(adm_cd,period,feature_name) DO UPDATE SET feature_value=excluded.feature_value',(code,row["dong_name"],period,name,domain,float(f[name]),int(baseline)))
         if change is not None:
             for row in records(change):
                 code = str(row["adm_cd"])
-                con.execute("INSERT INTO a1_change_detection(adm_cd,adm_nm,baseline_period,current_period,baseline_cluster_id,current_cluster_id,baseline_cluster_label,current_cluster_label,cluster_changed,centroid_distance,centroid_distance_delta,activity_domain_delta,time_domain_delta,demographic_domain_delta,structural_domain_delta) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",(code,row["dong_name"],"2025H2",period,int(row["baseline_cluster"]),int(row["current_cluster"]),row["baseline_cluster_type"],row["current_cluster_type"],int(row["cluster_changed"]),row["current_centroid_distance"],row["centroid_distance_delta"],row["activity_distance_from_baseline"],row["life_activity_distance_from_baseline"],row["population_household_distance_from_baseline"],row["structural_welfare_distance_from_baseline"]))
+                con.execute('INSERT INTO a1_change_detection(adm_cd,adm_nm,baseline_period,current_period,baseline_cluster_id,current_cluster_id,baseline_cluster_label,current_cluster_label,cluster_changed,centroid_distance,centroid_distance_delta,activity_domain_delta,time_domain_delta,demographic_domain_delta,structural_domain_delta) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(code,row["dong_name"],"2025H2",period,int(row["baseline_cluster"]),int(row["current_cluster"]),row["baseline_cluster_type"],row["current_cluster_type"],int(row["cluster_changed"]),row["current_centroid_distance"],row["centroid_distance_delta"],row["activity_distance_from_baseline"],row["life_activity_distance_from_baseline"],row["population_household_distance_from_baseline"],row["structural_welfare_distance_from_baseline"]))
                 for name, domain in metadata["feature_domains"].items():
                     current = float(by_code[code][name])
                     delta = float(row["delta_"+name])
                     original = current-delta
-                    con.execute("INSERT INTO a1_change_feature VALUES(?,?,?,?,?,?,?,?)",(code,period,name,domain,original,current,delta,None if original==0 else delta/original))
-        con.execute("INSERT INTO db1_run(analysis,period,fingerprint,model_version,metadata_json) VALUES(?,?,?,?,?)",("analysis1",period,digest,(metadata or {}).get("model_version",BASELINE_VERSION),payload(metadata or {})))
+                    con.execute('INSERT INTO a1_change_feature VALUES(%s,%s,%s,%s,%s,%s,%s,%s)',(code,period,name,domain,original,current,delta,None if original==0 else delta/original))
+        con.execute('INSERT INTO db1_run(analysis,period,fingerprint,model_version,metadata_json) VALUES(%s,%s,%s,%s,%s)',("analysis1",period,digest,(metadata or {}).get("model_version",BASELINE_VERSION),payload(metadata or {})))
     return True
 
 
 def seed_history(path, initial):
     initialize(path)
     with connect(path) as con:
-        con.execute("BEGIN IMMEDIATE")
+        con.execute('SELECT pg_advisory_xact_lock(hashtext(current_schema()));')
         stored = con.execute("SELECT COUNT(*) FROM a2_feature").fetchone()[0]
         if stored:
             return
@@ -159,15 +153,15 @@ def seed_history(path, initial):
             raise ValueError("Initial History must be 2022-01..2025-06, 924 rows")
         for row in records(initial):
             date = str(pd.Timestamp(row["date"]).date())
-            con.execute("INSERT INTO a2_feature VALUES(?,?,?,?,?)",(str(row["행정동코드"]),date,row["행정동"],1,payload(row)))
+            con.execute('INSERT INTO a2_feature VALUES(%s,%s,%s,%s,%s)',(str(row["행정동코드"]),date,row["행정동"],1,payload(row)))
 
 
 def commit_a2(path, current, result, evidence, context_period, metadata=None):
     period = str(pd.to_datetime(current.date).iloc[0].date())
     digest = fingerprint(current,["date","행정동코드"])
     with connect(path) as con:
-        con.execute("BEGIN IMMEDIATE")
-        versions=con.execute("SELECT DISTINCT model_version FROM a1_context WHERE period=?",(context_period,)).fetchall()
+        con.execute('SELECT pg_advisory_xact_lock(hashtext(current_schema()));')
+        versions=con.execute('SELECT DISTINCT model_version FROM a1_context WHERE period=%s',(context_period,)).fetchall()
         if len(versions)!=1: raise ValueError("Analysis1 context model version is missing or ambiguous")
         context_model_version=versions[0][0]
         if already_processed(con,"analysis2",period,digest):
@@ -181,12 +175,12 @@ def commit_a2(path, current, result, evidence, context_period, metadata=None):
         if set(result['행정동코드'].astype(str))!=set(current['행정동코드'].astype(str)) or not pd.to_datetime(result.date).eq(pd.Timestamp(period)).all():
             raise ValueError('Detection keys/dates differ from current Feature')
         for row in records(current):
-            con.execute("INSERT INTO a2_feature VALUES(?,?,?,?,?)",(str(row["행정동코드"]),period,row["행정동"],0,payload(row)))
+            con.execute('INSERT INTO a2_feature VALUES(%s,%s,%s,%s,%s)',(str(row["행정동코드"]),period,row["행정동"],0,payload(row)))
         for row in records(result):
-            con.execute("INSERT INTO a2_detection VALUES(?,?,?,?,?,?,?,?,?,?)",(str(row["행정동코드"]),period,context_period,context_model_version,int(row["any_signal"]),int(row["communication_signal"]),int(row["mobility_signal"]),int(row["combined_signal"]),row["signal_status"],payload(row)))
+            con.execute('INSERT INTO a2_detection VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(str(row["행정동코드"]),period,context_period,context_model_version,int(row["any_signal"]),int(row["communication_signal"]),int(row["mobility_signal"]),int(row["combined_signal"]),row["signal_status"],payload(row)))
         for row in records(evidence):
-            con.execute("INSERT INTO a2_evidence VALUES(?,?,?)",(str(row["행정동코드"]),period,payload(row)))
-        con.execute("INSERT INTO db1_run(analysis,period,fingerprint,model_version,metadata_json) VALUES(?,?,?,?,?)",("analysis2",period,digest,context_model_version,payload(metadata or {})))
+            con.execute('INSERT INTO a2_evidence VALUES(%s,%s,%s)',(str(row["행정동코드"]),period,payload(row)))
+        con.execute('INSERT INTO db1_run(analysis,period,fingerprint,model_version,metadata_json) VALUES(%s,%s,%s,%s,%s)',("analysis2",period,digest,context_model_version,payload(metadata or {})))
     return True
 
 
@@ -203,7 +197,7 @@ def export_csv(path, directory, analysis2_directory=None):
     with connect(path) as con:
         h=history(con)
         write(h,a2_directory/'history.csv')
-        write(pd.read_sql_query('SELECT * FROM v_db1_integrated ORDER BY date,adm_cd',con),directory/'db1_integrated.csv')
+        write(database.read_frame('SELECT * FROM v_db1_integrated ORDER BY date,adm_cd',con),directory/'db1_integrated.csv')
         detections=pd.DataFrame([json.loads(r[0]) for r in con.execute('SELECT result_json FROM a2_detection ORDER BY date,adm_cd')])
         evidence=pd.DataFrame([json.loads(r[0]) for r in con.execute('SELECT evidence_json FROM a2_evidence ORDER BY date,adm_cd')])
         # 아직 탐지 결과가 없는 DB도 빈 CSV를 열 이름과 함께 내보냅니다.

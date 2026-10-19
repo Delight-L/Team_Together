@@ -1,5 +1,7 @@
 > 2026-10-07 원천 정의 정정: 이 문서의 통신 월은 실제 관측월이 아니라 집계 기준월입니다. 실제 관측은 직전 3개월입니다. 같은 라벨월 소비는 후속 기간 맥락이며 동시 변화 근거가 아닙니다. 기간 정렬은 `v_a123_age_source_context`, 최신 규칙은 `docs/SOURCE_DEFINITIONS_RESULT_20261007.md`를 따르세요.
 
+> 과거 검증 기록입니다. 실행 경로는 PostgreSQL 전환에 맞춰 갱신했으며, 원문은 보존 스키마의 `source_archive`에서 복원할 수 있습니다.
+
 # DB1 소통 신호 10건: 공통 변화·자료 품질·12월 경과 검토
 
 작성일: 2026-10-07. 대상 자료: 2022-01~2025-12. DB1 현재 저장값을 읽기 전용으로 검토했다. 공식 신호·모델·임계값은 변경하지 않았다.
@@ -86,5 +88,5 @@
 - `FOLLOWUP_20261007.json`: 10건 월별 관측값·신호·구 중앙값·고정 구성 진단·소비 경과·품질 점검.
 - `followup_timeline_20261007.csv`: 사례별 월별 활동 및 기준 월 대비 변화.
 - `common_history_20261007.csv`: 2022~2025년 월·연령별 구 중앙값 변화.
-- DB 원본 경로: `C:/Users/user/Desktop/Team_Together/DB1/outputs/db1.sqlite`.
+- DB 원본 경로: `C:/Users/user/Desktop/Team_Together/db1_pipeline`.
 - 계산 스크립트: `followup.py`, `audit_followup.py`, `report_followup.py`. 공식 모델·신호에 쓰지 않는 사후 진단이다.

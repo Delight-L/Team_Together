@@ -8,6 +8,7 @@ DB1=ROOT.parents[2]/'pipelines'/'db1'
 sys.path[:0]=[str(DB1/'Analysis2'),str(DB1),str(DB1/'Context')]
 import pandas as pd
 import db1_store as store
+from pipelines.db1 import database
 import age_features as ages
 import age_detection as detect_age
 import source_semantics
@@ -34,14 +35,14 @@ def digest(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 def state(db,**kwargs):
     with store.connect(db) as con:
-        con.execute('INSERT OR REPLACE INTO pipeline_state VALUES(1,?)',(store.payload(kwargs),))
+        con.execute('INSERT INTO pipeline_state VALUES(1,%s) ON CONFLICT (id) DO UPDATE SET "payload_json"=excluded."payload_json"',(store.payload(kwargs),))
 
 def import_once(con,path,kind):
     name=str(path.relative_to(ROOT)).replace('\\','/');sha=digest(path)
-    old=con.execute('SELECT sha256 FROM input_import WHERE path=?',(name,)).fetchone()
+    old=con.execute('SELECT sha256 FROM input_import WHERE path=%s',(name,)).fetchone()
     if old and old[0]!=sha:raise ValueError(f'Approved input changed; explicit revision required: {name}')
     if old:return False
-    con.execute('INSERT INTO input_import VALUES(?,?,?)',(name,sha,kind));return True
+    con.execute('INSERT INTO input_import VALUES(%s,%s,%s)',(name,sha,kind));return True
 
 def seed_supplements(con):
     ref=ROOT/'data/reference/analysis3'
@@ -60,15 +61,15 @@ def seed_supplements(con):
         if frame.duplicated(list(keycols)).any():raise ValueError('Duplicate Analysis3 keys: '+table)
         for row in store.records(frame):
             values=[int(row[k]) if k in {'baseline_n','comparison_available','observed_industries'} else row[k] for k in keys]
-            con.execute(f'INSERT INTO {table} VALUES({",".join("?" for _ in range(len(keys)+1))})',(*values,store.payload(row)))
+            con.execute(f'INSERT INTO {table} VALUES({",".join("%s" for _ in range(len(keys)+1))})',(*values,store.payload(row)))
     path=ref/'a3_run.csv'
     if import_once(con,path,'provided_analysis3_export'):
         for row in store.records(pd.read_csv(path)):
             metadata=json.loads(row['metadata_json'])
             metadata.update(import_mode='provided_preprocessed_export',export_sha256=digest(path),retrospective_only=True)
-            con.execute('INSERT INTO a3_run(source,period,fingerprint,version,available_from,metadata_json) VALUES(?,?,?,?,?,?)',
+            con.execute('INSERT INTO a3_run(source,period,fingerprint,version,available_from,metadata_json) VALUES(%s,%s,%s,%s,%s,%s)',
                 (row['source'],row['period'],row['fingerprint'],row['version'],row['available_from'],store.payload(metadata)))
-    con.execute('INSERT OR IGNORE INTO a3_dimension SELECT DISTINCT age,domain FROM a3a_feature')
+    con.execute('INSERT INTO a3_dimension SELECT DISTINCT age,domain FROM a3a_feature ON CONFLICT DO NOTHING')
 
 def seed_annual_context(con):
     ref=ROOT/'data/reference/context'
@@ -76,19 +77,19 @@ def seed_annual_context(con):
     if import_once(con,path,'provided_annual_context'):
         for row in store.records(pd.read_csv(path,dtype={'adm_cd':str})):
             payload=json.loads(row['payload_json']);payload.update(available_from=row['available_from'],retrospective_only=True)
-            con.execute('INSERT INTO ctx_elder_annual VALUES(?,?,?)',(row['adm_cd'],int(row['year']),store.payload(payload)))
+            con.execute('INSERT INTO ctx_elder_annual VALUES(%s,%s,%s)',(row['adm_cd'],int(row['year']),store.payload(payload)))
     for name,table,first in [('v_survey_annual.csv','ctx_survey_annual','survey'),('v_youth_detail.csv','ctx_youth_reference','kind')]:
         path=ref/name
         if not import_once(con,path,'provided_annual_context'):continue
         for row in store.records(pd.read_csv(path)):
             row['definition']=json.loads(row.pop('payload_json'));row['not_detection_input']=True
-            con.execute(f'INSERT INTO {table} VALUES(?,?,?,?,?,?)',
+            con.execute(f"""INSERT INTO {table} VALUES(%s,%s,%s,%s,%s,%s)""",
                 (row[first],int(row['year']),row['district'],row['age_band'],row['metric'],store.payload(row)))
     path=ref/'ctx_evidence_guide.csv'
     if import_once(con,path,'provided_explanation_guide'):
         for row in store.records(pd.read_csv(path)):
             row['definition']=json.loads(row.pop('payload_json'))
-            con.execute('INSERT INTO ctx_evidence_guide VALUES(?,?)',(row['guide_id'],store.payload(row)))
+            con.execute('INSERT INTO ctx_evidence_guide VALUES(%s,%s)',(row['guide_id'],store.payload(row)))
 
 def initialize(cfg):
     db=cfg['database'];store.initialize(db)
@@ -100,7 +101,7 @@ def initialize(cfg):
     initial=pd.read_csv(initial_path);initial['date']=pd.to_datetime(initial.date);validate_history(initial)
     store.seed_history(db,initial)
     with store.connect(db) as con:
-        con.execute('BEGIN IMMEDIATE');import_once(con,initial_path,'initial_overall_history')
+        con.execute('SELECT pg_advisory_xact_lock(hashtext(current_schema()));');import_once(con,initial_path,'initial_overall_history')
         for scheme,expected in [('service',4620),('five_year',11088)]:
             path=ROOT/'data/reference/age'/f'{scheme}_baseline.csv'
             if not import_once(con,path,'initial_age_history'):continue
@@ -115,11 +116,11 @@ def initialize(cfg):
                 if set(g['행정동코드'])!=seed_codes or set(g.age_band.astype(str))!=expected_bands or len(g)!=22*len(expected_bands):
                     raise ValueError('Incomplete initial age grid')
             for row in store.records(f):
-                con.execute('INSERT INTO a2_age_feature VALUES(?,?,?,?,?,?,?,?)',
+                con.execute('INSERT INTO a2_age_feature VALUES(%s,%s,%s,%s,%s,%s,%s,%s)',
                     (str(row['행정동코드']),str(pd.Timestamp(row['date']).date()),scheme,str(row['age_band']),
                      ages.VERSION,'baseline',row['quality_status'],store.payload(row)))
         for month in pd.date_range('2022-01-01','2025-06-01',freq='MS'):
-            con.execute('INSERT OR IGNORE INTO a2_age_source VALUES(?,?,?)',
+            con.execute('INSERT INTO a2_age_source VALUES(%s,%s,%s) ON CONFLICT DO NOTHING',
                 (str(month.date()),'provided_baseline_'+str(month.date()),store.payload({'mode':'provided_preprocessed_initial_history','raw_available':False})))
         seed_supplements(con)
         seed_annual_context(con)
@@ -196,7 +197,7 @@ def export_all(cfg):
     store.export_csv(db,output,output/'analysis2')
     with store.connect(db) as con:
         for view,filename in [('v_v15_monthly_context','analysis123_monthly.csv'),('v_v15_age_context','analysis123_age.csv')]:
-            frame=pd.read_sql_query(f'SELECT * FROM {view}',con)
+            frame=database.read_frame(f'SELECT * FROM {view}',con)
             temporary=output/(filename+'.tmp')
             frame.to_csv(temporary,index=False,encoding='utf-8-sig')
             temporary.replace(output/filename)
@@ -205,9 +206,9 @@ def _staged_frames(con, date):
     """The ledger's preprocessing rows, rather than an in-memory raw parse, are
     the only inputs allowed into detection after they have been committed."""
     current=pd.DataFrame([json.loads(row[0]) for row in con.execute(
-        'SELECT feature_json FROM a2_month_input WHERE date=? ORDER BY adm_cd',(date,))])
+        'SELECT feature_json FROM a2_month_input WHERE date=%s ORDER BY adm_cd',(date,))])
     monthly=pd.DataFrame([json.loads(row[0]) for row in con.execute(
-        'SELECT feature_json FROM a2_age_month_input WHERE date=? ORDER BY adm_cd,age_scheme,age_band',(date,))])
+        'SELECT feature_json FROM a2_age_month_input WHERE date=%s ORDER BY adm_cd,age_scheme,age_band',(date,))])
     if len(current)!=22 or monthly.empty:
         raise ValueError(f'{date}: 저장된 전처리 입력이 완전하지 않습니다.')
     current['date']=pd.to_datetime(current['date'])
@@ -219,8 +220,8 @@ def _remove_unpublished_output(con, date):
     that unpublished month, then replay it from its immutable staged input."""
     for table in ('a2_feature','a2_detection','a2_evidence','a2_age_feature','a2_age_raw',
                   'a2_age_source','ctx_weather'):
-        con.execute(f'DELETE FROM {table} WHERE date=?',(date,))
-    con.execute("DELETE FROM db1_run WHERE analysis='analysis2' AND period=?",(date,))
+        con.execute(f"""DELETE FROM {table} WHERE date=%s""",(date,))
+    con.execute("DELETE FROM db1_run WHERE analysis='analysis2' AND period=%s",(date,))
 
 def process(cfg,period,t,i):
     db=cfg['database'];a2=cfg['analysis2']
@@ -233,17 +234,17 @@ def process(cfg,period,t,i):
     date=str(period.date());metadata=source_metadata(cfg,period,t,i)
     input_hash=hashlib.sha256((metadata['telecom']['sha256']+metadata['interest']['sha256']).encode()).hexdigest()
     with store.connect(db) as con:
-        existing=con.execute('SELECT input_hash,stage FROM month_run WHERE period=?',(date,)).fetchone()
+        existing=con.execute('SELECT input_hash,stage FROM month_run WHERE period=%s',(date,)).fetchone()
         if existing and existing[0] != input_hash:
             raise ValueError(f'{date}: 중단된 월의 원천 입력 hash가 변경되었습니다. 명시적 revision이 필요합니다.')
         if not existing:
-            con.execute("INSERT INTO month_run(period,input_hash,method_version,stage,output_json,error) VALUES(?,?,?,?,?,NULL)",
+            con.execute('INSERT INTO month_run(period,input_hash,method_version,stage,output_json,error) VALUES(%s,%s,%s,%s,%s,NULL)',
                         (date,input_hash,store.BASELINE_VERSION,'raw_validated',store.payload({'core_rows':len(parsed_current),'age_rows':len(parsed_monthly)})))
-            for row in store.records(parsed_current): con.execute('INSERT INTO a2_month_input VALUES(?,?,?)',(date,str(row['행정동코드']),store.payload(row)))
-            for row in store.records(parsed_monthly): con.execute('INSERT INTO a2_age_month_input VALUES(?,?,?,?,?)',(date,str(row['행정동코드']),row['age_scheme'],str(row['age_band']),store.payload(row)))
+            for row in store.records(parsed_current): con.execute('INSERT INTO a2_month_input VALUES(%s,%s,%s)',(date,str(row['행정동코드']),store.payload(row)))
+            for row in store.records(parsed_monthly): con.execute('INSERT INTO a2_age_month_input VALUES(%s,%s,%s,%s,%s)',(date,str(row['행정동코드']),row['age_scheme'],str(row['age_band']),store.payload(row)))
         current,monthly=_staged_frames(con,date)
         _remove_unpublished_output(con,date)
-        con.execute("UPDATE month_run SET stage='preprocessed',error=NULL,updated_at=CURRENT_TIMESTAMP WHERE period=?",(date,))
+        con.execute("UPDATE month_run SET stage='preprocessed',error=NULL,updated_at=CURRENT_TIMESTAMP WHERE period=%s",(date,))
         history=store.history(con);context_period,context=store.context_for(con,period)
     validate_history(history)
     full=run_month(history,current,context,return_history=True)
@@ -252,32 +253,32 @@ def process(cfg,period,t,i):
     evidence=evidence.loc[pd.to_datetime(evidence.date).eq(period)].copy()
     if len(result)!=22 or result[['cluster','cluster_type']].isna().any().any():raise ValueError('Incomplete core detection')
     with store.connect(db) as con:
-        con.execute('BEGIN IMMEDIATE')
+        con.execute('SELECT pg_advisory_xact_lock(hashtext(current_schema()));')
         last=con.execute('SELECT MAX(date) FROM a2_feature').fetchone()[0]
         if period!=(pd.Timestamp(last).to_period('M')+1).to_timestamp():raise ValueError('Concurrent/out-of-order update')
         for row in store.records(current):
-            con.execute('INSERT INTO a2_feature VALUES(?,?,?,?,?)',(str(row['행정동코드']),date,row['행정동'],0,store.payload(row)))
+            con.execute('INSERT INTO a2_feature VALUES(%s,%s,%s,%s,%s)',(str(row['행정동코드']),date,row['행정동'],0,store.payload(row)))
         for row in store.records(result):
-            con.execute('INSERT INTO a2_detection VALUES(?,?,?,?,?,?,?,?,?,?)',
+            con.execute('INSERT INTO a2_detection VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
                 (str(row['행정동코드']),date,context_period,store.BASELINE_VERSION,int(row['any_signal']),
                  int(row['communication_signal']),int(row['mobility_signal']),int(row['combined_signal']),row['signal_status'],store.payload(row)))
         for row in store.records(evidence):
-            con.execute('INSERT INTO a2_evidence VALUES(?,?,?)',(str(row['행정동코드']),date,store.payload(row)))
+            con.execute('INSERT INTO a2_evidence VALUES(%s,%s,%s)',(str(row['행정동코드']),date,store.payload(row)))
         for row in store.records(monthly):
-            con.execute('INSERT INTO a2_age_feature VALUES(?,?,?,?,?,?,?,?)',
+            con.execute('INSERT INTO a2_age_feature VALUES(%s,%s,%s,%s,%s,%s,%s,%s)',
                 (str(row['행정동코드']),date,row['age_scheme'],row['age_band'],ages.VERSION,row['phase'],row['quality_status'],store.payload(row)))
         for kind,raw in [('telecom',raw_t),('interest',raw_i)]:
             for row in store.records(raw):
-                con.execute('INSERT INTO a2_age_raw VALUES(?,?,?,?,?,?)',
+                con.execute('INSERT INTO a2_age_raw VALUES(%s,%s,%s,%s,%s,%s)',
                     (date,kind,str(row['행정동코드']),int(row['성별']),int(row['연령대']),store.payload(row)))
-        con.execute('INSERT INTO a2_age_source VALUES(?,?,?)',(date,store.fingerprint(monthly,['행정동코드','age_scheme','age_band']),store.payload(metadata)))
-        con.execute('INSERT INTO ctx_weather VALUES(?,?)',(date,store.payload(weather_context(cfg,period))))
-        con.execute('INSERT INTO db1_run(analysis,period,fingerprint,model_version,metadata_json) VALUES(?,?,?,?,?)',
+        con.execute('INSERT INTO a2_age_source VALUES(%s,%s,%s)',(date,store.fingerprint(monthly,['행정동코드','age_scheme','age_band']),store.payload(metadata)))
+        con.execute('INSERT INTO ctx_weather VALUES(%s,%s)',(date,store.payload(weather_context(cfg,period))))
+        con.execute('INSERT INTO db1_run(analysis,period,fingerprint,model_version,metadata_json) VALUES(%s,%s,%s,%s,%s)',
             ('analysis2',date,store.fingerprint(current,['date','행정동코드']),store.BASELINE_VERSION,store.payload(metadata)))
-        con.execute('INSERT OR REPLACE INTO pipeline_state VALUES(1,?)',(store.payload({'status':'refresh_required','month':date}),))
-        con.execute("UPDATE month_run SET stage='analyzed',output_json=?,updated_at=CURRENT_TIMESTAMP WHERE period=?",(store.payload({'core_rows':len(result),'age_rows':len(monthly)}),date))
+        con.execute('INSERT INTO pipeline_state VALUES(1,%s) ON CONFLICT (id) DO UPDATE SET "payload_json"=excluded."payload_json"',(store.payload({'status':'refresh_required','month':date}),))
+        con.execute("UPDATE month_run SET stage='analyzed',output_json=%s,updated_at=CURRENT_TIMESTAMP WHERE period=%s",(store.payload({'core_rows':len(result),'age_rows':len(monthly)}),date))
     refresh(cfg)
-    with store.connect(db) as con: con.execute("UPDATE month_run SET stage='complete',updated_at=CURRENT_TIMESTAMP WHERE period=?",(date,))
+    with store.connect(db) as con: con.execute("UPDATE month_run SET stage='complete',updated_at=CURRENT_TIMESTAMP WHERE period=%s",(date,))
     print(json.dumps({'month':period.strftime('%Y-%m'),'core_rows':len(current),'age_feature_rows':len(monthly),
         'signals':int(result.any_signal.sum()),'structural_issue_rows':int(current.interest_structural_issue.sum())}),flush=True)
 
@@ -314,17 +315,17 @@ def run(cfg,initialize_only=False,through=None):
             # A completed month becomes a separately readable release before the
             # coordinator starts mutating the next candidate month.
             state(db,status='ready',processed_this_run=processed,waiting_for=None,mode='local_raw_replay',network_download=False)
-            from snapshot_manager import publish
+            from publication import publish
             publish(db, period.strftime('%Y-%m-01'))
             with store.connect(db) as con:
-                con.execute("UPDATE month_run SET stage='published',updated_at=CURRENT_TIMESTAMP WHERE period=?",(str(period.date()),))
+                con.execute("UPDATE month_run SET stage='published',updated_at=CURRENT_TIMESTAMP WHERE period=%s",(str(period.date()),))
         if not core and not processed:refresh(cfg)
         elif not processed:export_all(cfg)
         state(db,status='ready',processed_this_run=processed,waiting_for=waiting,mode='local_raw_replay',network_download=False)
         # This module is also executed as a script by runner.py.  Initialization
         # and no-op recovery still need an initial/readable snapshot.
         if not processed:
-            from snapshot_manager import active_snapshot, publish
+            from publication import active_snapshot, publish
             # A no-op start must not replace the pointer that a dashboard has
             # already pinned.  Only the first cold start needs an initial one.
             if active_snapshot(db) is None:

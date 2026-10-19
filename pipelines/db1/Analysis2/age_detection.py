@@ -1,11 +1,12 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 """Prospective dong/age behavior-change detection with baseline-only calibration."""
 from pathlib import Path
-from contextlib import closing
 import argparse
 import hashlib
 import json
-import sqlite3
-
 import numpy as np
 import pandas as pd
 
@@ -22,7 +23,7 @@ DEFAULT = {
     'scale': 0.6745, 'lower_quantile': 0.025, 'threshold_cap': -2.0,
     'min_calibration_scores': 24,
 }
-SCHEMA = '''
+SCHEMA = """
 CREATE TABLE IF NOT EXISTS a2_age_model (
  model_version TEXT PRIMARY KEY, baseline_end TEXT NOT NULL, baseline_fingerprint TEXT NOT NULL,
  settings_json TEXT NOT NULL, calibration_json TEXT NOT NULL);
@@ -38,11 +39,11 @@ CREATE TABLE IF NOT EXISTS a2_age_common_change (
  date TEXT NOT NULL, age_band TEXT NOT NULL, model_version TEXT NOT NULL,
  result_json TEXT NOT NULL, PRIMARY KEY(date,age_band,model_version),
  FOREIGN KEY(model_version) REFERENCES a2_age_model(model_version));
-CREATE VIEW IF NOT EXISTS v_a2_age_detection AS
+CREATE OR REPLACE VIEW v_a2_age_detection AS
  SELECT adm_cd,date,age_scheme,age_band,model_version,assessment_status,
  communication_signal,mobility_signal,combined_signal,isolation_related_candidate,result_json
  FROM a2_age_detection;
-'''
+"""
 
 
 def records(frame):
@@ -239,13 +240,13 @@ def pipeline(frame, settings=None):
 
 def add_context(con, result, model_version):
     result = result.copy()
-    if not con.execute("SELECT 1 FROM sqlite_master WHERE name='a1_context'").fetchone(): return result
-    contexts = pd.read_sql_query('SELECT adm_cd,period,effective_from,cluster,cluster_type FROM a1_context',con)
+    if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a1_context'").fetchone(): return result
+    contexts = database.read_frame('SELECT adm_cd,period,effective_from,cluster,cluster_type FROM a1_context',con)
     if contexts.empty: return result
     result['context_period'] = None; result['a1_cluster_type'] = None
     saved_context = {
         (row[0],row[1],row[2]):(row[3],row[4])
-        for row in con.execute("SELECT adm_cd,date,age_band,json_extract(result_json,'$.context_period'),json_extract(result_json,'$.a1_cluster_type') FROM a2_age_detection WHERE model_version=?",(model_version,))
+        for row in con.execute("SELECT adm_cd,date,age_band,json_extract_path_text((result_json)::json, 'context_period'),json_extract_path_text((result_json)::json, 'a1_cluster_type') FROM a2_age_detection WHERE model_version=%s",(model_version,))
     }
     for idx,row in result.iterrows():
         key=(str(row['행정동코드']),row['date'].strftime('%Y-%m-%d'),row['age_band'])
@@ -260,10 +261,10 @@ def add_context(con, result, model_version):
 
 
 def load_features(db):
-    with closing(sqlite3.connect(db)) as con:
+    with database.connect(db) as con:
         frame = pd.DataFrame([json.loads(row[0]) for row in con.execute("SELECT feature_json FROM a2_age_feature WHERE age_scheme='service' ORDER BY date,adm_cd,age_band")])
-        if con.execute("SELECT 1 FROM sqlite_master WHERE name='a2_age_raw'").fetchone():
-            raw = pd.read_sql_query("SELECT date,adm_cd,sex,age_code,json_extract(raw_json,'$.총인구수') AS population FROM a2_age_raw WHERE kind='telecom'",con)
+        if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_raw'").fetchone():
+            raw = database.read_frame("SELECT date,adm_cd,sex,age_code,(json_extract_path_text((raw_json)::json, '총인구수')::double precision) AS population FROM a2_age_raw WHERE kind='telecom'",con)
             if not raw.empty:
                 raw['age_band'] = raw.age_code.map(lambda a:'60plus' if a>=60 else f'{a//10*10}s')
                 total = raw.groupby(['date','adm_cd','age_band']).population.sum()
@@ -278,29 +279,29 @@ def load_features(db):
 
 def commit(con, result, common, model):
     version = model['model_version']
-    con.execute('INSERT OR IGNORE INTO a2_age_model VALUES (?,?,?,?,?)', (version,model['settings']['baseline_end'],model['baseline_fingerprint'],canonical(model['settings']),canonical(model['calibration'])))
+    con.execute('INSERT INTO a2_age_model VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING', (version,model['settings']['baseline_end'],model['baseline_fingerprint'],canonical(model['settings']),canonical(model['calibration'])))
     saved = 0
     for row in records(result):
         date = pd.Timestamp(row['date']).strftime('%Y-%m-%d')
         key = (str(row['행정동코드']),date,row['age_scheme'],row['age_band'],version)
-        existing = con.execute('SELECT result_json FROM a2_age_detection WHERE adm_cd=? AND date=? AND age_scheme=? AND age_band=? AND model_version=?',key).fetchone()
+        existing = con.execute('SELECT result_json FROM a2_age_detection WHERE adm_cd=%s AND date=%s AND age_scheme=%s AND age_band=%s AND model_version=%s',key).fetchone()
         payload = canonical(row)
         if existing:
             if existing[0] != payload: raise ValueError(f'{key}: changed detection result; explicit model revision required')
             continue
         flags = [None if row[k] is None else int(row[k]) for k in ['communication_signal','mobility_signal','combined_signal','isolation_related_candidate']]
-        con.execute('INSERT INTO a2_age_detection VALUES (?,?,?,?,?,?,?,?,?,?,?)',(*key,row['assessment_status'],*flags,payload)); saved+=1
+        con.execute('INSERT INTO a2_age_detection VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(*key,row['assessment_status'],*flags,payload)); saved+=1
     for row in records(common):
         date = pd.Timestamp(row['date']).strftime('%Y-%m-%d'); payload=canonical(row)
-        old=con.execute('SELECT result_json FROM a2_age_common_change WHERE date=? AND age_band=? AND model_version=?',(date,row['age_band'],version)).fetchone()
+        old=con.execute('SELECT result_json FROM a2_age_common_change WHERE date=%s AND age_band=%s AND model_version=%s',(date,row['age_band'],version)).fetchone()
         if old and old[0] != payload: raise ValueError('Common age change results differ on rerun')
-        con.execute('INSERT OR IGNORE INTO a2_age_common_change VALUES (?,?,?,?)',(date,row['age_band'],version,payload))
+        con.execute('INSERT INTO a2_age_common_change VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING',(date,row['age_band'],version,payload))
     return saved
 
 
 def export(db, output):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
-    with closing(sqlite3.connect(db)) as con:
+    with database.connect(db) as con:
         for table,filename in [('a2_age_detection','analysis2_age_detection.csv'),('a2_age_common_change','analysis2_age_common_change.csv')]:
             frame=pd.DataFrame([json.loads(row[0]) for row in con.execute(f'SELECT result_json FROM {table}')])
             if not frame.empty: frame.sort_values(['date','age_band']).to_csv(output/filename,index=False,encoding='utf-8-sig')
@@ -313,8 +314,8 @@ def run(db, output, settings=None):
     common_history=common.copy()
     result=result.loc[result.date.ge(start)].copy()
     common=common.loc[common.date.ge(start)].copy()
-    with closing(sqlite3.connect(db)) as con,con:
-        con.execute('PRAGMA foreign_keys=ON');con.executescript(SCHEMA)
+    with database.connect(db) as con,con:
+        con.execute('SET CONSTRAINTS ALL IMMEDIATE;');con.executescript(SCHEMA)
         # Existing model baseline/config cannot silently change when future data arrive.
         old=con.execute('SELECT model_version FROM a2_age_model').fetchall()
         if old and model['model_version'] not in [r[0] for r in old]:
@@ -357,7 +358,7 @@ def build_summary(result):
 def main():
     root=Path(__file__).resolve().parents[1]
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--db',default=str(root/'outputs/db1.sqlite'))
+    parser.add_argument('--db',default=str('db1_pipeline'))
     parser.add_argument('--output',default=str(root/'Analysis2/outputs/age_detection'))
     parser.add_argument('--settings',help='Optional JSON settings; changes require explicit model migration after first run')
     parser.add_argument('--export-only',action='store_true')

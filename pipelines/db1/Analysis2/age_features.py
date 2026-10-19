@@ -1,15 +1,16 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 import sys as _settings_sys
 from pathlib import Path as _SettingsPath
 _settings_sys.path.insert(0, str(_SettingsPath(__file__).resolve().parents[1]))
 from db1_settings import load_settings
 """Age-preserving Analysis2 preprocessing; does not produce isolation detections."""
 from pathlib import Path
-from contextlib import closing
 import argparse
 import hashlib
 import json
-import sqlite3
-
 import numpy as np
 import pandas as pd
 
@@ -169,14 +170,14 @@ def persist(db, monthly, raw_t, raw_i, metadata):
     date = pd.Timestamp(monthly.date.iloc[0]).strftime('%Y-%m-%d')
     raw_payload = {'telecom': serial(raw_t.sort_values(RAW_KEY)), 'interest': serial(raw_i.sort_values(RAW_KEY)), 'version': VERSION}
     digest = hashlib.sha256(json.dumps(raw_payload, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
-    Path(db).parent.mkdir(parents=True, exist_ok=True)
-    with closing(sqlite3.connect(db)) as con, con:
+    database.ensure_workspace(db)
+    with database.connect(db) as con, con:
         con.executescript(SCHEMA)
-        existing = con.execute('SELECT fingerprint FROM a2_age_source WHERE date=?', (date,)).fetchone()
+        existing = con.execute('SELECT fingerprint FROM a2_age_source WHERE date=%s', (date,)).fetchone()
         if existing:
             if existing[0] != digest:
                 raise ValueError(f'{date}: stored age data differ; explicit source revision required')
-            stored = [json.loads(row[0]) for row in con.execute('SELECT feature_json FROM a2_age_feature WHERE date=?', (date,))]
+            stored = [json.loads(row[0]) for row in con.execute('SELECT feature_json FROM a2_age_feature WHERE date=%s', (date,))]
             order = lambda row: (row['행정동코드'], row['age_scheme'], row['age_band'])
             if sorted(stored, key=order) != sorted(serial(monthly), key=order):
                 raise ValueError(f'{date}: derived features/weather differ; explicit revision required')
@@ -186,20 +187,20 @@ def persist(db, monthly, raw_t, raw_i, metadata):
         if date != expected:
             raise ValueError(f'nonconsecutive age update: expected {expected}, got {date}')
         for row in serial(monthly):
-            con.execute('INSERT INTO a2_age_feature VALUES (?,?,?,?,?,?,?,?)', (str(row['행정동코드']), date, row['age_scheme'], row['age_band'], VERSION, row['phase'], row['quality_status'], json.dumps(row, ensure_ascii=False, allow_nan=False)))
+            con.execute('INSERT INTO a2_age_feature VALUES (%s,%s,%s,%s,%s,%s,%s,%s)', (str(row['행정동코드']), date, row['age_scheme'], row['age_band'], VERSION, row['phase'], row['quality_status'], json.dumps(row, ensure_ascii=False, allow_nan=False)))
         for kind, records in raw_payload.items():
             if kind == 'version':
                 continue
             for row in records:
-                con.execute('INSERT INTO a2_age_raw VALUES (?,?,?,?,?,?)', (date, kind, str(row['행정동코드']), int(row['성별']), int(row['연령대']), json.dumps(row, ensure_ascii=False, allow_nan=False)))
-        con.execute('INSERT INTO a2_age_source VALUES (?,?,?)', (date, digest, json.dumps(metadata, ensure_ascii=False)))
+                con.execute('INSERT INTO a2_age_raw VALUES (%s,%s,%s,%s,%s,%s)', (date, kind, str(row['행정동코드']), int(row['성별']), int(row['연령대']), json.dumps(row, ensure_ascii=False, allow_nan=False)))
+        con.execute('INSERT INTO a2_age_source VALUES (%s,%s,%s)', (date, digest, json.dumps(metadata, ensure_ascii=False)))
     return True
 
 
 def export(db, output):
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    with closing(sqlite3.connect(db)) as con:
+    with database.connect(db) as con:
         frame = pd.DataFrame([json.loads(r[0]) for r in con.execute('SELECT feature_json FROM a2_age_feature ORDER BY date,adm_cd,age_scheme,age_band')])
     for scheme in ['service', 'five_year']:
         selected = frame.loc[frame.age_scheme.eq(scheme)].copy()
@@ -219,9 +220,9 @@ def run(config, db, output, start='2022-01', end='2025-12', month=None):
     output = Path(output); output.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(inventory).to_csv(output/'source_inventory.csv', index=False, encoding='utf-8-sig')
     reports = []; checks = []; expected_codes = None
-    if Path(db).exists():
-        with closing(sqlite3.connect(db)) as con:
-            if con.execute("SELECT 1 FROM sqlite_master WHERE name='a2_age_feature'").fetchone():
+    if database.exists(db):
+        with database.connect(db) as con:
+            if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_feature'").fetchone():
                 expected_codes = [int(row[0]) for row in con.execute('SELECT DISTINCT adm_cd FROM a2_age_feature')]
                 if not expected_codes: expected_codes = None
     for period, source in zip(periods, inventory):
@@ -236,7 +237,7 @@ def run(config, db, output, start='2022-01', end='2025-12', month=None):
         print(json.dumps(reports[-1], ensure_ascii=False), flush=True)
     merge_report(pd.DataFrame(reports), output/'monthly_quality_report.csv', ['month'])
     merge_report(pd.concat(checks), output/'weighted_reconciliation.csv', ['date', '행정동코드', 'metric'])
-    with closing(sqlite3.connect(db)) as con:
+    with database.connect(db) as con:
         all_sources = [json.loads(row[0]) for row in con.execute('SELECT metadata_json FROM a2_age_source ORDER BY date')]
     pd.DataFrame([{k: row[k] for k in ['month','telecom','interest']} for row in all_sources]).to_csv(output/'source_inventory.csv', index=False, encoding='utf-8-sig')
     export(db, output)
@@ -252,7 +253,7 @@ def merge_report(frame, path, keys):
 
 def sync_age_history(settings, db, through, output):
     """Backfill only missing months; used by the ordinary DB1 scan/month worker."""
-    with closing(sqlite3.connect(db)) as con:
+    with database.connect(db) as con:
         con.executescript(SCHEMA)
         latest = con.execute('SELECT MAX(date) FROM a2_age_source').fetchone()[0]
     start = (pd.Period(latest, freq='M') + 1).to_timestamp() if latest else pd.Timestamp('2022-01-01')
@@ -267,7 +268,7 @@ def main():
     root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', default=str(root/'config/db1_config.json'))
-    parser.add_argument('--db', default=str(root/'outputs/db1.sqlite'))
+    parser.add_argument('--db', default=str('db1_pipeline'))
     parser.add_argument('--output', default=str(root/'Analysis2/outputs/age'))
     parser.add_argument('--start', default='2022-01'); parser.add_argument('--end', default='2025-12')
     parser.add_argument('--month')

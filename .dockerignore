@@ -11,7 +11,6 @@ frontend/dist
 **/tests
 **/*.pyc
 **/*.log
-**/*.sqlite*
 **/runtime
 **/ai_settings.json
 .tmp

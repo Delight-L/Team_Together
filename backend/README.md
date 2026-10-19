@@ -26,7 +26,7 @@ python scripts/audit_repository.py
 
 웹 서비스는 공유 PostgreSQL(`db1`·`db1_v16`·`db2`·`work` 스키마)을 사용합니다.
 v16 게시 테이블이 없으면 지역 분석 에이전트는 대시보드와 같은 DB1 조회 경로와 전달된 연령·소비·날씨 CSV를 사용합니다.
-구조와 설계 이유는 [보미 챗봇 구조](../docs/bomi-architecture.md), 재설계 과정은 [보미 재설계 보고서](../docs/bomi-redesign-report.md)를 보세요.
+구조와 설계 이유는 [보미 챗봇 구조](../docs/bomi-architecture.md), 재설계 과정은 [보미 재설계 보고서](../docs/postgresql-storage.md)를 보세요.
 
 ## 문서 목차
 
@@ -204,7 +204,7 @@ python -m backend.chatbot.welfare.app.dialogue.semantic --all-regions
 .venv/Scripts/python.exe -m unittest backend.db.tests.test_welfare_chatbot_repository -v
 ```
 
-외부 DB 없이 검사할 때는 `WELFIND_WELFARE_SOURCE=json`을 명시합니다. DB 검사는 임시 SQLite를 사용하고 HTTP 검사는 임시 업무 DB로 격리합니다. 테스트는 현재 저장소의 정책에 따라 로컬에서 관리합니다. 복지 원본 DB 조회나 AI 연결 실패를 JSON으로 자동 대체하지 않습니다.
+외부 DB 없이 검사할 때는 `WELFIND_WELFARE_SOURCE=json`을 명시합니다. DB 검사는 전용 PostgreSQL 검증 스키마에서 수행합니다. 테스트는 현재 저장소의 정책에 따라 로컬에서 관리합니다. 복지 원본 DB 조회나 AI 연결 실패를 JSON으로 자동 대체하지 않습니다.
 
 API 키는 서버 `.env` 또는 관리자 AI 설정에 저장하며 저장소나 화면 코드에 노출하지 않습니다.
 
@@ -226,7 +226,7 @@ API 키는 서버 `.env` 또는 관리자 AI 설정에 저장하며 저장소나
 | `chatbot_agent/db1_repository.py` | 저장소 계약(`Db1Repository`). 챗봇 로직은 SQL을 직접 쓰지 않고 이 계약만 부름 |
 | `chatbot_agent/repository.py` | 공통 조회 로직(`SqlDb1Repository`). SQL은 이 파일에만 둠 |
 | `chatbot_agent/pg_repository.py` | 유일한 구현(`PostgresDb1Repository`): 게시된 활성 run을 읽음 |
-| `data_pipeline/` | 계산 작업기(`analysis1_worker.py`, `monthly_worker.py`, `runner.py`, `snapshot_manager.py`)와 PostgreSQL 게시(`publish_postgres.py`, `db1_compat.py`) |
+| `data_pipeline/` | 계산 작업기(`analysis1_worker.py`, `monthly_worker.py`, `runner.py`, `publication.py`)와 PostgreSQL 게시(`publish_postgres.py`, `db1_compat.py`) |
 | `config/data_pipeline.json` | 계산용 DB 위치·원자료 위치 설정 |
 | `evaluation/` | 질문 세트와 평가 결과 |
 
@@ -234,10 +234,9 @@ DB를 새로 만드는 작업기는 공식 분석 코드 `pipelines/db1`을 그�
 
 ### 근거 자료 (PostgreSQL)
 
-- 게시 모드의 챗봇은 **PostgreSQL에서** 읽습니다. 게시 테이블이 없으면 대시보드 호환 모드(DB1 서비스 테이블 + 전달 CSV)를 사용합니다. 계산 파이프라인은 SQLite(`outputs/db1.sqlite`, git에 올리지 않음)에 결과를 쓰고, 게시가 이를 PostgreSQL의 `db1.v16_*` 테이블과 `db1_v16` 뷰로 옮깁니다.
-- 게시는 `data_pipeline/publish_postgres.py`의 `publish(sqlite_path, engine)`, 이전 run으로 되돌리기는 `activate(engine, run_id)`입니다. 저장 구조는 [보미 챗봇 구조 6장](../docs/bomi-architecture.md#6-v16-근거-저장소)을 보세요.
+- 게시 모드의 챗봇은 **PostgreSQL에서** 읽습니다. 게시 테이블이 없으면 대시보드 호환 모드(DB1 서비스 테이블 + 전달 CSV)를 사용합니다. 계산 파이프라인은 PostgreSQL `db1_pipeline`에 결과를 쓰고, 게시가 이를 서비스의 `db1.v16_*` 테이블과 `db1_v16` 뷰로 옮깁니다.
+- 게시는 `data_pipeline/publish_postgres.py`의 `publish(workspace_schema, engine)`, 이전 run으로 되돌리기는 `activate(engine, run_id)`입니다. 저장 구조는 [보미 챗봇 구조 6장](../docs/bomi-architecture.md#6-v16-근거-저장소)을 보세요.
 - 게시 테이블이 없을 때는 대시보드 호환 저장소의 자료 유무를 확인합니다. 사용할 자료가 없거나 DB에 연결하지 못하면 `data_ready()`가 False이고 동·그룹 분석 근거로 답합니다.
-- `DB1_REPOSITORY=sqlite` 같은 예전 설정은 오류로 알립니다(SQLite 서빙은 제거됨).
 
 ### 외부 AI
 

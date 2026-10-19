@@ -1,6 +1,6 @@
-"""Db1Repository의 PostgreSQL 구현. SQLite 구현과 같은 조회 로직(SqlDb1Repository)을 그대로 씁니다.
+"""Db1Repository의 PostgreSQL 구현. 작업 저장소 구현과 같은 조회 로직(SqlDb1Repository)을 그대로 씁니다.
 
-읽는 곳은 스키마 db1_v16의 뷰입니다. 뷰는 SQLite 테이블과 같은 이름·열이고, 연결에 고정한 run의 행만 보여 줍니다
+읽는 곳은 스키마 db1_v16의 뷰입니다. 뷰는 작업 저장소 테이블과 같은 이름·열이고, 연결에 고정한 run의 행만 보여 줍니다
 (data_pipeline/publish_postgres.py가 만듭니다). 그래서 조회 SQL은 한 줄도 바뀌지 않습니다.
 
 요청 하나가 읽는 run은 연결을 열 때 한 번 정해 고정합니다. 도중에 새 run이 공개돼도 한 답변 안에서 버전이 섞이지 않습니다.
@@ -16,13 +16,13 @@ VIEW_SCHEMA = 'db1_v16'
 
 
 class _PgConnection:
-    """`?` 자리표시자를 쓰는 조회 SQL을 PostgreSQL 드라이버 형식(%s)으로 바꿔 실행하는 얇은 연결."""
+    """PostgreSQL 조회 SQL을 실행하는 연결."""
 
     def __init__(self, connection):
         self.connection = connection
 
     def execute(self, sql, params=()):
-        return self.connection.exec_driver_sql(sql.replace('?', '%s'), tuple(params))
+        return self.connection.exec_driver_sql(sql, tuple(params))
 
 
 class PostgresDb1Repository(SqlDb1Repository):
@@ -42,7 +42,7 @@ class PostgresDb1Repository(SqlDb1Repository):
         # screen, or shared database code.
         with engine.connect() as connection:
             has_v16 = connection.exec_driver_sql(
-                "SELECT to_regclass('db1.v16_active_run')"
+                f"SELECT to_regclass('{SCHEMA}.v16_active_run')"
             ).scalar() is not None
         self._dashboard = None
         if not has_v16:
@@ -93,7 +93,7 @@ class PostgresDb1Repository(SqlDb1Repository):
                 f'SELECT status FROM {SCHEMA}.v16_run WHERE run_id=%s', (run_id,)).scalar() == 'ready'
 
     def pipeline_status(self):
-        """SQLite 구현(`data_pipeline.runner.status`)과 같은 항목."""
+        """작업 저장소 구현(`data_pipeline.runner.status`)과 같은 항목."""
         if self._dashboard is not None:
             return self._dashboard.pipeline_status()
         with self.connection() as c:

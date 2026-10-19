@@ -19,4 +19,7 @@ def load_settings(path):
         if isinstance(value, str):
             return value.replace('${TEAM_TOGETHER_DATA_ROOT}', str(data_root))
         return value
-    return expand(json.loads(Path(path).read_text(encoding='utf-8')))
+    settings = expand(json.loads(Path(path).read_text(encoding='utf-8')))
+    if os.environ.get('DB1_PIPELINE_SCHEMA'):
+        settings['database'] = os.environ['DB1_PIPELINE_SCHEMA']
+    return settings

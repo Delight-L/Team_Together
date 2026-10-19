@@ -1,3 +1,7 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 import sys as _settings_sys
 from pathlib import Path as _SettingsPath
 _settings_sys.path.insert(0, str(_SettingsPath(__file__).resolve().parents[1]))
@@ -99,7 +103,7 @@ def process(settings,db,period,bootstrap=False,overrides=None):
 def main():
     p=argparse.ArgumentParser();p.add_argument('--config',required=True);p.add_argument('--db');p.add_argument('--period');p.add_argument('--bootstrap',action='store_true');p.add_argument('--scan',action='store_true')
     for name in ['resident','household','welfare','effective-from']: p.add_argument('--'+name)
-    a=p.parse_args();settings=load_settings(a.config);db=Path(a.db) if a.db else ROOT/settings['database']
+    a=p.parse_args();settings=load_settings(a.config);db=database.workspace(a.db or settings['database'])
     if a.scan:
         from elder_context import ingest
         ingest(db,settings)
@@ -111,7 +115,7 @@ def main():
             if period=='2025H2': continue
             store.initialize(db)
             with store.connect(db) as con:
-                exists=con.execute("SELECT 1 FROM db1_run WHERE analysis='analysis1' AND period=?",(period)).fetchone()
+                exists=con.execute("SELECT 1 FROM db1_run WHERE analysis='analysis1' AND period=%s",(period)).fetchone()
             if not exists:
                 try: process(settings,db,period)
                 except FileNotFoundError as exc: print(f'{period}: waiting for original files: {exc}',flush=True)

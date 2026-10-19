@@ -1,12 +1,16 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 from pathlib import Path
 from contextlib import closing
-import importlib.util,sys,json,sqlite3,hashlib,math,csv
+import importlib.util,sys,json,hashlib,math,csv
 import pandas as pd
 import numpy as np
 R=Path(__file__).resolve().parent
 DB1=next((p for p in R.parents if (p/'run_db1.py').exists()),Path(r'C:\Users\user\Desktop\Team_Together\DB1'))
 O=DB1/'outputs/validation/retrospective_20261007' if (R/'DEPLOYED.txt').exists() else R/'outputs';O.mkdir(parents=True,exist_ok=True)
-DB=DB1/'outputs/db1.sqlite'
+DB='db1_pipeline'
 sys.path.insert(0,str(DB1/'Analysis2'))
 import age_detection as ad
 import activity_level as al
@@ -38,8 +42,8 @@ def evaluate(frame,start,end,first,last,label,q=.025,cap=-2,precomputed=None):
 before=sha(DB)
 frame=ad.load_features(DB)
 current,current_results,full=evaluate(frame,'2022-01-01','2025-06-01','2025-07-01','2025-12-01','current_reference')
-with closing(sqlite3.connect('file:'+DB.as_posix()+'?mode=ro',uri=True)) as c:
- stored=pd.read_sql_query('SELECT adm_cd,date,age_band,communication_signal,mobility_signal,combined_signal FROM a2_age_detection',c)
+with closing(database.connect(DB,readonly=True)) as c:
+ stored=database.read_frame('SELECT adm_cd,date,age_band,communication_signal,mobility_signal,combined_signal FROM a2_age_detection',c)
 expected={(r.adm_cd,r.date,r.age_band):tuple(None if pd.isna(getattr(r,m)) else int(getattr(r,m)) for m in ['communication_signal','mobility_signal','combined_signal']) for r in stored.itertuples()}
 for r in current_results.itertuples():
  actual=tuple(None if pd.isna(getattr(r,m)) else int(getattr(r,m)) for m in ['communication_signal','mobility_signal','combined_signal'])

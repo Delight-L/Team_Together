@@ -1,7 +1,7 @@
 # 보미 챗봇 구조
 
 보미의 요청 흐름, 모듈 책임, 규제 계층, 이벤트 계약, v16 근거 저장소 설계를 정리합니다.
-실행·테스트·설정 방법은 [백엔드 안내](../backend/README.md#bomi), 재설계 과정과 측정 결과는 [보미 재설계 보고서](bomi-redesign-report.md)를 보세요.
+실행·테스트·설정 방법은 [백엔드 안내](../backend/README.md#bomi), 재설계 과정과 측정 결과는 [보미 재설계 보고서](postgresql-storage.md)를 보세요.
 
 ## 1. 요청 흐름
 
@@ -150,18 +150,18 @@ repository.SqlDb1Repository         ← 조회 로직(SQL·캐시·인덱스). S
 pg_repository.PostgresDb1Repository ← 유일한 구현: 고정한 run의 뷰를 읽음
 ```
 
-- `Chatbot`은 저장소를 반드시 주입받습니다(없으면 `ValueError`). SQLite 서빙(`DataRepository`·`SqliteDb1Repository`, 단독 실행 `cli/main/menu`)은 없습니다.
-- 챗봇 로직에 SQL·`sqlite3`가 다시 들어오지 않도록 `bomi/tests/test_db1_repository.py`의 `SqlStaysInsideRepositoryTest`가 소스를 검사합니다.
+- `Chatbot`은 저장소를 반드시 주입받습니다(없으면 `ValueError`). 과거 단독 실행 `cli/main/menu`는 제거했습니다.
+- 챗봇 로직에 SQL가 다시 들어오지 않도록 `bomi/tests/test_db1_repository.py`의 `SqlStaysInsideRepositoryTest`가 소스를 검사합니다.
 - 저장소 객체당 연결 1개를 재사용하고, 같은 표·코드 표는 요청 동안 한 번만 읽습니다(호출부에는 사본). `v16.reply()`는 요청이 끝나면 `repo.close()`를 부릅니다.
 - 탐지 표(JSON 행)의 기간·동 조건은 SQL로 내리지 않습니다. 열 집합이 «읽은 행들의 키 합집합»이라 일부 행만 읽으면 열 구성이 달라질 수 있어, 동별 정렬 인덱스(이진 탐색)로 같은 목표를 달성합니다. 소비 원자료는 행 단위라 필요한 기간·동·연령만 SQL로 읽습니다.
 
 ### PostgreSQL 저장 구조
 
 ```
-SQLite 공개본 ──publish──▶ db1.v16_<테이블>(run_id, 원래 열…)   run별 자료
+PostgreSQL 작업 스키마 ──publish──▶ db1.v16_<테이블>(run_id, 원래 열…)   run별 자료
                            db1.v16_run / db1.v16_active_run      이력 / 활성 run 포인터
                                        │
-                           db1_v16.<테이블> (뷰)  ← 연결에 고정한 run의 행만, SQLite 테이블과 같은 이름·열
+                           db1_v16.<테이블> (뷰)  ← 연결에 고정한 run의 행만, 분석 작업 테이블과 같은 이름·열
                                        │
                            PostgresDb1Repository ──▶ SqlDb1Repository의 조회 로직
 ```
@@ -176,20 +176,20 @@ SQLite 공개본 ──publish──▶ db1.v16_<테이블>(run_id, 원래 열�
 | 열 변화 | 새 공개본에 열이 늘면 `ALTER TABLE ADD COLUMN`, 뷰를 다시 만듦 |
 | JSON 열 | **TEXT로 저장**. JSON 형식은 `NaN`을 거부하고 키 순서를 바꿀 수 있어 원문 그대로 보존 |
 | 세션 정리 | 연결을 닫을 때 `search_path`와 run 설정을 되돌려 풀의 다른 사용자에게 새지 않음 |
-| 설정 | PostgreSQL만 씀. 남은 `DB1_REPOSITORY=sqlite`·오타 값은 오류(`data_ready()`는 경고 후 «자료 없음») |
+| 설정 | `DB1_PIPELINE_SCHEMA` 또는 `--db`로 작업 스키마를 지정하며 서비스 스키마와 분리 |
 | 장애 구분 | `data_ready()`가 «자료 없음»(활성 run 없음)과 «저장소 연결 실패»(오류 로그)를 구분 |
 
 게시 테이블(`db1.v16_active_run`)이 없으면 대시보드 호환 저장소(DB1 서비스 테이블 + 전달 CSV)를 사용합니다. 사용할 자료가 없거나 조회가 실패하면 `data_ready()`가 False라 동·그룹 분석이 답합니다.
-계산 파이프라인(`monthly_worker`·`runner`·`snapshot_manager`)은 계속 SQLite에 결과를 쓰고, 게시가 PostgreSQL로 옮깁니다.
+계산 파이프라인은 `db1_pipeline`에 결과를 쓰고, `publication`이 서비스 run을 게시합니다.
 
 ### 조회 순서 규칙
 
-여러 행을 돌려주는 조회는 `ORDER BY`를 명시합니다. 같은 SQL이라도 SQLite는 기본키 색인 순서로, PostgreSQL은 저장 순서로 돌려주기 때문입니다.
+여러 행을 돌려주는 조회는 `ORDER BY`를 명시합니다. PostgreSQL은 ORDER BY가 없으면 조회 순서를 보장하지 않습니다.
 새 조회를 추가할 때 여러 행을 돌려준다면 기본키 순서의 `ORDER BY`를 함께 쓰세요.
 
 ### 파이프라인 산출물 게시 (`pipeline_state`·`ctx_weather`)
 
-`pipelines/db1`이 내놓는 `db1.sqlite`에는 v16 월별 작업기가 만드는 두 테이블이 없습니다. **원본 파일을 고치지 않고** 게시 단계에서 메웁니다(`data_pipeline/db1_compat.py`).
+분석 작업 스키마 `db1_pipeline`에는 v16 월별 작업기가 만드는 두 테이블이 없습니다. **작업 원본을 고치지 않고** 게시 단계에서 메웁니다(`data_pipeline/db1_compat.py`).
 
 | 대상 | 산출물 | 게시 때의 처리 |
 |---|---|---|

@@ -10,10 +10,10 @@ from backend.db.db1_snapshot import prepare_snapshot
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--sqlite', help='Read a hydrated DB1 SQLite snapshot without modifying it')
+    parser.add_argument('--workspace', help='Read a PostgreSQL analysis workspace without modifying it')
     parser.add_argument('--publish', action='store_true')
     args = parser.parse_args()
-    monthly, structure = prepare_snapshot(args.sqlite)
+    monthly, structure = prepare_snapshot(args.workspace)
     result = dict(status='PASS', monthly_rows=len(monthly['data']), structure_rows=len(structure['context']),
                   period=monthly['period'], model_version=structure['report']['rule_version'], published=False)
     if args.publish:
@@ -29,7 +29,7 @@ def main():
             connection.execute(text('''CREATE TABLE IF NOT EXISTS db1.service_imports
                 (run_id TEXT PRIMARY KEY, source_name TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)'''))
             connection.execute(text('INSERT INTO db1.service_imports(run_id,source_name) VALUES(:run,:source)'),
-                               dict(run=run_id, source=args.sqlite or 'delightL DB1 delivery'))
+                               dict(run=run_id, source=args.workspace or 'delightL DB1 delivery'))
         result.update(published=True, run_id=run_id)
     print(json.dumps(result, ensure_ascii=False))
 

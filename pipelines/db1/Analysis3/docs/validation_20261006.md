@@ -1,5 +1,7 @@
 # Analysis3 검증 결과 — 2026-10-06
 
+> 과거 검증 기록입니다. 실행 경로는 PostgreSQL 전환에 맞춰 갱신했으며, 원문은 보존 스키마의 `source_archive`에서 복원할 수 있습니다.
+
 ## 실제 원본 전처리
 
 - 신한카드 원본 전체 1,806,800행 중 강남구 1,366,189행 사용. 2025-07-01–12-31의 184일.
@@ -18,7 +20,7 @@
 - 삼성1동 2025Q4: 비교가능 연령·영역30개 중 과거 동일분기 일평균 최소 미만15개, 최대 초과3개. 소비영역별 기술 통계이며 위험 판정/원인 설명 아님.
 - Analysis1 입력22·context22·기준유형22·feature286, Analysis2 history1056·detection132·evidence1, 기존 처리기록7행은 원본 DB와 **전체 레코드 비교 일치**.
 - 원본 집계 건수·금액 합계와 DB 요약 합계 대조 통과. 업종 누락·0·관측 불가 상태 구분.
-- SQLite integrity_check=ok, foreign_key_check 오류 없음.
+- 이전 파일 저장소 integrity_check=ok, foreign_key_check 오류 없음.
 
 ## 테스트
 

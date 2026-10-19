@@ -67,8 +67,8 @@ Analysis2 구현은 `pipelines/db1/Analysis2` 하나입니다. `python main.py -
 
 v16 지역 변화 신호 에이전트는 PostgreSQL의 게시된 run(`db1_v16`)을 읽습니다.
 게시 테이블이 없으면 `DashboardDb1Repository`가 기존 DB1 서비스 테이블과 전달된 연령·소비·날씨 CSV를 읽습니다.
-`outputs/db1.sqlite`(Git 제외)는 계산·게시 입력이며 서빙용 SQLite 경로는 없습니다.
-`DB1_DATABASE_PATH`는 계산 산출물 위치를 지정합니다. 이 DB를 만드는 작업기도 `pipelines/db1`의 분석 코드를 그대로 씁니다.
+계산·게시 입력은 PostgreSQL `db1_pipeline`입니다.
+`DB1_PIPELINE_SCHEMA`는 분석 작업 스키마를 지정합니다. 이 DB를 만드는 작업기도 `pipelines/db1`의 분석 코드를 그대로 씁니다.
 
 루트 `.env`, 가상환경 `.venv`, `frontend/node_modules`는 계속 같은 위치를 사용합니다.
 관리자 AI 설정은 공유 PostgreSQL `work.app_settings`에 보관합니다(배포 서버 재시작 후에도 유지).
@@ -93,8 +93,8 @@ python scripts/audit_repository.py
 
 DB1의 개별 분석 테스트는 서로 같은 이름의 내부 모듈을 사용하므로,
 테스트 파일과 `pipelines/db1/run_tests.ps1`은 Git 추적에서 제외되어 새 checkout에 포함되지 않습니다. 별도로 보관한 로컬 테스트가 있을 때만 해당 파일의 안내에 따라 실행합니다.
-`pipelines/db1/outputs/db1.sqlite`가 `version https://git-lfs.github.com/spec/v1`로 시작하면
-실제 SQLite가 아닌 전달 포인터입니다. 해당 파일이 필요한 테스트는 실제 DB 전달본을 받은 뒤 실행해야 합니다.
+분석 DB는 PostgreSQL `db1_pipeline` 스키마를 사용합니다. 초기화·실행·보존 기록 복원은
+[저장소 안내](postgresql-storage.md)를 참고하세요.
 
 ## 폴더별 문서 찾기
 

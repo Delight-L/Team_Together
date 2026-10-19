@@ -1,3 +1,7 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 import sys as _settings_sys
 from pathlib import Path as _SettingsPath
 _settings_sys.path.insert(0, str(_SettingsPath(__file__).resolve().parents[1]))
@@ -8,7 +12,7 @@ Raw files are complete period snapshots. Missing industry rows are not zeros.
 Quarter observations are never fabricated as monthly consumption observations.
 """
 from pathlib import Path
-import calendar, hashlib, json, sqlite3
+import calendar, hashlib, json
 import numpy as np
 import pandas as pd
 from mappings import AGES,DOMAINS,CROSSWALK,MARKET_DOMAINS,CARD_DOMAINS,VERSION,harmonize_age
@@ -137,7 +141,7 @@ def pct(a,b):
 def store_payload(con,table,keys,record):
  cols=','.join([*keys,'payload_json'])
  vals=[*keys.values(),payload(record)]
- con.execute(f'INSERT INTO {table}({cols}) VALUES({",".join("?" for _ in vals)})',vals)
+ con.execute(f'INSERT INTO {table}({cols}) VALUES({",".join("%s" for _ in vals)})',vals)
 
 def market_frames(con):
  rows=con.execute('SELECT payload_json FROM a3a_industry ORDER BY period,adm_cd,industry').fetchall()
@@ -235,39 +239,39 @@ def make_card_features(con):
 
 DERIVED=['a3a_feature','a3a_comparison','a3b_feature','a3b_total','a3a_quarter_summary','a3b_month_summary']
 def apply_packets(db,packets,config):
- db=Path(db)
- if not db.exists():raise ValueError('Initialize Analysis1/2 DB first; DB1 database does not exist')
- with sqlite3.connect(db,timeout=60) as con:
-  con.execute('PRAGMA foreign_keys=ON')
-  if con.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='v_db1_integrated'").fetchone()[0]!=1:raise ValueError('Missing DB1 integrated view')
+ db=database.workspace(db)
+ if not database.exists(db):raise ValueError('Initialize Analysis1/2 DB first; DB1 database does not exist')
+ with database.connect(db) as con:
+  con.execute('SET CONSTRAINTS ALL IMMEDIATE;')
+  if con.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='v_db1_integrated'").fetchone()[0]!=1:raise ValueError('Missing DB1 integrated view')
   con.executescript((ROOT/'db/schema.sql').read_text(encoding='utf-8'))
-  con.execute('BEGIN IMMEDIATE')
-  con.executemany('INSERT OR IGNORE INTO a3_dimension VALUES(?,?)',[(a,d) for a in AGES for d in DOMAINS])
+  con.execute('SELECT pg_advisory_xact_lock(hashtext(current_schema()));')
+  con.executemany('INSERT INTO a3_dimension VALUES(%s,%s) ON CONFLICT DO NOTHING',[(a,d) for a in AGES for d in DOMAINS])
   policy=payload({'version':VERSION,'minimum_same_quarter_history':config.get('minimum_same_quarter_history',3),'first_detection_quarter':config.get('first_detection_quarter','2025Q3'),'market_domains':MARKET_DOMAINS,'card_domains':CARD_DOMAINS,'crosswalk':CROSSWALK})
   old_policy=con.execute('SELECT policy_json FROM a3_policy WHERE id=1').fetchone()
   if old_policy and old_policy[0]!=policy:raise ValueError('Stored preprocessing policy changed; explicit versioned migration required')
-  if not old_policy:con.execute('INSERT INTO a3_policy VALUES(1,?)',(policy,))
+  if not old_policy:con.execute('INSERT INTO a3_policy VALUES(1,%s)',(policy,))
   expected={v[0] for v in CROSSWALK.values()}
   stored={r[0] for r in con.execute('SELECT DISTINCT adm_cd FROM a1_context')}
   if expected!=stored:raise ValueError('Crosswalk differs from Analysis1 region set')
   changed=0;skipped=0
   for (source,p),packet in sorted(packets.items()):
-   old=con.execute('SELECT fingerprint,version,available_from FROM a3_run WHERE source=? AND period=?',(source,p)).fetchone()
+   old=con.execute('SELECT fingerprint,version,available_from FROM a3_run WHERE source=%s AND period=%s',(source,p)).fetchone()
    if old:
     if tuple(old)!=(packet['digest'],VERSION,packet['available']):raise ValueError(f'{source} {p}: stored snapshot or publication metadata differs; overwrite blocked')
     skipped+=1;continue
-   last=con.execute('SELECT MAX(period) FROM a3_run WHERE source=?',(source,)).fetchone()[0]
+   last=con.execute('SELECT MAX(period) FROM a3_run WHERE source=%s',(source,)).fetchone()[0]
    if last is not None and p<last:raise ValueError(f'{source} {p}: historical backfill would alter past baselines; explicit migration required')
    for r in packet['records']:
     if source=='market':store_payload(con,'a3a_industry',{'period':p,'adm_cd':r['adm_cd'],'industry':r['industry'],'domain':r['domain']},r)
     else:store_payload(con,'a3b_industry',{'period':p,'district':'11680','age_raw':r['age_raw'],'age':r['age'],'industry':r['industry'],'domain':r['domain']},r)
    metadata={**packet['metadata'],'paths':packet['paths'],'observation_period':p,'availability_policy':'explicit_date_only_else_retrospective'}
-   con.execute('INSERT INTO a3_run(source,period,fingerprint,version,available_from,metadata_json) VALUES(?,?,?,?,?,?)',(source,p,packet['digest'],VERSION,packet['available'],payload(metadata)))
+   con.execute('INSERT INTO a3_run(source,period,fingerprint,version,available_from,metadata_json) VALUES(%s,%s,%s,%s,%s,%s)',(source,p,packet['digest'],VERSION,packet['available'],payload(metadata)))
    changed+=1
   if changed or not con.execute('SELECT COUNT(*) FROM a3a_feature').fetchone()[0]:
    for table in DERIVED:con.execute(f'DELETE FROM {table}')
    make_market_features(con,config);make_card_features(con)
-  if con.execute('PRAGMA foreign_key_check').fetchall():raise ValueError('Foreign key validation failed')
+  if con.execute('SELECT conname FROM pg_constraint WHERE connamespace=to_regnamespace(current_schema()) AND NOT convalidated').fetchall():raise ValueError('Foreign key validation failed')
  return {'stored_periods':changed,'unchanged_periods':skipped}
 
 def export(db,directory,integrated_directory=None,context_config=None,context_ingest=False):
@@ -275,7 +279,7 @@ def export(db,directory,integrated_directory=None,context_config=None,context_in
  integrated_directory=Path(integrated_directory) if integrated_directory else ROOT.parent/'outputs/integrated'
  integrated_directory.mkdir(parents=True,exist_ok=True)
  integrated_names={'v_a2_quarter':'analysis2_quarter','v_a123_monthly':'analysis123_monthly','v_a123_detail':'analysis123_detail','v_a123_available_context':'analysis123_available_context'}
- with sqlite3.connect(db) as con:
+ with database.connect(db) as con:
   tables=['a3_run',*DERIVED,'v_a2_quarter','v_a123_monthly','v_a123_detail','v_a123_available_context']
   def flatten_context(frame):
    prefixes={'a3a_summary':'a3a','a3b_summary':'a3b','a3a_feature':'a3a_feature','a3a_comparison':'a3a_comparison','a3b_month_context':'a3b_context'}
@@ -289,7 +293,7 @@ def export(db,directory,integrated_directory=None,context_config=None,context_in
      if name not in frame:frame[name]=expanded[c]
    return frame
   for t in tables:
-   frame=pd.read_sql_query(f'SELECT * FROM {t}',con)
+   frame=database.read_frame(f'SELECT * FROM {t}',con)
    if 'payload_json' in frame:
     expanded=pd.DataFrame([json.loads(j) for j in frame.payload_json])
     frame=frame.drop(columns='payload_json')
@@ -301,7 +305,7 @@ def export(db,directory,integrated_directory=None,context_config=None,context_in
    folder=integrated_directory if t in integrated_names else directory
    name=integrated_names.get(t,t)
    tmp=folder/(name+'.csv.tmp');frame.to_csv(tmp,index=False,encoding='utf-8-sig');tmp.replace(folder/(name+'.csv'))
-  detail=flatten_context(pd.read_sql_query('SELECT * FROM v_a123_detail WHERE any_signal=1',con))
+  detail=flatten_context(database.read_frame('SELECT * FROM v_a123_detail WHERE any_signal=1',con))
   for c in detail:
    if detail[c].map(lambda x:isinstance(x,(list,dict))).any():detail[c]=detail[c].map(lambda x:payload(x) if isinstance(x,(list,dict)) else x)
   detail.to_csv(integrated_directory/'signal_context_detail.csv',index=False,encoding='utf-8-sig')
@@ -325,17 +329,17 @@ def export(db,directory,integrated_directory=None,context_config=None,context_in
   export_elder_context(db,integrated_directory)
 
 def status(db):
- with sqlite3.connect(db) as con:
+ with database.connect(db) as con:
   counts={t:con.execute(f'SELECT COUNT(*) FROM {t}').fetchone()[0] for t in ['a3_run','a3a_industry','a3b_industry',*DERIVED,'v_a123_monthly','v_a123_detail']}
   for table in ('a23_age_monthly','a23_age_detail','a23_age_quarter','a23_age_available_context'):
-   if con.execute("SELECT 1 FROM sqlite_master WHERE name=?",(table,)).fetchone():counts[table]=con.execute('SELECT COUNT(*) FROM '+table).fetchone()[0]
+   if con.execute('SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name=%s',(table,)).fetchone():counts[table]=con.execute('SELECT COUNT(*) FROM '+table).fetchone()[0]
   for table in ('a1_elder_annual','a1_elder_observation'):
-   if con.execute('SELECT 1 FROM sqlite_master WHERE name=?',(table,)).fetchone():counts[table]=con.execute('SELECT COUNT(*) FROM '+table).fetchone()[0]
-  if con.execute("SELECT 1 FROM sqlite_master WHERE name='a1_elder_year'").fetchone():
+   if con.execute('SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name=%s',(table,)).fetchone():counts[table]=con.execute('SELECT COUNT(*) FROM '+table).fetchone()[0]
+  if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a1_elder_year'").fetchone():
    counts['last_elder_reference_year']=con.execute('SELECT MAX(year) FROM a1_elder_year').fetchone()[0]
    counts['next_expected_elder_reference_year']=None if counts['last_elder_reference_year'] is None else counts['last_elder_reference_year']+1
   counts['behavior_signal_months']=con.execute('SELECT COUNT(*) FROM v_a123_monthly WHERE any_signal=1').fetchone()[0]
-  counts['integrity']=con.execute('PRAGMA integrity_check').fetchone()[0]
+  counts['integrity']=con.execute("SELECT CASE WHEN EXISTS(SELECT 1 FROM pg_constraint WHERE connamespace=to_regnamespace(current_schema()) AND NOT convalidated) THEN 'invalid_constraints' ELSE 'ok' END").fetchone()[0]
   last=dict(con.execute('SELECT source,MAX(period) FROM a3_run GROUP BY source').fetchall())
   counts['last_market_quarter']=last.get('market')
   counts['last_card_month']=last.get('card')

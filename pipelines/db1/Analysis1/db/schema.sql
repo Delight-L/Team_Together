@@ -1,4 +1,4 @@
-PRAGMA foreign_keys = ON;
+SET CONSTRAINTS ALL IMMEDIATE;
 
 CREATE TABLE IF NOT EXISTS a1_region_baseline (
     adm_cd TEXT NOT NULL,
@@ -6,9 +6,9 @@ CREATE TABLE IF NOT EXISTS a1_region_baseline (
     baseline_period TEXT NOT NULL,
     cluster_id INTEGER NOT NULL,
     cluster_label TEXT NOT NULL,
-    pca1 REAL,
-    pca2 REAL,
-    centroid_distance REAL,
+    pca1 DOUBLE PRECISION,
+    pca2 DOUBLE PRECISION,
+    centroid_distance DOUBLE PRECISION,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (adm_cd, baseline_period)
 );
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS a1_region_feature (
     period TEXT NOT NULL,
     feature_name TEXT NOT NULL,
     domain TEXT NOT NULL,
-    feature_value REAL NOT NULL,
+    feature_value DOUBLE PRECISION NOT NULL,
     is_baseline INTEGER NOT NULL DEFAULT 0 CHECK (is_baseline IN (0,1)),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (adm_cd, period, feature_name)
@@ -35,12 +35,12 @@ CREATE TABLE IF NOT EXISTS a1_change_detection (
     baseline_cluster_label TEXT NOT NULL,
     current_cluster_label TEXT NOT NULL,
     cluster_changed INTEGER NOT NULL CHECK (cluster_changed IN (0,1)),
-    centroid_distance REAL,
-    centroid_distance_delta REAL,
-    activity_domain_delta REAL,
-    time_domain_delta REAL,
-    demographic_domain_delta REAL,
-    structural_domain_delta REAL,
+    centroid_distance DOUBLE PRECISION,
+    centroid_distance_delta DOUBLE PRECISION,
+    activity_domain_delta DOUBLE PRECISION,
+    time_domain_delta DOUBLE PRECISION,
+    demographic_domain_delta DOUBLE PRECISION,
+    structural_domain_delta DOUBLE PRECISION,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (adm_cd, current_period)
 );
@@ -50,10 +50,10 @@ CREATE TABLE IF NOT EXISTS a1_change_feature (
     current_period TEXT NOT NULL,
     feature_name TEXT NOT NULL,
     domain TEXT NOT NULL,
-    baseline_value REAL NOT NULL,
-    current_value REAL NOT NULL,
-    delta REAL NOT NULL,
-    pct_change REAL,
+    baseline_value DOUBLE PRECISION NOT NULL,
+    current_value DOUBLE PRECISION NOT NULL,
+    delta DOUBLE PRECISION NOT NULL,
+    pct_change DOUBLE PRECISION,
     PRIMARY KEY (adm_cd, current_period, feature_name),
     FOREIGN KEY (adm_cd, current_period)
         REFERENCES a1_change_detection(adm_cd, current_period)

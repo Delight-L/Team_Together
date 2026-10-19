@@ -28,7 +28,7 @@ flowchart TD
 
     WHO -->|"region_analysis"| RA{"설명기 선택"}
     RA -->|"화면 용어 · 열린 그룹 질문 · v16 자료 없음"| WS["workspace<br/>group_workspace · region_workspace"]
-    RA -->|"그 밖"| V16["v16 어댑터<br/>Db1Repository → SQLite 공개본"]
+    RA -->|"그 밖"| V16["v16 어댑터<br/>Db1Repository → 이전 파일 저장소 공개본"]
     WS -->|"AI 해석 실패"| WSF["외부 AI 없이 데이터 근거로 재답변<br/>error 이벤트 후 replace"]
     WS --> DLV
     WSF --> DLV

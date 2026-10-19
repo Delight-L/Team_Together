@@ -13,8 +13,8 @@
 | [디자인 규칙](design-rules.md) | 화면 디자인 기준 |
 | [보고서 에이전트](report-agent.md) | 보고서 생성과 검토 |
 | [보미 챗봇 구조](bomi-architecture.md) | 요청 흐름·규제·이벤트 계약·v16 저장소 |
-| [보미 재설계 보고서](bomi-redesign-report.md) | 챗봇 재설계 과정과 결과, 팀 저장소 병합 |
-| [보미 v16 성능 측정 기록](bomi-performance-comparison.md) | 실제 db1.sqlite 측정표와 재현 방법 |
+
+| [PostgreSQL 저장소](postgresql-storage.md) | 분석·전처리·서비스 스키마와 원문 보존·복원 |
 
 ## README 관리 기준
 
@@ -48,7 +48,7 @@ README에서는 **자료 → 분석·수집 → 공유 DB → 대시보드·보�
 
 DB1은 분석 결과, DB2는 복지자원, `work`는 업무 기록을 담는 PostgreSQL 스키마입니다.
 복지사업 자료는 공공 API와 팀 정리 자료를 함께 표현했습니다. 팀 정리 JSON은 보미가 직접 읽는 참조자료도 포함하므로, 그림은 개별 파일의 저장 경로보다 업무 흐름을 요약합니다.
-SQLite 작업·전달 파일과 테스트용 메모리 DB는 발표 그림에서 생략했습니다. 웹 서비스 저장소는 PostgreSQL입니다.
+분석 작업 영역과 서비스 저장소는 모두 PostgreSQL입니다. 현재 스키마 경계는 [저장소 안내](postgresql-storage.md)를 참고하세요.
 외부 AI는 선택 기능이며 기본 꺼짐입니다. 보미는 AI를 끄면 자료 검색·규칙 기반 안내를 제공합니다.
 구체적인 파일 위치는 [폴더 구성 안내](folder-organization.md)를 참고하세요.
 

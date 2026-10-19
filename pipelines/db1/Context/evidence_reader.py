@@ -2,27 +2,27 @@
 import json
 from datetime import date
 def lookup(c,kind,period):
-    row=c.execute('SELECT available_from,proof,registered_at FROM ctx_publication_registry WHERE kind=? AND period=?',(kind,period)).fetchone()
+    row=c.execute('SELECT available_from,proof,registered_at FROM ctx_publication_registry WHERE kind=%s AND period=%s',(kind,period)).fetchone()
     return dict(row) if row else {'available_from':None,'proof':None,'registered_at':None}
 def known(c,kind,period,as_of):
     d=lookup(c,kind,period)['available_from'];return d is not None and d<=as_of
 def core_available(c,label,as_of):
     # Availability of all input labels through requested score, not just newest file.
-    labels=[r[0][:7] for r in c.execute('SELECT date FROM a2_age_source WHERE date<=?',(label,))]
+    labels=[r[0][:7] for r in c.execute('SELECT date FROM a2_age_source WHERE date<=%s',(label,))]
     return bool(labels) and all(known(c,kind,p,as_of) for p in labels for kind in ['telecom','interest'])
 def status(available,reason,**extra):return {'status':'available' if available else 'unavailable','reason':reason,**extra}
 def enrich(c,item,as_of=None):
     if as_of and date.fromisoformat(as_of).isoformat()!=as_of:raise ValueError('as_of must be YYYY-MM-DD')
-    if not c.execute("SELECT 1 FROM sqlite_master WHERE name='ctx_weather_window'").fetchone():
+    if not c.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='ctx_weather_window'").fetchone():
         item['supplemental_context_status']='not_installed'
         return item if as_of is None else None
     label=item['source_label_date'];age=item['age_band'];cons=item['observation_consumption_json']
     if as_of and not core_available(c,label,as_of):return None
-    p=c.execute('SELECT observation_weather_json,youth_detail_json FROM v_a123_age_evidence_context WHERE adm_cd=? AND age_band=? AND source_label_date=? AND model_version=?',(item['adm_cd'],age,label,item['model_version'])).fetchone()
+    p=c.execute('SELECT observation_weather_json,youth_detail_json FROM v_a123_age_evidence_context WHERE adm_cd=%s AND age_band=%s AND source_label_date=%s AND model_version=%s',(item['adm_cd'],age,label,item['model_version'])).fetchone()
     weather=json.loads(p[0]) if p and p[0] else None;youth=json.loads(p[1]) if p and p[1] else []
     tracking=None
-    if c.execute("SELECT 1 FROM sqlite_master WHERE name='ctx_weather_window_tracking'").fetchone():
-        t=c.execute('SELECT payload_json FROM ctx_weather_window_tracking WHERE date=?',(label,)).fetchone()
+    if c.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='ctx_weather_window_tracking'").fetchone():
+        t=c.execute('SELECT payload_json FROM ctx_weather_window_tracking WHERE date=%s',(label,)).fetchone()
         tracking=json.loads(t[0]) if t else None
     guides=[dict(r) for r in c.execute('SELECT source_id,age_scope,topic,payload_json FROM ctx_evidence_guide')] if age in ['20s','30s'] else []
     for g in guides:g['payload_json']=json.loads(g['payload_json'])

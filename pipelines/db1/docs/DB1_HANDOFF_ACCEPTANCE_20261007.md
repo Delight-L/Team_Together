@@ -1,5 +1,7 @@
 # DB1 인수 검증 결과 · 2026-10-07
 
+> 과거 검증 기록입니다. 실행 경로는 PostgreSQL 전환에 맞춰 갱신했으며, 원문은 보존 스키마의 `source_archive`에서 복원할 수 있습니다.
+
 ## 전달 결과
 
 실제 2025년 신호 3건의 설명 예시, 읽기 전용 조회 도구, 분리 DB 업데이트 검증 기록을 추가했다. 운영 DB에 모의 자료를 넣지 않았다. 원천 정의 정정 문서와 설명 규칙을 함께 읽는다.
@@ -25,7 +27,7 @@
 
 ## 팀원에게 전달할 구성
 
-`DB1` 전체 폴더를 전달한다. 읽기 전용 질의에는 `outputs/db1.sqlite`, 조회 도구와 해석 문서만으로 시작할 수 있다. 재분석·업데이트에는 세 분석 코드, Context, db/schema.sql, 기준 모델, 기준/reference 파일, 설정과 외부 원본 폴더가 필요하다. 문서만 전달하면 업데이트할 수 없다. 설정의 두 JSON(`config/db1_config.json`, `Analysis3/config/analysis3_config.json`)에서 팀원의 원본 경로를 수정한다. 고정 기준 모델은 재학습하지 않는다.
+`DB1` 전체 폴더를 전달한다. 읽기 전용 질의에는 `db1_pipeline`, 조회 도구와 해석 문서만으로 시작할 수 있다. 재분석·업데이트에는 세 분석 코드, Context, db/schema.sql, 기준 모델, 기준/reference 파일, 설정과 외부 원본 폴더가 필요하다. 문서만 전달하면 업데이트할 수 없다. 설정의 두 JSON(`config/db1_config.json`, `Analysis3/config/analysis3_config.json`)에서 팀원의 원본 경로를 수정한다. 고정 기준 모델은 재학습하지 않는다.
 
 기본 PowerShell 실행 환경은 `C:\ProgramData\anaconda3\envs\analysis1\python.exe`다. 팀원 환경에서는 `run_db1.ps1 -Python <경로>`로 지정한다. 필요한 패키지는 루트 requirements.txt를 확인한다. 읽기 도구는 Python 표준 라이브러리만 사용한다. 라이브러리 확인은 설치·최신 환경 호환성 보장이 아니며 검증한 버전 목록을 함께 제공한다.
 

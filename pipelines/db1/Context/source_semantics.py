@@ -1,10 +1,13 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 """Provider definitions, rolling observation windows and same-period SNS context."""
 from pathlib import Path
-from contextlib import closing
 from datetime import date,timedelta
 from statistics import median
 from collections import defaultdict
-import argparse,calendar,csv,json,math,sqlite3
+import argparse,calendar,csv,json,math
 VERSION='source_semantics_v1'
 URL='https://data.seoul.go.kr/dataVisual/seoul/seoulLiving.do'
 def canonical(x):return json.dumps(x,ensure_ascii=False,sort_keys=True,allow_nan=False)
@@ -35,23 +38,23 @@ def card_window_comparison(industry,months,prior,age,domain):
   return sum(industry[(p,age,domain,i)][0]['use_count'] for p in selected for i in common)/days
  current,baseline=daily(months),daily(prior)
  return {'change_pct':(current/baseline-1)*100 if baseline>0 else None,'reason':'ready' if baseline>0 else 'zero_prior_window_count','matched_industries':sorted(common),'current_daily_count':current,'prior_daily_count':baseline,'method':'common_industries_all_six_months_full_calendar_day_coverage','seasonality_adjusted':False,'scope':'merchant_district_not_same_residents'}
-SCHEMA='''
+SCHEMA="""
 CREATE TABLE IF NOT EXISTS a2_observation_window(date TEXT PRIMARY KEY,payload_json TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS ctx_sns_index(adm_cd TEXT NOT NULL,date TEXT NOT NULL,age_band TEXT NOT NULL,payload_json TEXT NOT NULL,PRIMARY KEY(adm_cd,date,age_band));
 CREATE TABLE IF NOT EXISTS a23_observation_context(adm_cd TEXT NOT NULL,date TEXT NOT NULL,age_band TEXT NOT NULL,model_version TEXT NOT NULL,payload_json TEXT NOT NULL,PRIMARY KEY(adm_cd,date,age_band,model_version));
-CREATE VIEW IF NOT EXISTS v_a123_age_source_context AS
+CREATE OR REPLACE VIEW v_a123_age_source_context AS
  SELECT d.adm_cd,d.date AS source_label_date,d.age_band,d.model_version,d.assessment_status,d.communication_signal,d.mobility_signal,d.combined_signal,d.result_json,
- json_extract(w.payload_json,'$.observation_start') AS observation_start,json_extract(w.payload_json,'$.observation_end') AS observation_end,w.payload_json AS observation_window_json,s.payload_json AS same_period_sns_json,o.payload_json AS observation_consumption_json
+ json_extract_path_text((w.payload_json)::json, 'observation_start') AS observation_start,json_extract_path_text((w.payload_json)::json, 'observation_end') AS observation_end,w.payload_json AS observation_window_json,s.payload_json AS same_period_sns_json,o.payload_json AS observation_consumption_json
  FROM a2_age_detection d LEFT JOIN a2_observation_window w ON w.date=d.date LEFT JOIN ctx_sns_index s ON s.adm_cd=d.adm_cd AND s.date=d.date AND s.age_band=d.age_band LEFT JOIN a23_observation_context o ON o.adm_cd=d.adm_cd AND o.date=d.date AND o.age_band=d.age_band AND o.model_version=d.model_version;
-'''
+"""
 def upsert_guard(c,table,fields,values,payload):
- where=' AND '.join(f'{k}=?' for k in fields);text=canonical(payload)
+ where=' AND '.join(f'{k}=%s' for k in fields);text=canonical(payload)
  old=c.execute(f'SELECT payload_json FROM {table} WHERE {where}',values).fetchone()
  if old and old[0]!=text:raise ValueError('Changed historical source context: explicit revision required '+str(values))
  if old:return 0
- c.execute(f"INSERT INTO {table} VALUES({','.join('?' for _ in range(len(values)+1))})",list(values)+[text]);return 1
+ c.execute(f"INSERT INTO {table} VALUES({','.join('%s' for _ in range(len(values)+1))})",list(values)+[text]);return 1
 def run(db,output=None):
- with closing(sqlite3.connect(db)) as c:
+ with database.connect(db) as c:
   rows=c.execute("SELECT date,adm_cd,age_code,raw_json FROM a2_age_raw WHERE kind='telecom' ORDER BY date,adm_cd,sex,age_code").fetchall()
   features={(r[0],r[1],r[2]):json.loads(r[3]) for r in c.execute("SELECT adm_cd,date,age_band,feature_json FROM a2_age_feature WHERE age_scheme='service'")}
   groups=defaultdict(list)
@@ -103,7 +106,7 @@ def run(db,output=None):
  return summary
 def export(db,output):
  output=Path(output);output.mkdir(parents=True,exist_ok=True)
- with closing(sqlite3.connect(db)) as c:
+ with database.connect(db) as c:
   for table in ['a2_observation_window','ctx_sns_index','a23_observation_context']:
    cursor=c.execute('SELECT * FROM '+table+' ORDER BY date')
    with (output/(table+'.csv')).open('w',encoding='utf-8-sig',newline='') as f:

@@ -1,3 +1,7 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 import sys
 from pathlib import Path as _SettingsPath
 sys.path.insert(0,str(_SettingsPath(__file__).resolve().parents[1]))
@@ -15,7 +19,7 @@ def main():
  parser.add_argument('--db');parser.add_argument('--exports');parser.add_argument('--integrated-exports');parser.add_argument('--interval',type=int,default=60)
  args=parser.parse_args();config_path=Path(args.config).resolve()
  config=load_settings(config_path)
- db=Path(args.db).resolve() if args.db else (config_path.parent/config['database']).resolve()
+ db=database.workspace(args.db or config['database'])
  outputs=Path(args.exports).resolve() if args.exports else (ROOT/config['exports']).resolve()
  integrated=Path(args.integrated_exports).resolve() if args.integrated_exports else (ROOT/config.get('integrated_exports','../outputs/integrated')).resolve()
  if args.command=='status':print(json.dumps(status(db),ensure_ascii=False,indent=2));return

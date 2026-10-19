@@ -38,7 +38,7 @@
 
 > 발표용 16:9 그림입니다. [고해상도 PNG](docs/architecture/system_architecture.png) · [편집 가능한 SVG](docs/architecture/system_architecture.svg) · [그림 안내](docs/README.md#architecture)
 
-- 웹 서비스의 업무 기록은 모두 공유 PostgreSQL `work` 스키마에 저장합니다. SQLite는 DB1 분석 실행기의 작업·전달 파일(`pipelines/db1/outputs/db1.sqlite`)과 테스트용 메모리 DB에만 씁니다.
+- 웹 서비스의 업무 기록은 공유 PostgreSQL `work`, 분석·전처리는 `db1_pipeline` 스키마에 저장합니다. [저장소 구성과 실행 방법](docs/postgresql-storage.md)을 참고하세요.
 - 위험신호 수치는 Python 통계 분석으로 만들고, LLM은 수치를 계산하지 않고 근거를 설명합니다.
 
 ---
@@ -282,7 +282,7 @@ DB1 / DB2 업데이트
 |---|---|
 | 데이터·분석 | Python, Pandas, NumPy, 공공데이터 API |
 | ML | scikit-learn (StandardScaler · PCA · KMeans), joblib |
-| 데이터베이스 | PostgreSQL (오라클 클라우드 VM, 스키마 `db1`·`db2`·`work`), SQLAlchemy, psycopg2. DB1 실행기 작업 파일은 SQLite |
+| 데이터베이스 | PostgreSQL (오라클 클라우드 VM, 스키마 `db1`·`db2`·`work`), SQLAlchemy, psycopg2. DB1 작업 스키마는 `db1_pipeline` |
 | 서버 | Python 표준 `http.server` 기반 HTTP API (`backend/api/server.py`) |
 | 화면 | React + Vite |
 | AI Agent | 보미 챗봇 코어 `backend/bomi`(Python, 규칙/AI 담당 선택), OpenAI·Anthropic·Gemini SDK (선택, 기본 꺼짐) |
@@ -381,7 +381,7 @@ cd ..
 | 종합 현황 관찰 그룹 | 연령·성별 유동인구 집계 | DB `db1.group_flow_snapshots` (`python -m db.group_repository --build --publish`로 생성) |
 | 사업 매칭 검토 | 지자체 복지사업 목록 | DB `db2` (`python -m pipelines.welfare.collect`로 수집) |
 | 보미 복지사업 안내 | 팀 정리 복지사업 자료 | `backend/chatbot/welfare/data/*.json` |
-| 업무 기록·보고서·협업 기록·집단 검토 메모 | 담당자 업무 기록 | DB `work` 스키마 (처음 사용할 때 자동 생성. 예전 PC별 SQLite 기록은 `python scripts/migrate_work_store.py --apply`로 옮김) |
+| 업무 기록·보고서·협업 기록·집단 검토 메모 | 담당자 업무 기록 | DB `work` 스키마 (처음 사용할 때 자동 생성. 과거 실행기 원문은 `python scripts/read_source_archive.py --list`로 확인) |
 
 `.env`의 `WELFIND_DATA_SOURCE`로 분석 결과를 어디서 읽을지 정합니다: `auto`(DB 우선, 실패 시 CSV), `db`, `csv`. 팀 공용 DB 구축은 [오라클 클라우드 DB 구축](docs/오라클_클라우드_DB_구축.md)을 참고하세요.
 

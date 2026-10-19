@@ -1,8 +1,8 @@
-"""Prepare a DB1 delivery or read-only SQLite snapshot for service publication."""
+"""Prepare a DB1 delivery or read-only PostgreSQL workspace for service publication."""
 from pathlib import Path
 from contextlib import closing
 import json
-import sqlite3
+from pipelines.db1 import database
 import pandas as pd
 
 from backend.common import ROOT
@@ -11,18 +11,14 @@ MODEL_VERSION = 'analysis1_2025H2_elder_v2'
 CONTEXT_NOTE = '2025년 독거노인 수와 2025년 4분기 65세 이상 등록인구를 비교한 연간 지역 배경자료입니다. 공개 시점 미확인으로 과거 월 당시 정보나 개인 고립 판정에 사용하지 않습니다.'
 
 
-def prepare_snapshot(sqlite_path=None):
+def prepare_snapshot(workspace_schema=None):
     from backend.db.analysis_repository import monthly_upload, prepare_analysis2
     legacy = DB1 / 'Analysis2/data/reference/gangnam_analysis2_detection_2022_2025.csv'
     history = monthly_upload(legacy.read_bytes(), legacy.name)['data']
     history['analysis_model_version'] = 'analysis2-v11'
     history['context_model_version'] = 'analysis1_2025H2'
-    if sqlite_path:
-        path = Path(sqlite_path).resolve()
-        with path.open('rb') as handle:
-            if handle.read(16) != b'SQLite format 3\x00':
-                raise ValueError('SQLite 실파일이 필요합니다. Git LFS 포인터라면 git lfs pull로 받으세요.')
-        with closing(sqlite3.connect(path.as_uri() + '?mode=ro', uri=True)) as connection:
+    if workspace_schema:
+        with database.connect(workspace_schema,readonly=True) as connection:
             rows = connection.execute('SELECT result_json, model_version FROM a2_detection ORDER BY date,adm_cd').fetchall()
             current = pd.DataFrame([dict(json.loads(payload), context_model_version=version,
                                          analysis_model_version='analysis2-sequential-v1') for payload, version in rows])
@@ -30,11 +26,11 @@ def prepare_snapshot(sqlite_path=None):
             if not period:
                 raise ValueError('Analysis1 지역 유형 결과가 없습니다.')
             contexts = connection.execute('''SELECT c.adm_cd,c.adm_nm,c.cluster,c.cluster_type,c.model_version,c.feature_json,i.input_json
-                FROM a1_context c JOIN a1_input i ON i.adm_cd=c.adm_cd AND i.period=c.period WHERE c.period=?''', (period,)).fetchall()
+                FROM a1_context c JOIN a1_input i ON i.adm_cd=c.adm_cd AND i.period=c.period WHERE c.period=%s''', (period,)).fetchall()
             context = pd.DataFrame([dict(json.loads(raw), **json.loads(features), cluster=cluster,
                 cluster_type=label, model_version=version, context_period=period)
                 for code, name, cluster, label, version, features, raw in contexts])
-            metadata = json.loads(connection.execute("SELECT metadata_json FROM db1_run WHERE analysis='analysis1' AND period=?", (period,)).fetchone()[0])
+            metadata = json.loads(connection.execute("SELECT metadata_json FROM db1_run WHERE analysis='analysis1' AND period=%s", (period,)).fetchone()[0])
             elder = metadata.get('public_sources', {}).get('elderly_cluster_input', {})
             for key in ('elder_year', 'denominator_reference', 'available_from', 'alignment'):
                 context['elder_' + key if key in ('available_from', 'alignment') else key] = elder.get(key)

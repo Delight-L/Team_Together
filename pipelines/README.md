@@ -43,9 +43,9 @@ python main.py --analysis --publish
 ```
 
 기본 명령은 전달된 Analysis1 elder v2 / Analysis2 CSV를 검사합니다. `--publish`는
-서비스 DB에 새 실행 버전으로 반영합니다. 원본 SQLite와 과거 실행은 보존합니다.
+서비스 DB에 새 실행 버전으로 반영합니다. 분석 작업 영역과 과거 실행은 보존합니다.
 신규 반기나 월 분석은 `--command analysis1 --period ...`, `--command analysis2 --month ...`를 사용합니다.
-원천자료 설정과 운영 SQLite를 `--config`, `--db`로 지정할 수 있습니다.
+원천자료 설정과 PostgreSQL 작업 스키마를 `--config`, `--db`로 지정할 수 있습니다.
 
 ### 폴더 구성
 

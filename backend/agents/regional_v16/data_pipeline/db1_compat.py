@@ -1,25 +1,25 @@
-"""파이프라인 산출물(`pipelines/db1`의 db1.sqlite)과 v16 엔진의 스키마 차이를 메우는 변환.
+"""파이프라인 산출물(PostgreSQL 분석 작업 스키마)과 v16 엔진의 스키마 차이를 메우는 변환.
 
 v16 월별 작업기가 만드는 DB에는 있고, 파이프라인 산출물에는 없는 것
 - pipeline_state : 작업기의 «갱신 완료» 표지. 산출물에는 없습니다.
 - ctx_weather    : 작업기가 월마다 만드는 날씨 보조 자료(`weather_context`의 결과). 산출물에는 같은 정보가
                    ctx_weather_month(월별 값)와 ctx_weather_window(기준월별 3개월 관측기간)로 나뉘어 있습니다.
 
-이 모듈은 산출물을 고치지 않고, 게시(PostgreSQL)·측정 준비 때 작업기가 만드는 모양으로 **변환한 값**을 만듭니다.
+이 모듈은 산출물을 고치지 않고, 서비스 게시 때 작업기가 만드는 모양으로 **변환한 값**을 만듭니다.
 """
 from __future__ import annotations
 
 import json
-import sqlite3
+from pipelines.db1.database import Connection
 
 SNOW_NOTE = 'Legacy feature reproduction uses zero; user-facing context preserves the missing symbol.'
 
 
-def table_names(source: sqlite3.Connection) -> set[str]:
-    return {row[0] for row in source.execute("SELECT name FROM sqlite_master WHERE type IN ('table','view')")}
+def table_names(source: Connection) -> set[str]:
+    return source.table_names()
 
 
-def weather_rows(source: sqlite3.Connection) -> list[tuple[str, str]] | None:
+def weather_rows(source: Connection) -> list[tuple[str, str]] | None:
     """(기준월 날짜, payload JSON 문자열) 목록. 변환에 필요한 두 테이블이 없으면 None.
 
     payload는 작업기의 `weather_context`와 같은 모양입니다.

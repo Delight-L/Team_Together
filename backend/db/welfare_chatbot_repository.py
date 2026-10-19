@@ -14,7 +14,6 @@ from pathlib import Path
 from sqlalchemy import (JSON, Boolean, Column, Date, DateTime, Integer, MetaData, Table,
                         Text, and_, case, func, literal, or_, select, text)
 from sqlalchemy.dialects.postgresql import JSONB, insert as pg_insert
-from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.exc import SQLAlchemyError
 
 from backend.common import get_engine, seoul_now
@@ -281,7 +280,7 @@ class WelfareDataError(RuntimeError):
 def _upsert(conn, table, rows):
     if not rows:
         return
-    insert = pg_insert if conn.dialect.name == "postgresql" else sqlite_insert
+    insert = pg_insert
     statement = insert(table)
     primary = [c.name for c in table.primary_key]
     statement = statement.on_conflict_do_update(

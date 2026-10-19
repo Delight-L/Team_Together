@@ -1,9 +1,12 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 """Descriptive seasonal level tracking; never writes detection flags or risk scores."""
 from pathlib import Path
 from statistics import median
 from collections import defaultdict
-from contextlib import closing
-import argparse,csv,hashlib,json,math,sqlite3
+import argparse,csv,hashlib,json,math
 
 METRICS=('call_contacts','text_contacts','weekday_move_count','weekend_move_count')
 DOMAINS={'communication':METRICS[:2],'mobility':METRICS[2:]}
@@ -120,53 +123,53 @@ def compute(features,events):
     signature=hashlib.sha256(canonical({'settings':SETTINGS,'source_baseline':source_baseline,'baseline':[{ 'key':list(k),**v} for k,v in sorted(baseline.items())]}).encode()).hexdigest()
     return [v for (_,_,date),v in sorted(levels.items()) if date>BASELINE_END],tracks,signature
 
-SCHEMA='''
+SCHEMA="""
 CREATE TABLE IF NOT EXISTS a2_activity_model(version TEXT PRIMARY KEY,settings_json TEXT NOT NULL,baseline_fingerprint TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS a2_activity_level(adm_cd TEXT NOT NULL,date TEXT NOT NULL,age_band TEXT NOT NULL,version TEXT NOT NULL,payload_json TEXT NOT NULL,PRIMARY KEY(adm_cd,date,age_band,version),FOREIGN KEY(version) REFERENCES a2_activity_model(version));
 CREATE TABLE IF NOT EXISTS a2_activity_followup(adm_cd TEXT NOT NULL,signal_date TEXT NOT NULL,date TEXT NOT NULL,age_band TEXT NOT NULL,detection_model_version TEXT NOT NULL,version TEXT NOT NULL,payload_json TEXT NOT NULL,PRIMARY KEY(adm_cd,signal_date,date,age_band,detection_model_version,version),FOREIGN KEY(version) REFERENCES a2_activity_model(version));
 CREATE TABLE IF NOT EXISTS a2_activity_active_model(singleton INTEGER PRIMARY KEY CHECK(singleton=1),version TEXT NOT NULL REFERENCES a2_activity_model(version));
-DROP VIEW IF EXISTS v_a2_activity_followup_latest;
-DROP VIEW IF EXISTS v_a2_activity_followup;
-DROP VIEW IF EXISTS v_a2_activity_level;
-CREATE VIEW v_a2_activity_level AS SELECT l.* FROM a2_activity_level l JOIN a2_activity_active_model a ON a.version=l.version;
-CREATE VIEW v_a2_activity_followup AS SELECT t.adm_cd,t.signal_date,t.date,t.age_band,t.detection_model_version,t.version,json_extract(t.payload_json,'$.raw_state') AS raw_state,json_extract(t.payload_json,'$.seasonal_state') AS seasonal_state,json_extract(t.payload_json,'$.local_state') AS local_state,json_extract(t.payload_json,'$.overall_recovery_status') AS overall_recovery_status,t.payload_json FROM a2_activity_followup t JOIN a2_activity_active_model a ON a.version=t.version;
-CREATE VIEW v_a2_activity_followup_latest AS SELECT t.* FROM v_a2_activity_followup t WHERE t.date=(SELECT MAX(x.date) FROM v_a2_activity_followup x WHERE x.adm_cd=t.adm_cd AND x.age_band=t.age_band AND x.signal_date=t.signal_date AND x.detection_model_version=t.detection_model_version);
-CREATE VIEW IF NOT EXISTS v_a2_activity_followup_all_versions AS SELECT * FROM a2_activity_followup;
-'''
+
+
+
+CREATE OR REPLACE VIEW v_a2_activity_level AS SELECT l.* FROM a2_activity_level l JOIN a2_activity_active_model a ON a.version=l.version;
+CREATE OR REPLACE VIEW v_a2_activity_followup AS SELECT t.adm_cd,t.signal_date,t.date,t.age_band,t.detection_model_version,t.version,json_extract_path_text((t.payload_json)::json, 'raw_state') AS raw_state,json_extract_path_text((t.payload_json)::json, 'seasonal_state') AS seasonal_state,json_extract_path_text((t.payload_json)::json, 'local_state') AS local_state,json_extract_path_text((t.payload_json)::json, 'overall_recovery_status') AS overall_recovery_status,t.payload_json FROM a2_activity_followup t JOIN a2_activity_active_model a ON a.version=t.version;
+CREATE OR REPLACE VIEW v_a2_activity_followup_latest AS SELECT t.* FROM v_a2_activity_followup t WHERE t.date=(SELECT MAX(x.date) FROM v_a2_activity_followup x WHERE x.adm_cd=t.adm_cd AND x.age_band=t.age_band AND x.signal_date=t.signal_date AND x.detection_model_version=t.detection_model_version);
+CREATE OR REPLACE VIEW v_a2_activity_followup_all_versions AS SELECT * FROM a2_activity_followup;
+"""
 def run(db,output=None,migrate_from_v1=False):
-    with closing(sqlite3.connect(db)) as c:
-        c.execute('PRAGMA foreign_keys=ON')
+    with database.connect(db) as c:
+        c.execute('SET CONSTRAINTS ALL IMMEDIATE;')
         features=[json.loads(r[0]) for r in c.execute("SELECT feature_json FROM a2_age_feature WHERE age_scheme='service' ORDER BY date,adm_cd,age_band")]
         events=[dict(zip(['adm_cd','date','age_band','model_version','communication_signal','mobility_signal'],r)) for r in c.execute('SELECT adm_cd,date,age_band,model_version,communication_signal,mobility_signal FROM a2_age_detection WHERE communication_signal=1 OR mobility_signal=1 ORDER BY date,adm_cd,age_band,model_version')]
         events=episode_events(events)
         levels,tracks,fingerprint=compute(features,events)
         version=SETTINGS['method']+'_'+fingerprint[:12]
-        exists=c.execute("SELECT 1 FROM sqlite_master WHERE name='a2_activity_model'").fetchone()
+        exists=c.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_activity_model'").fetchone()
         prior={v:json.loads(s) for v,s in c.execute('SELECT version,settings_json FROM a2_activity_model')} if exists else {}
         if prior and version not in prior:
             if any(s.get('method')==SETTINGS['method'] for s in prior.values()):raise ValueError('Baseline/settings changed; explicit model migration required')
             if not migrate_from_v1 or any(s.get('method')!='a2_activity_level_v1' for s in prior.values()):raise ValueError('Four-metric tracking requires explicit --migrate-from-v1')
         with c:
-            c.executescript('BEGIN IMMEDIATE;'+SCHEMA)
-            c.execute('INSERT OR IGNORE INTO a2_activity_model VALUES(?,?,?)',(version,canonical(SETTINGS),fingerprint))
+            c.executescript('SELECT pg_advisory_xact_lock(hashtext(current_schema()));'+SCHEMA)
+            c.execute('INSERT INTO a2_activity_model VALUES(%s,%s,%s) ON CONFLICT DO NOTHING',(version,canonical(SETTINGS),fingerprint))
             inserted={}
             for table,records,fields in [('a2_activity_level',levels,['adm_cd','date','age_band']),('a2_activity_followup',tracks,['adm_cd','signal_date','date','age_band','detection_model_version'])]:
                 count=0
                 for record in records:
                     key=[record[k] for k in fields]+[version];payload=canonical(record)
-                    where=' AND '.join(f'{k}=?' for k in fields+['version'])
+                    where=' AND '.join(f'{k}=%s' for k in fields+['version'])
                     existing=c.execute(f'SELECT payload_json FROM {table} WHERE {where}',key).fetchone()
                     if existing and existing[0]!=payload:raise ValueError('Changed historical tracking result; explicit revision required: '+str(key))
                     if not existing:
-                        c.execute(f"INSERT INTO {table} VALUES({','.join('?' for _ in key)},?)",key+[payload]);count+=1
+                        c.execute(f"""INSERT INTO {table} VALUES({','.join(('%s' for _ in key))},%s)""",key+[payload]);count+=1
                 inserted[table]=count
-            c.execute('INSERT INTO a2_activity_active_model VALUES(1,?) ON CONFLICT(singleton) DO UPDATE SET version=excluded.version',(version,))
+            c.execute('INSERT INTO a2_activity_active_model VALUES(1,%s) ON CONFLICT(singleton) DO UPDATE SET version=excluded.version',(version,))
         report={'version':version,'baseline_fingerprint':fingerprint,'tracked_metrics':list(METRICS),'level_rows':len(levels),'followup_rows':len(tracks),'events':len(events),'inserted':inserted,'existing_detection_untouched':True,'legacy_v1_preserved':any(s.get('method')=='a2_activity_level_v1' for s in prior.values())}
     if output:export(db,output)
     return report
 def export(db,output):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
-    with closing(sqlite3.connect(db)) as c:
+    with database.connect(db) as c:
         for table,name in [('v_a2_activity_level','activity_level.csv'),('v_a2_activity_followup','activity_followup.csv')]:
             cursor=c.execute(f'SELECT * FROM {table} ORDER BY adm_cd,date,age_band,version')
             with (output/name).open('w',encoding='utf-8-sig',newline='') as f:

@@ -1,6 +1,6 @@
 # 원천 기간·SNS·소비 맥락
 
-`source_semantics.py --db outputs/db1.sqlite --output Analysis2/outputs/source_semantics` 또는 루트 `source-semantics` 명령으로 실행한다. 기존 전처리와 탐지·소비 적재가 먼저 완료돼야 한다.
+`source_semantics.py --db db1_pipeline --output Analysis2/outputs/source_semantics` 또는 루트 `source-semantics` 명령으로 실행한다. 기존 전처리와 탐지·소비 적재가 먼저 완료돼야 한다.
 
 테이블: `a2_observation_window`(기준월별 직전 3개월), `ctx_sns_index`(동·연령·기준월별 공급자 표준화 지수), `a23_observation_context`(탐지 결과별 기간 정렬 소비). 조회: `v_a123_age_source_context`. CSV와 신호 JSON을 출력한다. 같은 자료 재실행은 멱등이며 과거 값 변경 시 정정 요구 오류로 중단한다.
 

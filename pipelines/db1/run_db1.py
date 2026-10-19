@@ -1,3 +1,7 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 import sys as _settings_sys
 from pathlib import Path as _SettingsPath
 _settings_sys.path.insert(0, str(_SettingsPath(__file__).resolve().parents[0]))
@@ -25,11 +29,7 @@ def main():
     args=parser.parse_args()
     config=Path(args.config).resolve()
     settings=load_settings(config)
-    selected_db=Path(args.db).resolve() if args.db else (ROOT/settings['database']).resolve()
-    if selected_db.is_file():
-        with selected_db.open('rb') as handle:
-            if handle.read(7)==b'version':
-                parser.error('DB1 SQLite가 Git LFS 포인터입니다. git lfs pull로 실파일을 받거나 --db에 별도 운영 파일을 지정하세요.')
+    selected_db=database.workspace(args.db or settings['database'])
     def worker(kind,extra=()):
         cmd=[sys.executable,str(ROOT/kind/'update_worker.py'),'--config',str(config)]
         if args.db: cmd+=['--db',args.db]
@@ -37,7 +37,7 @@ def main():
     def analysis3(command='scan'):
         cmd=[sys.executable,str(ROOT/'Analysis3'/'run_analysis3.py'),command]
         settings=load_settings(config)
-        selected_db=Path(args.db).resolve() if args.db else (ROOT/settings['database']).resolve()
+        selected_db=database.workspace(args.db or settings['database'])
         cmd+=['--db',str(selected_db),'--db1-config',str(config)]
         cmd+=['--integrated-exports',str((ROOT/settings.get('exports','outputs/integrated')).resolve())]
         subprocess.run(cmd,check=True)
@@ -46,30 +46,28 @@ def main():
             source_semantics()
             survey_context(export_only=True)
     def activity_level():
-        import sqlite3
         from contextlib import closing
         settings=load_settings(config)
-        selected_db=Path(args.db).resolve() if args.db else (ROOT/settings['database']).resolve()
-        with closing(sqlite3.connect(selected_db)) as con:
-            if not con.execute("SELECT 1 FROM sqlite_master WHERE name='a2_age_detection'").fetchone(): return
+        selected_db=database.workspace(args.db or settings['database'])
+        with closing(database.connect(selected_db)) as con:
+            if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_detection'").fetchone(): return
         subprocess.run([sys.executable,str(ROOT/'Analysis2/activity_level.py'),'--db',str(selected_db),'--output',str(ROOT/'Analysis2/outputs/activity_level')],check=True)
     def source_semantics():
-        import sqlite3
         from contextlib import closing
         settings=load_settings(config)
-        selected_db=Path(args.db).resolve() if args.db else (ROOT/settings['database']).resolve()
-        with closing(sqlite3.connect(selected_db)) as con:
-            if not con.execute("SELECT 1 FROM sqlite_master WHERE name='a2_age_raw'").fetchone(): return
+        selected_db=database.workspace(args.db or settings['database'])
+        with closing(database.connect(selected_db)) as con:
+            if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_raw'").fetchone(): return
         subprocess.run([sys.executable,str(ROOT/'Context/source_semantics.py'),'--db',str(selected_db),'--output',str(ROOT/'Analysis2/outputs/source_semantics')],check=True)
         evidence_context()
     def evidence_context():
         settings=load_settings(config)
-        selected_db=Path(args.db).resolve() if args.db else (ROOT/settings['database']).resolve()
+        selected_db=database.workspace(args.db or settings['database'])
         subprocess.run([sys.executable,str(ROOT/'Context/evidence_context.py'),'--config',str(config),'--db',str(selected_db),'--output',str(ROOT/'Context/outputs/evidence')],check=True)
     def survey_context(export_only=False):
         settings=load_settings(config)
         if not settings.get('survey_context'): return
-        selected_db=Path(args.db).resolve() if args.db else (ROOT/settings['database']).resolve()
+        selected_db=database.workspace(args.db or settings['database'])
         cmd=[sys.executable,str(ROOT/'Context/survey.py'),'--config',str(config),'--db',str(selected_db),'--output',str((ROOT/settings.get('exports','outputs/integrated')).resolve())]
         if export_only: cmd+=['--export-only']
         subprocess.run(cmd,check=True)
@@ -89,7 +87,7 @@ def main():
         analysis3()
     elif args.command=='analysis1-elder':
         settings=load_settings(config)
-        selected_db=Path(args.db).resolve() if args.db else (ROOT/settings['database']).resolve()
+        selected_db=database.workspace(args.db or settings['database'])
         subprocess.run([sys.executable,str(ROOT/'Analysis1/elder_context.py'),'--db',str(selected_db),'--config',str(config),'--output',str((ROOT/settings.get('exports','outputs/integrated')).resolve())],check=True)
     elif args.command=='analysis2':
         if not args.month: parser.error('--month is required')
@@ -102,7 +100,7 @@ def main():
         subprocess.run(cmd,check=True)
     elif args.command=='analysis2-age-detect':
         settings=load_settings(config)
-        db=Path(args.db).resolve() if args.db else (ROOT/settings['database']).resolve()
+        db=database.workspace(args.db or settings['database'])
         subprocess.run([sys.executable,str(ROOT/'Analysis2/age_detection.py'),'--db',str(db)],check=True)
         analysis3('export')
     elif args.command=='analysis2-activity':
@@ -129,15 +127,15 @@ def main():
     else:
         import db1_store as store
         settings=load_settings(config)
-        db=Path(args.db) if args.db else ROOT/settings['database']
+        db=database.workspace(args.db or settings['database'])
         if args.command=='export':
             store.export_csv(db,ROOT/settings['exports'])
             with store.connect(db) as con:
-                has_age=con.execute("SELECT 1 FROM sqlite_master WHERE name='a2_age_feature'").fetchone()
+                has_age=con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_feature'").fetchone()
             if has_age:
                 subprocess.run([sys.executable,str(ROOT/'Analysis2/age_features.py'),'--db',str(db),'--export-only'],check=True)
                 with store.connect(db) as con:
-                    has_age_detection=con.execute("SELECT 1 FROM sqlite_master WHERE name='a2_age_detection'").fetchone()
+                    has_age_detection=con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_detection'").fetchone()
                 if has_age_detection:
                     subprocess.run([sys.executable,str(ROOT/'Analysis2/age_detection.py'),'--db',str(db),'--export-only'],check=True)
             analysis3('export')
@@ -146,12 +144,12 @@ def main():
             with store.connect(db) as con:
                 for table in ['a1_input','a1_context','a1_region_feature','a1_change_detection','a2_feature','a2_detection','a2_evidence']:
                     print(table,con.execute(f'SELECT COUNT(*) FROM {table}').fetchone()[0])
-                if con.execute("SELECT 1 FROM sqlite_master WHERE name='a2_activity_followup'").fetchone():
+                if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_activity_followup'").fetchone():
                     print('a2_activity_followup',con.execute('SELECT COUNT(*) FROM a2_activity_followup').fetchone()[0])
                 print('runs',con.execute('SELECT analysis,period FROM db1_run ORDER BY analysis,period').fetchall())
-                if con.execute("SELECT 1 FROM sqlite_master WHERE name='a2_age_feature'").fetchone():
+                if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_feature'").fetchone():
                     print('a2_age_feature',con.execute('SELECT age_scheme,COUNT(*) FROM a2_age_feature GROUP BY age_scheme').fetchall())
-                if con.execute("SELECT 1 FROM sqlite_master WHERE name='a2_age_detection'").fetchone():
+                if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_detection'").fetchone():
                     print('a2_age_detection',con.execute('SELECT COUNT(*),SUM(communication_signal),SUM(mobility_signal),SUM(combined_signal) FROM a2_age_detection').fetchone())
             if (ROOT/'Analysis3'/'run_analysis3.py').exists(): analysis3('status')
 

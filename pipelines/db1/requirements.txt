@@ -11,3 +11,6 @@ shapely==2.1.2
 pyogrio==0.13.0
 pyproj==3.8.0
 pytest==9.1.1
+
+# Shared PostgreSQL analysis workspace
+psycopg2==2.9.13

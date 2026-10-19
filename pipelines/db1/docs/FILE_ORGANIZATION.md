@@ -7,7 +7,7 @@
 | Analysis1~3/ | 분석 코드·모델·기준 입력·각 분석 산출물 |
 | Context/ | 조사·기상·관측 기간·소비 보충 근거 및 재현용 원본 보관 |
 | docs/ | 최신 인수인계·실행·해석·검증 안내 |
-| outputs/db1.sqlite | 유일한 운영 DB |
+| db1_pipeline | 유일한 운영 DB |
 | outputs/integrated/ | 통합 CSV 내보내기 |
 | outputs/handoff/ | AI 조회 예시, 실제 10건 근거 및 근거별 확인 상태 JSON |
 | outputs/figures/ | 보관된 그래프 |
@@ -19,7 +19,7 @@
 
 ## GitHub 전달
 
-운영 DB는 약361MiB여서 일반 Git 파일의100MiB 한도를 넘는다. DB를 포함하려면 Git LFS 설치·초기화가 필요하며 .gitattributes에 LFS 경로를 지정했다. Git LFS 초기화와 최초 전달 커밋·푸시를 완료했다(커밋 948cf05, delightL 브랜치). 기존 저장소의 attributes가 DB1/** -text를 지정하면 해당 규칙 뒤에 DB1/outputs/db1.sqlite filter=lfs diff=lfs merge=lfs -text를 적용한다. 실제 커밋 전에 git check-attr filter -- DB1/outputs/db1.sqlite로 lfs 적용을 확인한다.
+운영 DB는 약361MiB여서 일반 Git 파일의100MiB 한도를 넘는다. DB를 포함하려면 Git LFS 설치·초기화가 필요하며 .gitattributes에 LFS 경로를 지정했다. Git LFS 초기화와 최초 전달 커밋·푸시를 완료했다(커밋 948cf05, delightL 브랜치). 기존 저장소의 attributes가 DB1/** -text를 지정하면 해당 규칙 뒤에 db1_pipeline filter=lfs diff=lfs merge=lfs -text를 적용한다. 실제 커밋 전에 git check-attr filter -- db1_pipeline로 lfs 적용을 확인한다.
 
 재현에 필요한 모델·reference·fixture·Context 원본 보관본은 이번 정리에서 제거하지 않았다. 원본 수집 폴더는 기존 프로젝트 경로를 사용하며 다른 팀원의 PC에서는 tools/configure_db1.py로 경로를 설정한다. 현재 결과 조회에는 추가 기상 자료가 필요하지 않다. 신규 월 기상 누락 처리와 신규 반기 설정은 현재 운영 코드에서 아직 반영되지 않은 업데이트 준비 항목이다. 격리된 검토 폴더의 미반영 코드를 운영 DB1로 복사하지 않는다.
 

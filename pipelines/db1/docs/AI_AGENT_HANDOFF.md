@@ -19,7 +19,7 @@ DB1은 지역별 관측·분석 근거를 제공하는 저장소다. 최종 종�
 
 | 파일/폴더 | 용도 |
 |---|---|
-| `outputs/db1.sqlite` | 세 분석의 운영 기준 데이터. agent가 우선 조회할 SQLite 파일 |
+| `db1_pipeline` | 세 분석의 운영 기준 데이터. agent가 우선 조회할 이전 파일 저장소 파일 |
 | `outputs/integrated/` | 같은 DB 결과를 CSV로 내보낸 자료. 탐색·확인·CSV 기반 구현에 활용 |
 | `README.md` | 현재 폴더 구조와 실행 방법 |
 | `Analysis3/docs/DATA_DICTIONARY.md` | 소비 지표 정의 및 해석 |
@@ -42,7 +42,7 @@ DB1은 지역별 관측·분석 근거를 제공하는 저장소다. 최종 종�
 
 ## 4. agent가 조회할 데이터
 
-SQLite의 view는 기존 테이블을 연결한 조회용 구조다. agent는 다음 view부터 사용하면 된다.
+이전 파일 저장소의 view는 기존 테이블을 연결한 조회용 구조다. agent는 다음 view부터 사용하면 된다.
 
 | 조회 대상 | 행 단위 / 키 | 용도 |
 |---|---|---|
@@ -64,14 +64,14 @@ SQL view의 `a1_features`, `a2_result`, `a2_evidence`, `a3a_summary`, `a3b_summa
 
 ```python
 from pathlib import Path
-import sqlite3
+import 이전파일저장소3
 import json
 
 def read_month(db1_root, month):
     # 호출자는 month를 YYYY-MM 형식으로 검증한다.
-    db = (Path(db1_root) / 'outputs' / 'db1.sqlite').resolve()
-    with sqlite3.connect(db.as_uri() + '?mode=ro', uri=True) as con:
-        con.row_factory = sqlite3.Row
+    db = (Path(db1_root) / 'outputs' / 'db1_pipeline').resolve()
+    with 이전파일저장소3.connect(db.as_uri() + '?mode=ro', uri=True) as con:
+        con.row_factory = 이전파일저장소3.Row
         rows = con.execute('''
             SELECT date, adm_cd, adm_nm, context_period, a1_cluster_type,
                    any_signal, communication_signal, mobility_signal,
@@ -162,11 +162,11 @@ FROM a3_run GROUP BY source;
 
 `scan`은 Analysis1→2→3 순서로 신규 자료를 처리한다. Analysis1은 반기, Analysis2는 월, Analysis3A는 분기, 3B는 월별 자료를 처리하며 필요한 기간의 원본이 충족되어야 한다. CSV 내보내기는 DB 저장 후 실행한다. 세 분석 전체가 하나의 transaction은 아니므로 한 단계가 실패하면 이미 성공한 단계의 결과는 남을 수 있다. 소비 누락 시에도 행동 월의 상세 행은 유지되고 소비값은 NULL일 수 있다.
 
-업데이트 실행자는 운영 환경에서 정한다. agent의 일상 질의는 읽기 전용으로 두고, 기존 전처리·분석 코드가 DB를 갱신하도록 연결한다. DB 파일을 다른 PC로 전달할 때는 업데이트 작업을 멈춘 시점의 일관된 복사본을 전달하거나 SQLite backup 기능을 사용한다.
+업데이트 실행자는 운영 환경에서 정한다. agent의 일상 질의는 읽기 전용으로 두고, 기존 전처리·분석 코드가 DB를 갱신하도록 연결한다. DB 파일을 다른 PC로 전달할 때는 업데이트 작업을 멈춘 시점의 일관된 복사본을 전달하거나 이전 파일 저장소 backup 기능을 사용한다.
 
 ## 10. AI agent 담당자에게 전달할 요청
 
-“DB1의 분석 및 업데이트 파이프라인은 구축돼 있습니다. `outputs/db1.sqlite`의 통합 view를 읽기 전용으로 조회하는 연결을 구현해 주세요. 질문에서 동·기간을 선택하고, 월별 요약과 필요한 상세 근거를 조회해 지역 특성·변화신호·소비 맥락을 설명하면 됩니다. 기간·공간 단위와 결측을 유지하고, 결과를 개인 위험 판정으로 확대하지 않아야 합니다. 조회 API/도구 구성과 서비스 응답 형식은 AI agent 담당 범위입니다. 원본 전처리와 변화 탐지 기능을 agent 쪽에서 다시 구현할 필요는 없습니다.”
+“DB1의 분석 및 업데이트 파이프라인은 구축돼 있습니다. `db1_pipeline`의 통합 view를 읽기 전용으로 조회하는 연결을 구현해 주세요. 질문에서 동·기간을 선택하고, 월별 요약과 필요한 상세 근거를 조회해 지역 특성·변화신호·소비 맥락을 설명하면 됩니다. 기간·공간 단위와 결측을 유지하고, 결과를 개인 위험 판정으로 확대하지 않아야 합니다. 조회 API/도구 구성과 서비스 응답 형식은 AI agent 담당 범위입니다. 원본 전처리와 변화 탐지 기능을 agent 쪽에서 다시 구현할 필요는 없습니다.”
 
 연결 검증은 삼성1동 2025-12 예시 조회, 무신호 동 조회, 없는 기간의 빈 결과, 소비 NULL 처리, 상세 신호 중복 집계 방지, JSON 파싱, 읽기 전용 연결부터 확인하면 된다.
 
@@ -384,14 +384,14 @@ JSON `isolation_explanation_v2`의 `evidence_checks`는 자체 과거 기준·�
 
 ### 우선 조회
 
-`outputs/db1.sqlite`를 읽기 전용으로 열고 `v_a123_age_source_context`를 조회한다. 원천 기준월과 실제 관측 창을 함께 표시한다. 기존 공식 결과는 그대로 보존돼 있다.
+`db1_pipeline`를 읽기 전용으로 열고 `v_a123_age_source_context`를 조회한다. 원천 기준월과 실제 관측 창을 함께 표시한다. 기존 공식 결과는 그대로 보존돼 있다.
 
 ```python
 from pathlib import Path
-import sqlite3, json
+import 이전파일저장소3, json
 root = Path(r"C:\Users\user\Desktop\Team_Together\DB1")
-con = sqlite3.connect((root / "outputs/db1.sqlite").as_uri() + "?mode=ro", uri=True)
-con.row_factory = sqlite3.Row
+con = 이전파일저장소3.connect((root / "db1_pipeline").as_uri() + "?mode=ro", uri=True)
+con.row_factory = 이전파일저장소3.Row
 rows = con.execute("""SELECT * FROM v_a123_age_source_context
  WHERE communication_signal=1 OR mobility_signal=1
  ORDER BY source_label_date, adm_cd, age_band""").fetchall()
@@ -416,7 +416,7 @@ con.close()
 
 ### 검증된 조회 도구와 담당자 실행 순서
 
-DB1 폴더에서 다음을 실행한다. 조회 도구는 Python 표준 라이브러리와 읽기 전용 SQLite만 사용한다.
+DB1 폴더에서 다음을 실행한다. 조회 도구는 Python 표준 라이브러리와 읽기 전용 이전 파일 저장소만 사용한다.
 
 ```powershell
 python .\tools\read_agent_context.py --signals-only --limit 10

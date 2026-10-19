@@ -1,4 +1,4 @@
-"""Explain existing DB1 signals; never fit models or write to SQLite."""
+"""Explain existing DB1 signals; never fit models or write to 분석 DB."""
 import argparse
 import json
 import math
@@ -188,7 +188,7 @@ def markdown(data):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--db',default=str(Path(__file__).resolve().parents[1]/'outputs/db1.sqlite'))
+    p.add_argument('--db',default='db1_pipeline')
     for name in ('dong','age','label','as-of','output','markdown'):p.add_argument('--'+name)
     p.add_argument('--limit',type=int,default=1000);p.add_argument('--include-no-signals',action='store_true')
     a=p.parse_args()

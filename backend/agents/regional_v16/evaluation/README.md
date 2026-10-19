@@ -19,11 +19,9 @@ python backend/agents/regional_v16/evaluation/summarize_human_review.py --help
 `validate_dataset.py`는 단계·필수 필드·사례 구성을 검사합니다. 실제 답변의 정확성을 검증하거나
 공유 DB와 데이터셋의 근거가 같은지 보장하지 않습니다.
 
-## 과거 실행기
+## 과거 실행기·메타데이터
 
-`run_eval.py`, `prepare_dataset32.py`, `import_dataset.py`는 [legacy/](legacy/README.md)로 옮겼습니다.
-제거된 SQLite 서비스 모듈과 개발자 PC 전용 경로에 의존해 현재 구조에서 동작하지 않던 코드입니다.
-새 PostgreSQL·대화 근거 계약으로 평가하려면 실행기를 다시 연결하고 근거 버전도 검증해야 합니다.
+현재 실행 경로와 연결되지 않는 실행기와 예전 데이터셋 메타데이터는 PostgreSQL `db1_regional_archive.source_archive`에 원문·해시를 보존한 뒤 제거했습니다. `python scripts/read_source_archive.py --list`로 목록을 확인할 수 있습니다.
 
 ## 결과 해석
 

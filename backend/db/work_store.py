@@ -8,7 +8,7 @@ from backend.common import get_engine
 
 SCHEMA = "work"
 metadata = MetaData(schema=SCHEMA)
-# JSON은 기존 SQLite와 같은 문자열로 저장해 키·값 형식을 그대로 유지합니다.
+# JSON은 기존 분석 DB와 같은 문자열로 저장해 키·값 형식을 그대로 유지합니다.
 missions = Table("missions", metadata, Column("key", Text, primary_key=True), Column("value", Text, nullable=False))
 report_files = Table("report_files", metadata, Column("key", Text, primary_key=True),
                      Column("document", LargeBinary, nullable=False))

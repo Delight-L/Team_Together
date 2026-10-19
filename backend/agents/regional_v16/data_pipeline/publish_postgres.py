@@ -1,15 +1,15 @@
-"""DB1 SQLite 공개본을 PostgreSQL에 «run» 단위로 적재하고 활성 run을 바꿉니다(공개).
+"""DB1 PostgreSQL 분석 결과를 PostgreSQL에 «run» 단위로 적재하고 활성 run을 바꿉니다(공개).
 
 저장 구조 (스키마 db1)
 - v16_run(run_id, status, coverage_end, source_sha256, tables, published_at)   적재 이력
 - v16_active_run(id=1, run_id)                                                 챗봇이 읽는 활성 run 포인터
-- v16_<테이블>(run_id, <SQLite 테이블의 열 그대로>)                              run별 자료
+- v16_<테이블>(run_id, <분석 테이블의 열 그대로>)                              run별 자료
 - 스키마 db1_v16의 뷰 <테이블>                                                  활성(고정된) run만 보이는 읽기 전용 창구.
-  SQLite 테이블과 같은 이름·열이라 챗봇의 조회 SQL이 그대로 동작합니다.
+  분석 테이블과 같은 이름·열이라 챗봇의 조회 SQL이 그대로 동작합니다.
 
 원칙
 - 적재와 포인터 변경은 한 트랜잭션입니다. 읽는 쪽은 이전 run 또는 새 run 중 하나만 보고, 중간 상태를 보지 않습니다.
-- JSON 열은 TEXT로 저장합니다. JSON 형식은 NaN 같은 값을 거부하고 키 순서를 바꿀 수 있어서, 원문 그대로 보존해 SQLite와 같은 결과를 냅니다.
+- JSON 열은 TEXT로 저장합니다. JSON 형식은 NaN 같은 값을 거부하고 키 순서를 바꿀 수 있어서, 원문 그대로 보존해 분석 DB와 같은 결과를 냅니다.
 - 같은 공개본(내용 해시)을 다시 올리면 새로 적재하지 않고 활성 run만 그 run으로 맞춥니다.
 - 파이프라인 산출물에는 없는 `pipeline_state`·`ctx_weather`는 **원본을 고치지 않고** 게시 때 만들어 줍니다(data_pipeline/db1_compat.py):
   pipeline_state는 run 상태(v16_run)에서 뷰로, ctx_weather는 ctx_weather_month·ctx_weather_window에서 변환해 적재합니다.
@@ -18,11 +18,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sqlite3
-from contextlib import closing
-from pathlib import Path
+from psycopg2.extras import execute_values
+from pipelines.db1 import database
 
-from data_pipeline import db1_compat
+from . import db1_compat
 
 SCHEMA = 'db1'
 VIEW_SCHEMA = 'db1_v16'
@@ -39,11 +38,14 @@ INDEXED = ('date', 'adm_cd', 'period', 'age_band', 'age', 'district', 'year')
 BATCH = 5000
 
 
-def _sha256(path: Path) -> str:
+def _fingerprint(source, tables):
     digest = hashlib.sha256()
-    with path.open('rb') as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b''):
-            digest.update(block)
+    for table in sorted(tables):
+        hashes = []
+        for row in source.execute('SELECT * FROM ' + _quote(table)):
+            payload = json.dumps(list(row), ensure_ascii=False, separators=(',', ':'), default=str)
+            hashes.append(hashlib.sha256(payload.encode()).hexdigest())
+        digest.update((table + ''.join(sorted(hashes))).encode())
     return digest.hexdigest()
 
 
@@ -60,8 +62,8 @@ def _quote(name: str) -> str:
     return '"' + name.replace('"', '""') + '"'
 
 
-def _columns(source: sqlite3.Connection, table: str) -> list[tuple[str, str]]:
-    return [(row[1], _pg_type(row[2])) for row in source.execute(f'PRAGMA table_info({_quote(table)})')]
+def _columns(source: database.Connection, table: str) -> list[tuple[str, str]]:
+    return [(name, _pg_type(kind)) for name, kind in source.columns(table)]
 
 
 def _ensure_schema(conn) -> None:
@@ -89,7 +91,7 @@ def _ensure_table(conn, table: str, columns: list[tuple[str, str]]) -> None:
         if name in INDEXED:
             conn.exec_driver_sql(
                 f'CREATE INDEX IF NOT EXISTS ix_{PREFIX}{table}_{name} ON {target}(run_id, {_quote(name)})')
-    # 읽기 창구 뷰: 고정된 run의 행만, 원래 SQLite 테이블과 같은 이름·열로 보입니다.
+    # 읽기 창구 뷰: 고정된 run의 행만, 원래 분석 테이블과 같은 이름·열로 보입니다.
     names = ', '.join(_quote(name) for name, _ in columns)
     conn.exec_driver_sql(f'DROP VIEW IF EXISTS {VIEW_SCHEMA}.{_quote(table)}')
     conn.exec_driver_sql(
@@ -97,27 +99,24 @@ def _ensure_table(conn, table: str, columns: list[tuple[str, str]]) -> None:
         f"WHERE run_id = current_setting('db1.v16_run_id', true)")
 
 
-def _copy(conn, source: sqlite3.Connection, table: str, columns: list[tuple[str, str]], run_id: str) -> int:
+def _copy(conn, source: database.Connection, table: str, columns: list[tuple[str, str]], run_id: str) -> int:
     names = [name for name, _ in columns]
     insert = (f'INSERT INTO {SCHEMA}.{PREFIX}{table}(run_id, {", ".join(_quote(n) for n in names)}) '
-              f'VALUES ({", ".join(["%s"] * (len(names) + 1))})')
+              'VALUES %s')
     cursor = source.execute(f'SELECT {", ".join(_quote(n) for n in names)} FROM {_quote(table)}')
     total = 0
     while True:
         rows = cursor.fetchmany(BATCH)
         if not rows:
             return total
-        conn.exec_driver_sql(insert, [(run_id, *row) for row in rows])
+        with conn.connection.driver_connection.cursor() as target:
+            execute_values(target, insert, [(run_id, *row) for row in rows], page_size=500)
         total += len(rows)
 
 
-def publish(sqlite_path, engine, *, run_id: str | None = None, keep: int = 3, force: bool = False) -> dict:
-    """SQLite 공개본을 새 run으로 올리고 활성 run으로 지정합니다. 결과 요약(dict)을 돌려줍니다."""
-    path = Path(sqlite_path).resolve()
-    if not path.is_file():
-        raise FileNotFoundError(path)
-    digest = _sha256(path)
-    with closing(sqlite3.connect(path.as_uri() + '?mode=ro', uri=True)) as source:
+def publish(workspace_schema, engine, *, run_id: str | None = None, keep: int = 3, force: bool = False) -> dict:
+    """PostgreSQL 분석 결과를 새 run으로 올리고 활성 run으로 지정합니다. 결과 요약(dict)을 돌려줍니다."""
+    with database.connect(workspace_schema, readonly=True) as source:
         present = db1_compat.table_names(source)
         readiness_known = 'pipeline_state' in present
         if readiness_known:  # 작업기가 만든 DB는 «갱신 완료» 표지를 확인하고, 산출물에는 그 개념이 없어 확인할 수 없습니다
@@ -128,6 +127,7 @@ def publish(sqlite_path, engine, *, run_id: str | None = None, keep: int = 3, fo
         if missing:
             raise ValueError('공개에 필요한 테이블이 없습니다: ' + ', '.join(missing))
         tables = [name for name in (*REQUIRED, *OPTIONAL) if name in present]
+        digest = _fingerprint(source, tables)
         coverage = source.execute('SELECT MAX(date) FROM a2_feature').fetchone()[0]
         run_id = run_id or f"db1-{str(coverage)[:7].replace('-', '')}-{digest[:12]}"
         schema = {name: _columns(source, name) for name in tables}

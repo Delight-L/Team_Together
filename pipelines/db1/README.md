@@ -35,7 +35,7 @@ DB1 폴더의 PowerShell에서 실행합니다.
 
 ### 파일 위치
 - `config/db1_config.json`: 공통 DB, 원본 및 Analysis1·2 설정.
-- `outputs/db1.sqlite`: DB1 분석 실행기가 공유하는 작업·전달 DB. 웹 서비스는 검사·게시된 PostgreSQL 결과를 조회합니다.
+- `db1_pipeline`: DB1 분석 실행기가 공유하는 작업·전달 DB. 웹 서비스는 검사·게시된 PostgreSQL 결과를 조회합니다.
 - `outputs/integrated/`: Analysis1·2 통합 CSV와 Analysis1·2·3 연결 CSV.
 - `outputs/figures/`: 기존 분석 그래프 PNG·SVG. CSV 갱신과 별도로 보존된 시각화입니다.
 - `Analysis1/data/reference/`: 고정 기준 입력; `models/2025H2_elder_v2/`: 기준 모델.
@@ -196,7 +196,7 @@ python Analysis2/validation/build_report.py
 작업 기준 폴더: `pipelines/db1/Analysis3/`
 
 작업 폴더: `pipelines/db1/Analysis3/`
-공통 DB: 상위 `outputs/db1.sqlite`. Analysis3 CSV는 이 폴더의 `outputs`에 있습니다.
+공통 DB: 상위 `db1_pipeline`. Analysis3 CSV는 이 폴더의 `outputs`에 있습니다.
 
 ### 목적과 의미 연결
 
@@ -273,7 +273,7 @@ DB1 폴더에서 전체 1·2·3 업데이트:
 - 미완료 기간은 대기 목록, 스키마·숫자·중복키·새 지역코드 오류는 실패로 보고.
 - 처리된 기간은 원본 정규화 fingerprint/방법 버전/공개일 확인 후 동일하면 건너뜀. 수정된 기존 기간은 덮어쓰기 차단.
 - 마지막 저장 기간 이전의 누락 자료를 뒤늦게 적재해 과거 기준선을 바꾸는 backfill은 자동 실행하지 않음. 명시적 이력/버전 변경이 필요.
-- 선택된 새 기간의 원본 집계, 처리 기록, 파생 지표는 한 SQLite transaction. 충돌/저장 실패면 신규 전체 배치 rollback.
+- 선택된 새 기간의 원본 집계, 처리 기록, 파생 지표는 하나의 PostgreSQL 트랜잭션. 충돌/저장 실패면 신규 전체 배치 rollback.
 - CSV는 DB commit 후 내보냄. 내보내기 실패 시 `export`로 재생성 가능.
 
 자동 감시는 실행 중인 프로세스에 한해 작동합니다. 이번 작업에서 상시 프로세스나 예약작업을 등록하지 않았습니다.

@@ -1,9 +1,13 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
 """Export aggregate DB1 context without changing the authoritative DB1 database."""
 from pathlib import Path
-import argparse,csv,sqlite3,json,hashlib,math
+import argparse,csv,json,hashlib,math
 
 
-def export(source, target):
+def export(source, target, workspace_schema=None):
+    from pipelines.db1 import database
     def records(path):
         with path.open(encoding='utf-8-sig') as stream:
             return list(csv.DictReader(stream))
@@ -24,9 +28,8 @@ def export(source, target):
                   'baselineN':int(r['baseline_n']),'baselinePeriods':json.loads(r['baseline_periods']),
                   'baselineDaily':numeric(r['baseline_daily_mean']),'currentDaily':numeric(r['matched_current_daily_count']),
                   'reason':r['comparison_reason']} for r in records(path)]
-    db=source/'outputs/db1.sqlite'
-    with sqlite3.connect(db.as_uri()+'?mode=ro',uri=True) as conn:
-        conn.row_factory=sqlite3.Row
+    with database.connect(workspace_schema,readonly=True) as conn:
+        conn.dict_rows=True
         surveys=[dict(r) for r in conn.execute("SELECT year,district,age_band,metric,value,n_valid,effective_n,quality_status FROM v_survey_annual WHERE survey='seoul_survey' AND district IN ('gangnam','seoul') AND metric IN ('no_support_emotion','no_support_sick','loneliness_outside_agree')")]
     names={r['name'] for r in typologies}
     assert len(names)==22 and '개포3동' in names

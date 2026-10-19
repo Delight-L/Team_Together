@@ -1,10 +1,14 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 import sys as _settings_sys
 from pathlib import Path as _SettingsPath
 _settings_sys.path.insert(0, str(_SettingsPath(__file__).resolve().parents[1]))
 from db1_settings import load_settings
 """Annual dong-level living-alone elderly context, separate from fitted PCA."""
 from pathlib import Path
-import argparse,calendar,csv,glob,hashlib,io,json,re,sqlite3
+import argparse,calendar,csv,glob,hashlib,io,json,re
 import pandas as pd
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -13,14 +17,14 @@ SOURCE_URL='https://data.seoul.go.kr/bsp/wgs/dataView/data300View/91.do'
 CATEGORIES=('합계','국민기초생활보장수급권자','저소득노인','일반')
 SEXES=('계','남','여')
 TABLES=('a1_elder_source','a1_elder_year','a1_elder_observation','a1_elder_annual')
-SCHEMA='''
+SCHEMA="""
 CREATE TABLE IF NOT EXISTS a1_elder_source(sha256 TEXT PRIMARY KEY,source_path TEXT NOT NULL,metadata_json TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS a1_elder_year(year INTEGER PRIMARY KEY,fingerprint TEXT NOT NULL,available_from TEXT,metadata_json TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS a1_elder_observation(adm_cd TEXT NOT NULL,year INTEGER NOT NULL,category TEXT NOT NULL,sex TEXT NOT NULL,value INTEGER,raw_value TEXT NOT NULL,PRIMARY KEY(adm_cd,year,category,sex),FOREIGN KEY(year) REFERENCES a1_elder_year(year));
 CREATE TABLE IF NOT EXISTS a1_elder_annual(adm_cd TEXT NOT NULL,year INTEGER NOT NULL,payload_json TEXT NOT NULL,PRIMARY KEY(adm_cd,year),FOREIGN KEY(year) REFERENCES a1_elder_year(year));
-CREATE VIEW IF NOT EXISTS v_a1_elder_annual AS
+CREATE OR REPLACE VIEW v_a1_elder_annual AS
  SELECT a.adm_cd,a.year,y.available_from,a.payload_json FROM a1_elder_annual a JOIN a1_elder_year y ON a.year=y.year;
-CREATE VIEW IF NOT EXISTS v_a1_elder_context AS
+CREATE OR REPLACE VIEW v_a1_elder_context AS
  SELECT c.adm_cd,c.adm_nm,c.period,c.cluster_type AS a1_cluster_type,a.year AS elder_year,
  a.payload_json AS elder_context_json,y.available_from AS elder_available_from,
  'retrospective_latest_completed_reference_year' AS elder_alignment
@@ -28,25 +32,25 @@ CREATE VIEW IF NOT EXISTS v_a1_elder_context AS
  SELECT MAX(e.year) FROM a1_elder_annual e WHERE e.adm_cd=c.adm_cd
  AND e.year<=CAST(substr(c.period,1,4) AS INTEGER)-CASE WHEN substr(c.period,6,1)='1' THEN 1 ELSE 0 END)
  LEFT JOIN a1_elder_year y ON y.year=a.year;
-'''
-LINK_SCHEMA='''
-CREATE VIEW IF NOT EXISTS v_a123_age_elder_context AS
+"""
+LINK_SCHEMA="""
+CREATE OR REPLACE VIEW v_a123_age_elder_context AS
  SELECT m.*,e.year AS elder_year,e.payload_json AS elder_context_json,y.available_from AS elder_available_from,
  CASE WHEN m.age_band='60plus' THEN 'partial_overlap_65plus_vs_60plus' ELSE 'not_applicable_to_age_band' END AS elder_age_alignment,
  'retrospective_reference_year_not_monthly_observation' AS elder_time_alignment
  FROM a23_age_monthly m LEFT JOIN a1_elder_annual e ON m.age_band='60plus' AND e.adm_cd=m.adm_cd AND e.year=(
  SELECT MAX(a.year) FROM a1_elder_annual a WHERE a.adm_cd=m.adm_cd AND a.year<=CAST(substr(m.date,1,4) AS INTEGER))
  LEFT JOIN a1_elder_year y ON y.year=e.year;
-CREATE VIEW IF NOT EXISTS v_a123_age_elder_available_context AS
+CREATE OR REPLACE VIEW v_a123_age_elder_available_context AS
  SELECT m.*,e.year AS elder_year,e.payload_json AS elder_context_json,y.available_from AS elder_available_from,
  CASE WHEN m.age_band='60plus' THEN 'partial_overlap_65plus_vs_60plus' ELSE 'not_applicable_to_age_band' END AS elder_age_alignment,
  'known_publication_and_completed_reference_year_by_event_month_end' AS elder_time_alignment
  FROM a23_age_available_context m LEFT JOIN a1_elder_annual e ON m.age_band='60plus' AND e.adm_cd=m.adm_cd AND e.year=(
  SELECT MAX(a.year) FROM a1_elder_annual a JOIN a1_elder_year p ON p.year=a.year
- WHERE a.adm_cd=m.adm_cd AND printf('%04d-12-31',a.year)<=date(substr(m.date,1,7)||'-01','+1 month','-1 day')
- AND p.available_from IS NOT NULL AND p.available_from<=date(substr(m.date,1,7)||'-01','+1 month','-1 day'))
+ WHERE a.adm_cd=m.adm_cd AND (lpad((a.year)::text,4,'0')||'-12-31')<=((date_trunc('month', (substr(m.date,1,7)||'-01')::date)+INTERVAL '1 month - 1 day')::date)::text
+ AND p.available_from IS NOT NULL AND p.available_from<=((date_trunc('month', (substr(m.date,1,7)||'-01')::date)+INTERVAL '1 month - 1 day')::date)::text)
  LEFT JOIN a1_elder_year y ON y.year=e.year;
-'''
+"""
 
 def dumps(value):return json.dumps(value,ensure_ascii=False,sort_keys=True,allow_nan=False)
 def norm(value):return re.sub(r'\s+','',value)
@@ -138,12 +142,12 @@ def make_annual(con):
         economic=None if benefit is None or low is None else benefit+low
         female=get('합계','여');male=get('합계','남')
         payload={'adm_cd':cd,'adm_nm':names[cd],'year':year,'source_age_minimum':65,'reference_precision':'year','elderly_living_alone_total':total,'male':male,'female':female,'female_share':ratio(female,total),'beneficiary_total':benefit,'low_income_total':low,'general_total':get('일반'),'beneficiary_share_among_living_alone_elderly':ratio(benefit,total),'low_income_share_among_living_alone_elderly':ratio(low,total),'economic_vulnerability_total':economic,'economic_vulnerability_share_among_living_alone_elderly':ratio(economic,total),'previous_year':year-1 if (cd,year-1,'합계','계') in cells else None,'previous_total':prior,'yoy_count_change':None if total is None or prior is None else total-prior,'yoy_count_change_pct':None if total is None else (None if ratio(total,prior) is None else (total/prior-1)*100),'rate_among_all_65plus_residents':None,'all_65plus_denominator_status':'not_added_reference_population_and_date_unverified','missing_cells':sum(cells[cd,year,cat,sex] is None for cat in CATEGORIES for sex in SEXES),'interpretation':'annual_structural_living_arrangement_and_economic_context_not_isolation_cases','version':VERSION}
-        if con.execute("SELECT 1 FROM sqlite_master WHERE name='a1_elder_population'").fetchone():
-            den=con.execute('SELECT population,source_sha256 FROM a1_elder_population WHERE adm_cd=? AND year=?',(cd,year)).fetchone()
+        if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a1_elder_population'").fetchone():
+            den=con.execute('SELECT population,source_sha256 FROM a1_elder_population WHERE adm_cd=%s AND year=%s',(cd,year)).fetchone()
             if den:
                 if total is not None and total>den[0]:raise ValueError('Elderly living-alone count exceeds same-year 65plus denominator')
                 payload.update(rate_among_all_65plus_residents=ratio(total,den[0]),all_65plus_denominator_status='same_year_Q4_registered_population',all_65plus_population=den[0],denominator_reference=f'{year}Q4',denominator_source_sha256=den[1])
-        con.execute('INSERT INTO a1_elder_annual VALUES(?,?,?) ON CONFLICT(adm_cd,year) DO UPDATE SET payload_json=excluded.payload_json',(cd,year,dumps(payload)))
+        con.execute('INSERT INTO a1_elder_annual VALUES(%s,%s,%s) ON CONFLICT(adm_cd,year) DO UPDATE SET payload_json=excluded.payload_json',(cd,year,dumps(payload)))
 
 def ingest_populations(con,settings,mapping):
     """Archive and append same-year Q4 age denominators; reject silent corrections."""
@@ -151,7 +155,7 @@ def ingest_populations(con,settings,mapping):
     from preprocessing.resident import preprocess_resident
     options=settings['analysis1']['elderly_living_alone']
     if not options.get('population_sources'):return
-    con.execute('CREATE TABLE IF NOT EXISTS a1_elder_population(adm_cd TEXT,year INTEGER,population REAL NOT NULL,source_sha256 TEXT NOT NULL,metadata_json TEXT NOT NULL,PRIMARY KEY(adm_cd,year))')
+    con.execute('CREATE TABLE IF NOT EXISTS a1_elder_population(adm_cd TEXT,year INTEGER,population DOUBLE PRECISION NOT NULL,source_sha256 TEXT NOT NULL,metadata_json TEXT NOT NULL,PRIMARY KEY(adm_cd,year))')
     candidates={Path(p).resolve() for pat in options['population_sources'] for p in glob.glob(pat)}
     archive=ROOT/options.get('population_archive','Analysis1/data/raw/elderly_population')
     candidates.update(archive.glob('*.csv'))
@@ -173,9 +177,9 @@ def ingest_populations(con,settings,mapping):
             saved=archive/(sha+'.csv')
             if not saved.exists():saved.write_bytes(path.read_bytes())
     for (cd,year),(value,sha,meta) in pending.items():
-        old=con.execute('SELECT population FROM a1_elder_population WHERE adm_cd=? AND year=?',(cd,year)).fetchone()
+        old=con.execute('SELECT population FROM a1_elder_population WHERE adm_cd=%s AND year=%s',(cd,year)).fetchone()
         if old and abs(old[0]-value)>1e-7:raise ValueError('Historical elderly denominator changed; explicit migration required')
-        con.execute('INSERT OR IGNORE INTO a1_elder_population VALUES(?,?,?,?,?)',(cd,year,value,sha,dumps(meta)))
+        con.execute('INSERT INTO a1_elder_population VALUES(%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING',(cd,year,value,sha,dumps(meta)))
 
 def attach_cluster_feature(db,settings,frame,period,options=None):
     """H1: latest previous year; H2: latest <= current year. Never use future data."""
@@ -183,11 +187,11 @@ def attach_cluster_feature(db,settings,frame,period,options=None):
     options=options or {};limit=int(period[:4])-(1 if period.endswith('H1') else 0)
     requested=options.get('elder_year')
     if requested is not None and int(requested)>limit:raise ValueError('Future elderly year is not allowed')
-    with sqlite3.connect(db) as con:
-        years=[r[0] for r in con.execute('SELECT year FROM a1_elder_annual GROUP BY year HAVING COUNT(*)=22 AND year<=? ORDER BY year DESC',(limit,))]
+    with database.connect(db) as con:
+        years=[r[0] for r in con.execute('SELECT year FROM a1_elder_annual GROUP BY year HAVING COUNT(*)=22 AND year<=%s ORDER BY year DESC',(limit,))]
         year=int(requested) if requested is not None else (years[0] if years else None)
         if year is None or year not in years:raise ValueError('Missing elderly annual source for '+period)
-        rows=[json.loads(r[0]) for r in con.execute('SELECT payload_json FROM a1_elder_annual WHERE year=?',(year,))]
+        rows=[json.loads(r[0]) for r in con.execute('SELECT payload_json FROM a1_elder_annual WHERE year=%s',(year,))]
     values={r['adm_cd']:r.get('rate_among_all_65plus_residents') for r in rows}
     out=frame.copy();out['adm_cd']=out.adm_cd.astype(str)
     out['elderly_living_alone_rate_65plus']=out.adm_cd.map(values)
@@ -200,7 +204,7 @@ def ingest(db,settings):
     if not options:return {'status':'elderly_source_not_configured'}
     paths=sorted({Path(p).resolve() for pattern in options['sources'] for p in glob.glob(pattern)})
     if not paths:raise FileNotFoundError('Configured elderly living-alone source not found')
-    with sqlite3.connect(db,timeout=60) as con:
+    with database.connect(db) as con:
         mapping=mappings(con);packets=[read_source(p,mapping,options.get('allow_non_gangnam_terminal_error',False)) for p in paths]
         if options.get('source_archive'):
             archive=(ROOT/options['source_archive']).resolve();archive.mkdir(parents=True,exist_ok=True)
@@ -221,7 +225,7 @@ def ingest(db,settings):
                 if year in pending and pending[year]['fingerprint']!=digest:raise ValueError(f'{year}: conflicting source files')
                 packet=pending.setdefault(year,{'fingerprint':digest,'cells':selected,'source_sha256':[],'district_total':next(r['value'] for r in meta['district_controls'] if r['year']==year and r['category']=='합계' and r['sex']=='계')})
                 packet['source_sha256'].append(meta['sha256'])
-        con.execute('PRAGMA foreign_keys=ON');con.executescript(SCHEMA)
+        con.execute('SET CONSTRAINTS ALL IMMEDIATE;');con.executescript(SCHEMA)
         inserted=[]
         with con:
             last=con.execute('SELECT MAX(year) FROM a1_elder_year').fetchone()[0]
@@ -231,18 +235,18 @@ def ingest(db,settings):
                     try:published=pd.Timestamp(published).strftime('%Y-%m-%d')
                     except Exception as exc:raise ValueError('Invalid annual publication date') from exc
                     if published<f'{year}-12-31':raise ValueError('Publication cannot precede completed reference year')
-                stored=con.execute('SELECT fingerprint,available_from FROM a1_elder_year WHERE year=?',(year,)).fetchone()
+                stored=con.execute('SELECT fingerprint,available_from FROM a1_elder_year WHERE year=%s',(year,)).fetchone()
                 if stored:
                     if stored[0]!=p['fingerprint']:raise ValueError(f'{year}: historical elderly snapshot changed; explicit versioned correction required')
                     if published and stored[1] not in (None,published):raise ValueError('Publication correction requires explicit migration')
-                    if published and stored[1] is None:con.execute('UPDATE a1_elder_year SET available_from=? WHERE year=?',(published,year))
+                    if published and stored[1] is None:con.execute('UPDATE a1_elder_year SET available_from=%s WHERE year=%s',(published,year))
                     continue
                 if last is not None and year<last:raise ValueError('Historical backfill requires explicit migration')
                 meta={k:v for k,v in p.items() if k!='cells'}
                 meta.update(version=VERSION,reference_precision='year',source_age_minimum=65)
-                con.execute('INSERT INTO a1_elder_year VALUES(?,?,?,?)',(year,p['fingerprint'],published,dumps(meta)))
-                con.executemany('INSERT INTO a1_elder_observation VALUES(?,?,?,?,?,?)',[(r['adm_cd'],year,r['category'],r['sex'],r['value'],r['raw_value']) for r in p['cells']]);inserted.append(year)
-            for meta in assets:con.execute('INSERT OR IGNORE INTO a1_elder_source(sha256,source_path,metadata_json) VALUES(?,?,?)',(meta['sha256'],meta['source_path'],dumps(meta)))
+                con.execute('INSERT INTO a1_elder_year VALUES(%s,%s,%s,%s)',(year,p['fingerprint'],published,dumps(meta)))
+                con.executemany('INSERT INTO a1_elder_observation VALUES(%s,%s,%s,%s,%s,%s)',[(r['adm_cd'],year,r['category'],r['sex'],r['value'],r['raw_value']) for r in p['cells']]);inserted.append(year)
+            for meta in assets:con.execute('INSERT INTO a1_elder_source(sha256,source_path,metadata_json) VALUES(%s,%s,%s) ON CONFLICT DO NOTHING',(meta['sha256'],meta['source_path'],dumps(meta)))
             ingest_populations(con,settings,mapping)
             make_annual(con)
         return {'inserted_years':inserted,'source_files':len(paths),'quarantined_outside_gangnam_records':sum(len(a['quarantined_records']) for a in assets)}
@@ -250,12 +254,12 @@ def ingest(db,settings):
 def export(db,directory):
     directory=Path(directory);directory.mkdir(parents=True,exist_ok=True)
     names={'v_a1_elder_annual':'analysis1_elder_annual','a1_elder_observation':'analysis1_elder_observations','v_a1_elder_context':'analysis1_elder_context','v_a123_age_elder_context':'analysis123_age_elder_context','v_a123_age_elder_available_context':'analysis123_age_elder_available_context'}
-    with sqlite3.connect(db) as con:
-        if not con.execute("SELECT 1 FROM sqlite_master WHERE name='a1_elder_annual'").fetchone():return {'status':'elderly_context_unavailable'}
-        if con.execute("SELECT 1 FROM sqlite_master WHERE name='a23_age_monthly'").fetchone():con.executescript(LINK_SCHEMA)
+    with database.connect(db) as con:
+        if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a1_elder_annual'").fetchone():return {'status':'elderly_context_unavailable'}
+        if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a23_age_monthly'").fetchone():con.executescript(LINK_SCHEMA)
         for table,name in names.items():
-            if not con.execute('SELECT 1 FROM sqlite_master WHERE name=?',(table,)).fetchone():continue
-            frame=pd.read_sql_query('SELECT * FROM '+table,con)
+            if not con.execute('SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name=%s',(table,)).fetchone():continue
+            frame=database.read_frame('SELECT * FROM '+table,con)
             for column,prefix in [('payload_json',''),('elder_context_json','elder_')]:
                 if column not in frame:continue
                 values=pd.DataFrame([{} if pd.isna(v) else json.loads(v) for v in frame[column]],index=frame.index)
@@ -266,10 +270,10 @@ def export(db,directory):
                 frame[column]=frame[column].map(lambda x:dumps(x) if isinstance(x,(list,dict)) else x)
             tmp=directory/(name+'.csv.tmp');frame.to_csv(tmp,index=False,encoding='utf-8-sig');tmp.replace(directory/(name+'.csv'))
         report={'annual_rows':con.execute('SELECT COUNT(*) FROM a1_elder_annual').fetchone()[0],'observation_rows':con.execute('SELECT COUNT(*) FROM a1_elder_observation').fetchone()[0],'missing_observation_cells':con.execute('SELECT COUNT(*) FROM a1_elder_observation WHERE value IS NULL').fetchone()[0],'district_totals_by_year':dict(con.execute("SELECT year,SUM(value) FROM a1_elder_observation WHERE category='합계' AND sex='계' GROUP BY year")), 'source_age_minimum':65,'isolation_detection_flags_changed':False}
-        if con.execute("SELECT 1 FROM sqlite_master WHERE name='v_a123_age_elder_context'").fetchone():
+        if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='v_a123_age_elder_context'").fetchone():
             report['monthly_rows']=con.execute('SELECT COUNT(*) FROM v_a123_age_elder_context').fetchone()[0]
             report['monthly_60plus_context_rows']=con.execute('SELECT COUNT(*) FROM v_a123_age_elder_context WHERE elder_year IS NOT NULL').fetchone()[0]
-            report['current_behavior_signal_rows_with_age_applicable_elder_context']=con.execute("SELECT COUNT(*) FROM v_a123_age_elder_context WHERE elder_year IS NOT NULL AND json_extract(payload_json,'$.behavior_signal')=1").fetchone()[0]
+            report['current_behavior_signal_rows_with_age_applicable_elder_context']=con.execute("SELECT COUNT(*) FROM v_a123_age_elder_context WHERE elder_year IS NOT NULL AND (json_extract_path_text((payload_json)::json, 'behavior_signal')::integer)=1").fetchone()[0]
         (directory/'elder_context_validation.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8');return report
 
 def run(db,settings,directory):

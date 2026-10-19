@@ -1,11 +1,14 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 import sys as _settings_sys
 from pathlib import Path as _SettingsPath
 _settings_sys.path.insert(0, str(_SettingsPath(__file__).resolve().parents[1]))
 from db1_settings import load_settings
 """Annual district/age survey context. Never changes behavioral detection flags."""
 from pathlib import Path
-import argparse,hashlib,json,sqlite3,shutil
-from contextlib import closing
+import argparse,hashlib,json,shutil
 import pandas as pd
 import numpy as np
 from openpyxl import load_workbook
@@ -13,7 +16,7 @@ from openpyxl import load_workbook
 ROOT=Path(__file__).resolve().parents[1]
 VERSION='survey_context_v1'
 AGE={2:'20s',3:'30s',4:'40s',5:'50s',6:'60plus'}
-SCHEMA='''
+SCHEMA="""
 CREATE TABLE IF NOT EXISTS ctx_survey_source(
  source_id TEXT PRIMARY KEY, survey TEXT NOT NULL, year INTEGER NOT NULL,
  fingerprint TEXT NOT NULL, available_from TEXT, metadata_json TEXT NOT NULL,
@@ -21,16 +24,16 @@ CREATE TABLE IF NOT EXISTS ctx_survey_source(
 CREATE TABLE IF NOT EXISTS ctx_survey_metric(
  source_id TEXT NOT NULL REFERENCES ctx_survey_source(source_id),
  district TEXT NOT NULL, age_band TEXT NOT NULL, metric TEXT NOT NULL,
- value REAL, unit TEXT NOT NULL, n_total INTEGER NOT NULL, n_valid INTEGER NOT NULL,
- n_event INTEGER, n_households INTEGER, effective_n REAL, quality_status TEXT NOT NULL,
+ value DOUBLE PRECISION, unit TEXT NOT NULL, n_total INTEGER NOT NULL, n_valid INTEGER NOT NULL,
+ n_event INTEGER, n_households INTEGER, effective_n DOUBLE PRECISION, quality_status TEXT NOT NULL,
  payload_json TEXT NOT NULL, PRIMARY KEY(source_id,district,age_band,metric));
 CREATE TABLE IF NOT EXISTS ctx_evidence_guide(
  guide_id TEXT PRIMARY KEY, source_id TEXT NOT NULL REFERENCES ctx_survey_source(source_id),
  age_scope TEXT NOT NULL, topic TEXT NOT NULL, payload_json TEXT NOT NULL);
-CREATE VIEW IF NOT EXISTS v_survey_annual AS
+CREATE OR REPLACE VIEW v_survey_annual AS
 SELECT s.survey,s.year,s.available_from,m.* FROM ctx_survey_metric m
 JOIN ctx_survey_source s USING(source_id);
-'''
+"""
 
 def dumps(x):return json.dumps(x,ensure_ascii=False,allow_nan=False,default=str)
 def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
@@ -154,9 +157,9 @@ def packet_youth(kind,option):
  return {'source_id':source,'survey':'seoul_youth_'+kind,'year':2022,'fingerprint':fingerprint,'available_from':'2024-05-22','metadata':metadata,'rows':rows,'guides':guides}
 
 def refresh_views(con):
- con.executescript('''
- DROP VIEW IF EXISTS v_survey_age_trend;
- CREATE VIEW v_survey_age_trend AS
+ con.executescript("""
+
+ CREATE OR REPLACE VIEW v_survey_age_trend AS
  SELECT a.*,b.value previous_value,a.value-b.value change_value,
  CASE WHEN b.source_id IS NULL THEN 'no_previous_year'
  WHEN a.year=2024 AND a.metric LIKE 'loneliness_%' THEN 'response_wording_changed'
@@ -165,38 +168,38 @@ def refresh_views(con):
  FROM v_survey_annual a LEFT JOIN v_survey_annual b
  ON b.survey=a.survey AND b.year=a.year-1 AND b.district=a.district
  AND b.age_band=a.age_band AND b.metric=a.metric;
- ''')
- if not con.execute("SELECT 1 FROM sqlite_master WHERE name='v_a123_age_elder_context'").fetchone():return
+ """)
+ if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='v_a123_age_elder_context'").fetchone():return
  for name,available in [('v_a123_age_survey_context',False),('v_a123_age_survey_available_context',True)]:
-  timing="AND s.available_from IS NOT NULL AND s.available_from<=date(substr(b.date,1,7)||'-01','+1 month','-1 day')" if available else ''
-  con.executescript(f'''DROP VIEW IF EXISTS {name}; CREATE VIEW {name} AS
+  timing="AND s.available_from IS NOT NULL AND s.available_from<=to_char(date_trunc('month', b.date::date) + interval '1 month - 1 day', 'YYYY-MM-DD')" if available else ''
+  con.executescript(f"""CREATE OR REPLACE VIEW {name} AS
   SELECT b.*,s.year survey_year,s.available_from survey_available_from,
   'district_not_dong' survey_geography_alignment,'reference_not_person_link' survey_evidence_role,
   CASE WHEN s.year IS NULL THEN 'unavailable' WHEN s.year=CAST(substr(b.date,1,4) AS INTEGER) THEN 'same_year_retrospective' ELSE 'prior_year_reference' END survey_time_alignment,
-  CASE WHEN s.source_id IS NULL THEN NULL ELSE (SELECT json_group_object(m.metric,json_object('value',m.value,'unit',m.unit,'n_valid',m.n_valid,'n_event',m.n_event,'effective_n',m.effective_n,'quality_status',m.quality_status,'metadata',json(m.payload_json))) FROM ctx_survey_metric m WHERE m.source_id=s.source_id AND m.district='gangnam' AND m.age_band=b.age_band) END survey_context_json
+  CASE WHEN s.source_id IS NULL THEN NULL ELSE (SELECT json_object_agg(m.metric,json_build_object('value',m.value,'unit',m.unit,'n_valid',m.n_valid,'n_event',m.n_event,'effective_n',m.effective_n,'quality_status',m.quality_status,'metadata',json(m.payload_json)))::text FROM ctx_survey_metric m WHERE m.source_id=s.source_id AND m.district='gangnam' AND m.age_band=b.age_band) END survey_context_json
   FROM v_a123_age_elder_context b LEFT JOIN ctx_survey_source s ON s.source_id=(
    SELECT s.source_id FROM ctx_survey_source s WHERE s.survey='seoul_survey'
    AND s.year<=CAST(substr(b.date,1,4) AS INTEGER) {timing} ORDER BY s.year DESC LIMIT 1);
-  ''')
+  """)
 
 def export(db,output):
  output=Path(output);output.mkdir(parents=True,exist_ok=True)
- with closing(sqlite3.connect(db)) as c:
-  if not c.execute("SELECT 1 FROM sqlite_master WHERE name='ctx_survey_source'").fetchone():return {'status':'not_initialized'}
+ with database.connect(db) as c:
+  if not c.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='ctx_survey_source'").fetchone():return {'status':'not_initialized'}
   refresh_views(c)
   for name in ['v_survey_annual','v_survey_age_trend','ctx_evidence_guide','v_a123_age_survey_context','v_a123_age_survey_available_context']:
-   if not c.execute('SELECT 1 FROM sqlite_master WHERE name=?',(name,)).fetchone():continue
-   d=pd.read_sql_query('SELECT * FROM '+name,c)
+   if not c.execute('SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name=%s',(name,)).fetchone():continue
+   d=database.read_frame('SELECT * FROM '+name,c)
    tmp=output/(name+'.csv.tmp');d.to_csv(tmp,index=False,encoding='utf-8-sig');tmp.replace(output/(name+'.csv'))
   report={'sources':c.execute('SELECT survey,year FROM ctx_survey_source ORDER BY survey,year').fetchall(),'metric_rows':c.execute('SELECT COUNT(*) FROM ctx_survey_metric').fetchone()[0],'guide_rows':c.execute('SELECT COUNT(*) FROM ctx_evidence_guide').fetchone()[0],'detection_scores_modified':False}
   for name in ['v_a123_age_survey_context','v_a123_age_survey_available_context']:
-   if c.execute('SELECT 1 FROM sqlite_master WHERE name=?',(name,)).fetchone():report[name]={'rows':c.execute('SELECT COUNT(*) FROM '+name).fetchone()[0],'linked':c.execute('SELECT COUNT(*) FROM '+name+' WHERE survey_year IS NOT NULL').fetchone()[0]}
+   if c.execute('SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name=%s',(name,)).fetchone():report[name]={'rows':c.execute('SELECT COUNT(*) FROM '+name).fetchone()[0],'linked':c.execute('SELECT COUNT(*) FROM '+name+' WHERE survey_year IS NOT NULL').fetchone()[0]}
  (output/'survey_context_validation.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8');return report
 
 def run(db,settings,output):
  options=settings.get('survey_context',{});packets=[];unchanged=[];publication_updates=[]
- with closing(sqlite3.connect(db)) as c:
-  c.execute('PRAGMA foreign_keys=ON');c.executescript(SCHEMA)
+ with database.connect(db) as c:
+  c.execute('SET CONSTRAINTS ALL IMMEDIATE;');c.executescript(SCHEMA)
   candidates=[('seoul_survey',int(year),option,lambda y=int(year),o=option:packet_seoul(y,o)) for year,option in options.get('seoul_years',{}).items()]
   candidates += [('seoul_youth_'+kind,2022,option,lambda k=kind,o=option:packet_youth(k,o)) for kind,option in options.get('youth_reference',{}).items()]
   for survey,year,option,reader in candidates:
@@ -204,7 +207,7 @@ def run(db,settings,output):
    path=Path(option['path']);fingerprint=sha(path)
    date=option.get('available_from') if survey=='seoul_survey' else '2024-05-22'
    if date and (pd.Timestamp(date).strftime('%Y-%m-%d')!=date or date<f'{year}-01-01'):raise ValueError('Invalid availability date')
-   stored=c.execute('SELECT fingerprint,metadata_json,available_from FROM ctx_survey_source WHERE survey=? AND year=?',(survey,year)).fetchone()
+   stored=c.execute('SELECT fingerprint,metadata_json,available_from FROM ctx_survey_source WHERE survey=%s AND year=%s',(survey,year)).fetchone()
    if stored:
     if stored[0]!=fingerprint:raise ValueError(f'{survey}/{year}: source correction requires explicit versioned migration')
     prior=json.loads(stored[1])
@@ -221,20 +224,20 @@ def run(db,settings,output):
    packets.append(p)
   # Parse and validate all sources before saving any metric.
   with c:
-   for update in publication_updates:c.execute('UPDATE ctx_survey_source SET available_from=? WHERE survey=? AND year=?',update)
+   for update in publication_updates:c.execute('UPDATE ctx_survey_source SET available_from=%s WHERE survey=%s AND year=%s',update)
    for p in packets:
     archive=ROOT/'Context/data/raw'/p['fingerprint'];archive.mkdir(parents=True,exist_ok=True)
     source=Path(p['metadata']['path']);target=archive/source.name
     if target.exists() and sha(target)!=p['fingerprint']:raise ValueError('Archive checksum mismatch')
     if not target.exists():shutil.copy2(source,target)
     p['metadata']['archive']=str(target.relative_to(ROOT))
-    c.execute('INSERT INTO ctx_survey_source VALUES(?,?,?,?,?,?)',(p['source_id'],p['survey'],p['year'],p['fingerprint'],p['available_from'],dumps(p['metadata'])))
-    c.executemany('INSERT INTO ctx_survey_metric VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',p['rows'])
-    c.executemany('INSERT INTO ctx_evidence_guide VALUES(?,?,?,?,?)',p['guides'])
+    c.execute('INSERT INTO ctx_survey_source VALUES(%s,%s,%s,%s,%s,%s)',(p['source_id'],p['survey'],p['year'],p['fingerprint'],p['available_from'],dumps(p['metadata'])))
+    c.executemany('INSERT INTO ctx_survey_metric VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',p['rows'])
+    c.executemany('INSERT INTO ctx_evidence_guide VALUES(%s,%s,%s,%s,%s)',p['guides'])
   refresh_views(c)
  return {**export(db,output),'inserted_sources':len(packets),'unchanged_sources':unchanged,'publication_dates_filled':len(publication_updates)}
 
 if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('--config',default=str(ROOT/'config/db1_config.json'));p.add_argument('--db');p.add_argument('--output');p.add_argument('--export-only',action='store_true');a=p.parse_args()
- settings=load_settings(a.config);db=Path(a.db) if a.db else ROOT/settings['database'];output=Path(a.output) if a.output else ROOT/settings.get('exports','outputs/integrated')
+ settings=load_settings(a.config);db=database.workspace(a.db or settings['database']);output=Path(a.output) if a.output else ROOT/settings.get('exports','outputs/integrated')
  print(dumps(export(db,output) if a.export_only else run(db,settings,output)))

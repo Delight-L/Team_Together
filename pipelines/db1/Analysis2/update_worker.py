@@ -1,3 +1,7 @@
+from pathlib import Path as _DatabasePath
+import sys as _database_sys
+_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+from pipelines.db1 import database
 import sys as _settings_sys
 from pathlib import Path as _SettingsPath
 _settings_sys.path.insert(0, str(_SettingsPath(__file__).resolve().parents[1]))
@@ -61,7 +65,7 @@ def process(settings,db,month):
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--config',required=True);p.add_argument('--db');p.add_argument('--month');p.add_argument('--initialize',action='store_true');p.add_argument('--scan',action='store_true');a=p.parse_args()
-    settings=load_settings(a.config);db=Path(a.db) if a.db else ROOT/settings['database']
+    settings=load_settings(a.config);db=database.workspace(a.db or settings['database'])
     if a.initialize:
         initialize(settings,db);store.export_csv(db,ROOT/settings['exports']);return
     if a.scan:

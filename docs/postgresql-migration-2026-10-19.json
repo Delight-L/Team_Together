@@ -1,0 +1,697 @@
+{
+  "workspaces": [
+    {
+      "schema": "db1_pipeline",
+      "source_sha256": "f6457b8d3115731069f0e88ab831804662b0521567a9088e328e2a616d8e0a89",
+      "tables": {
+        "a1_region_baseline": {
+          "rows": 22,
+          "content_sha256": "72614b487181698f65a6f203f00181daadb85f9d96ce2145188fbc0a3d229ba1"
+        },
+        "a1_region_feature": {
+          "rows": 286,
+          "content_sha256": "585312b5ecb4915b2bd0c4ce4de0bc456768cd59709c0b33bffc7c9458cc0595"
+        },
+        "a1_change_detection": {
+          "rows": 0,
+          "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "a1_change_feature": {
+          "rows": 0,
+          "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "db1_run": {
+          "rows": 7,
+          "content_sha256": "1acf95fa40bb69183285407d39035d74ec719432aa5eef7bd1672cbf4d5e986c"
+        },
+        "a1_input": {
+          "rows": 22,
+          "content_sha256": "3d8412bcb864724a786d3139c576cc2652f1de699b2b265cbadd9f0311b86767"
+        },
+        "a1_context": {
+          "rows": 22,
+          "content_sha256": "86d5b907d6e688750df2bb520dc8fe8894ae68716a7f38c8ed64cf2e119afa09"
+        },
+        "a2_feature": {
+          "rows": 1056,
+          "content_sha256": "84ec21b7bc1ff016299b285f15bdfd942db3626e6504827a09995ac3bb865e5c"
+        },
+        "a2_detection": {
+          "rows": 132,
+          "content_sha256": "0fef5c4b8e13f9623639e4ba57ea49e7369326f7f2b222bfbf8c546263eca9a9"
+        },
+        "a2_evidence": {
+          "rows": 1,
+          "content_sha256": "247ce355ea8c8e62a4392c552aef780b396583bb97add68b7db2da2316e71119"
+        },
+        "a3_run": {
+          "rows": 22,
+          "content_sha256": "709b6711e0c9dd2bc4b67a459736217e046376ee26965671eaba9e6a0949e262"
+        },
+        "a3_policy": {
+          "rows": 1,
+          "content_sha256": "27556acb57196d8d1d8b8ba10626379c0242b8b689013c960e24500520fc5404"
+        },
+        "a3a_industry": {
+          "rows": 15164,
+          "content_sha256": "2d04773a5bc27445153570f500dda5362a0935d44855d364d8268b8bb6119055"
+        },
+        "a3b_industry": {
+          "rows": 4502,
+          "content_sha256": "3f3edde7732821fbba3c98b84bc9f0871b3f62c2df33a3db63bfb9867395f35a"
+        },
+        "a3a_feature": {
+          "rows": 10560,
+          "content_sha256": "f6178a20da1bb5b4c1ee4c253bbbe936ffa11aa5b61564b1aea891687badab42"
+        },
+        "a3a_comparison": {
+          "rows": 1320,
+          "content_sha256": "7042586ceba8528f784b20bc81f7f11683be7fe689429959355df354592141e2"
+        },
+        "a3b_feature": {
+          "rows": 180,
+          "content_sha256": "7bdf6975e4e9d7744aa0d6c6eb0239c0ec8e146e3c70b9058ce187df685fa8f4"
+        },
+        "a3b_total": {
+          "rows": 36,
+          "content_sha256": "bbb795763edbfc1c2b83c6955b10d1228e2825f59fb764b83b5742ac70161a76"
+        },
+        "a3a_quarter_summary": {
+          "rows": 352,
+          "content_sha256": "96b98fc1d29f1838b9daefb3fda5e8bb69ca58343fd02850bc6cade6c13524a7"
+        },
+        "a3b_month_summary": {
+          "rows": 6,
+          "content_sha256": "62aa38af0a9e0861956a66ea29326d79b512d91de4735f7a3063ef9b93155836"
+        },
+        "a3_dimension": {
+          "rows": 30,
+          "content_sha256": "5f9698498b3f95aede9c6f7d50e4b50b9e6b665e406a1e61a07e287f793ba880"
+        },
+        "a2_age_feature": {
+          "rows": 17952,
+          "content_sha256": "2c471521d2a409534408a96b5a8b0ceae8d111f07328552fa0d4e5e5da2432d4"
+        },
+        "a2_age_source": {
+          "rows": 48,
+          "content_sha256": "5371c29c5a363825176265fe6210474d02cb8709ff97b78e7681c54600bfe5d1"
+        },
+        "a2_age_raw": {
+          "rows": 50688,
+          "content_sha256": "09f8151073b2117fd26f11ad580c35b6184188fb7d7bd446d597bd273a0c945b"
+        },
+        "a2_age_model": {
+          "rows": 1,
+          "content_sha256": "c957e5cad0637ba7aefc848691479c7d76022abe6d1a4994ba74e429d6d9e394"
+        },
+        "a2_age_detection": {
+          "rows": 660,
+          "content_sha256": "95445c9e12c2a743be128bff30b2a4bb0d40dd73ec97dab781de9f41366d0562"
+        },
+        "a2_age_common_change": {
+          "rows": 30,
+          "content_sha256": "6eccdd8a0d756abf9ec2dfa8adbf45d4c304caa51594a011581a8d8df5531b0c"
+        },
+        "a23_age_detail": {
+          "rows": 3300,
+          "content_sha256": "691c191fbce19d0751f1f375c57f42950d80c96e5a829dc3e1e64068fdbce073"
+        },
+        "a23_age_monthly": {
+          "rows": 660,
+          "content_sha256": "3a6aac37de38b7fe11c8ecb633b4c6df26023e119ffb49549efaa33c041dac34"
+        },
+        "a23_age_quarter": {
+          "rows": 220,
+          "content_sha256": "19da1db146d16b489b6a68dbc3fed0cba40386830d0298af1ccf2597bca4f29c"
+        },
+        "a23_age_available_context": {
+          "rows": 3300,
+          "content_sha256": "48786b6538bbfbfcf670cbab98be7f95a7c085618498c66a2a387cab98e167d1"
+        },
+        "a1_elder_source": {
+          "rows": 1,
+          "content_sha256": "41703334392f8cfa867d3bc4a6855b372f4b3759d7e128ed08293c6cd50f25f8"
+        },
+        "a1_elder_year": {
+          "rows": 4,
+          "content_sha256": "a90332862e798aa393dc47556a545814c9e4ae0963d7e6db1d6fa70acf017d60"
+        },
+        "a1_elder_observation": {
+          "rows": 1056,
+          "content_sha256": "e5ef21e8849ff0e848fd5e28964cdeacbda50ecbf7bb0d9ce9fd4598bb28269c"
+        },
+        "a1_elder_annual": {
+          "rows": 88,
+          "content_sha256": "ff303ebd461d213ca8873a2fd88576afcd8a0693ab23585d562dfdd6a5f4c124"
+        },
+        "ctx_survey_source": {
+          "rows": 6,
+          "content_sha256": "807399ead1009a23a10ebdcfbf909681502bb35790d26de9b84a16f14382a0ad"
+        },
+        "ctx_survey_metric": {
+          "rows": 572,
+          "content_sha256": "7554b607b9ed8e6b2ec8aad07f7cd20826638bd671b2a89c01913abc515f983b"
+        },
+        "ctx_evidence_guide": {
+          "rows": 6,
+          "content_sha256": "fd84eaa491d72253989f429412a3c1848128cb504852296d2dec445315f25981"
+        },
+        "a2_activity_model": {
+          "rows": 2,
+          "content_sha256": "747e17e8edf9e6113c86fb383978ea05cff70424739b1b61671c3efd1c6d1a6c"
+        },
+        "a2_activity_level": {
+          "rows": 1320,
+          "content_sha256": "2d581056d8550b248fc0f7851f663f790c6a66492c70c8764caf16256d0ec749"
+        },
+        "a2_activity_followup": {
+          "rows": 58,
+          "content_sha256": "f8ad01b10d2c2b21f7c441512601d2ae635e7edc1953f4ee46f3f137eebe438f"
+        },
+        "a2_observation_window": {
+          "rows": 48,
+          "content_sha256": "849871b367b54e4ee6276484fd2d5ce6498cd16aeffc2038620ed0d71fc197f5"
+        },
+        "ctx_sns_index": {
+          "rows": 5280,
+          "content_sha256": "cff6b3eedf79320d83b5ad91f7c6c38bc11402e6fef6d9639a99531c64a0888f"
+        },
+        "a23_observation_context": {
+          "rows": 660,
+          "content_sha256": "289eed918bf8e9916c626d940b5541b7ba1a8c5f9826a5624bc8170f2ffb80cd"
+        },
+        "ctx_consumption_anchor": {
+          "rows": 22,
+          "content_sha256": "a781e2d2e5eac575001a2021309e0d1d16d9178c8fbe3b4edd172e0c9318b729"
+        },
+        "ctx_enrichment_state": {
+          "rows": 1,
+          "content_sha256": "fa8171278b72d160bf17369808bd90621c6740fe32a16ab58865905f1371b7cc"
+        },
+        "a23_context_revision": {
+          "rows": 0,
+          "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "ctx_youth_source": {
+          "rows": 2,
+          "content_sha256": "b43a415cf387cd6f9ad410bcdb4b9d06b66fe44174b13c6227a06e5cbe2719a3"
+        },
+        "ctx_youth_metric": {
+          "rows": 476,
+          "content_sha256": "a758bf95c33160973ff77ba8de4757ab92471a86faa5b92dc0c9a4bb43111f90"
+        },
+        "ctx_weather_month": {
+          "rows": 48,
+          "content_sha256": "0e997cc6b78c5d3226274021cdc3335364d3f7c90c597c737cf97bdcff6780b2"
+        },
+        "ctx_weather_file": {
+          "rows": 2,
+          "content_sha256": "20b515e87ac12e99fd54d059e062376b5f3c0ad06cc4faae264fb1196bde9423"
+        },
+        "ctx_weather_month_source": {
+          "rows": 96,
+          "content_sha256": "39969e17892f56e13bec85cb2362a840b305e5720fcea1fd3836acb84cc4d5b1"
+        },
+        "ctx_weather_window": {
+          "rows": 48,
+          "content_sha256": "a8f4c5e76a571f9de29534dbc6e33cacbffc02fac75d14033459493986da4c29"
+        },
+        "ctx_weather_revision": {
+          "rows": 0,
+          "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "ctx_publication_registry": {
+          "rows": 2,
+          "content_sha256": "d835ca5003522857ddfca86d65ca206203749b64877488b01e3ba9b9c6638a84"
+        },
+        "ctx_weather_tracking_reference": {
+          "rows": 1,
+          "content_sha256": "88d8f3df9604292ad45dbe71ad76d98a4f6502cb7dca631047bf4820685f801f"
+        },
+        "ctx_weather_month_tracking": {
+          "rows": 6,
+          "content_sha256": "1fef2b86008db732a4c873d59b09d418bb8ed2fb828de226ec59198256e54777"
+        },
+        "ctx_weather_window_tracking": {
+          "rows": 6,
+          "content_sha256": "81e98768abb3f933bdb207c247aaf54d96a88878e250ea6db9230b2e760a3498"
+        },
+        "ctx_weather_tracking_revision": {
+          "rows": 0,
+          "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "a2_activity_active_model": {
+          "rows": 1,
+          "content_sha256": "a2e43383e06148dcb6129186aa352ebf4711d650ed91bdb9a66ecc908d4f7686"
+        },
+        "a1_elder_population": {
+          "rows": 22,
+          "content_sha256": "646358fc8b7d35761614cc337d3af5b826928823fe638a7efbd32443f8065892"
+        }
+      },
+      "view_count": 27,
+      "row_count": 120414
+    },
+    {
+      "schema": "db1_regional_archive",
+      "source_sha256": "196462ce577849e8ffd09afa2d45b649fac3fea6125f6327f9ec061da4e00a43",
+      "tables": {
+        "a1_region_baseline": {
+          "rows": 22,
+          "content_sha256": "8df8ba299b3242e0128ae71fb38405cca49134b958913f1db84e7d11c942ba05"
+        },
+        "a1_region_feature": {
+          "rows": 286,
+          "content_sha256": "ddbd3472b894e9aff928a78863e9d2291548b40ddbce83f029ededce4440d7ab"
+        },
+        "a1_change_detection": {
+          "rows": 0,
+          "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "a1_change_feature": {
+          "rows": 0,
+          "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "db1_run": {
+          "rows": 7,
+          "content_sha256": "8e41cedf58b65e3b40fcc1951af9ec7e9f7da4e6699ea4928911e04c977e7e34"
+        },
+        "a1_input": {
+          "rows": 22,
+          "content_sha256": "93800b94c1cac562cdf4590b37a87f353d2ac0467a18aa9b059098308e62422c"
+        },
+        "a1_context": {
+          "rows": 22,
+          "content_sha256": "e1e1c1ac6be2caef2d84fe1bddd674e25f6511c18678318d07ac4a2793bdd1e9"
+        },
+        "a2_feature": {
+          "rows": 1056,
+          "content_sha256": "84ec21b7bc1ff016299b285f15bdfd942db3626e6504827a09995ac3bb865e5c"
+        },
+        "a2_detection": {
+          "rows": 132,
+          "content_sha256": "0fef5c4b8e13f9623639e4ba57ea49e7369326f7f2b222bfbf8c546263eca9a9"
+        },
+        "a2_evidence": {
+          "rows": 1,
+          "content_sha256": "52b792c5e610dac1b31092feb88cc24ba6913814abbec6abd7e5fd753dad3df2"
+        },
+        "a2_age_feature": {
+          "rows": 17952,
+          "content_sha256": "b820d7e97376c44a2e32c4f7778b8cf5d6e4c36c4d203705a952b6d4c4a79fbb"
+        },
+        "a2_age_source": {
+          "rows": 48,
+          "content_sha256": "247bcd5a6ddf4fbc7f4124cd08a737248b1587ba8e152236b6bbb8038d8e1470"
+        },
+        "a2_age_raw": {
+          "rows": 6336,
+          "content_sha256": "76241ba29075614bce69327605f33f37baab47cc3e1957a0ac2bfcb933fdf2d2"
+        },
+        "a2_age_model": {
+          "rows": 1,
+          "content_sha256": "369837c57ce83fbeadf84003cf669923bac8a286823a65028883252937e60173"
+        },
+        "a2_age_detection": {
+          "rows": 660,
+          "content_sha256": "9bd207ca6d83e0850141c5022654ece71db4815bb4fec6100e041c07d41d34a3"
+        },
+        "a2_age_common_change": {
+          "rows": 30,
+          "content_sha256": "7f75ce63a9bd4d106967c66a1ec588a2dd31c2812525d30c4391f225e06fe7c2"
+        },
+        "a2_activity_model": {
+          "rows": 1,
+          "content_sha256": "696f16906dbf9520c8c2d3f8f8e6635a1bb8de4e32c5eaef82f3456fe2306f16"
+        },
+        "a2_activity_level": {
+          "rows": 660,
+          "content_sha256": "6da5384fe451d426e14d9f07a9edaebac4c34c9e8646f5e9170a4760c20fe114"
+        },
+        "a2_activity_followup": {
+          "rows": 29,
+          "content_sha256": "caeebe664a7a46f4f52ece035f8364ab15adc6d74d255d974117e3caf730bd97"
+        },
+        "a2_observation_window": {
+          "rows": 6,
+          "content_sha256": "8bba0f21313bd8634e22d3a186b68710177ed17bd9620006e8b87f174fb5c94a"
+        },
+        "ctx_sns_index": {
+          "rows": 660,
+          "content_sha256": "178601e8f8be119b44adbe98e103caaccac80d4f34bfd153473ea0a8dd645af4"
+        },
+        "a23_observation_context": {
+          "rows": 660,
+          "content_sha256": "25e62643a95a162c7024cab1c5712be98c107c8b42d4f9eacb65a5c91976f1df"
+        },
+        "pipeline_state": {
+          "rows": 1,
+          "content_sha256": "896cfc0e1b9e224036280ca8a88ae4767b0af0b2e749b7369194b227959a42b8"
+        },
+        "month_run": {
+          "rows": 6,
+          "content_sha256": "b2e81fef12e49a36fe4ec5581cbb299514b77a3e3b9ae8770a1a42a7fb8ecbbc"
+        },
+        "a2_month_input": {
+          "rows": 132,
+          "content_sha256": "f86ccb7e16dbcd1065d0ba09805f24da623efbd08319e7214b0964a8f547ce6c"
+        },
+        "a2_age_month_input": {
+          "rows": 2244,
+          "content_sha256": "138d008c5c76c27efe44464b5988caf22a9591da4f00371bdd61dd06eb0d9dc4"
+        },
+        "input_import": {
+          "rows": 14,
+          "content_sha256": "07ac14943e57c2767edd0637a8dfa87b5ebdd8fe4656ac14c2843026d9f32936"
+        },
+        "ctx_weather": {
+          "rows": 6,
+          "content_sha256": "8de82266541ff6ab45b666a5ac1b00e4bc49839b15b97284edf02f1bd611706a"
+        },
+        "ctx_elder_annual": {
+          "rows": 88,
+          "content_sha256": "c74d7e7950f8c96bffda3fa4e71fbee6395772f3eb823c0f8ab6be3611061652"
+        },
+        "ctx_survey_annual": {
+          "rows": 572,
+          "content_sha256": "dd953fb3571d01238ecb607704b99a1213c4dc9fe1116b989ef721421010fe99"
+        },
+        "ctx_youth_reference": {
+          "rows": 476,
+          "content_sha256": "65cad42d07ab3facb21e1caf63bbc64d68ee66b12f228da9a3de8160f7e66266"
+        },
+        "ctx_evidence_guide": {
+          "rows": 6,
+          "content_sha256": "922e7d64b78c5b9878577b7352d5438315a963c800c9d9523d10f67cb3306f58"
+        },
+        "a3_run": {
+          "rows": 22,
+          "content_sha256": "d865f1ab20c6d272301f88df0892113fedd48818b5c7cb276fcb547eff01972d"
+        },
+        "a3_policy": {
+          "rows": 0,
+          "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "a3_dimension": {
+          "rows": 30,
+          "content_sha256": "5f9698498b3f95aede9c6f7d50e4b50b9e6b665e406a1e61a07e287f793ba880"
+        },
+        "a3a_industry": {
+          "rows": 0,
+          "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "a3b_industry": {
+          "rows": 0,
+          "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "a3a_feature": {
+          "rows": 10560,
+          "content_sha256": "5f1e80844a708b89740f0d6bb98844d1c34d263e9b45c473eb941240a8983ccc"
+        },
+        "a3a_comparison": {
+          "rows": 1320,
+          "content_sha256": "f7444f528249a6ad832e34d152f5b0950e7e74407a29a0d44989abe7dd7e2504"
+        },
+        "a3b_feature": {
+          "rows": 180,
+          "content_sha256": "f386b1876364d37b05168ee3f2b4eb90bfe6b3de2988b3bcf1e9f84563e9f018"
+        },
+        "a3b_total": {
+          "rows": 36,
+          "content_sha256": "c1240ab3ced8b39e3a845587407eaf3f5de3620737ab9a456d3860214c5bed7e"
+        },
+        "a3a_quarter_summary": {
+          "rows": 352,
+          "content_sha256": "8c77d8950c878813d8f6c4269bd8a9db9ea347d0489ab837fadc2f3254e562bf"
+        },
+        "a3b_month_summary": {
+          "rows": 6,
+          "content_sha256": "62aa38af0a9e0861956a66ea29326d79b512d91de4735f7a3063ef9b93155836"
+        },
+        "ctx_consumption_anchor": {
+          "rows": 22,
+          "content_sha256": "a781e2d2e5eac575001a2021309e0d1d16d9178c8fbe3b4edd172e0c9318b729"
+        },
+        "ctx_enrichment_state": {
+          "rows": 1,
+          "content_sha256": "fa8171278b72d160bf17369808bd90621c6740fe32a16ab58865905f1371b7cc"
+        },
+        "a23_context_revision": {
+          "rows": 0,
+          "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "view_count": 11,
+      "row_count": 44665
+    }
+  ],
+  "service_schemas_modified": false,
+  "view_verification": {
+    "views": [
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a123_age_elder_available_context",
+        "rows": 3300,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a123_age_elder_context",
+        "rows": 660,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a123_age_evidence_context",
+        "rows": 660,
+        "equal": true,
+        "comparison": "JSON structure and numeric values, relative tolerance 1e-14, absolute tolerance 1e-15"
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a123_age_source_context",
+        "rows": 660,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a123_age_survey_available_context",
+        "rows": 660,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a123_age_survey_context",
+        "rows": 660,
+        "equal": true,
+        "comparison": "JSON structure and numeric values, relative tolerance 1e-14, absolute tolerance 1e-15"
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a123_available_context",
+        "rows": 132,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a123_detail",
+        "rows": 3960,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a123_monthly",
+        "rows": 132,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a1_elder_annual",
+        "rows": 88,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a1_elder_context",
+        "rows": 22,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a23_age_available_context",
+        "rows": 3300,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a23_age_detail",
+        "rows": 3300,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a23_age_monthly",
+        "rows": 660,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a23_age_quarter",
+        "rows": 220,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a2_activity_followup",
+        "rows": 29,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a2_activity_followup_all_versions",
+        "rows": 58,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a2_activity_followup_latest",
+        "rows": 10,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a2_activity_level",
+        "rows": 660,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a2_age_detection",
+        "rows": 660,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a2_quarter",
+        "rows": 44,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_a2_weather_tracking_context",
+        "rows": 660,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_db1_integrated",
+        "rows": 132,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_survey_age_trend",
+        "rows": 572,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_survey_annual",
+        "rows": 572,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_weather_month_tracking",
+        "rows": 6,
+        "equal": true
+      },
+      {
+        "schema": "db1_pipeline",
+        "view": "v_youth_detail",
+        "rows": 476,
+        "equal": true
+      },
+      {
+        "schema": "db1_regional_archive",
+        "view": "v_a123_age_source_context",
+        "rows": 660,
+        "equal": true
+      },
+      {
+        "schema": "db1_regional_archive",
+        "view": "v_a123_available_context",
+        "rows": 132,
+        "equal": true
+      },
+      {
+        "schema": "db1_regional_archive",
+        "view": "v_a123_detail",
+        "rows": 3960,
+        "equal": true
+      },
+      {
+        "schema": "db1_regional_archive",
+        "view": "v_a123_monthly",
+        "rows": 132,
+        "equal": true
+      },
+      {
+        "schema": "db1_regional_archive",
+        "view": "v_a2_activity_followup",
+        "rows": 29,
+        "equal": true
+      },
+      {
+        "schema": "db1_regional_archive",
+        "view": "v_a2_activity_followup_latest",
+        "rows": 10,
+        "equal": true
+      },
+      {
+        "schema": "db1_regional_archive",
+        "view": "v_a2_age_detection",
+        "rows": 660,
+        "equal": true
+      },
+      {
+        "schema": "db1_regional_archive",
+        "view": "v_a2_quarter",
+        "rows": 44,
+        "equal": true
+      },
+      {
+        "schema": "db1_regional_archive",
+        "view": "v_db1_integrated",
+        "rows": 132,
+        "equal": true
+      },
+      {
+        "schema": "db1_regional_archive",
+        "view": "v_v15_age_context",
+        "rows": 660,
+        "equal": true
+      },
+      {
+        "schema": "db1_regional_archive",
+        "view": "v_v15_monthly_context",
+        "rows": 132,
+        "equal": true
+      }
+    ],
+    "serializer_precision_differences": 31548,
+    "maximum_absolute_difference": 4.547473508864641e-13
+  },
+  "source_archive_records": 82,
+  "retired_local_files": 32,
+  "verified_on": "2026-10-19",
+  "original_files_removed": true,
+  "removed_original_bytes": 478932992,
+  "source_audit": {
+    "text_files_checked": 547,
+    "retired_engine_references": 0,
+    "syntax_errors": 0,
+    "missing_frontend_imports": 0,
+    "exact_text_duplicates": 0
+  }
+}
