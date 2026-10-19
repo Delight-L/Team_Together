@@ -118,6 +118,7 @@ async def hybrid_search(query, lexical, **filters):
             corpus = [r for r in corpus if any(t in r["name"] + " " + r["description"] for t in resources.HOUSING_TERMS)]
         if "자립준비청년" in resources.compact(query):
             corpus = [r for r in corpus if "자립준비청년" in resources.compact(document_text(r))]
+        corpus = resources.filter_target_records(query, corpus)
         index = read_index()
         valid = [r for r in corpus if index.get(r["id"], (None,))[0] == content_hash(r)]
         partial = len(valid) < len(corpus)

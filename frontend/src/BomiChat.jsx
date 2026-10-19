@@ -227,7 +227,7 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
           {m.followUps.map(q => <button type="button" key={q} disabled={chat.busy} onClick={() => submit(q)}>{q}</button>)}
         </div>}
         {m.sources?.length > 0 && <details className="bomi-sources"><summary>참고한 복지 자료 · {m.sources.length}건</summary>
-          {m.sources.map(r => <div key={r.id}><strong>{r.name}</strong><p>{r.source}{r.pages ? ` · p. ${r.pages}` : ''}
+          {m.sources.map((r, index) => <div key={r.id}><strong>{index + 1}. {r.name}</strong><p>{r.source}{r.pages ? ` · p. ${r.pages}` : ''}
             {!r.pages && /^https?:\/\//i.test(r.url || '') && <> · <a href={r.url} target="_blank" rel="noopener noreferrer">원문 보기</a></>}</p><small>{r.status}</small></div>)}
         </details>}
         {onAction && m.actions?.map(a => <button key={a.label} className="bomi-action" onClick={() => onAction(a)}>{a.label} →</button>)}

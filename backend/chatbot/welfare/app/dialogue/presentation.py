@@ -1,6 +1,39 @@
 """답변용 근거 표현. 검색·서명 원본은 유지하고 AI에는 읽기 쉬운 자료만 전달합니다."""
 import re
 
+
+def requested_fields(question):
+    """명시적으로 물은 항목만 고릅니다. 사업 추천은 기본 요약을 사용합니다."""
+    fields = []
+    for words, key, label in (
+        (('대상', '자격', '조건'), 'target', '자료상 대상'),
+        (('신청', '절차', '서류'), 'procedure', '자료상 신청 절차'),
+        (('기관', '문의', '연락처'), 'agency', '담당 기관'),
+        (('기간', '언제', '운영', '모집', '접수'), 'period', '기간 안내'),
+    ):
+        if any(word in question for word in words):
+            fields.append((key, label))
+    return fields
+
+
+def brief_description(text):
+    """첫 문장이 대상·담당 안내여도 원문에 있는 지원 활동을 먼저 발췌합니다."""
+    text = re.sub(r'\s+', ' ', str(text)).strip()
+    sentences = re.split(r'(?<=[.!?。])\s+', text)
+    activity = re.compile(r'제공|지원|방문|동행|상담|교육|돌봄|안부|응급|정서|복약|활동|지급|급식|배달|대여|감면|연계|보조|기능')
+    # 대상·담당 기관을 소개하는 문장보다 실제 지원 내용이 있는 문장을 우선합니다.
+    candidates = [s for s in sentences if activity.search(s) and not (
+        re.search(r'대상\s*조건|담당\s*기관|과\s*담당', s)
+        and not re.search(r'제공|방문|동행|상담|교육|지급|응급|복약|기능', s))]
+    first = candidates[0] if candidates else sentences[0]
+    return first if len(first) <= 160 else first[:160].rstrip() + '…'
+
+
+def record_cautions(record):
+    return [label for key, label in (('expired', '종료된 사업'),
+            ('reference_only', '다른 지역 참고 사례'), ('application_closed', '접수 종료'),
+            ('application_future', '접수 시작 전')) if record.get(key)]
+
 FIELDS = {
     'name': '사업명', 'description': '지원 내용', 'target': '자료상 대상', 'agency': '담당 기관',
     'source': '출처', 'pages': '문서 페이지', 'url': '원문 주소', 'application_url': '자료상 신청 주소',
@@ -19,6 +52,8 @@ def answer_material(context, records):
     readable = []
     for number, record in enumerate(records, 1):
         item = {'자료 번호': number, **{label: record[key] for key, label in FIELDS.items() if record.get(key)}}
+        if record.get('support_role') == 'living':
+            item['안내 구분'] = '함께 확인할 생활비 지원 · 직접 돌봄 사업은 아님'
         item['자료 유형'] = {'document': '정책 문서·검토 자료', 'api': '공공 API 안내',
             'service': '등록 복지서비스', 'session': '사업 회차 공고'}.get(record.get('source_type'), '복지 자료')
         item['확인 상태'] = {

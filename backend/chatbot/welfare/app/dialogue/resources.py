@@ -8,7 +8,7 @@ import threading
 import time
 
 from backend.common import seoul_now
-from backend.chatbot.welfare.app.dialogue.query_rules import compact, excludes_past, named_program
+from backend.chatbot.welfare.app.dialogue.query_rules import compact, excludes_past, named_program, filter_target_records, select_recommendations
 
 from backend.db.welfare_chatbot_repository import (
     catalog_counts, database_id, load_dataset_rows, search_catalog,
@@ -239,6 +239,7 @@ def search(query, limit=5, *, city="", district="", include_reference=False, inc
     if requested_document:
         # 명시한 사업이 지역·기간 조건에서 제외됐다면 다른 사업으로 대체하지 않습니다.
         return []
+    resources = filter_target_records(query, resources)
     # 지원 분야는 실제 사업명·지원 내용으로 확인합니다. '청년/자립' 관련성만으로
     # 경제 지원을 주거 지원으로 추천하지 않습니다.
     if any(term in query for term in HOUSING_TERMS):
@@ -263,36 +264,44 @@ def search(query, limit=5, *, city="", district="", include_reference=False, inc
         if score:
             ranked.append((score, resource))
     ranked.sort(key=lambda item: item[0], reverse=True)
-    return [resource for score, resource in ranked[:limit]]
+    return select_recommendations([resource for score, resource in ranked], limit)
 
 
-def local_answer(records):
-    """AI 없이 검색 결과만으로 만드는 안내문입니다."""
+def local_answer(records, question=""):
+    """AI 없이도 요청한 항목만 안내하고 출처는 sources 이벤트로 제공합니다."""
+    from backend.chatbot.welfare.app.dialogue.presentation import (
+        brief_description, record_cautions, requested_fields)
     if not records:
-        return ("팀 자료에서 질문에 맞는 사업을 찾지 못했어요. 거주 지역과 필요한 지원(식사, 병원 동행, 주거, 관계 모임 등)을 "
-                "알려주시면 다시 찾아볼게요. 선택 지역·등록 기간에 맞는 자료가 없거나 아직 수집되지 않았을 수 있습니다. "
-                "주민등록번호나 정확한 주소는 보내지 마세요.")
-    blocks = ["저장된 자료에서 관련 복지사업을 찾았어요. 자료 유형과 기간을 함께 확인해 주세요. 현재 모집, 이용 자격, 지원금은 담당 기관에 확인해야 합니다."]
+        return "관련 복지사업 자료를 찾지 못했어요. 거주 지역과 필요한 지원을 알려 주세요."
+    fields = requested_fields(question)
+    detailed = any(word in question for word in ('자세히', '상세', '전체 내용'))
+    if detailed:
+        fields = [('description', '지원 내용'), ('target', '자료상 대상'),
+                  ('procedure', '자료상 신청 절차'), ('agency', '담당 기관'), ('period', '기간 안내')]
+    blocks = []
+    grouped = not fields and any(r.get('support_role') == 'living' for r in records)
+    heading = None
     for number, record in enumerate(records, 1):
-        details = [f'{number}. {record["name"]}', f'지원 내용: {record["description"]}',
-                   f'자료상 대상: {record["target"]}', f'기관: {record["agency"]}']
-        if record.get("procedure"):
-            details.append(f'자료상 확인·신청 절차: {record["procedure"]}')
-        if record.get("plan_period"):
-            details.append(f'자료상 계획기간: {record["plan_period"]} (현재 모집기간이 아님)')
-        if record.get("source_type") != "document":
-            details.append(f'자료상 지역: {record["region"]}')
-            if record.get("period"):
-                details.append(f'원문 기간 안내: {record["period"]}')
-            if record.get("effective_start") or record.get("effective_end"):
-                end = "종료일 미정(원문 확인 필요)" if record.get("effective_end", "").startswith("9999") else record.get("effective_end") or "미기재"
-                details.append(f'등록된 적용기간: {record.get("effective_start") or "미기재"} ~ {end} (현재 접수 여부 별도 확인)')
-            if record.get("application_start") or record.get("application_end"):
-                details.append(f'공고상 접수기간: {record.get("application_start") or "미기재"} ~ {record.get("application_end") or "미기재"}')
-        details.extend([f'확인 상태: {record["status"]}', f'출처: {source_citation(record)}'])
-        blocks.append("\n".join(details))
-    blocks.append("다음 단계: 거주 지역 담당 주민센터 또는 자료에 나온 기관에 현재 운영 여부, 대상 조건, 신청 방법과 필요 서류를 확인해 주세요. "
-                  "어떤 지역에서 어떤 지원을 찾고 계신가요?")
+        if grouped:
+            section = '함께 확인할 생활비 지원' if record.get('support_role') == 'living' else '돌봄 관련 지원'
+            if section != heading:
+                blocks.append(section)
+                heading = section
+        caution = record_cautions(record)
+        title = f'{number}. {record["name"]}' + (f' · {" / ".join(caution)}' if caution else '')
+        if fields:
+            details = [title]
+            for key, label in fields:
+                value = record.get(key)
+                if key == 'period':
+                    value = record.get('period') or record.get('plan_period')
+                    if record.get('application_start') or record.get('application_end'):
+                        value = f"공고상 접수기간: {record.get('application_start') or '미기재'} ~ {record.get('application_end') or '미기재'}"
+                details.append(f'{label}: {value or "자료에 미기재 · 담당 기관 확인 필요"}')
+            blocks.append("\n".join(details))
+        else:
+            blocks.append(f'{title}\n{brief_description(record.get("description", "지원 내용은 원문 확인 필요"))}')
+    blocks.append('현재 운영 여부·이용 자격·신청 절차는 담당 기관 확인이 필요해요. 출처는 참고 자료에서 볼 수 있어요.')
     return "\n\n".join(blocks)
 
 

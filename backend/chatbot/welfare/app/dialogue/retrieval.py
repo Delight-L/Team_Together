@@ -26,5 +26,9 @@ async def retrieve(query, *, city='', district='', use_ai=False, planning=False)
     records = resources.search(query, limit=20 if use_ai else 5, city=city, district=district, **constraints)
     mode = 'keyword'
     if use_ai:
+        supplementary = [r for r in records if r.get('support_role') == 'living']
         records, mode = await semantic.hybrid_search(query, records, city=city, **constraints)
+        # AI 재정렬에서도 확인된 보완 지원 한 건은 별도 안내 후보로 유지합니다.
+        if not planning and supplementary and not any(r.get('support_role') == 'living' for r in records):
+            records = [*records, supplementary[0]]
     return {'query': query, 'records': records, 'mode': mode}

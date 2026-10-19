@@ -22,11 +22,11 @@ from backend.bomi.events import Event
 from backend.bomi.phrases import BLOCKED_MODE, OUTPUT_BLOCKED
 from backend.bomi.regularization import Policy
 from backend.bomi.request import ChatRequest
-from backend.chatbot.welfare.app.dialogue.resources import compact, local_answer, source_footer
+from backend.chatbot.welfare.app.dialogue.resources import compact, local_answer
 from backend.chatbot.welfare.app.dialogue import retrieval
 from backend.chatbot.welfare.app.dialogue.evidence import validate_answer
 from backend.chatbot.welfare.app.dialogue.presentation import answer_material, contains_internal_metadata
-from backend.chatbot.welfare.app.dialogue.query_rules import excludes_past
+from backend.chatbot.welfare.app.dialogue.query_rules import excludes_past, named_program, filter_target_records, select_recommendations
 from backend.chatbot.welfare.app.llm.client import LLM_ERRORS, EmptyAnswer, llm
 from backend.db import region_workspace
 
@@ -74,11 +74,7 @@ def unverified_eligibility_answer(question: str, answer: str, records: list[dict
         return None
     if not any(phrase in compact(answer) for phrase in ELIGIBILITY_DECISIONS):
         return None
-    lines = ['현재 이용 자격과 접수 여부가 확인되지 않아 이 자료만으로 신청 가능·불가를 확정할 수 없습니다.']
-    for record in records:
-        lines.append(f'{record["name"]}의 자료상 대상: {record["target"]}\n확인할 기관: {record["agency"]}')
-    lines.append('거주 지역과 대상 조건, 현재 운영 여부를 담당 기관에 확인해 주세요.')
-    return '\n\n'.join(lines) + source_footer(records)
+    return local_answer(records, question)
 
 
 def review_key(record: dict) -> str | None:
@@ -166,6 +162,10 @@ class WelfareAgent(RegulatedAgent):
         action = None if blocked else review_action(records, context)
         if action:
             yield events.actions([action])
+        if records and not blocked:
+            yield events.follow_ups([question for record in records[:2] for question in
+                                    (f'{record["name"]}의 대상 조건은?',
+                                     f'{record["name"]}의 신청 방법은?')])
 
     async def _converse(self, messages: list[dict], context: dict, use_ai: bool,
                         *, state=None, prefetched=None) -> AsyncIterator[Event]:
@@ -173,7 +173,8 @@ class WelfareAgent(RegulatedAgent):
         planning = is_planning_request(question)
         state, prefetched = state or {}, prefetched or {}
         query = search_question(messages)
-        if _is_followup(question) and state.get('records') and not excludes_past(question):
+        named_snapshot = any(named_program(question, r['name']) for r in state.get('records', []))
+        if (_is_followup(question) or named_snapshot) and state.get('records') and not excludes_past(question):
             query = (state.get('anchor', '') + ' ' + question)[-3000:]
             found = {'records': state['records'], 'mode': 'conversation_snapshot'}
         elif use_ai and prefetched.get('query') == query:
@@ -182,6 +183,12 @@ class WelfareAgent(RegulatedAgent):
             found = await retrieval.retrieve(query, city=context.get('city', ''),
                 district=context.get('district', ''), use_ai=use_ai, planning=planning)
         records, mode = found['records'], found['mode']
+        if not planning:
+            records = filter_target_records(query, records)
+            named = [r for r in records if named_program(question, r['name'])]
+            count = re.search(r'(\d{1,2})\s*(?:개|건)(?:만|의|를|\s|$)', question)
+            limit = max(1, min(int(count[1]), 5)) if count else 2
+            records = named[:limit] if named else select_recommendations(records, limit)
         yield events.sources(records, 'AI 대화' if use_ai else '자료 검색 · AI 사용 안 함',
                              retrieval=mode, query=query)
         if 'partial' in mode:
@@ -189,7 +196,7 @@ class WelfareAgent(RegulatedAgent):
         if 'unavailable' in mode or 'missing' in mode:
             yield events.notice('의미 검색 또는 재정렬을 완료하지 못해 사용 가능한 검색 결과로 답합니다.')
         if not use_ai:
-            yield events.token(PLANNING_NEEDS_AI if planning else local_answer(records))
+            yield events.token(PLANNING_NEEDS_AI if planning else local_answer(records, question))
             return
         inner = self._ask_ai(messages, context, records, planning)
         try:
@@ -219,7 +226,7 @@ class WelfareAgent(RegulatedAgent):
                 yield events.replace(OUTPUT_BLOCKED, BLOCKED_MODE, '')
                 return
             if not planning and contains_internal_metadata(''.join(parts), records):
-                yield events.replace(local_answer(records), '자료 기반 · 확인 상태 안내')
+                yield events.replace(local_answer(records, messages[-1]['content']), '자료 기반 · 확인 상태 안내')
                 yield events.notice('자료의 확인 상태를 알기 쉬운 안내로 정리했어요.')
                 return
             # 기존 사업 조회: 미확인 자격을 단정한 답은 확인 안내로 바꾸고, 아니면 출처·확인 상태를 붙입니다.
@@ -231,14 +238,12 @@ class WelfareAgent(RegulatedAgent):
             else:
                 answer, hidden = (self.regulator.redact(''.join(parts), material_text, self.policy)
                                   if planning else validate_answer(''.join(parts), records))
-                if not planning:
-                    answer += source_footer(records)
                 yield events.token(answer)
                 if hidden:
                     yield events.notice('해당 사업 자료에서 확인되지 않은 ' + '·'.join(hidden)
                                         + '을 가렸어요. 기관 확인이 필요합니다.')
         except (*LLM_ERRORS, TimeoutError):
             yield events.error(AI_ERROR_NOTICE)
-            yield events.replace(PLANNING_AI_FAILED if planning else local_answer(records), '자료 검색 · AI 연결 실패')
+            yield events.replace(PLANNING_AI_FAILED if planning else local_answer(records, messages[-1]['content']), '자료 검색 · AI 연결 실패')
         finally:
             await tokens.aclose()
