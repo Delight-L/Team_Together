@@ -1,5 +1,6 @@
 import {compareDistrictAge} from './caseOrder.mjs';
 import { useDraft } from './useDraft';
+import { useTransientMessage } from './useTransientMessage';
 import { draftKey, clearDrafts, hasDrafts } from './draftStore.mjs';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api, query } from './api';
@@ -209,8 +210,8 @@ export default function App() {
     [reportSeed, setReportSeed] = useState(null),
     [serviceSeed, setServiceSeed] = useState(null),
     [serviceChatContext, setServiceChatContext] = useState(false),
-    [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useTransientMessage();
   const [chatDraft, setChatDraft] = useState(null);
   const [chatGroup, setChatGroup] = useState(null);
   const [workflowScope, setWorkflowScope] = useState('');
@@ -300,7 +301,7 @@ export default function App() {
     let active = true;
     api('/workflow?' + query(workflowContext))
       .then((d) => { if (active) { setWorkflow(d); setWorkflowScope(JSON.stringify(workflowContext)); } })
-      .catch((e) => active && setNotice(e.message));
+      .catch((e) => active && setNotice(e.message, { persistent: true }));
     return () => {
       active = false;
     };
@@ -320,7 +321,7 @@ export default function App() {
       }
       return result;
     } catch (e) {
-      if (latestWorkflowContext.current === workflowContext) setNotice(e.message);
+      if (latestWorkflowContext.current === workflowContext) setNotice(e.message, { persistent: true });
       return null;
     } finally {
       setBusy(false);
