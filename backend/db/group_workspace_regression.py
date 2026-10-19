@@ -107,6 +107,8 @@ class ProvenanceAnswerTests(unittest.TestCase):
         self.assertIn('삼성1동', answer)
         self.assertIn('공식 이상신호 탐지 0건', answer)
         self.assertIn('보조 분석', answer)
+        answer = explain_region(context, '왜 삼성1동이 확인 대상인가요?', data)['answer']
+        self.assertIn('공식 이상신호 탐지 0건', answer)
 
     def test_signal_list_question_does_not_treat_proxy_candidates_as_official(self):
         context = {'city': '강남구', 'month': '2025-12'}

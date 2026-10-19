@@ -48,7 +48,8 @@ def _is_signal_presence_question(question):
     """Detect questions asking whether the selected dong has an official signal."""
     compact = str(question).replace(' ', '')
     asks_presence = any(word in compact for word in ('이상신호가있', '이상신호가잡혔', '이상신호가탐지',
-                                                      '신호가있', '신호가잡혔', '신호가탐지'))
+                                                      '신호가있', '신호가잡혔', '신호가탐지',
+                                                      '확인대상인가', '확인대상이야', '후보인가', '후보야'))
     asks_definition = any(word in compact for word in ('기준', '방법', '뜻', '의미', '무엇'))
     return asks_presence and not asks_definition
 
