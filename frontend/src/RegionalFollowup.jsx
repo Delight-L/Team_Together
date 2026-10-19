@@ -45,7 +45,7 @@ function DomainCard({domain,event,endMonth}) {
  </section>;
 }
 
-export default function RegionalFollowup({city,month,geometry,assessment=[],selected,onSelect,summarize,age,onAgeChange,onMonthChange}) {
+export default function RegionalFollowup({city,month,geometry,assessment=[],selected,onSelect,summarize,age,onAgeChange,onMonthChange,onServiceCaseChange}) {
  const [data,setData]=useState(null),[error,setError]=useState(''),[retry,setRetry]=useState(0);
  const [selectedAge,setSelectedAge]=useState(TRACKING_AGES.includes(age)?age:'40대'),[signalMonth,setSignalMonth]=useState('');
  const initialized=useRef(''),selectionInitialized=useRef('');
@@ -56,6 +56,7 @@ export default function RegionalFollowup({city,month,geometry,assessment=[],sele
  const mapMonth=monthOptions.some(m=>m.month===signalMonth)?signalMonth:priorEvent?.signalMonth||monthOptions.filter(m=>m.count).at(-1)?.month||monthOptions.at(-1)?.month||endMonth;
  const monthlyEvents=eventsInMonth(tracking,mapMonth);
  const event=monthlyEvents.find(e=>e.district===selected&&e.age===selectedAge);
+ useEffect(()=>{onServiceCaseChange?.(tracking ? {city,district:selected,age:selectedAge,month:mapMonth} : null);},[tracking,city,selected,selectedAge,mapMonth,onServiceCaseChange]);
  useEffect(()=>{if(age!==selectedAge)onAgeChange?.(selectedAge);},[age,selectedAge,onAgeChange]);
  useEffect(()=>{if(!data||initialized.current===city)return;initialized.current=city;const latest=months.at(-1);if(latest&&latest!==month)onMonthChange?.(latest);},[data,city]);
  useEffect(()=>{

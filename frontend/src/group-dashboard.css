@@ -61,7 +61,6 @@
 .gd-brand > img { width: 62px; height: 66px; object-fit: contain; }
 .gd-brand b { display: block; font-size: 25px; font-weight: 800; letter-spacing: -1px; color: #111d3a; }
 .gd-brand small { display: block; margin-top: 3px; font-size: 13px; letter-spacing: 2px; color: #4e6ca1; }
-.group-shell .sidebar > .logo-toggle { padding: 0 4px; margin-bottom: 20px; min-height: 66px; }
 .gd-ask { margin: 10px 0; padding: 14px; background: linear-gradient(110deg, #edf8ff, #f7fbff); }
 .gd-ask > svg { background: #0865ff; color: white; border-radius: 50%; padding: 6px; width: 36px; height: 36px; flex-shrink: 0; }
 .gd-ask strong { font-size: 16px; line-height: 1.4; color: #0c1837; }

@@ -21,10 +21,6 @@
 .group-shell .gd-tabs-window { flex: 1; min-width: 0; height: 50px; overflow: hidden; }
 .group-shell .gd-tabs-window::-webkit-scrollbar { display: none; }
 .group-shell .gd-tabs-track { position: relative; display: flex; align-items: stretch; width: max-content; height: 50px; }
-.group-shell .gd-tab-controls { display: flex; align-items: center; gap: 3px; flex-shrink: 0; margin-left: auto; padding-bottom: 4px; }
-.group-shell .gd-tab-controls .gd-tab-arrow { display: grid; place-items: center; width: 28px; height: 32px; padding: 0; border: 1px solid #dec8a8; border-radius: 7px; background: #fffaf2; color: #2563eb; }
-.group-shell .gd-tab-controls .gd-tab-arrow:disabled { opacity: .35; cursor: default; }
-.group-shell .gd-tab-arrow.previous svg { transform: rotate(180deg); }
 .group-shell .gd-tabbar .gd-tab { position: relative; flex-shrink: 0; margin: 3px 0 0; height: 47px; border: 0; border-radius: 0; transform: none; background: url('./assets/dossier-tab-inactive.svg') center bottom / 100% 100% no-repeat; box-shadow: none; padding: 0 18px; }
 .group-shell .gd-tabbar .gd-tab > button { transform: none; }
 .group-shell .gd-tabbar .gd-tab > button:first-child { height: 44px; padding: 8px 6px; color: #2a2b2d; }
@@ -230,7 +226,6 @@
 .group-shell .gd-summary .gd-context-cards { display:block; flex:1; min-height:0; overflow:auto; }
 .group-shell .gd-summary .gd-context-cards > article { min-height:100%; }
 .gd-observation-window { display:block; color:#64748b; font-size:11px; font-weight:500; margin-top:5px; white-space:nowrap; }
-.group-shell .gd-case-counter { font-size:12px; font-weight:700; color:#52617a; white-space:nowrap; padding:0 3px; }
 .group-shell .gd-detection-summary { border:1px solid #ffe0e5; background:linear-gradient(120deg,#fff4f5,#fffafb); border-radius:10px; padding:10px 12px; margin:8px 0 11px; }
 
 

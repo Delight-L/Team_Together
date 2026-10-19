@@ -95,3 +95,6 @@
 .app-shell .bomi-chat .bomi-welcome-art { width:100%;aspect-ratio:1116 / 720;flex-shrink:0;background-size:100% auto;background-position:center 54%;background-repeat:no-repeat;border-radius:18px; }
 .app-shell .bomi-chat .bomi-welcome-character p { margin:0;text-align:center;font-size:clamp(14px,4.2cqw,17px);line-height:1.7;color:var(--text-sub); }
 @media(max-height:740px) { .app-shell .bomi-chat .bomi-welcome { padding:16px 14px;gap:10px; } .app-shell .bomi-chat .bomi-welcome-character { gap:12px; } }
+
+/* Keep the scope and mode chips aligned across views in narrow chat panels. */
+@container (max-width:380px) { .bomi-chips { flex-direction:column;align-items:flex-start; } }

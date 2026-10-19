@@ -227,7 +227,7 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
     <div className={`bomi-messages ${!chat.messages.length ? 'is-empty' : ''}`} aria-live="polite">
       {!chat.messages.length && <div className="bomi-welcome">
         <h3>{group || context.age ? '선택한 사례를 함께 살펴볼까요?' : '무엇을 도와드릴까요?'}</h3>
-        <p>분석 근거부터 관련 복지사업과 보고서 초안까지 물어보세요.</p><div className="bomi-welcome-character"><div className="bomi-welcome-art" role="img" aria-label="돋보기와 태블릿을 든 복지탐정 보미" style={{backgroundImage:`url(${welcomeArtwork})`}}/><p>궁금한 내용을 물어보시면<br/>보미가 함께 찾아드릴게요.</p></div>
+        <p>분석 근거부터 관련 복지사업과<br/>보고서 초안까지 물어보세요.</p><div className="bomi-welcome-character"><div className="bomi-welcome-art" role="img" aria-label="돋보기와 태블릿을 든 복지탐정 보미" style={{backgroundImage:`url(${welcomeArtwork})`}}/><p>궁금한 내용을 물어보시면<br/>보미가 함께 찾아드릴게요.</p></div>
       </div>}
       {chat.messages.map((m, i) => {
         const before = m.role === 'user' && chat.messages.slice(0, i).findLast(p => p.role === 'user');

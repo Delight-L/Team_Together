@@ -1,3 +1,4 @@
+import DetectionCaseSelector from './DetectionCaseSelector';
 import DetectionEvidence, { SignalBadges, signalState, signalExplanation } from './DetectionEvidence';
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -76,10 +77,10 @@ function DetectionSummary({detection, group}) {
   </section>;
 }
 
-function DetectionHeading({group, detection, onEvidence}) {
+function DetectionHeading({group, detection, onEvidence, caseOptions, onCaseChange}) {
   const p=detection?.payload || {};
   const domains=[['communication','전화·문자 연락','chat'],['mobility','평일·휴일 이동','chart']].filter(([key])=>detection?.[key+'_signal']);
-  return <header className="gd-case-heading gd-unified-heading"><div className="gd-case-title"><h2>{groupLabel(group)}</h2>{domains.map(([key,label,icon])=><span key={key} className={`gd-domain-chip signal-${signalState(p[key+'_absolute_signal'],p[key+'_local_signal'])}`}><Icon name={icon} size={20}/>{label} 감소 탐지</span>)}<button className="text-button gd-heading-evidence" onClick={onEvidence}>탐지 근거 보기 →</button></div><div className="gd-path-explanation">{domains.map(([key])=><span className="gd-domain-explanation" key={key}>{domains.length>1&&<b>{key==='communication'?'통신':'이동'}</b>}<SignalBadges absolute={p[key+'_absolute_signal']} local={p[key+'_local_signal']}/></span>)}{domains.length===1&&<p>{signalExplanation(p[domains[0][0]+'_absolute_signal'], p[domains[0][0]+'_local_signal'], group.city)}</p>}</div></header>;
+  return <header className="gd-case-heading gd-unified-heading"><div className="gd-case-title"><h2>{groupLabel(group)}</h2>{domains.map(([key,label,icon])=><span key={key} className={`gd-domain-chip signal-${signalState(p[key+'_absolute_signal'],p[key+'_local_signal'])}`}><Icon name={icon} size={20}/>{label} 감소 탐지</span>)}<div className="gd-case-actions">{caseOptions && <DetectionCaseSelector items={caseOptions} selected={group} onSelect={onCaseChange}/>}<button className="text-button gd-heading-evidence" onClick={onEvidence}>탐지 근거 보기 →</button></div></div><div className="gd-path-explanation">{domains.map(([key])=><span className="gd-domain-explanation" key={key}>{domains.length>1&&<b>{key==='communication'?'통신':'이동'}</b>}<SignalBadges absolute={p[key+'_absolute_signal']} local={p[key+'_local_signal']}/></span>)}{domains.length===1&&<p>{signalExplanation(p[domains[0][0]+'_absolute_signal'], p[domains[0][0]+'_local_signal'], group.city)}</p>}</div></header>;
 }
 
 // 조사 파일 카드가 글자 겹침 없이 들어가는 최소 폭입니다. 높이는 실제 카드 내용과 여백으로 잽니다.
@@ -139,7 +140,7 @@ function Directory({ catalog, loading, error, retry, city, month, onOpen, state,
   </div>;
 }
 
-function GroupCase({ group, shown, evidenceShown, summaryStep, user, onEvidence, analysis, onSummary }) {
+function GroupCase({ group, shown, evidenceShown, summaryStep, user, onEvidence, analysis, onSummary, caseOptions, onCaseChange }) {
   const [summaryPage, setSummaryPage] = useState(0);
   useEffect(() => { setSummaryPage(0); }, [summaryStep]);
   const [data, setData] = useState(null), [error, setError] = useState(''), [retry, setRetry] = useState(0);
@@ -175,7 +176,7 @@ function GroupCase({ group, shown, evidenceShown, summaryStep, user, onEvidence,
   }
   return <><section hidden={!shown && !evidenceShown} className={`gd-case ${evidenceShown ? 'gd-evidence-panel' : ''}`} role="tabpanel" id={'panel-' + groupKey(group)} aria-label={groupLabel(group)}>
     {error ? <div role="alert" className="gd-error">{error}<button onClick={() => { setError(''); setRetry(r => r + 1); }}>다시 연결</button></div> : !row ? <p role="status">집단별 근거를 읽고 있습니다…</p> : <>
-      <div hidden={evidenceShown} className="gd-summary" data-summary-page={summaryPage}><div className="gd-overview gd-unified-overview"><DetectionHeading group={group} detection={detection} onEvidence={() => setSummaryPage(3)}/>
+      <div hidden={evidenceShown} className="gd-summary" data-summary-page={summaryPage}><div className="gd-overview gd-unified-overview"><DetectionHeading group={group} detection={detection} onEvidence={() => setSummaryPage(3)} caseOptions={shown ? caseOptions : undefined} onCaseChange={onCaseChange}/>
       {detection && <DetectionSummary detection={detection} group={group}/>}
       <section className="gd-unified-flow" aria-label="유동량 참고"><div className="gd-heading-with-note"><h3 className="gd-flow-reference-label">{group.district} {group.age} 유동량 변화</h3><small className="gd-period-note">직전 기준월 대비</small></div>
       <h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `${fmt(Math.abs(row.change_pct), 2)}% ${row.change_pct > 0 ? '증가' : row.change_pct < 0 ? '감소' : '변화 없음'}` : '비교 자료 부족'}</h3>
@@ -188,7 +189,7 @@ function GroupCase({ group, shown, evidenceShown, summaryStep, user, onEvidence,
   </section></>;
 }
 
-export default function GroupDashboard({ city, month: preferredMonth, user, analysis, onActiveGroup, onMonthChange }) {
+export default function GroupDashboard({ city, month: preferredMonth, user, analysis, onActiveGroup, onMonthChange, focusCase }) {
   const [catalog, setCatalog] = useState(null), [loading, setLoading] = useState(true), [error, setError] = useState(''), [retry, setRetry] = useState(0);
   // v2: 후보 우선 규칙(처음 방문 시 1순위 후보 동의 그룹)이 생기기 전에 저장된 탭 기록은 한 번 새로 시작합니다.
   const [stored, setStored, , workspaceStorageFailed] = useDraft(draftKey(user, { city }, 'group-workspace-v2'), emptyTabs);
@@ -197,16 +198,12 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
   const analysisVersion = cases[0]?.model_version || '';
   const migrate = Boolean(analysisVersion && state.analysisVersion !== analysisVersion);
   const signalMonths = [...new Set(cases.filter(r => r.any_signal).map(r => r.month))].sort();
-  const month = migrate ? signalMonths.at(-1) || preferredMonth : state.month || preferredMonth;
+  const [appliedFocus,setAppliedFocus]=useState(null);
+  const focusPending=focusCase?.city===city && focusCase.requestId !== appliedFocus;
+  const month = focusPending ? focusCase.month : migrate ? signalMonths.at(-1) || preferredMonth : state.month || preferredMonth;
   useEffect(() => { if (month) onMonthChange?.(month); }, [month, onMonthChange]);
   const setState = update => setStored(old => update(restoreWorkspace(old, city)));
   const searchRef = useRef(null), tabRefs = useRef({});
-  const scrollTabs = direction => {
-    const current=state.tabs.findIndex(g => groupKey(g) === state.active);
-    const next=Math.max(0,Math.min(state.tabs.length-1,current+direction));
-    if (state.tabs[next]) setState(old => ({...old,active:groupKey(old.tabs[next])}));
-    if (workspaceTab === 'files') setShowFiles(false);
-  };
   // 종합 현황에서 고른 기준월로 동별 판정을 다시 계산해, 후보 동의 그룹을 먼저 보여 줍니다.
   const statusByDistrict = useMemo(() => {
     if (!analysis) return {};
@@ -219,6 +216,15 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
   // 탐지 현황과 조사 파일은 고정 탭입니다. 그룹 탭을 열거나 고르면 브리핑으로 전환됩니다.
   const [workspaceTab, setWorkspaceTab] = useState('group');
   const [summaryStep, setSummaryStep] = useState(1);
+  useEffect(() => {
+    if (!focusCase || focusCase.city !== city) return;
+    setState(old => {
+      const next={...old,month:focusCase.month,initialized:true,analysisVersion};
+      return focusCase.code && focusCase.age && focusCase.district ? openGroup(next,focusCase) : next;
+    });
+    setAppliedFocus(focusCase.requestId);
+    setWorkspaceTab('group');setSummaryStep(1);
+  }, [focusCase?.requestId]);
   const setShowFiles = value => { setWorkspaceTab(value ? 'files' : 'group'); if (!value) setSummaryStep(1); };
   useEffect(() => {
     let live = true; setLoading(true); setError(''); setCatalog(null);
@@ -241,7 +247,7 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
   }, [city, month, retry, analysisVersion]);
   const open = group => { setState(s => openGroup({ ...s, initialized: true }, group)); setShowFiles(false); };
   const openFiles = (focus = false) => { setShowFiles(true); if (focus) setTimeout(() => searchRef.current?.focus(), 0); };
-  const active = state.tabs.find(g => groupKey(g) === state.active);
+  const active = state.tabs.find(g => groupKey(g) === state.active && g.month === month);
   const evidenceShown = workspaceTab === 'support';
   const filesShown = workspaceTab === 'files' || (!active && !evidenceShown);
   const activeKey = active ? groupKey(active) : '';
@@ -266,10 +272,10 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
     {active && active.month !== month && <p className="gd-scope-note">조사 파일 기준월은 {month}, 현재 열린 브리핑은 <b>{active.month} · {groupLabel(active)}</b>입니다.</p>}
     <div className="gd-workspace"><ol className="gd-process" aria-label="브리핑 읽는 순서">{[['연락·이동 변화 확인', '탐지된 변화와 감소 폭을 살펴봅니다.'], ['가구·관계망 함께 보기', '가구 구성과 사회적 연결을 함께 봅니다.'], ['필요한 지원 검토', '확인한 필요에 맞는 지원을 검토합니다.']].map(([title, text], i) => <li key={title}><div className="gd-step-guide"><b>{i + 1}</b><span className="gd-step-icon"><Icon name={['discover', 'neighborhood', 'support'][i]} size={26}/></span><div><strong>{title}</strong><span>{text}</span></div></div></li>)}</ol><div className="gd-tabbar"><div className="gd-tabs-window"><div className="gd-tabs-track" role="tablist" aria-label="사례 검토 파일">
         {[['overview','탐지 현황','clipboard'],['support','지원 검토','services'],['files','조사 파일','report']].map(([id,label,icon],index)=>{const selected=id==='overview'?!filesShown&&!evidenceShown:id==='support'?evidenceShown:filesShown;return <div key={id} className={`gd-tab ${selected?'active':''}`}><button role="tab" id={'tab-'+id} aria-selected={selected} aria-controls={id==='files'?'panel-files':active?'panel-'+groupKey(active):'panel-evidence-empty'} tabIndex={selected?0:-1} ref={el=>{tabRefs.current[id]=el;}} onKeyDown={e=>changeTab(e,index)} onClick={()=>{setWorkspaceTab(['group','support','files'][index]);setSummaryStep(index===1?3:1);}}><Icon name={icon} size={22}/><span><b>{label}</b></span></button></div>;})}
-      </div></div><div className="gd-tab-controls">{state.tabs.length>0 && <span className="gd-case-counter" aria-label="현재 탐지 사례 순서">{state.tabs.findIndex(g=>groupKey(g)===state.active)+1} / {state.tabs.length}</span>}<button className="gd-tab-arrow previous" aria-label="이전 탐지 사례" disabled={state.tabs.findIndex(g=>groupKey(g)===state.active)<=0} onClick={()=>scrollTabs(-1)}><Icon name="arrow" size={18}/></button><button className="gd-tab-arrow" aria-label="다음 탐지 사례" disabled={!state.tabs.length || state.tabs.findIndex(g=>groupKey(g)===state.active)>=state.tabs.length-1} onClick={()=>scrollTabs(1)}><Icon name="arrow" size={18}/></button></div></div>
+      </div></div></div>
       <section className="gd-case gd-files-panel" role="tabpanel" id="panel-files" aria-labelledby="tab-files" hidden={!filesShown}><Directory catalog={catalog} city={city} month={month} loading={loading} error={error} retry={() => setRetry(n => n + 1)} onOpen={open} state={state} searchRef={searchRef} statusOf={statusOf} detectionMode={cases.length > 0} /></section>
-      {state.tabs.map(g => <GroupCase key={groupKey(g)} group={g} shown={!filesShown && !evidenceShown && groupKey(g) === state.active} evidenceShown={evidenceShown && groupKey(g) === state.active} onEvidence={openEvidence} summaryStep={summaryStep} user={user} analysis={analysis} onSummary={() => {setWorkspaceTab('group'); setSummaryStep(1);}} />)}
-<section id="panel-evidence-empty" role="tabpanel" aria-labelledby="tab-support" className="gd-case" hidden={filesShown || !!active}><h2>검토할 사례를 선택하세요</h2><p>선택한 월의 탐지 사례가 없습니다. 조사 파일에서 기준월과 사례를 확인하세요.</p><button className="primary" onClick={() => openFiles()}>조사 파일에서 그룹 선택</button></section>
+      {state.tabs.map(g => <GroupCase key={groupKey(g)} group={g} shown={!filesShown && !evidenceShown && groupKey(g) === state.active} evidenceShown={evidenceShown && groupKey(g) === state.active} onEvidence={openEvidence} caseOptions={state.tabs.filter(item => item.month === month)} onCaseChange={open} summaryStep={summaryStep} user={user} analysis={analysis} onSummary={() => {setWorkspaceTab('group'); setSummaryStep(1);}} />)}
+<section id="panel-evidence-empty" role="tabpanel" aria-labelledby="tab-support" className="gd-case" hidden={filesShown || !!active}><DetectionCaseSelector items={[]} selected={null} loading={loading} onSelect={open}/><h2>검토할 사례를 선택하세요</h2><p>선택한 월의 탐지 사례가 없습니다. 조사 파일에서 기준월과 사례를 확인하세요.</p><button className="primary" onClick={() => openFiles()}>조사 파일에서 그룹 선택</button></section>
     </div>
   </div>;
 }

@@ -1,0 +1,36 @@
+.service-review-workspace .service-candidate { color:#173052; }
+.service-candidate .candidate-heading { display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px; }
+.service-card .candidate-heading h3 { margin:0;font-size:22px;line-height:1.4;letter-spacing:-.5px; }
+.service-candidate .candidate-status { padding:5px 10px;border-radius:20px;background:#edf5ff;color:#245ca5;font-size:13px;font-weight:700; }
+.service-candidate .candidate-status.conditional { background:#f0f3f8;color:#526783; }
+.service-card .candidate-introduction { margin:0 0 16px;color:#526783;font-size:16px;line-height:1.65;overflow-wrap:anywhere; }
+.service-candidate .candidate-facts { display:grid;grid-template-columns:1fr 1fr;border:1px solid #e0eafa;border-radius:10px;margin:0 0 14px;padding:14px 16px;gap:20px; }
+.service-candidate .candidate-facts > div + div { border-left:1px solid #e0eafa;padding-left:20px; }
+.service-candidate dt { font-weight:700;font-size:15px;margin-bottom:5px; }
+.service-candidate dd { margin:0;font-size:15px;line-height:1.6;overflow-wrap:anywhere; }
+.service-candidate .candidate-connection { display:flex;align-items:baseline;gap:16px;background:#eef5ff;border-radius:9px;padding:12px 15px; }
+.service-candidate .candidate-connection b { color:#2563eb;white-space:nowrap;font-size:15px; }
+.service-card .candidate-connection p { margin:0;font-size:15px;line-height:1.65; }
+.service-candidate .candidate-actions { display:flex;align-items:baseline;gap:20px;flex-wrap:wrap;margin-top:14px; }
+.service-candidate .candidate-actions > a { font-size:14px;color:#2563eb;white-space:nowrap;text-decoration:none; }
+.service-card .candidate-actions > button { margin:0 0 0 auto;font-size:14px;font-weight:700;min-height:40px; }
+.service-candidate .candidate-details { display:contents; }
+.service-candidate .candidate-details > summary { cursor:pointer;color:#526783;font-size:14px;padding:8px 0; }
+.service-candidate .candidate-detail-content { order:4;flex-basis:100%;min-width:0;border-top:1px solid #e0eafa;padding-top:16px; }
+.service-candidate .candidate-details:not([open]) > .candidate-detail-content { display:none; }
+.service-candidate .candidate-detail-content dl > div { margin:14px 0; }
+.service-candidate .candidate-detail-content h4 { font-size:16px;margin:20px 0 10px; }
+.service-card .candidate-detail-content p { font-size:14px;line-height:1.7; }
+.service-candidate .candidate-qualification { color:#657b99; }
+.service-candidate .candidate-reason { margin:14px 0; }
+.service-candidate .candidate-reason blockquote { margin:8px 0;padding:10px 14px;background:#f8fbff;border-left:3px solid #d4e3f8;font-size:14px;line-height:1.7; }
+@media(max-width:900px) { .service-candidate .candidate-facts {grid-template-columns:1fr;gap:14px}.service-candidate .candidate-facts > div + div {border-left:0;padding:12px 0 0;border-top:1px solid #e0eafa}.service-candidate .candidate-connection {align-items:flex-start;gap:10px}.service-candidate .candidate-actions{gap:12px} }
+.service-candidate .candidate-sector { font-size:13px;color:#456a9a;background:#f0f6ff;border-radius:6px;padding:4px 8px; }
+.service-candidate .candidate-benefit-notes { margin:10px 0 0;padding-left:20px;color:#657b99;font-size:13px;line-height:1.6; }
+.service-review-workspace .service-browse-heading { margin-top:20px;padding-top:18px;border-top:1px solid #e0eafa; }
+.service-browse-heading > div:first-child { display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px; }
+.service-review-workspace .service-browse-heading h2 { margin:0;font-size:20px;color:#173052; }
+.service-browse-heading small { font-size:13px;color:#657b99; }
+.service-sector-filter { display:flex;gap:8px;flex-wrap:wrap; }
+.service-sector-filter button { border:1px solid #dce8f9;background:#f6f9ff;color:#526783;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600; }
+.service-sector-filter button.active { background:#2563eb;border-color:#2563eb;color:white; }

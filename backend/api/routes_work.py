@@ -9,7 +9,7 @@ import json
 import logging
 from datetime import date, datetime
 
-from backend.agents import report_writer, service_matching
+from backend.agents import report_writer, service_matching, service_eligibility
 from backend.db import experience_store, mission_store
 from backend.services import report
 from backend.api import limits, sessions
@@ -97,7 +97,7 @@ def services(request):
     current = load_workflow(context)
     evidence = current.get('analysis_evidence') or evidence
     try:
-        matches = service_matching.match_services(context['city'], evidence)
+        matches = service_eligibility.browse_services(context)
         references = service_matching.reference_matches(context['city'], evidence)
     except Exception:
         logging.exception('DB2 service lookup failed')
@@ -328,8 +328,8 @@ def workflow_review(request):
     with sessions.write_lock:
         current = load_workflow(context)
         chosen = None
-        # 사업 조회(GET /api/services)와 같은 근거로 사업을 찾아야 매칭 근거가 일치합니다.
-        for match in service_matching.match_services(context['city'], current.get('analysis_evidence') or evidence):
+        # 사업 조회와 저장에 같은 지역·연령 조건을 적용합니다.
+        for match in service_eligibility.browse_services(context):
             if match['key'] == request.params.get('serviceKey'):
                 chosen = match
                 break

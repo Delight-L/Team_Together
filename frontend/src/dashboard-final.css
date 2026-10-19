@@ -28,7 +28,6 @@
 .app-shell.group-shell .gd-tabbar .gd-tab { width:clamp(145px,12vw,205px);height:55px;padding:0 15px;display:flex; }
 .app-shell.group-shell .gd-tabbar .gd-tab > button:first-child { height:52px;gap:10px; }
 .app-shell.group-shell .gd-tabbar .gd-tab b,.app-shell.group-shell .gd-tabbar .gd-tab.active b { font-size:clamp(14px,1vw,18px); }
-.app-shell.group-shell .gd-case-counter { font-size:15px;padding:0 10px; }
 .app-shell.group-shell .gd-case { padding:12px 12px 8px; }
 .app-shell.group-shell .gd-summary {overflow:hidden; }
 .app-shell.group-shell .gd-summary .gd-unified-overview { display:grid; }
@@ -91,17 +90,11 @@
 .app-shell.group-shell .gd-files-panel .gd-file-list button strong { font-size:17px; }
 .app-shell.group-shell .gd-files-panel .gd-file-list button small { font-size:13px; }
 .app-shell.group-shell .gd-files-panel .gd-file-list button { padding:16px; }
-.app-shell.group-shell .bomi-suggestions button { font-size:13px;padding:8px 12px; }
-.app-shell.group-shell .bomi-input textarea { font-size:14px;padding:14px;min-height:80px; }
-.app-shell.group-shell .bomi-chat-head { gap:7px; }
-.app-shell.group-shell .bomi-chat-head strong { white-space:nowrap;font-size:15px; }
-.app-shell.group-shell .bomi-chat-head img { width:38px; }
 .app-shell.group-shell .gd-case:not(.gd-files-panel) { display:flex;flex-direction:column; }
 .app-shell.group-shell .gd-case[hidden] { display:none; }
 .app-shell.group-shell .gd-summary { height:auto;flex:1;min-height:0; }
 .app-shell.group-shell .gd-inline-background article > h4 { margin:0; }
 .app-shell.group-shell .gd-summary-metric { min-height:0; }
-.app-shell.group-shell .bomi-messages { padding:0; }
 
 
 .app-shell.group-shell .gd-summary { padding-top:8px;padding-bottom:4px; }
@@ -547,6 +540,15 @@
  .app-shell.group-shell .gd-signal-card > .ev-single { height:auto;grid-template-rows:auto auto auto auto auto; }
  .app-shell.group-shell .ev-single .ev-chart-space { min-height:100px; }
  .app-shell.group-shell .ev-interpretation { flex-wrap:wrap; }
+}
+
+/* Case selection shares the evidence action row inside the overview card. */
+.app-shell.group-shell .gd-case-title { padding-right:460px; }
+.app-shell.group-shell .gd-case-title .gd-case-actions { position:absolute;right:0;top:calc(50% - 6px);transform:translateY(-50%);display:flex;align-items:center;gap:10px; }
+.app-shell.group-shell .gd-case-title .gd-case-actions .gd-heading-evidence { position:static;transform:none;margin:0; }
+@media(max-width:1200px) {
+ .app-shell.group-shell .gd-case-title { padding-right:0; }
+ .app-shell.group-shell .gd-case-title .gd-case-actions { position:static;transform:none;flex-basis:100%;justify-content:flex-end;flex-wrap:wrap; }
 }
 
 /* 보미 패널 너비 조절: 사용자가 정한 폭이 있으면 모든 화면에서 세 번째 열로 씁니다(서랍 모드 제외). */
