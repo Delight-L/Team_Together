@@ -64,7 +64,7 @@ SURVEY_METRIC_TERMS = (
     '외로움', '가족 외 관계', '복합 참고값', '동반자 부족', '혼자 남겨짐', '사람들 사이에서 고립',
 )
 REGION_TYPE_EXPLANATION = (
-    '“고활동·청년유동·1인가구 중심형”은 **머신러닝 군집화 결과**로 붙인 지역유형 이름입니다. '
+    '“고활동·청년유동·1인가구 중심형”은 머신러닝 군집화 결과로 붙인 지역유형 이름입니다. '
     '2025년 하반기 강남구 22개 동의 유동 활동·인구·가구 구성·구조적 복지 배경을 13개 지표로 요약하고, '
     'PCA로 비교 기준을 정리한 뒤 K-means(k=3)로 특성이 비슷한 동을 세 묶음으로 나눴습니다. '
     '이 동은 그중 청년층 유동 활동과 1인 가구 비중이 다른 묶음보다 상대적으로 두드러진 군집에 속해 이 이름을 받았습니다. '
@@ -87,7 +87,7 @@ def region_type_explanation(context, data):
     if not cluster:
         return REGION_TYPE_EXPLANATION
     return (
-        f'“{cluster}”은 **머신러닝 군집화 결과**로 붙인 지역유형 이름입니다. '
+        f'“{cluster}”은 머신러닝 군집화 결과로 붙인 지역유형 이름입니다. '
         '2025년 하반기 강남구 22개 동의 유동 활동·인구·가구 구성·구조적 복지 배경을 13개 지표로 요약하고, '
         'PCA로 비교 기준을 정리한 뒤 K-means(k=3)로 특성이 비슷한 동을 세 묶음으로 나눴습니다. '
         f'{district or "선택한 동"}은 이 군집에 속해 대시보드에 “{cluster}”로 표시됩니다. '
@@ -102,9 +102,9 @@ def _is_survey_metrics_question(question):
 
 TAB_EXPLANATION = (
     '이 탭은 탐지월 전후의 지역 변화 흐름을 확인하는 화면입니다.\n\n'
-    '• **자체 과거 비교**: 해당 동의 과거 변화 범위와 현재 변화를 비교합니다.\n'
-    '• **공통 변화 제거 후 비교**: 강남구 전체에서 함께 움직인 공통 흐름을 먼저 제외한 뒤, 해당 동의 변화가 평소와 얼마나 다른지 비교합니다.\n'
-    '• **두 비교 모두**: 위 두 방식에서 모두 확인된 경우입니다. 실제 증감률 자체가 아니라, 각 비교 기준에서 추가 확인이 필요한 수준인지 보여주는 표시입니다.\n\n'
+    '• 자체 과거 비교: 해당 동의 과거 변화 범위와 현재 변화를 비교합니다.\n'
+    '• 공통 변화 제거 후 비교: 강남구 전체에서 함께 움직인 공통 흐름을 먼저 제외한 뒤, 해당 동의 변화가 평소와 얼마나 다른지 비교합니다.\n'
+    '• 두 비교 모두: 위 두 방식에서 모두 확인된 경우입니다. 실제 증감률 자체가 아니라, 각 비교 기준에서 추가 확인이 필요한 수준인지 보여주는 표시입니다.\n\n'
     '통신 지표 흐름은 통화·문자 상대 수, 이동 지표 흐름은 평일·휴일 이동 횟수의 기준화된 흐름입니다. '
     '탐지월은 결과가 표시된 기준월이고, 그래프의 직전 구간은 비교에 사용한 관측기간입니다. '
     '이 표시는 개인의 고립이나 변화 원인을 확정하는 진단이 아닙니다.'
@@ -119,11 +119,11 @@ def _is_tab_question(question):
 SURVEY_OTHER_METRICS_EXPLANATION = (
     '현재 화면에는 사회적 연결과 직접 관련된 세 지표만 먼저 보여드려요. '
     'DB1에 같은 서울서베이 원자료로 정리된 추가 지표는 다음과 같습니다.\n\n'
-    '• **도움 관계**: 중요한·어려운 일에 조언을 구할 사람 없음, 금전적으로 도움받을 사람 없음, '
+    '• 도움 관계: 중요한·어려운 일에 조언을 구할 사람 없음, 금전적으로 도움받을 사람 없음, '
     '질병·금전·정서 세 상황 모두 도움받을 사람이 없음\n'
-    '• **외로움**: 가족 관계에서 외로움을 느낀 비율과 평균 점수, 가족 외 관계에서 외로움을 느낀 평균 점수\n'
-    '• **복합 참고값**: 세 상황 모두 도움받을 사람이 없는 동시에 가족 외 관계에서 외로움을 느낀 비율\n'
-    '• **2025년 별도 문항**: 동반자가 부족함, 혼자 남겨짐, 사람들 사이에서 고립됨을 느낀 비율과 평균 점수\n\n'
+    '• 외로움: 가족 관계에서 외로움을 느낀 비율과 평균 점수, 가족 외 관계에서 외로움을 느낀 평균 점수\n'
+    '• 복합 참고값: 세 상황 모두 도움받을 사람이 없는 동시에 가족 외 관계에서 외로움을 느낀 비율\n'
+    '• 2025년 별도 문항: 동반자가 부족함, 혼자 남겨짐, 사람들 사이에서 고립됨을 느낀 비율과 평균 점수\n\n'
     '이 값들은 강남구·연령대별 연간 설문 통계이며 동별 수치나 개인별 고립 판정은 아닙니다. '
     '특히 2025년 별도 문항은 이전 연도와 문항이 같지 않아 장기 변화로 비교하지 않습니다. '
     '원하시는 항목을 말씀해 주시면 현재 선택한 연령대의 강남구 값과 서울 전체 비교값을 정리해 드릴게요.'
@@ -206,7 +206,7 @@ def survey_metrics_answer(context, question):
         for key in visible_keys:
             pair = snapshot['metrics'].get(key)
             if pair:
-                visible.append(f"• **{SURVEY_METRIC_LABELS[key]}**: 강남구 {_survey_value(pair['gangnam'])} · 서울 전체 {_survey_value(pair['seoul'])}")
+                visible.append(f"• {SURVEY_METRIC_LABELS[key]}: 강남구 {_survey_value(pair['gangnam'])} · 서울 전체 {_survey_value(pair['seoul'])}")
         current = ('\n\n현재 화면의 선택 연령 카드 값은 다음과 같습니다.\n' + '\n'.join(visible)) if visible else ''
         return SURVEY_SOURCE_EXPLANATION + SURVEY_OTHER_METRICS_EXPLANATION + current
     if any(key.startswith('no_support') for key in keys):
@@ -217,12 +217,12 @@ def survey_metrics_answer(context, question):
         category = '2025년 별도 외로움 설문 데이터'
     else:
         category = '외로움 설문 데이터'
-    lines = [f"네. 아래 값들은 서울서베이의 **{category}**입니다.\n\n" + SURVEY_SOURCE_EXPLANATION + f"{snapshot['year']}년 {snapshot['age']} 기준으로, 아래는 강남구 값과 같은 연령의 서울 전체 비교값입니다."]
+    lines = [f"네. 아래 값들은 서울서베이의 {category}입니다.\n\n" + SURVEY_SOURCE_EXPLANATION + f"{snapshot['year']}년 {snapshot['age']} 기준으로, 아래는 강남구 값과 같은 연령의 서울 전체 비교값입니다."]
     for key in keys:
         pair = snapshot['metrics'].get(key)
         if not pair:
             continue
-        lines.append(f"• **{SURVEY_METRIC_LABELS[key]}**: 강남구 {_survey_value(pair['gangnam'])} · 서울 전체 {_survey_value(pair['seoul'])}")
+        lines.append(f"• {SURVEY_METRIC_LABELS[key]}: 강남구 {_survey_value(pair['gangnam'])} · 서울 전체 {_survey_value(pair['seoul'])}")
     if len(lines) == 1:
         return (SURVEY_SOURCE_EXPLANATION + '선택한 항목은 현재 DB1 서울서베이 추출 자료에 없습니다. '
                 '확인된 항목만 안내하며, 다른 조사나 추정값으로 대신하지 않습니다.')
