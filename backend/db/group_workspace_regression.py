@@ -7,7 +7,8 @@ import unittest
 from backend.agents.regional_v16.chatbot_agent.answer_generator import _age_activity_answer, _reason_answer
 from backend.agents.regional_v16.chatbot_agent.schemas import Evidence, QueryIntent
 from backend.db.group_workspace import _is_provenance_question, _provenance_answer
-from backend.db.region_workspace import REGION_TYPE_EXPLANATION, _is_region_type_question
+from backend.db.region_workspace import (REGION_TYPE_EXPLANATION, SURVEY_OTHER_METRICS_EXPLANATION,
+                                         _is_region_type_question, _is_survey_metrics_question)
 
 
 class ProvenanceAnswerTests(unittest.TestCase):
@@ -28,6 +29,12 @@ class ProvenanceAnswerTests(unittest.TestCase):
         self.assertTrue(_is_region_type_question("고활동·청년유동·1인가구 중심형은 왜 나온 거야?"))
         self.assertIn("머신러닝 군집화 결과", REGION_TYPE_EXPLANATION)
         self.assertIn("K-means(k=3)", REGION_TYPE_EXPLANATION)
+
+    def test_survey_question_lists_only_the_available_extra_metrics(self):
+        self.assertTrue(_is_survey_metrics_question("다른 지표는 더 없어?"))
+        self.assertIn("금전적으로 도움받을 사람 없음", SURVEY_OTHER_METRICS_EXPLANATION)
+        self.assertIn("2025년 별도 문항", SURVEY_OTHER_METRICS_EXPLANATION)
+        self.assertIn("동별 수치나 개인별 고립 판정은 아닙니다", SURVEY_OTHER_METRICS_EXPLANATION)
 
     def test_overall_signal_omits_age_panel_but_explicit_age_keeps_its_scope(self):
         overall = _reason_answer(Evidence("signal", "", rows=[{"행정동": "역삼2동", "date": "2025-11", "signal_type": "communication"}]))[0]

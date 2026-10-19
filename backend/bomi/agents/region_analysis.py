@@ -54,6 +54,11 @@ class RegionAnalysisAgent(RegulatedAgent):
             return True
         if questions.is_screen_term_question(question):
             return True
+        # 연령대가 선택된 사회적 연결 카드의 추가 지표는 DB1 서울서베이
+        # 집계 목록으로 답한다. 일반 v16 신호 설명으로 보내면 현재 카드와
+        # 관계없는 탐지 요약이 될 수 있다.
+        if request.context.get('age') and region_workspace._is_survey_metrics_question(question):
+            return True
         # 원본·다운로드 출처 질문은 화면에 열린 그룹의 실제 입력 메타데이터로
         # 답해야 한다. v16의 일반 신호 설명이나 외부 AI가 이를 대신하면,
         # 현재 화면과 무관한 탐지 요약으로 흘러갈 수 있다.

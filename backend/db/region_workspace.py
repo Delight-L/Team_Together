@@ -58,6 +58,7 @@ SCORE_TERMS = ('두 값은 비교하는 기준이 다릅니다.\n'
                '후보로 표시합니다. 그래서 전월 변화율이 작아도 후보일 수 있고, 크게 줄어도 후보가 아닐 수 있습니다.')
 
 REGION_TYPE_TERMS = ('지역유형', '고활동', '청년유동', '1인가구 중심형', '2인가구', '다인가구')
+SURVEY_METRIC_TERMS = ('사회적 연결', '관계망', '서울서베이', '다른 지표', '다른 항목', '추가 지표')
 REGION_TYPE_EXPLANATION = (
     '“고활동·청년유동·1인가구 중심형”은 **머신러닝 군집화 결과**로 붙인 지역유형 이름입니다. '
     '2025년 하반기 강남구 22개 동의 유동 활동·인구·가구 구성·구조적 복지 배경을 13개 지표로 요약하고, '
@@ -70,6 +71,24 @@ REGION_TYPE_EXPLANATION = (
 
 def _is_region_type_question(question):
     return any(term in question for term in REGION_TYPE_TERMS)
+
+
+def _is_survey_metrics_question(question):
+    return any(term in question for term in SURVEY_METRIC_TERMS)
+
+
+SURVEY_OTHER_METRICS_EXPLANATION = (
+    '현재 화면에는 사회적 연결과 직접 관련된 세 지표만 먼저 보여드려요. '
+    'DB1에 같은 서울서베이 원자료로 정리된 추가 지표는 다음과 같습니다.\n\n'
+    '• **도움 관계**: 중요한·어려운 일에 조언을 구할 사람 없음, 금전적으로 도움받을 사람 없음, '
+    '질병·금전·정서 세 상황 모두 도움받을 사람이 없음\n'
+    '• **외로움**: 가족 관계에서 외로움을 느낀 비율과 평균 점수, 가족 외 관계에서 외로움을 느낀 평균 점수\n'
+    '• **복합 참고값**: 세 상황 모두 도움받을 사람이 없는 동시에 가족 외 관계에서 외로움을 느낀 비율\n'
+    '• **2025년 별도 문항**: 동반자가 부족함, 혼자 남겨짐, 사람들 사이에서 고립됨을 느낀 비율과 평균 점수\n\n'
+    '이 값들은 강남구·연령대별 연간 설문 통계이며 동별 수치나 개인별 고립 판정은 아닙니다. '
+    '특히 2025년 별도 문항은 이전 연도와 문항이 같지 않아 장기 변화로 비교하지 않습니다. '
+    '원하시는 항목을 말씀해 주시면 현재 선택한 연령대의 강남구 값과 서울 전체 비교값을 정리해 드릴게요.'
+)
 
 
 def _finite(value):
@@ -127,6 +146,8 @@ def explain_region(context, question, data):
     if any(term in question for term in ['자료 부족', '자료 없음', '이력 부족', '판단 보류', '기준 미해당']) \
             and any(word in question for word in ['뜻', '의미', '차이', '다른', '다르', '무엇', '뭐']):
         answer = STATUS_TERMS
+    elif _is_survey_metrics_question(question):
+        answer = SURVEY_OTHER_METRICS_EXPLANATION
     elif _is_region_type_question(question):
         answer = REGION_TYPE_EXPLANATION
     elif any(term in question for term in ['평소 대비', '전월 변화율']):
@@ -161,6 +182,8 @@ def ai_explain_region(context, question, data, history):
     # 군집의 학습·분류 방식은 DB1의 고정 모델 설명으로만 답한다. AI가
     # 근거에 없는 이유나 변수 비중을 보태지 않도록 생성 단계를 건너뛴다.
     if _is_region_type_question(question):
+        return grounded
+    if _is_survey_metrics_question(question):
         return grounded
     district = context.get('district')
     fields = ['행정동명', '기준연월', 'metric_label', 'change_pct', 'relative_change_pp', 'is_risk_signal', 'has_enough_history']
