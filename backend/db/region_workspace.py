@@ -174,7 +174,15 @@ def survey_metrics_answer(context, question):
                 visible.append(f"• **{SURVEY_METRIC_LABELS[key]}**: 강남구 {_survey_value(pair['gangnam'])} · 서울 전체 {_survey_value(pair['seoul'])}")
         current = ('\n\n현재 화면의 선택 연령 카드 값은 다음과 같습니다.\n' + '\n'.join(visible)) if visible else ''
         return SURVEY_SOURCE_EXPLANATION + SURVEY_OTHER_METRICS_EXPLANATION + current
-    lines = [SURVEY_SOURCE_EXPLANATION + f"{snapshot['year']}년 {snapshot['age']} 기준으로, 아래는 강남구 값과 같은 연령의 서울 전체 비교값입니다."]
+    if any(key.startswith('no_support') for key in keys):
+        category = '도움 관계 지표'
+    elif any(key == 'no_support3_and_lonely_outside' for key in keys):
+        category = '복합 참고 지표'
+    elif any(key.startswith(('loneliness_companionship', 'loneliness_left_alone', 'loneliness_among_people')) for key in keys):
+        category = '2025년 별도 외로움 문항 지표'
+    else:
+        category = '외로움 지표'
+    lines = [f"네. 아래 값들은 서울서베이의 **{category}**입니다.\n\n" + SURVEY_SOURCE_EXPLANATION + f"{snapshot['year']}년 {snapshot['age']} 기준으로, 아래는 강남구 값과 같은 연령의 서울 전체 비교값입니다."]
     for key in keys:
         pair = snapshot['metrics'].get(key)
         if not pair:
