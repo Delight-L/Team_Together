@@ -82,7 +82,8 @@ def _write_csv(path: Path, columns: list[str], rows: list[dict]) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")
     with tmp.open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=columns)
-        w.writeheader(); w.writerows(rows)
+        w.writeheader()
+        w.writerows(rows)
     tmp.replace(path)
 
 

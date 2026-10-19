@@ -14,7 +14,8 @@ class Agent(Protocol):
     """담당 에이전트. route·done·개인정보 notice는 파이프라인이 보내므로 에이전트는 답변 이벤트만 만듭니다."""
     id: str
 
-    def respond(self, request: ChatRequest) -> Iterator[Event]: ...
+    def respond(self, request: ChatRequest) -> Iterator[Event]:
+        ...
 
 
 @dataclass

@@ -67,8 +67,10 @@ def records(frame):
     rows=frame.astype(object).where(pd.notna(frame),None).to_dict(orient='records')
     for row in rows:
         for key,value in row.items():
-            if isinstance(value,pd.Timestamp): row[key]=value.isoformat()
-            elif hasattr(value,'item'): row[key]=value.item()
+            if isinstance(value,pd.Timestamp):
+                row[key]=value.isoformat()
+            elif hasattr(value,'item'):
+                row[key]=value.item()
     return rows
 
 
@@ -162,7 +164,8 @@ def commit_a2(path, current, result, evidence, context_period, metadata=None):
     with connect(path) as con:
         con.execute('SELECT pg_advisory_xact_lock(hashtext(current_schema()));')
         versions=con.execute('SELECT DISTINCT model_version FROM a1_context WHERE period=%s',(context_period,)).fetchall()
-        if len(versions)!=1: raise ValueError("Analysis1 context model version is missing or ambiguous")
+        if len(versions)!=1:
+            raise ValueError("Analysis1 context model version is missing or ambiguous")
         context_model_version=versions[0][0]
         if already_processed(con,"analysis2",period,digest):
             return False

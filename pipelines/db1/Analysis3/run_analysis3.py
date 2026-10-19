@@ -16,25 +16,40 @@ def main():
  parser.add_argument('command',choices=['scan','status','export','watch'],nargs='?',default='scan')
  parser.add_argument('--config',default=str(ROOT/'config/analysis3_config.json'))
  parser.add_argument('--db1-config',default=str(ROOT.parent/'config/db1_config.json'))
- parser.add_argument('--db');parser.add_argument('--exports');parser.add_argument('--integrated-exports');parser.add_argument('--interval',type=int,default=60)
- args=parser.parse_args();config_path=Path(args.config).resolve()
+ parser.add_argument('--db')
+ parser.add_argument('--exports')
+ parser.add_argument('--integrated-exports')
+ parser.add_argument('--interval',type=int,default=60)
+ args=parser.parse_args()
+ config_path=Path(args.config).resolve()
  config=load_settings(config_path)
  db=database.workspace(args.db or config['database'])
  outputs=Path(args.exports).resolve() if args.exports else (ROOT/config['exports']).resolve()
  integrated=Path(args.integrated_exports).resolve() if args.integrated_exports else (ROOT/config.get('integrated_exports','../outputs/integrated')).resolve()
- if args.command=='status':print(json.dumps(status(db),ensure_ascii=False,indent=2));return
- if args.command=='export':export(db,outputs,integrated,context_config=args.db1_config);return
+ if args.command=='status':
+     print(json.dumps(status(db),ensure_ascii=False,indent=2))
+     return
+ if args.command=='export':
+     export(db,outputs,integrated,context_config=args.db1_config)
+     return
  def scan():
   packets,waiting=prepare(config)
-  result=apply_packets(db,packets,config);export(db,outputs,integrated,context_config=args.db1_config,context_ingest=True)
+  result=apply_packets(db,packets,config)
+  export(db,outputs,integrated,context_config=args.db1_config,context_ingest=True)
   result['waiting']=waiting
-  logs=ROOT/'logs';logs.mkdir(exist_ok=True)
+  logs=ROOT/'logs'
+  logs.mkdir(exist_ok=True)
   (logs/'last_scan.json').write_text(json.dumps({**result,'status':status(db)},ensure_ascii=False,indent=2),encoding='utf-8')
   print(json.dumps(result,ensure_ascii=False))
   print(json.dumps(status(db),ensure_ascii=False))
  if args.command=='watch':
-  if args.interval<10:parser.error('--interval must be at least 10 seconds')
-  while True:scan();time.sleep(args.interval)
- else:scan()
+  if args.interval<10:
+      parser.error('--interval must be at least 10 seconds')
+  while True:
+      scan()
+      time.sleep(args.interval)
+ else:
+     scan()
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    main()

@@ -27,18 +27,24 @@ def public_sources(settings,options,year,quarters):
     root=Path(settings['analysis1'].get('public_root',Path(sources['resident']).parent))
     patterns={'resident':'등록인구*.csv','household':'세대원수별*.csv'}
     for name,pattern in patterns.items():
-        if options.get(name): sources[name]=options[name];continue
+        if options.get(name):
+            sources[name]=options[name]
+            continue
         matches=[]
         for path in root.rglob(pattern):
             raw=read_local(path,sep='\t' if name=='household' else None)
             try:
                 quarter_indices(raw.columns,year,quarters,22 if name=='resident' else 11,3 if name=='resident' else 2,(options.get('quarter_blocks') or {}).get(name))
                 matches.append(path)
-            except ValueError:continue
-        if not matches: raise ValueError(f'Missing/ambiguous public data: {name} {year} {quarters}')
-        if len(matches)!=1:raise ValueError(f'Multiple matching {name} exports; specify the intended path: {matches}')
+            except ValueError:
+                continue
+        if not matches:
+            raise ValueError(f'Missing/ambiguous public data: {name} {year} {quarters}')
+        if len(matches)!=1:
+            raise ValueError(f'Multiple matching {name} exports; specify the intended path: {matches}')
         sources[name]=str(matches[0])
-    if options.get('welfare'): sources['welfare']=options['welfare']
+    if options.get('welfare'):
+        sources['welfare']=options['welfare']
     return sources
 
 
@@ -81,49 +87,72 @@ def process(settings,db,period,bootstrap=False,overrides=None):
             bundle=joblib.load(model_path)
             pd.testing.assert_frame_equal(bundle['baseline_features'][['adm_cd','dong_name']].assign(adm_cd=lambda x:x.adm_cd.astype(str)).reset_index(drop=True),raw_input[['adm_cd','dong_name']].reset_index(drop=True),check_dtype=False,check_column_type=False)
             features,balance,change=detect_changes(raw_input,bundle,period)
-            if change.cluster_changed.any() or change.filter(like='delta_').abs().to_numpy().max()>1e-10: raise ValueError('Existing baseline model does not match approved reference')
-            clusters=features.copy();clusters['cluster']=change.current_cluster;clusters['cluster_type']=change.current_cluster_type
+            if change.cluster_changed.any() or change.filter(like='delta_').abs().to_numpy().max()>1e-10:
+                raise ValueError('Existing baseline model does not match approved reference')
+            clusters=features.copy()
+            clusters['cluster']=change.current_cluster
+            clusters['cluster_type']=change.current_cluster_type
         else:
             features,balance,clusters,bundle=save_baseline(raw_input,model_path.parent,results_dir=ROOT/'Analysis1/outputs/baseline')
         clusters['centroid_distance']=np.linalg.norm(balance.to_numpy()-bundle['kmeans'].cluster_centers_[clusters.cluster.to_numpy(int)],axis=1)
         change=None
     else:
-        if not model_path.exists(): raise ValueError('Initialize the approved baseline first')
+        if not model_path.exists():
+            raise ValueError('Initialize the approved baseline first')
         features,balance,change=detect_changes(raw_input,model_path,period)
-        clusters=features.copy();clusters['cluster']=change.current_cluster;clusters['cluster_type']=change.current_cluster_type
+        clusters=features.copy()
+        clusters['cluster']=change.current_cluster
+        clusters['cluster_type']=change.current_cluster_type
     metadata={'feature_domains':{f:d for d,cols in CONFIG.domains.items() for f in cols},'period':period,'effective_from':str(effective.date()),'public_sources':options,'retrospective_context':bool(bootstrap),'baseline_model':str(model_path),'model_version':settings['analysis1'].get('model_version',store.BASELINE_VERSION)}
     saved=store.commit_a1(db,raw_input,features,clusters,period,str(effective.date()),bootstrap,change,metadata)
     raw_input.to_csv(out/'pca_input.csv',index=False,encoding='utf-8-sig')
     features.to_csv(result_dir/'features.csv',index=False,encoding='utf-8-sig')
     clusters.to_csv(result_dir/'context.csv',index=False,encoding='utf-8-sig')
-    if change is not None: change.to_csv(result_dir/'changes.csv',index=False,encoding='utf-8-sig')
+    if change is not None:
+        change.to_csv(result_dir/'changes.csv',index=False,encoding='utf-8-sig')
     print(json.dumps({'analysis':'analysis1','period':period,'saved':saved,'rows':len(features),'effective_from':str(effective.date())}),flush=True)
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--config',required=True);p.add_argument('--db');p.add_argument('--period');p.add_argument('--bootstrap',action='store_true');p.add_argument('--scan',action='store_true')
-    for name in ['resident','household','welfare','effective-from']: p.add_argument('--'+name)
-    a=p.parse_args();settings=load_settings(a.config);db=database.workspace(a.db or settings['database'])
+    p=argparse.ArgumentParser()
+    p.add_argument('--config',required=True)
+    p.add_argument('--db')
+    p.add_argument('--period')
+    p.add_argument('--bootstrap',action='store_true')
+    p.add_argument('--scan',action='store_true')
+    for name in ['resident','household','welfare','effective-from']:
+        p.add_argument('--'+name)
+    a=p.parse_args()
+    settings=load_settings(a.config)
+    db=database.workspace(a.db or settings['database'])
     if a.scan:
         from elder_context import ingest
         ingest(db,settings)
         configured=set(settings['analysis1'].get('periods',{}))
         for path in Path(settings['analysis1']['skt_source']).glob('flow_age_pop_*.csv'):
             match=re.fullmatch(r'flow_age_pop_(20\d{2})(\d{2})\.csv',path.name)
-            if match:configured.add(f'{match[1]}H{1 if int(match[2])<=6 else 2}')
+            if match:
+                configured.add(f'{match[1]}H{1 if int(match[2])<=6 else 2}')
         for period in sorted(configured):
-            if period=='2025H2': continue
+            if period=='2025H2':
+                continue
             store.initialize(db)
             with store.connect(db) as con:
                 exists=con.execute("SELECT 1 FROM db1_run WHERE analysis='analysis1' AND period=%s",(period)).fetchone()
             if not exists:
-                try: process(settings,db,period)
-                except FileNotFoundError as exc: print(f'{period}: waiting for original files: {exc}',flush=True)
+                try:
+                    process(settings,db,period)
+                except FileNotFoundError as exc:
+                    print(f'{period}: waiting for original files: {exc}',flush=True)
                 except ValueError as exc:
-                    if str(exc).startswith(('Missing/ambiguous','Missing elderly')): print(f'{period}: waiting for public data: {exc}',flush=True)
-                    else: raise
+                    if str(exc).startswith(('Missing/ambiguous','Missing elderly')):
+                        print(f'{period}: waiting for public data: {exc}',flush=True)
+                    else:
+                        raise
     else:
-        if not a.period: p.error('--period is required')
+        if not a.period:
+            p.error('--period is required')
         process(settings,db,a.period,a.bootstrap,{k:getattr(a,k) for k in ['resident','household','welfare','effective_from']})
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    main()

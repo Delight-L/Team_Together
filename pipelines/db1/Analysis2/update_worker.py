@@ -59,31 +59,48 @@ def process(settings,db,month):
     saved=store.commit_a2(db,current,result,evidence,context_period,{'telecom':str(telecom),'interest':str(interest),'rain':a2['rain'],'diary':a2['diary']})
     sync_age(settings,db,period)
     store.export_csv(db,ROOT/settings['exports'])
-    with store.connect(db) as con: updated=store.history(con)
+    with store.connect(db) as con:
+        updated=store.history(con)
     print(json.dumps({'analysis':'analysis2','month':month,'saved':saved,'history_rows':len(updated),'signals':int(result.any_signal.sum()),'context_period':context_period}),flush=True)
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--config',required=True);p.add_argument('--db');p.add_argument('--month');p.add_argument('--initialize',action='store_true');p.add_argument('--scan',action='store_true');a=p.parse_args()
-    settings=load_settings(a.config);db=database.workspace(a.db or settings['database'])
+    p=argparse.ArgumentParser()
+    p.add_argument('--config',required=True)
+    p.add_argument('--db')
+    p.add_argument('--month')
+    p.add_argument('--initialize',action='store_true')
+    p.add_argument('--scan',action='store_true')
+    a=p.parse_args()
+    settings=load_settings(a.config)
+    db=database.workspace(a.db or settings['database'])
     if a.initialize:
-        initialize(settings,db);store.export_csv(db,ROOT/settings['exports']);return
+        initialize(settings,db)
+        store.export_csv(db,ROOT/settings['exports'])
+        return
     if a.scan:
-        with store.connect(db) as con: latest_history=store.history(con)
-        if not latest_history.empty: sync_age(settings,db,latest_history.date.max())
+        with store.connect(db) as con:
+            latest_history=store.history(con)
+        if not latest_history.empty:
+            sync_age(settings,db,latest_history.date.max())
         while True:
-            with store.connect(db) as con: history=store.history(con)
-            if history.empty: raise ValueError('Run initialize first')
+            with store.connect(db) as con:
+                history=store.history(con)
+            if history.empty:
+                raise ValueError('Run initialize first')
             period=(history.date.max().to_period('M')+1).to_timestamp()
             a2=settings['analysis2']
             try:
                 find_month_file(Path(a2['telecom_dir']),period.year,period.month,'29개')
                 find_month_file(Path(a2['interest_dir']),period.year,period.month,'10개')
             except FileNotFoundError:
-                print(f'Waiting for complete raw files: {period:%Y-%m}',flush=True);break
+                print(f'Waiting for complete raw files: {period:%Y-%m}',flush=True)
+                break
             process(settings,db,period.strftime('%Y-%m'))
     else:
-        if not a.month: p.error('--month is required')
+        if not a.month:
+            p.error('--month is required')
         process(settings,db,a.month)
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    main()

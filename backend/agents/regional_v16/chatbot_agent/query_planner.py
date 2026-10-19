@@ -38,7 +38,8 @@ def complete_and_validate(intent: QueryIntent, memory: ConversationMemory,
     needs = list(intent.needs)
     # Only an anomaly ranking needs one activity metric. Other query types
     # already define their metric set (all CORE values or transaction counts).
-    if intent.question_type!='anomaly':needs=[item for item in needs if item!='지표']
+    if intent.question_type!='anomaly':
+        needs=[item for item in needs if item!='지표']
     names = intent.dongs or ((intent.dong,) if intent.dong else ())
     previous = memory.last_scope()
 
@@ -66,8 +67,10 @@ def complete_and_validate(intent: QueryIntent, memory: ConversationMemory,
 
     # LLM needs are provisional.  A scope restored from conversation memory is
     # now a resolved slot, so stale requests for that slot must not survive.
-    if names:needs=[item for item in needs if item!='행정동']
-    if intent.metric:needs=[item for item in needs if item!='지표']
+    if names:
+        needs=[item for item in needs if item!='행정동']
+    if intent.metric:
+        needs=[item for item in needs if item!='지표']
 
     if (start and not end) or (end and not start):
         if "기간" not in needs:
@@ -80,7 +83,8 @@ def complete_and_validate(intent: QueryIntent, memory: ConversationMemory,
             if "기간" not in needs:
                 needs.append("기간")
         else:
-            start=max(start,available_start);end=min(end,available_end)
+            start=max(start,available_start)
+            end=min(end,available_end)
             needs=[item for item in needs if item!='기간']
 
     dong = names[0] if len(names) == 1 else None
@@ -93,8 +97,10 @@ def complete_and_validate(intent: QueryIntent, memory: ConversationMemory,
         elif slot == "지표" and not intent.metric:
             needs.append(slot)
     age=intent.age_band
-    if age is None and intent.question_type!='age_activity' and not intent.age_scope_explicit and intent.use_previous_scope and previous:age=previous.age_band
-    if age not in {None,'20s','30s','40s','50s','60plus'}:needs.append('연령')
+    if age is None and intent.question_type!='age_activity' and not intent.age_scope_explicit and intent.use_previous_scope and previous:
+        age=previous.age_band
+    if age not in {None,'20s','30s','40s','50s','60plus'}:
+        needs.append('연령')
     remaining=tuple(dict.fromkeys(needs))
     clarification=intent.clarifying_question if set(remaining)==set(intent.needs) else None
     return replace(intent, dong=dong, dongs=tuple(names), start_month=start, age_band=age,

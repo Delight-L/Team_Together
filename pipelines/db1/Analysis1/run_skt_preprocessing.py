@@ -19,4 +19,5 @@ print(f'[OK] saved: {out} / rows={len(df)} / dongs={df.adm_cd.nunique()}')
 if a.reference:
     result=validate_against_reference(df,a.reference)
     print('[REFERENCE]',result)
-    if not result['ok']: raise SystemExit(2)
+    if not result['ok']:
+        raise SystemExit(2)

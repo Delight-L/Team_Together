@@ -40,14 +40,18 @@ def _month(text: str) -> tuple[str | None, str | None]:
     )
     interval=re.search(r'(20\d{2})\s*년\s*(\d{1,2})\s*월?\s*(?:[~～∼–-]|부터)\s*(?:(20\d{2})\s*년\s*)?(\d{1,2})\s*월',text)
     if interval:
-        y,a,y2,b=interval.groups();return f'{y}-{int(a):02d}',f'{y2 or y}-{int(b):02d}'
+        y,a,y2,b=interval.groups()
+        return f'{y}-{int(a):02d}',f'{y2 or y}-{int(b):02d}'
     iso=re.findall(r'(20\d{2}-(?:0[1-9]|1[0-2]))',text)
-    if iso:return iso[0],iso[-1]
+    if iso:
+        return iso[0],iso[-1]
     half=re.search(r'(20\d{2})\s*년?\s*(상반기|하반기)',text)
-    if half:return (f'{half[1]}-01',f'{half[1]}-06') if half[2]=='상반기' else (f'{half[1]}-07',f'{half[1]}-12')
+    if half:
+        return (f'{half[1]}-01',f'{half[1]}-06') if half[2]=='상반기' else (f'{half[1]}-07',f'{half[1]}-12')
     quarter=re.search(r'(20\d{2})\s*년?\s*([1-4])\s*분기',text)
     if quarter:
-        y,q=quarter.groups();return f'{y}-{(int(q)-1)*3+1:02d}',f'{y}-{int(q)*3:02d}'
+        y,q=quarter.groups()
+        return f'{y}-{(int(q)-1)*3+1:02d}',f'{y}-{int(q)*3:02d}'
     named_years=re.findall(r'(20\d{2})\s*년',text)
     named_months=re.findall(r'(?<!\d)(1[0-2]|0?[1-9])\s*월',text)
     if len(set(named_years))==1 and named_months:
@@ -57,28 +61,37 @@ def _month(text: str) -> tuple[str | None, str | None]:
         months = [f"{y}-{int(m):02d}" for y,m in hits]
         return months[0], months[-1]
     years = re.findall(r"(20\d{2})\s*년", text)
-    if years: return f"{years[0]}-01", f"{years[-1]}-12"
+    if years:
+        return f"{years[0]}-01", f"{years[-1]}-12"
     return None, None
 
 def unsupported_numeric_age(text):
     """Reject narrower bounds rather than silently widening them to a service bin."""
-    if re.search(r'(?<!\d)60\s*대(?!\s*이상)',text):return True
+    if re.search(r'(?<!\d)60\s*대(?!\s*이상)',text):
+        return True
     cleaned=re.sub(r'(?<!\d)60\s*(?:세|살)\s*이상','',text)
     return bool(re.search(r'(?<!\d)\d{1,3}\s*(?:세|살)',cleaned))
 
 def age_condition(text):
-    if unsupported_numeric_age(text):return None,True
-    if re.search(r'전\s*연령|전체\s*연령|연령\s*전체',text):return None,False
+    if unsupported_numeric_age(text):
+        return None,True
+    if re.search(r'전\s*연령|전체\s*연령|연령\s*전체',text):
+        return None,False
     ages=set(re.findall(r'(?<!\d)([1-9]0)\s*대',text))
-    if re.search(r'60\s*(?:세|살)\s*이상|노년층|고령층',text):ages.add('60')
-    if not ages:return None,False
-    if len(ages)!=1 or not ages.issubset({'20','30','40','50','60'}):return None,True
-    age=next(iter(ages));return '60plus' if age=='60' else age+'s',False
+    if re.search(r'60\s*(?:세|살)\s*이상|노년층|고령층',text):
+        ages.add('60')
+    if not ages:
+        return None,False
+    if len(ages)!=1 or not ages.issubset({'20','30','40','50','60'}):
+        return None,True
+    age=next(iter(ages))
+    return '60plus' if age=='60' else age+'s',False
 
 def comparison_ages(text):
     """Extract explicitly written age groups for separate comparison rows."""
     ages=set(re.findall(r'(?<!\d)([1-9]0)\s*대',text))
-    if re.search(r'60\s*(?:세|살)\s*이상|노년층|고령층',text):ages.add('60')
+    if re.search(r'60\s*(?:세|살)\s*이상|노년층|고령층',text):
+        ages.add('60')
     unsupported=bool(ages-{'20','30','40','50','60'}) or unsupported_numeric_age(text)
     return tuple('60plus' if age=='60' else age+'s' for age in ('20','30','40','50','60') if age in ages),unsupported
 
@@ -167,8 +180,10 @@ def parse_intent(question: str, districts: set[str]) -> QueryIntent:
     if kind in {'age_activity','capabilities'}:
         bands,ambiguous=comparison_ages(question)
         age=bands[0] if len(bands)==1 else None
-    if ambiguous:needs.append('연령')
-    if kind in {"reason", "previous", "activity", "age_activity", "context", "support"} and not dong: needs.append("행정동")
+    if ambiguous:
+        needs.append('연령')
+    if kind in {"reason", "previous", "activity", "age_activity", "context", "support"} and not dong:
+        needs.append("행정동")
     # 지역을 새로 말하지 않은 "왜?", "전월에도?"는 직전 조회를 이어받을 수 있다.
     signal_period_follow_up = (
         kind == "signals" and signal != "any"

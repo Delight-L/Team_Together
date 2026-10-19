@@ -16,9 +16,12 @@ METRICS = [('call_contacts','전화 연락','communication'),('text_contacts','�
            ('weekday_move_count','평일 이동','mobility'),('weekend_move_count','휴일 이동','mobility')]
 
 def flag(value):
-    if value is None or pd.isna(value) or value == '': return None
-    if str(value).lower() in ('true','1','1.0'): return True
-    if str(value).lower() in ('false','0','0.0'): return False
+    if value is None or pd.isna(value) or value == '':
+        return None
+    if str(value).lower() in ('true','1','1.0'):
+        return True
+    if str(value).lower() in ('false','0','0.0'):
+        return False
     raise ValueError('Invalid detection flag')
 
 def percent(value):
@@ -27,17 +30,26 @@ def percent(value):
 def prepare_age_analysis(frame, source):
     frame=frame.copy()
     required={'date','행정동코드','행정동','age_band','detection_model_version','communication_signal','mobility_signal'}
-    if frame.empty or not required.issubset(frame): raise ValueError('동·연령별 탐지 결과가 필요합니다.')
+    if frame.empty or not required.issubset(frame):
+        raise ValueError('동·연령별 탐지 결과가 필요합니다.')
     frame['month']=pd.to_datetime(frame.date,format='mixed').dt.strftime('%Y-%m')
     frame['행정동코드']=frame['행정동코드'].astype(str)
-    if frame.duplicated(['month','행정동코드','age_band']).any(): raise ValueError('동·연령·월 탐지 결과 중복 또는 모델 버전 혼재')
-    if frame.detection_model_version.nunique()!=1: raise ValueError('활성 탐지 모델은 하나여야 합니다.')
-    if not set(frame.age_band).issubset(AGE_LABELS): raise ValueError('지원하지 않는 탐지 연령대')
-    assessment=[];cases=[];alerts=[]
+    if frame.duplicated(['month','행정동코드','age_band']).any():
+        raise ValueError('동·연령·월 탐지 결과 중복 또는 모델 버전 혼재')
+    if frame.detection_model_version.nunique()!=1:
+        raise ValueError('활성 탐지 모델은 하나여야 합니다.')
+    if not set(frame.age_band).issubset(AGE_LABELS):
+        raise ValueError('지원하지 않는 탐지 연령대')
+    assessment=[]
+    cases=[]
+    alerts=[]
     for r in json.loads(frame.to_json(orient='records',force_ascii=False)):
         for key in list(r):
-            if key.endswith(('_signal','_assessable')) or key=='any_signal': r[key]=flag(r[key])
-        age=AGE_LABELS[r['age_band']]; code=r['행정동코드'];month=r['month']
+            if key.endswith(('_signal','_assessable')) or key=='any_signal':
+                r[key]=flag(r[key])
+        age=AGE_LABELS[r['age_band']]
+        code=r['행정동코드']
+        month=r['month']
         name=DISPLAY_NAMES.get(code,r['행정동'])
         case_id='/'.join([month,code,r['age_band'],r['detection_model_version']])
         any_signal=r['communication_signal'] is True or r['mobility_signal'] is True
@@ -48,9 +60,11 @@ def prepare_age_analysis(frame, source):
                   any_signal=any_signal,assessment_status=r.get('assessment_status'),signal_status=status,
                   payload=r,source_file=source,scope='dong_age')
         cases.append(case)
-        if any_signal: alerts.append({k:v for k,v in case.items() if k!='payload'})
+        if any_signal:
+            alerts.append({k:v for k,v in case.items() if k!='payload'})
         for metric,label,domain in METRICS:
-            own=flag(r.get(domain+'_absolute_signal'));local=flag(r.get(domain+'_local_signal'))
+            own=flag(r.get(domain+'_absolute_signal'))
+            local=flag(r.get(domain+'_local_signal'))
             scope='absolute' if own else 'local' if local else 'absolute' if flag(r.get(metric+'_absolute_assessable')) else 'local'
             assessable=flag(r.get(metric+'_'+scope+'_assessable')) is True and r[domain+'_signal'] is not None
             row={'행정동코드':code,'행정동명':name,'source_district':r['행정동'],'기준연월':month,'age_band':r['age_band'],'age_label':age,
@@ -79,11 +93,13 @@ def _load(path, modified_ns):
     return prepare_age_analysis(pd.read_csv(path,dtype={'행정동코드':str}),path)
 
 def load_age_analysis():
-    if not SOURCE.is_file(): raise FileNotFoundError('DB1 동·연령별 탐지 결과를 준비하세요: '+str(SOURCE))
+    if not SOURCE.is_file():
+        raise FileNotFoundError('DB1 동·연령별 탐지 결과를 준비하세요: '+str(SOURCE))
     return deepcopy(_load(str(SOURCE),SOURCE.stat().st_mtime_ns))
 
 def detection_for(context, data=None):
-    if context['city']!='강남구':return None
+    if context['city']!='강남구':
+        return None
     data=data if data is not None else load_age_analysis()
     band=AGE_BANDS.get(context.get('age'))
     return next((r for r in data['ageDetections'] if r['code']==context['code'] and r['month']==context['month'] and r['age_band']==band),None)

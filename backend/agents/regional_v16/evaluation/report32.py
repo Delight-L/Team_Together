@@ -12,7 +12,8 @@ def render(result, reviews):
     counts = Counter(v['label'] for v in verdicts.values())
     sections = []
     for row in data['results']:
-        case = row['case_id']; review = verdicts[case]
+        case = row['case_id']
+        review = verdicts[case]
         esc = lambda x: html.escape(str(x))
         references = row.get('reference_answers') or [row.get('reference_answer','')]
         steps = row.get('step_results', row.get('trace', []))
@@ -30,5 +31,8 @@ def render(result, reviews):
     return out
 
 if __name__ == '__main__':
-    parser=argparse.ArgumentParser(); parser.add_argument('result',type=Path);parser.add_argument('reviews',type=Path)
-    args=parser.parse_args();print(render(args.result,args.reviews))
+    parser=argparse.ArgumentParser()
+    parser.add_argument('result',type=Path)
+    parser.add_argument('reviews',type=Path)
+    args=parser.parse_args()
+    print(render(args.result,args.reviews))

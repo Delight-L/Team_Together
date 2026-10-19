@@ -8,11 +8,13 @@ def configure(source_root,output):
     public=source_root/'서울시 공공데이터'
     def one(pattern,root=public):
         hits=list(root.rglob(pattern))
-        if len(hits)!=1: raise ValueError(f'Expected one source for {pattern}: {hits}')
+        if len(hits)!=1:
+            raise ValueError(f'Expected one source for {pattern}: {hits}')
         return str(hits[0])
     skt=list(originals.rglob('flow_age_pop_202507.csv'))
     canonical=[p.parent for p in skt if '전처리' not in str(p.parent)]
-    if len(canonical)!=1: raise ValueError('Set the canonical SKT source directory explicitly')
+    if len(canonical)!=1:
+        raise ValueError('Set the canonical SKT source directory explicitly')
     settings={
       'database':'db1_pipeline','exports':'outputs/integrated',
       'analysis1':{'skt_source':str(canonical[0]),'public_root':str(public),'boundary':one('서울_행정동_경계_2017_EPSG5179.geojson'),
@@ -32,4 +34,8 @@ def configure(source_root,output):
     print(f'Saved {output}')
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--source-root',required=True);p.add_argument('--output',default=str(Path(__file__).resolve().parents[1]/'config/db1_config.json'));a=p.parse_args();configure(a.source_root,a.output)
+    p=argparse.ArgumentParser()
+    p.add_argument('--source-root',required=True)
+    p.add_argument('--output',default=str(Path(__file__).resolve().parents[1]/'config/db1_config.json'))
+    a=p.parse_args()
+    configure(a.source_root,a.output)

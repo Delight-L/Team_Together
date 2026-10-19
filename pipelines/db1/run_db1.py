@@ -25,14 +25,17 @@ def main():
     parser.add_argument('--period',help='Analysis1 half-year, e.g. 2026H1')
     parser.add_argument('--month',help='Analysis2 month, e.g. 2026-01')
     parser.add_argument('--effective-from',help='Analysis1 Context applicability month YYYY-MM')
-    parser.add_argument('--resident'); parser.add_argument('--household'); parser.add_argument('--welfare')
+    parser.add_argument('--resident')
+    parser.add_argument('--household')
+    parser.add_argument('--welfare')
     args=parser.parse_args()
     config=Path(args.config).resolve()
     settings=load_settings(config)
     selected_db=database.workspace(args.db or settings['database'])
     def worker(kind,extra=()):
         cmd=[sys.executable,str(ROOT/kind/'update_worker.py'),'--config',str(config)]
-        if args.db: cmd+=['--db',args.db]
+        if args.db:
+            cmd+=['--db',args.db]
         subprocess.run(cmd+list(extra),check=True)
     def analysis3(command='scan'):
         cmd=[sys.executable,str(ROOT/'Analysis3'/'run_analysis3.py'),command]
@@ -50,14 +53,16 @@ def main():
         settings=load_settings(config)
         selected_db=database.workspace(args.db or settings['database'])
         with closing(database.connect(selected_db)) as con:
-            if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_detection'").fetchone(): return
+            if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_detection'").fetchone():
+                return
         subprocess.run([sys.executable,str(ROOT/'Analysis2/activity_level.py'),'--db',str(selected_db),'--output',str(ROOT/'Analysis2/outputs/activity_level')],check=True)
     def source_semantics():
         from contextlib import closing
         settings=load_settings(config)
         selected_db=database.workspace(args.db or settings['database'])
         with closing(database.connect(selected_db)) as con:
-            if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_raw'").fetchone(): return
+            if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_raw'").fetchone():
+                return
         subprocess.run([sys.executable,str(ROOT/'Context/source_semantics.py'),'--db',str(selected_db),'--output',str(ROOT/'Analysis2/outputs/source_semantics')],check=True)
         evidence_context()
     def evidence_context():
@@ -66,10 +71,12 @@ def main():
         subprocess.run([sys.executable,str(ROOT/'Context/evidence_context.py'),'--config',str(config),'--db',str(selected_db),'--output',str(ROOT/'Context/outputs/evidence')],check=True)
     def survey_context(export_only=False):
         settings=load_settings(config)
-        if not settings.get('survey_context'): return
+        if not settings.get('survey_context'):
+            return
         selected_db=database.workspace(args.db or settings['database'])
         cmd=[sys.executable,str(ROOT/'Context/survey.py'),'--config',str(config),'--db',str(selected_db),'--output',str((ROOT/settings.get('exports','outputs/integrated')).resolve())]
-        if export_only: cmd+=['--export-only']
+        if export_only:
+            cmd+=['--export-only']
         subprocess.run(cmd,check=True)
     if args.command=='initialize':
         worker('Analysis1',['--period','2025H2','--bootstrap'])
@@ -78,11 +85,13 @@ def main():
     elif args.command=='survey-context':
         survey_context()
     elif args.command=='analysis1':
-        if not args.period: parser.error('--period is required')
+        if not args.period:
+            parser.error('--period is required')
         extra=['--period',args.period]
         for key in ['effective_from','resident','household','welfare']:
             value=getattr(args,key)
-            if value is not None: extra+=['--'+key.replace('_','-'),str(value)]
+            if value is not None:
+                extra+=['--'+key.replace('_','-'),str(value)]
         worker('Analysis1',extra)
         analysis3()
     elif args.command=='analysis1-elder':
@@ -90,13 +99,16 @@ def main():
         selected_db=database.workspace(args.db or settings['database'])
         subprocess.run([sys.executable,str(ROOT/'Analysis1/elder_context.py'),'--db',str(selected_db),'--config',str(config),'--output',str((ROOT/settings.get('exports','outputs/integrated')).resolve())],check=True)
     elif args.command=='analysis2':
-        if not args.month: parser.error('--month is required')
+        if not args.month:
+            parser.error('--month is required')
         worker('Analysis2',['--month',args.month])
         analysis3()
     elif args.command=='analysis2-age':
         cmd=[sys.executable,str(ROOT/'Analysis2/age_features.py'),'--config',str(config)]
-        if args.db: cmd+=['--db',args.db]
-        if args.month: cmd+=['--month',args.month]
+        if args.db:
+            cmd+=['--db',args.db]
+        if args.month:
+            cmd+=['--month',args.month]
         subprocess.run(cmd,check=True)
     elif args.command=='analysis2-age-detect':
         settings=load_settings(config)
@@ -117,7 +129,8 @@ def main():
         worker('Analysis2',['--scan'])
         analysis3()
     elif args.command=='watch':
-        if args.interval<10: parser.error('--interval must be at least 10 seconds')
+        if args.interval<10:
+            parser.error('--interval must be at least 10 seconds')
         while True:
             survey_context()
             worker('Analysis1',['--scan'])
@@ -151,6 +164,8 @@ def main():
                     print('a2_age_feature',con.execute('SELECT age_scheme,COUNT(*) FROM a2_age_feature GROUP BY age_scheme').fetchall())
                 if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_detection'").fetchone():
                     print('a2_age_detection',con.execute('SELECT COUNT(*),SUM(communication_signal),SUM(mobility_signal),SUM(combined_signal) FROM a2_age_detection').fetchone())
-            if (ROOT/'Analysis3'/'run_analysis3.py').exists(): analysis3('status')
+            if (ROOT/'Analysis3'/'run_analysis3.py').exists():
+                analysis3('status')
 
-if __name__=='__main__': main()
+if __name__=='__main__':
+    main()

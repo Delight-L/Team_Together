@@ -30,14 +30,16 @@ class ConversationMemory:
 
     def _pending_scope(self) -> ConversationTurn | None:
         intent=self.pending_intent
-        if intent is None:return None
+        if intent is None:
+            return None
         names=intent.dongs or ((intent.dong,) if intent.dong else ())
         return ConversationTurn(self.pending_question or '',intent.purpose,intent.question_type,names,
                                 intent.start_month,intent.end_month,intent.signal,
                                 '추가 조건 답변 대기',intent.age_band,intent.age_bands,intent.metric)
 
     def add(self, user: str, intent: QueryIntent, evidence: Evidence) -> None:
-        self.pending_intent=None;self.pending_question=None
+        self.pending_intent=None
+        self.pending_question=None
         districts=[]
         for row in evidence.rows:
             name=row.get("행정동") or row.get("dong_name")
@@ -75,7 +77,8 @@ class ConversationMemory:
              "result_summary":t.result_summary,"age_band":t.age_band,"age_bands":list(t.age_bands),"metric":t.metric}
             for t in turns
         ]
-        if scope:data[-1].update(awaiting_clarification=True,needs=list(self.pending_intent.needs))
+        if scope:
+            data[-1].update(awaiting_clarification=True,needs=list(self.pending_intent.needs))
         return data
 
     def last_scope(self) -> ConversationTurn | None:

@@ -12,9 +12,11 @@ def export(source, target, workspace_schema=None):
         with path.open(encoding='utf-8-sig') as stream:
             return list(csv.DictReader(stream))
     def numeric(value):
-        if value in ('',None): return None
+        if value in ('',None):
+            return None
         n=float(value)
-        if not math.isfinite(n): return None
+        if not math.isfinite(n):
+            return None
         return n
     typologies=[]
     paths=sorted((source/'Analysis1/outputs/periods').glob('*/context.csv'))

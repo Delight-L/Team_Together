@@ -217,20 +217,26 @@ def run(config, db, output, start='2022-01', end='2025-12', month=None):
     periods = [pd.Period(month, freq='M').to_timestamp()] if month else pd.date_range(start, end, freq='MS')
     inventory = [{'month': p.strftime('%Y-%m'), 'telecom': str(sources(settings, p)[0]), 'interest': str(sources(settings, p)[1])} for p in periods]
     # Validate inventory before any new monthly data are stored.
-    output = Path(output); output.mkdir(parents=True, exist_ok=True)
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(inventory).to_csv(output/'source_inventory.csv', index=False, encoding='utf-8-sig')
-    reports = []; checks = []; expected_codes = None
+    reports = []
+    checks = []
+    expected_codes = None
     if database.exists(db):
         with database.connect(db) as con:
             if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_feature'").fetchone():
                 expected_codes = [int(row[0]) for row in con.execute('SELECT DISTINCT adm_cd FROM a2_age_feature')]
-                if not expected_codes: expected_codes = None
+                if not expected_codes:
+                    expected_codes = None
     for period, source in zip(periods, inventory):
-        t = pd.read_excel(source['telecom']); i = pd.read_excel(source['interest'])
+        t = pd.read_excel(source['telecom'])
+        i = pd.read_excel(source['interest'])
         age, t, i = build_age_frames(t, i, rain, diary, period.year, period.month, expected_codes)
         expected_codes = sorted(t['행정동코드'].unique())
         old = build_month_feature_frames(t, i, rain, diary, period.year, period.month)
-        check = reconcile(age, old); checks.append(check)
+        check = reconcile(age, old)
+        checks.append(check)
         metadata = {**source, 'telecom_columns': list(t.columns), 'interest_columns': list(i.columns)}
         saved = persist(db, age, t, i, metadata)
         reports.append({'month': source['month'], 'raw_telecom_rows': len(t), 'raw_interest_rows': len(i), 'service_rows': int(age.age_scheme.eq('service').sum()), 'five_year_rows': int(age.age_scheme.eq('five_year').sum()), 'review_required': int(age.quality_status.eq('review_required').sum()), 'max_reconciliation_error': float(check.difference.abs().max()), 'saved': saved})
@@ -270,12 +276,15 @@ def main():
     parser.add_argument('--config', default=str(root/'config/db1_config.json'))
     parser.add_argument('--db', default=str('db1_pipeline'))
     parser.add_argument('--output', default=str(root/'Analysis2/outputs/age'))
-    parser.add_argument('--start', default='2022-01'); parser.add_argument('--end', default='2025-12')
+    parser.add_argument('--start', default='2022-01')
+    parser.add_argument('--end', default='2025-12')
     parser.add_argument('--month')
     parser.add_argument('--export-only', action='store_true')
     a = parser.parse_args()
-    if a.export_only: export(a.db, a.output)
-    else: run(a.config, a.db, a.output, a.start, a.end, a.month)
+    if a.export_only:
+        export(a.db, a.output)
+    else:
+        run(a.config, a.db, a.output, a.start, a.end, a.month)
 
 
 if __name__ == '__main__':

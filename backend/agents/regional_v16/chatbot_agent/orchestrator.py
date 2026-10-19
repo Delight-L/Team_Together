@@ -23,16 +23,20 @@ from .observation_period import observation_period
 class Chatbot:
  def __init__(self, project_root: Path, model: str="gemini-2.5-flash-lite", intent_resolver=None, moderator=None, repository: Db1Repository=None):
   self.project_root=project_root
-  if repository is None:raise ValueError('Chatbot에는 repository(Db1Repository)를 주입해야 합니다. PostgreSQL 저장소는 pg_repository.PostgresDb1Repository입니다.')
-  self.repo=repository; self.model=model
+  if repository is None:
+      raise ValueError('Chatbot에는 repository(Db1Repository)를 주입해야 합니다. PostgreSQL 저장소는 pg_repository.PostgresDb1Repository입니다.')
+  self.repo=repository
+  self.model=model
   self.memory=ConversationMemory()
   self.moderator=moderator if moderator is not None else InputModerator(project_root)
   self.intent_resolver=intent_resolver or IntentResolver(project_root,model,self.repo.available_period())
-  self.dashboard_scope=None; self.dashboard_segment_id=None
+  self.dashboard_scope=None
+  self.dashboard_segment_id=None
   self.allow_ai_generation=True
   self._operation_lock=RLock()
  def activate_dashboard_context(self, scope, segment_id):
-  self.dashboard_scope=scope; self.dashboard_segment_id=segment_id
+  self.dashboard_scope=scope
+  self.dashboard_segment_id=segment_id
   self.memory=ConversationMemory()
  def answer(self, question: str) -> AnswerResult:
   with self._operation_lock:
@@ -40,9 +44,11 @@ class Chatbot:
  def _answer(self, question: str) -> AnswerResult:
   # 1. 인풋 필터링
   guard=validate_input(question)
-  if not guard.allowed: return AnswerResult(guard.message, Evidence("입력 안내",guard.message))
+  if not guard.allowed:
+      return AnswerResult(guard.message, Evidence("입력 안내",guard.message))
   guard=self.moderator.check(question.strip())
-  if not guard.allowed: return AnswerResult(guard.message, Evidence("입력 안전 안내",guard.message))
+  if not guard.allowed:
+      return AnswerResult(guard.message, Evidence("입력 안전 안내",guard.message))
   # 지역·연령 집계는 개인의 상태를 판정할 수 없으므로, 이 요청에는
   # 신호·보조자료를 먼저 나열하지 않고 제한을 직접 답한다.
   if re.search(r"고립.*(?:확정|판단)|(?:확정|판단).*고립", question):
@@ -94,7 +100,8 @@ class Chatbot:
          f"현재 신호 조회는 {start}~{end}에서 가능합니다.")
    return AnswerResult(text,Evidence("조회 범위 안내",text),
                        ("2025년 하반기 확인할 지역 알려줘", "이상신호 기준은 무엇인가요?"))
-  if intent.question_type=='consumption':start,end=self.repo.consumption_period()
+  if intent.question_type=='consumption':
+      start,end=self.repo.consumption_period()
   intent=complete_and_validate(intent,self.memory,start,end)
   if intent.needs:
    self.memory.set_pending(question,intent)
@@ -109,7 +116,8 @@ class Chatbot:
   # 3. 정확한 데이터 조회 + RAG + 답변 생성
   try:
    evidence=execute(self.repo,intent)
-  except (ValueError,FileNotFoundError) as exc: return AnswerResult(str(exc),Evidence("조회 안내",str(exc)))
+  except (ValueError,FileNotFoundError) as exc:
+      return AnswerResult(str(exc),Evidence("조회 안내",str(exc)))
   self.memory.add(question,intent,evidence)
   knowledge=retrieve(question,intent.question_type)
   if intent.age_band and knowledge:
@@ -122,7 +130,8 @@ class Chatbot:
         else try_gemini(question,intent,evidence,knowledge,explanation,self.model,self.project_root) or template_answer(intent,evidence,knowledge,explanation))
   # 4. 답변 필터링. 실패하면 검증된 템플릿으로 되돌린다.
   passed,_=validate_answer(text,evidence)
-  if not passed: text=template_answer(intent,evidence,knowledge,explanation)
+  if not passed:
+      text=template_answer(intent,evidence,knowledge,explanation)
   return AnswerResult(text,evidence,self._follow_ups(intent,evidence))
 
  @staticmethod

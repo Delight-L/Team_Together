@@ -22,22 +22,26 @@ def validate(path):
             errors.append(f'{label}: exactly final step must be score target')
         for step in steps:
             if step.get('action') == 'chat':
-                if not str(step.get('text', '')).strip(): errors.append(f'{label}: empty input')
+                if not str(step.get('text', '')).strip():
+                    errors.append(f'{label}: empty input')
             elif step.get('action') == 'dashboard_selection':
                 s = step.get('selection') or {}
                 if not s.get('dong') or not s.get('label_month') or 'age_band' not in s:
                     errors.append(f'{label}: incomplete selection')
                 if s.get('age_band') not in {None, '20s', '30s', '40s', '50s', '60plus'}:
                     errors.append(f'{label}: invalid age')
-                if not isinstance(step.get('selection_revision'), int): errors.append(f'{label}: revision required')
-            else: errors.append(f'{label}: unsupported action')
+                if not isinstance(step.get('selection_revision'), int):
+                    errors.append(f'{label}: revision required')
+            else:
+                errors.append(f'{label}: unsupported action')
         if item.get('path_id') in {'PATH-01', 'PATH-02'} and any(s.get('action') != 'chat' for s in steps):
             errors.append(f'{label}: chat path contains selection')
         if item.get('path_id') in {'PATH-03', 'PATH-04'} and (not steps or steps[0].get('action') != 'dashboard_selection'):
             errors.append(f'{label}: missing dashboard precondition')
     if any(sum(r.get('path_id') == p for r in rows) != 8 for p in PATHS):
         errors.append('Each path must contain 8 cases')
-    if errors: raise ValueError('\n'.join(errors))
+    if errors:
+        raise ValueError('\n'.join(errors))
     return rows
 
 if __name__ == '__main__':

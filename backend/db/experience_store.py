@@ -12,7 +12,8 @@ def scope(context):
     user = context['user']
     # 기록은 같은 지역 담당자가 함께 봅니다. 'team'은 기존 저장 기록과 같은 키를 유지하기 위한 값입니다.
     parts = ['team', context['city'], context['district'], context['month']]
-    if context.get('age'): parts.append(context['age'])
+    if context.get('age'):
+        parts.append(context['age'])
     return json.dumps(parts, ensure_ascii=False)
 
 

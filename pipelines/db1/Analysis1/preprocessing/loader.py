@@ -15,5 +15,6 @@ def read_local(path, *, sep=None, **kwargs):
                 df=pd.read_csv(path,encoding=enc,sep=s,low_memory=False,**kwargs)
                 if sep is not None or df.shape[1] > 1:
                     return df
-            except Exception as e: last=e
+            except Exception as e:
+                last=e
     raise ValueError(f"파일을 읽을 수 없습니다: {path} / {last}")

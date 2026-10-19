@@ -3,7 +3,8 @@ import pandas as pd
 
 def halfyear(value):
     match=re.fullmatch(r'(20\d{2})H([12])',value)
-    if not match: raise ValueError('period must be YYYYH1 or YYYYH2')
+    if not match:
+        raise ValueError('period must be YYYYH1 or YYYYH2')
     year,half=int(match[1]),int(match[2])
     return year,(1,2) if half==1 else (3,4),pd.date_range(pd.Timestamp(year,1 if half==1 else 7,1),periods=6,freq='MS')
 

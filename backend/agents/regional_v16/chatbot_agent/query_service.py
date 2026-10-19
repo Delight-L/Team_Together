@@ -14,12 +14,14 @@ METRIC_LABEL=dict(zip(CORE,('통화 상대 수','문자 상대 수','평일 이�
 
 def _records(f,cols=None):
     f=f[[c for c in cols if c in f]].copy() if cols else f.copy()
-    if 'date' in f:f['date']=f.date.astype(str).str[:7]
+    if 'date' in f:
+        f['date']=f.date.astype(str).str[:7]
     return json.loads(f.to_json(orient='records',force_ascii=False,double_precision=15))
 
 def _signal_flag(value):
     """Keep an unassessable DB flag unknown instead of bool(None/NaN)."""
-    if value is None or pd.isna(value):return None
+    if value is None or pd.isna(value):
+        return None
     return bool(value) if value in (True,False) else None
 
 def _signal_type(row):
@@ -54,7 +56,8 @@ def _age_signal_changes(repo,signal_rows):
     changes=[]
     for signal_row in signal_rows:
         dong,date=signal_row.get('행정동'),signal_row.get('date')
-        if not dong or not date:continue
+        if not dong or not date:
+            continue
         kind=str(signal_row.get('signal_type',''))
         metrics=CORE[:2] if kind=='communication' else CORE[2:] if kind=='mobility' else CORE
         flag={'communication':'communication_signal','mobility':'mobility_signal',
@@ -92,7 +95,8 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
     limits=[f'초기 이력은 기준을 만드는 데만 사용했습니다. 새 탐지 결과는 {observation_range_text(available_start, available_end)}을 다루며, 건수는 '+
             ('동×연령 묶음 기록' if age else '동별 기록')+' 수입니다.',
             '각 기준월은 그 직전 3개월 관측을 뜻합니다. 개인의 고립이나 신호 원인을 확정하지 않습니다.']
-    if age:limits.append(f'연령 범위: {AGE_LABEL[age]}. 연령별 판정은 초기 이력으로 보정한 지표·비교범위별 기준을 사용합니다.')
+    if age:
+        limits.append(f'연령 범위: {AGE_LABEL[age]}. 연령별 판정은 초기 이력으로 보정한 지표·비교범위별 기준을 사용합니다.')
     source='DB1: a2_age_detection' if age else SOURCES['detection']
     def selected(method,*extra):
         frames=[method(n,start,end,*extra) for n in names] if names else [method(None,start,end,*extra)]
@@ -102,7 +106,8 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
         frames=[repo.activity(name,start,end,band) for name in names for band in bands]
         cols=['date','행정동','age_band','assessment_status','signal_status','signal_type',
               'communication_signal','mobility_signal','combined_signal','any_signal',*CORE]
-        for m in CORE:cols += [m+'_log_change',m+'_valid']
+        for m in CORE:
+            cols += [m+'_log_change',m+'_valid']
         rows=[row for frame in frames for row in _records(frame,cols)]
         for row in rows:
             row['comparison_month']=str(pd.Period(row['date'],freq='M')-1)
@@ -138,7 +143,8 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
     elif kind=='rank_regions':
         signal_reader = repo.age_signal_cases if intent.age_scope_explicit else repo.signals
         f=signal_reader(start,end,None,intent.signal,age)
-        if names:f=f.loc[f['행정동'].isin(names)]
+        if names:
+            f=f.loc[f['행정동'].isin(names)]
         grouped=f.groupby('행정동',as_index=False).size().rename(columns={'size':'신호 건수'}).sort_values(['신호 건수','행정동'],ascending=[False,True]).head(intent.limit or 3)
         e=Evidence('신호가 많은 지역',f'{LABEL[intent.signal]} 신호 건수가 많은 동 {len(grouped)}곳입니다.',_records(grouped),[source],limits)
     elif kind=='signals':
@@ -184,7 +190,8 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
         cols += [metric+'_log_change' for metric in CORE]
         e=Evidence('활동 변화',f'{len(f)}건의 지역 활동 집계값을 확인했습니다.',_records(f,cols),[source],limits)
     elif kind=='previous':
-        f=selected(repo.activity,age);rows=[]
+        f=selected(repo.activity,age)
+        rows=[]
         for row in _records(f,['date','행정동','signal_type']):
             previous=(pd.Period(row['date'],freq='M')-1).strftime('%Y-%m')
             p=repo.activity(row['행정동'],previous,previous,age)
@@ -194,10 +201,12 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
         return Evidence('전월 신호 여부','전월 탐지 결과입니다.',rows,[source],['전월 결과가 없거나 평가가 보류되면 미탐지로 처리하지 않습니다.'])
     elif kind in {'reason','support'}:
         f=selected(repo.evidence,age)
-        if intent.signal!='any' and not f.empty:f=f.loc[f[intent.signal+'_signal'].fillna(False).eq(True)]
+        if intent.signal!='any' and not f.empty:
+            f=f.loc[f[intent.signal+'_signal'].fillna(False).eq(True)]
         cols=['date','행정동','age_band','signal_type','signal_status','assessment_status','review_reasons',
               'previous_signal_date','consecutive_signal','interest_structural_issue']
-        for m in CORE:cols+=[m,m+'_residual_change_expanding_rz',m+'_log_change']+[m+'_'+scope+'_'+key for scope in ('absolute','local') for key in ('rz','threshold','signal')]
+        for m in CORE:
+            cols+=[m,m+'_residual_change_expanding_rz',m+'_log_change']+[m+'_'+scope+'_'+key for scope in ('absolute','local') for key in ('rz','threshold','signal')]
         e=Evidence('선정 근거' if kind=='reason' else '보조 근거',f'조건에 맞는 신호 기록은 {len(f)}건입니다.',_records(f,cols),[source],limits)
         # Legacy evidence cards lack original values; merge exact detection values.
         if not age:
@@ -205,7 +214,8 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
                 a=repo.activity(r['행정동'],r['date'],r['date'])
                 if not a.empty:
                     for m in CORE:
-                        for key in [m,m+'_log_change']:r[key]=float(a.iloc[0][key])
+                        for key in [m,m+'_log_change']:
+                            r[key]=float(a.iloc[0][key])
     elif kind=='context':
         frames=[repo.context(n,(end or available_end)+'-01') for n in names]
         f=pd.concat(frames,ignore_index=True) if frames else pd.DataFrame()
@@ -218,7 +228,8 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
              'consumption_trends':consumption_trends(repo,names,start,end,age),
              'requested_period':{'start':start,'end':end}})
         return e
-    else:raise ValueError('지원하지 않는 질문 유형입니다.')
+    else:
+        raise ValueError('지원하지 않는 질문 유형입니다.')
     if age is None and kind in {'signals','reason'} and e.rows and not intent.age_scope_explicit:
         signal_age_changes=_age_signal_changes(repo,e.rows)
     if age:
@@ -227,8 +238,10 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
         e.limitations.append(f"연령별 평가 상태: 조회 {len(assessed)}건 중 전체 지표 평가 {int(statuses.get('assessed',0))}건, 일부 지표만 평가 {int(statuses.get('partially_assessed',0))}건, 보류 {int(statuses.get('deferred',0))}건. 평가 보류를 무신호로 해석하지 않습니다.")
     context_names=names or tuple(dict.fromkeys(r.get('행정동') for r in e.rows if r.get('행정동')))
     dates=sorted({r['date'] for r in e.rows if r.get('date')})
-    if not dates and start and end:dates=[str(p) for p in pd.period_range(start,end,freq='M')]
-    if not dates and kind=='context':dates=[available_end]
+    if not dates and start and end:
+        dates=[str(p) for p in pd.period_range(start,end,freq='M')]
+    if not dates and kind=='context':
+        dates=[available_end]
     if context_names:
         e.supplementary=repo.supplements(context_names[:10],dates,age)
         if signal_age_changes is not None:
@@ -236,7 +249,8 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
         # A regional-background question without a selected signal month should
         # not expand into every available quarter of consumption data.
         if kind in {'support', 'context'} and dates:
-            trends=[];quarters={}
+            trends=[]
+            quarters={}
             signal_observation_end=None
             if kind=='support' and dates:
                 window=observation_period(dates[-1])
@@ -280,6 +294,7 @@ def execute(repo:Db1Repository,intent:QueryIntent)->Evidence:
                 trends += consumption_trends(repo,context_names,start,end,age,include_district=False)
                 trends += consumption_trends(repo,(),start,end,age)
             e.supplementary['consumption_trends']=trends
-        if len(context_names)>10:e.supplementary['shown_context_dongs']=10
+        if len(context_names)>10:
+            e.supplementary['shown_context_dongs']=10
         e.sources+=['DB1: Analysis1 지역유형','DB1: Analysis3 보조자료','서울 기상 원본']
     return e

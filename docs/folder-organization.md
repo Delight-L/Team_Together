@@ -24,6 +24,7 @@ Team_Together/
 │  └─ welfare/               DB2 복지사업 수집
 ├─ data/                     공통 원자료·가공 자료
 ├─ assets/brand/             로고·캐릭터·브랜드 원본
+│  └─ source/                화면에서 직접 쓰지 않는 CI·브랜드 보드·가이드 원본
 ├─ docs/                     팀 문서·아키텍처·외부 참고자료·과거 안내(history/)
 ├─ scripts/                  실행·이관·정기 수집 도구
 ├─ deploy/                   배포 설정
@@ -58,6 +59,11 @@ PostgreSQL의 `db1`, `db2`, `work` 스키마 이름과 테이블은 폴더 이�
 보미 챗봇 코어(담당 선택·규제·에이전트)는 `backend/bomi/`에 있습니다. 예전 총괄 `backend/agents/supervisor.py`와 복지 대화 `welfare/service.py`·`dialogue/orchestrator.py`는 2026-10-16에 `bomi`로 대체되어 삭제했습니다.
 
 ## 자료 보존 기준
+
+2026-10-19 추가 정리에서 브랜드 원본 이미지 5개와 가이드 PPTX 1개를
+`assets/brand/source/`로 모았습니다. 실제 서비스에서 참조하는 로고·캐릭터·애니메이션은
+기존 `assets/brand/` 경로를 사용합니다. 코드 읽기와 파일 정리 기준은
+[초급 개발자 안내](code-reading-guide.md)를 참고하세요.
 
 이번 정리는 파일 이동과 경로 수정입니다. 기존 분석 코드·모델·입력·검증 결과는 삭제하지 않습니다.
 분석 내부의 `data`, `models`, `outputs`는 실행·재현 경로를 유지하기 위해 해당 파이프라인에 보관합니다.

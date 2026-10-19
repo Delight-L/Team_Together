@@ -12,18 +12,26 @@ METRICS=('call_contacts','text_contacts','weekday_move_count','weekend_move_coun
 DOMAINS={'communication':METRICS[:2],'mobility':METRICS[2:]}
 BASELINE_END='2025-06-01'
 SETTINGS={'method':'a2_activity_level_v2','tracked_metrics':list(METRICS),'baseline_end':BASELINE_END,'min_same_month_years':3,'min_peer_dongs':11,'min_valid_population':200,'min_coverage':0.8,'recovery_reference':'month_immediately_before_signal','interpretation':'descriptive_not_isolation_risk'}
-def canonical(x):return json.dumps(x,ensure_ascii=False,sort_keys=True,allow_nan=False)
+def canonical(x):
+    return json.dumps(x,ensure_ascii=False,sort_keys=True,allow_nan=False)
 def prior_month(date):
-    y,m=map(int,date[:7].split('-'));return f'{y if m>1 else y-1:04d}-{m-1 if m>1 else 12:02d}-01'
+    y,m=map(int,date[:7].split('-'))
+    return f'{y if m>1 else y-1:04d}-{m-1 if m>1 else 12:02d}-01'
 def valid(row,m):
-    if not row:return False
-    value=row.get(m);pop=row.get(m+'_valid_population');total=row.get('total_population')
+    if not row:
+        return False
+    value=row.get(m)
+    pop=row.get(m+'_valid_population')
+    total=row.get('total_population')
     return all(isinstance(v,(int,float)) and math.isfinite(v) for v in (value,pop,total)) and value>0 and total>0 and pop>=SETTINGS['min_valid_population'] and SETTINGS['min_coverage']<=pop/total<=1.00000001
 def state(values):
-    if any(v is None for v in values):return 'unavailable'
+    if any(v is None for v in values):
+        return 'unavailable'
     # Zero means equality to the pre-signal comparison level, not a risk threshold.
-    if all(v>=-1e-10 for v in values):return 'recovered_to_reference'
-    if all(v<-1e-10 for v in values):return 'both_below_reference'
+    if all(v>=-1e-10 for v in values):
+        return 'recovered_to_reference'
+    if all(v<-1e-10 for v in values):
+        return 'both_below_reference'
     return 'mixed_recovery'
 
 def metric_state(value):
@@ -31,65 +39,93 @@ def metric_state(value):
 
 def episode_events(events):
     """Keep the first event of consecutive signals; retain later separate episodes."""
-    selected=[];previous={}
+    selected=[]
+    previous={}
     for event in sorted(events,key=lambda e:(e['date'],e['adm_cd'],e['age_band'],e['model_version'])):
         key=(event['adm_cd'],event['age_band'],event['model_version'])
-        if previous.get(key)!=prior_month(event['date']):selected.append(event)
+        if previous.get(key)!=prior_month(event['date']):
+            selected.append(event)
         previous[key]=event['date']
     return selected
 
 def recovery_status(states):
     # Relative recovery cannot override a raw/seasonal shortfall.
     raw,seasonal=states['raw_state'],states['seasonal_state']
-    if 'unavailable' in (raw,seasonal):return 'unavailable'
-    if raw==seasonal=='recovered_to_reference':return 'reference_level_reached'
-    if raw==seasonal=='both_below_reference':return 'below_reference'
+    if 'unavailable' in (raw,seasonal):
+        return 'unavailable'
+    if raw==seasonal=='recovered_to_reference':
+        return 'reference_level_reached'
+    if raw==seasonal=='both_below_reference':
+        return 'below_reference'
     return 'mixed_recovery_or_basis'
 def compute(features,events):
-    rows={};dates=set();codes=set();ages=set()
+    rows={}
+    dates=set()
+    codes=set()
+    ages=set()
     for source in features:
-        r=dict(source);r['date']=r['date'][:10];r['adm_cd']=str(r.get('adm_cd',r.get('행정동코드')))
+        r=dict(source)
+        r['date']=r['date'][:10]
+        r['adm_cd']=str(r.get('adm_cd',r.get('행정동코드')))
         key=(r['adm_cd'],r['age_band'],r['date'])
-        if key in rows:raise ValueError('Duplicate feature key')
-        rows[key]=r;dates.add(r['date']);codes.add(r['adm_cd']);ages.add(r['age_band'])
-    if not rows:raise ValueError('No service features')
+        if key in rows:
+            raise ValueError('Duplicate feature key')
+        rows[key]=r
+        dates.add(r['date'])
+        codes.add(r['adm_cd'])
+        ages.add(r['age_band'])
+    if not rows:
+        raise ValueError('No service features')
     expected={(code,age) for code in codes for age in ages}
     for date in dates:
-        if {(code,age) for code,age,d in rows if d==date}!=expected:raise ValueError('Incomplete monthly service grid')
-        if date[8:10]!='01':raise ValueError('Expected month start dates')
+        if {(code,age) for code,age,d in rows if d==date}!=expected:
+            raise ValueError('Incomplete monthly service grid')
+        if date[8:10]!='01':
+            raise ValueError('Expected month start dates')
     ordered=sorted(dates)
-    if any(prior_month(b)!=a for a,b in zip(ordered,ordered[1:])):raise ValueError('Missing monthly feature history')
+    if any(prior_month(b)!=a for a,b in zip(ordered,ordered[1:])):
+        raise ValueError('Missing monthly feature history')
     hist=defaultdict(list)
     for (code,age,date),r in rows.items():
         if date<=BASELINE_END:
             for m in METRICS:
-                if valid(r,m):hist[(code,age,date[5:7],m)].append((date,r[m]))
-    baseline={};levels={}
+                if valid(r,m):
+                    hist[(code,age,date[5:7],m)].append((date,r[m]))
+    baseline={}
+    levels={}
     for key,values in hist.items():
-        values=sorted(values);baseline[key]={'n':len(values),'periods':[x[0] for x in values],'value':median(x[1] for x in values)}
+        values=sorted(values)
+        baseline[key]={'n':len(values),'periods':[x[0] for x in values],'value':median(x[1] for x in values)}
     for (code,age,date),r in sorted(rows.items()):
         payload={'adm_cd':code,'adm_nm':r.get('행정동',r.get('adm_nm')),'age_band':age,'date':date,'raw':{},'seasonal_reference':{},'seasonal_index':{},'quality':{},'interpretation':'retrospective_descriptive_not_risk'}
         for m in METRICS:
             b=baseline.get((code,age,date[5:7],m),{'n':0,'periods':[],'value':None})
             usable=valid(r,m) and b['n']>=SETTINGS['min_same_month_years']
-            payload['raw'][m]=r.get(m);payload['seasonal_reference'][m]=b
+            payload['raw'][m]=r.get(m)
+            payload['seasonal_reference'][m]=b
             payload['seasonal_index'][m]=r[m]/b['value'] if usable else None
             payload['quality'][m]='ready' if usable else ('current_invalid' if not valid(r,m) else 'insufficient_same_month_history')
         levels[(code,age,date)]=payload
     tracks=[]
     for event in episode_events(events):
-        code,age,start=event['adm_cd'],event['age_band'],event['date'];anchor=prior_month(start)
-        streaks={domain:0 for domain in DOMAINS};all_streak=0
+        code,age,start=event['adm_cd'],event['age_band'],event['date']
+        anchor=prior_month(start)
+        streaks={domain:0 for domain in DOMAINS}
+        all_streak=0
         for date in sorted(d for d in dates if d>=start):
-            current=levels.get((code,age,date));pre=levels.get((code,age,anchor))
-            if current is None:raise ValueError('Missing tracked month')
+            current=levels.get((code,age,date))
+            pre=levels.get((code,age,anchor))
+            if current is None:
+                raise ValueError('Missing tracked month')
             result={'adm_cd':code,'adm_nm':current['adm_nm'],'age_band':age,'signal_date':start,'date':date,'detection_model_version':event['model_version'],'reference_date':anchor,'trigger_domains':[m for m in ('communication','mobility') if event.get(m+'_signal')==1],'raw_change_pct':{},'seasonal_change_pct':{},'common_change_pct':{},'local_change_pct':{},'peer_n':{},'quality':current['quality'],'comparison_note':'same_calendar_month_baseline_normalization_then_pre_signal_ratio; district_median_includes_target; overlapping_source_windows_not_independent'}
             for m in METRICS:
-                a=current['seasonal_index'][m];b=pre['seasonal_index'][m] if pre else None
+                a=current['seasonal_index'][m]
+                b=pre['seasonal_index'][m] if pre else None
                 seasonal=(a/b-1)*100 if a is not None and b is not None else None
                 pairs=[]
                 for peer in codes:
-                    pc=levels.get((peer,age,date));pp=levels.get((peer,age,anchor))
+                    pc=levels.get((peer,age,date))
+                    pp=levels.get((peer,age,anchor))
                     if pc and pp and pc['seasonal_index'][m] is not None and pp['seasonal_index'][m] is not None:
                         pairs.append(pc['seasonal_index'][m]/pp['seasonal_index'][m])
                 common=median(pairs) if len(pairs)>=SETTINGS['min_peer_dongs'] else None
@@ -147,8 +183,10 @@ def run(db,output=None,migrate_from_v1=False):
         exists=c.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_activity_model'").fetchone()
         prior={v:json.loads(s) for v,s in c.execute('SELECT version,settings_json FROM a2_activity_model')} if exists else {}
         if prior and version not in prior:
-            if any(s.get('method')==SETTINGS['method'] for s in prior.values()):raise ValueError('Baseline/settings changed; explicit model migration required')
-            if not migrate_from_v1 or any(s.get('method')!='a2_activity_level_v1' for s in prior.values()):raise ValueError('Four-metric tracking requires explicit --migrate-from-v1')
+            if any(s.get('method')==SETTINGS['method'] for s in prior.values()):
+                raise ValueError('Baseline/settings changed; explicit model migration required')
+            if not migrate_from_v1 or any(s.get('method')!='a2_activity_level_v1' for s in prior.values()):
+                raise ValueError('Four-metric tracking requires explicit --migrate-from-v1')
         with c:
             c.executescript('SELECT pg_advisory_xact_lock(hashtext(current_schema()));'+SCHEMA)
             c.execute('INSERT INTO a2_activity_model VALUES(%s,%s,%s) ON CONFLICT DO NOTHING',(version,canonical(SETTINGS),fingerprint))
@@ -156,28 +194,42 @@ def run(db,output=None,migrate_from_v1=False):
             for table,records,fields in [('a2_activity_level',levels,['adm_cd','date','age_band']),('a2_activity_followup',tracks,['adm_cd','signal_date','date','age_band','detection_model_version'])]:
                 count=0
                 for record in records:
-                    key=[record[k] for k in fields]+[version];payload=canonical(record)
+                    key=[record[k] for k in fields]+[version]
+                    payload=canonical(record)
                     where=' AND '.join(f'{k}=%s' for k in fields+['version'])
                     existing=c.execute(f'SELECT payload_json FROM {table} WHERE {where}',key).fetchone()
-                    if existing and existing[0]!=payload:raise ValueError('Changed historical tracking result; explicit revision required: '+str(key))
+                    if existing and existing[0]!=payload:
+                        raise ValueError('Changed historical tracking result; explicit revision required: '+str(key))
                     if not existing:
-                        c.execute(f"""INSERT INTO {table} VALUES({','.join(('%s' for _ in key))},%s)""",key+[payload]);count+=1
+                        c.execute(f"""INSERT INTO {table} VALUES({','.join(('%s' for _ in key))},%s)""",key+[payload])
+                        count+=1
                 inserted[table]=count
             c.execute('INSERT INTO a2_activity_active_model VALUES(1,%s) ON CONFLICT(singleton) DO UPDATE SET version=excluded.version',(version,))
         report={'version':version,'baseline_fingerprint':fingerprint,'tracked_metrics':list(METRICS),'level_rows':len(levels),'followup_rows':len(tracks),'events':len(events),'inserted':inserted,'existing_detection_untouched':True,'legacy_v1_preserved':any(s.get('method')=='a2_activity_level_v1' for s in prior.values())}
-    if output:export(db,output)
+    if output:
+        export(db,output)
     return report
 def export(db,output):
-    output=Path(output);output.mkdir(parents=True,exist_ok=True)
+    output=Path(output)
+    output.mkdir(parents=True,exist_ok=True)
     with database.connect(db) as c:
         for table,name in [('v_a2_activity_level','activity_level.csv'),('v_a2_activity_followup','activity_followup.csv')]:
             cursor=c.execute(f'SELECT * FROM {table} ORDER BY adm_cd,date,age_band,version')
             with (output/name).open('w',encoding='utf-8-sig',newline='') as f:
-                w=csv.writer(f);w.writerow([col[0] for col in cursor.description]);w.writerows(cursor)
+                w=csv.writer(f)
+                w.writerow([col[0] for col in cursor.description])
+                w.writerows(cursor)
         (output/'activity_followup_latest.json').write_text(json.dumps([json.loads(r[0]) for r in c.execute('SELECT payload_json FROM v_a2_activity_followup_latest ORDER BY signal_date,adm_cd,age_band')],ensure_ascii=False,indent=2),encoding='utf-8')
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--db',required=True);parser.add_argument('--output');parser.add_argument('--export-only',action='store_true');parser.add_argument('--migrate-from-v1',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--db',required=True)
+    parser.add_argument('--output')
+    parser.add_argument('--export-only',action='store_true')
+    parser.add_argument('--migrate-from-v1',action='store_true')
+    args=parser.parse_args()
     if args.export_only:
-        if not args.output:parser.error('--output required for export-only')
+        if not args.output:
+            parser.error('--output required for export-only')
         export(args.db,args.output)
-    else:print(json.dumps(run(args.db,args.output,args.migrate_from_v1),ensure_ascii=False,indent=2))
+    else:
+        print(json.dumps(run(args.db,args.output,args.migrate_from_v1),ensure_ascii=False,indent=2))

@@ -52,7 +52,8 @@ def _explicit_districts(question: str, districts: set[str]) -> tuple[str, ...]:
 
 def _api_key(project_root: Path) -> str | None:
     value=os.getenv("GEMINI_API_KEY","").strip()
-    if value: return value
+    if value:
+        return value
     # `start_chatbot.bat` normally imports backend.app.config, which loads
     # .env.  The resolver is also used directly by the CLI and tests, though,
     # so it must not silently fall back to rule parsing merely because that
@@ -60,20 +61,24 @@ def _api_key(project_root: Path) -> str | None:
     try:
         from dotenv import dotenv_values
         value=(dotenv_values(project_root / ".env").get("GEMINI_API_KEY") or "").strip()
-        if value: return value
+        if value:
+            return value
     except Exception:
         pass
     path=project_root/"chatbot_agent"/"api_key.txt"
     if path.is_file():
         value=path.read_text(encoding="utf-8-sig").strip()
-        if value and not value.startswith("여기에_"): return value
+        if value and not value.startswith("여기에_"):
+            return value
     return None
 
 def _json_object(text: str) -> dict:
     match=re.search(r"\{.*\}",text,re.S)
-    if not match: raise ValueError("LLM 목적분류 결과에 JSON 객체가 없습니다.")
+    if not match:
+        raise ValueError("LLM 목적분류 결과에 JSON 객체가 없습니다.")
     value=json.loads(match.group(0))
-    if not isinstance(value,dict): raise ValueError("목적분류 결과가 객체가 아닙니다.")
+    if not isinstance(value,dict):
+        raise ValueError("목적분류 결과가 객체가 아닙니다.")
     return value
 
 class IntentResolver:
@@ -207,14 +212,19 @@ JSON만 반환하세요:
             self.last_source='gemini'
             if intent.question_type=='age_activity':
                 bands,unsupported=comparison_ages(question)
-                if unsupported:return replace(intent,needs=(*intent.needs,'연령'))
-                if bands:return replace(intent,age_band=bands[0] if len(bands)==1 else None,
+                if unsupported:
+                    return replace(intent,needs=(*intent.needs,'연령'))
+                if bands:
+                    return replace(intent,age_band=bands[0] if len(bands)==1 else None,
                                         age_bands=bands,age_scope_explicit=True)
                 return replace(intent,age_scope_explicit=True)
             age,ambiguous=age_condition(question)
-            if ambiguous:return replace(intent,needs=(*intent.needs,'연령'))
-            if age:return replace(intent,age_band=age,age_scope_explicit=True)
-            if re.search(r'전\s*연령|전체\s*연령',question):return replace(intent,age_band=None,age_scope_explicit=True)
+            if ambiguous:
+                return replace(intent,needs=(*intent.needs,'연령'))
+            if age:
+                return replace(intent,age_band=age,age_scope_explicit=True)
+            if re.search(r'전\s*연령|전체\s*연령',question):
+                return replace(intent,age_band=None,age_scope_explicit=True)
             if (intent.question_type in {"signals", "rank_regions"}
                     and re.search(r"신호", question)
                     and re.search(r"요약|상태", question)
@@ -262,7 +272,8 @@ JSON만 반환하세요:
             age,unsupported=age_condition(question)
             bands,_=comparison_ages(question)
             needs=tuple(item for item in pending.needs if not (age_only and age and item=='연령'))
-            if unsupported:needs=(*needs,'연령')
+            if unsupported:
+                needs=(*needs,'연령')
             return replace(pending,dong=parsed.dong or pending.dong,dongs=names or pending.dongs,
                            start_month=parsed.start_month or pending.start_month,
                            end_month=parsed.end_month or pending.end_month,
@@ -386,11 +397,15 @@ JSON만 반환하세요:
         if kind in {"signals", "rank_regions"}:
             needs=tuple(item for item in needs if item != "행정동")
         age=raw.get('age_band')
-        if age not in {None,'20s','30s','40s','50s','60plus'}:needs=(*needs,'연령');age=None
+        if age not in {None,'20s','30s','40s','50s','60plus'}:
+            needs=(*needs,'연령')
+            age=None
         bands=raw.get('age_bands',[])
-        if not isinstance(bands,list):raise ValueError('Age comparison groups must be a list')
+        if not isinstance(bands,list):
+            raise ValueError('Age comparison groups must be a list')
         if any(b not in {'20s','30s','40s','50s','60plus'} for b in bands):
-            needs=(*needs,'연령');bands=[]
+            needs=(*needs,'연령')
+            bands=[]
         bands=tuple(dict.fromkeys(bands)) if kind=='age_activity' else ()
         clarification=raw.get("clarifying_question")
         clarification=clarification.strip()[:300] if isinstance(clarification,str) else None

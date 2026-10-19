@@ -38,10 +38,14 @@ def consumption_check(row):
                             'baseline_method':comparison.get('baseline_method')})
     available=[c for c in comparisons if c['available']]
     decreases=[c['domain'] for c in available if c['direction']=='decrease']
-    if not available:status='unavailable'
-    elif len(decreases)==len(available):status='all_comparable_domains_decreased'
-    elif decreases:status='mixed_directions'
-    else:status='no_decrease_in_comparable_domains'
+    if not available:
+        status='unavailable'
+    elif len(decreases)==len(available):
+        status='all_comparable_domains_decreased'
+    elif decreases:
+        status='mixed_directions'
+    else:
+        status='no_decrease_in_comparable_domains'
     card=[d['domain'] for d in domains if d.get('card_full_window_available') and d.get('card_previous_window_available') and finite(d.get('card_window_change_pct'))]
     return {'status':status,'available_domain_count':len(available),'total_domain_count':len(domains),
             'coverage_complete':bool(domains) and len(available)==len(domains),
@@ -74,13 +78,15 @@ def evidence_checks(row,metrics):
 def check_labels(checks):
     # A positive local check can exist without a positive self-history check.
     def basis_label(check):
-        if check['status']=='confirmed':return '확인: '+ '·'.join(LABELS[k] for k in check['triggered_metrics'])
+        if check['status']=='confirmed':
+            return '확인: '+ '·'.join(LABELS[k] for k in check['triggered_metrics'])
         return '추가 탐지 없음' if check['status']=='not_detected' else '평가 자료 부족'
     return [basis_label(checks['self_history']),basis_label(checks['regional_comparison'])]
 
 def explain(row):
     r=row.get('result_json') or {}
-    comm=bool(row.get('communication_signal')); move=bool(row.get('mobility_signal'))
+    comm=bool(row.get('communication_signal'))
+    move=bool(row.get('mobility_signal'))
     assessed=row.get('assessment_status')=='assessed'
     category=('communication_and_mobility' if comm and move else 'communication_only' if comm else 'mobility_only' if move else 'no_signal' if assessed else 'insufficient_data')
     titles={'communication_and_mobility':'소통·이동 복합 변화 신호','communication_only':'소통 변화 관찰 신호','mobility_only':'이동 변화 관찰 신호','no_signal':'이번 기간 탐지 신호 없음','insufficient_data':'평가 자료 부족'}
@@ -94,7 +100,8 @@ def explain(row):
             evidence['tests'].append({'basis':basis,'assessable':r.get(key+'_'+basis+'_assessable'),'signal':r.get(key+'_'+basis+'_signal'),'rz':r.get(key+'_'+basis+'_rz'),'threshold':r.get(key+'_'+basis+'_threshold'),'baseline_n':r.get(key+'_'+basis+'_baseline_n')})
         metrics.append(evidence)
         changes=evidence['change_pct']
-        if changes is not None:lines.append(f"{label}의 직전 라벨 대비 변화는 {changes:+.2f}%입니다. 두 관측 창은 2개월이 겹치므로 독립된 월별 변화로 해석하지 않습니다.")
+        if changes is not None:
+            lines.append(f"{label}의 직전 라벨 대비 변화는 {changes:+.2f}%입니다. 두 관측 창은 2개월이 겹치므로 독립된 월별 변화로 해석하지 않습니다.")
         for test in evidence['tests']:
             if test['signal'] and test['assessable'] and test['rz'] is not None and test['threshold'] is not None:
                 basis='과거 자체 변화 기준' if test['basis']=='absolute' else '동일 연령의 강남구 공통 변화를 제외한 기준'
@@ -121,7 +128,8 @@ def explain(row):
     follow=row.get('activity_followup_same_label') or {}
     states={'mixed_recovery':'통화·문자의 회복 방향이 서로 다름','both_below_reference':'통화·문자 모두 기준보다 낮음','both_recovered':'통화·문자 모두 기준 수준 회복'}
     if follow:
-        raw=follow.get('raw_state');local=follow.get('local_state')
+        raw=follow.get('raw_state')
+        local=follow.get('local_state')
         lines.append(f"같은 라벨의 후속 추적: 원자료 상태 {states.get(raw,raw)}, 지역 공통 변화를 고려한 상태 {states.get(local,local)}. 기준 라벨 {follow.get('reference_date')}. 겹치는 관측 창의 연속 신호를 독립된 반복 사건으로 세지 않습니다.")
     if comm or move:
         lines.append('지속성은 추가 추적이 필요합니다. 같은 라벨의 추적 상태와 겹치는 관측 창의 연속 감소만으로 지속성이 확인됐다고 판정하지 않습니다.')
@@ -131,7 +139,8 @@ def explain(row):
         check=next(c for c in market['domains'] if c['domain']==domain.get('domain'))
         if check['available']:
             lines.append(f"{domain.get('domain')} 상권 소비 비교: {domain['market_period']}, 과거 동일 분기 비교 기준 대비 {value:+.2f}%. 동 소재 가맹점의 소비 배경이며 해당 연령 주민의 소비 변화로 환산하지 않습니다.")
-        else:lines.append(f"{domain.get('domain')} 상권 소비는 관측 창과 정확히 일치하는 분기 비교가 없어 연결 판단을 유보합니다.")
+        else:
+            lines.append(f"{domain.get('domain')} 상권 소비는 관측 창과 정확히 일치하는 분기 비교가 없어 연결 판단을 유보합니다.")
         card=domain.get('card_window_change_pct')
         if isinstance(card,(int,float)) and domain.get('card_previous_window_available'):
             lines.append(f"강남구 해당 연령 카드 소비의 동일 창 비교는 {card:+.2f}%입니다. 가맹점 소재지 기준 보조자료입니다.")
@@ -189,15 +198,21 @@ def markdown(data):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--db',default='db1_pipeline')
-    for name in ('dong','age','label','as-of','output','markdown'):p.add_argument('--'+name)
-    p.add_argument('--limit',type=int,default=1000);p.add_argument('--include-no-signals',action='store_true')
+    for name in ('dong','age','label','as-of','output','markdown'):
+        p.add_argument('--'+name)
+    p.add_argument('--limit',type=int,default=1000)
+    p.add_argument('--include-no-signals',action='store_true')
     a=p.parse_args()
     sys.path.insert(0,str(Path(__file__).resolve().parent))
     from read_agent_context import read
     data=build(read(a.db,a.label,a.dong,a.age,not a.include_no_signals,a.limit,a.as_of))
     content=json.dumps(data,ensure_ascii=False,indent=2,allow_nan=False)
-    if a.output:Path(a.output).write_text(content,encoding='utf-8')
-    else:print(content)
-    if a.markdown:Path(a.markdown).write_text(markdown(data),encoding='utf-8')
+    if a.output:
+        Path(a.output).write_text(content,encoding='utf-8')
+    else:
+        print(content)
+    if a.markdown:
+        Path(a.markdown).write_text(markdown(data),encoding='utf-8')
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    main()

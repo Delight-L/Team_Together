@@ -9,8 +9,10 @@ PERSONAL_REQUEST = "이 자료는 동 단위 집계입니다. 개인의 고립 �
 
 def validate_input(question: str) -> GuardResult:
     q = question.strip()
-    if not q: return GuardResult(False, "질문을 입력하거나 메뉴를 선택해 주세요.")
-    if len(q) > MAX_CHARS: return GuardResult(False, f"질문은 {MAX_CHARS}자 이내로 입력해 주세요.")
+    if not q:
+        return GuardResult(False, "질문을 입력하거나 메뉴를 선택해 주세요.")
+    if len(q) > MAX_CHARS:
+        return GuardResult(False, f"질문은 {MAX_CHARS}자 이내로 입력해 주세요.")
     if re.search(r"(명단|개인.*고립|누가.*고립|주민.*이름|전화번호)", q):
         return GuardResult(False, PERSONAL_REQUEST)
     if re.search(r"(지시.*무시|프롬프트.*공개|api.?key|비밀번호)", q, re.I):

@@ -8,6 +8,7 @@
 | [파이프라인](../pipelines/README.md) | 전처리·분석·수집 |
 | [DB1 상세 안내](../pipelines/db1/README.md) | 분석별 실행·해석·검증 |
 | [폴더 구성](folder-organization.md) | 폴더 역할과 이동 이력 |
+| [코드 읽기·가독성 기준](code-reading-guide.md) | 초급 개발자의 읽기 순서·DB 조회 흐름·파일 정리 기준 |
 | [2026-10-19 코드·파일 정리](repository-cleanup-2026-10-19.md) | 정리 대상·이동 내역·검증·남은 기능 문제 |
 | [DB1 서비스 통합](db1-integration.md) | 검사·서비스 DB 반영 |
 | [디자인 규칙](design-rules.md) | 화면 디자인 기준 |

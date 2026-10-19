@@ -31,6 +31,8 @@ for domain,names in zip(DOMAINS,[
  CARD_DOMAINS.update({n:domain for n in names})
 def harmonize_age(value):
  value=str(value).replace(' ','')
- if value in AGES:return value
- if value in ('60대','70대','80대','90대'):return '60대이상'
+ if value in AGES:
+     return value
+ if value in ('60대','70대','80대','90대'):
+     return '60대이상'
  raise ValueError(f'Unrecognized age group: {value}')

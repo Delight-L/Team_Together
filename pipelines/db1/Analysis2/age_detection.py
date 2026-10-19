@@ -59,18 +59,22 @@ def validate_features(frame, settings):
     f['date'] = pd.to_datetime(f.date, format='mixed')
     f['_area'] = f['행정동코드'].astype(str)
     f = f.loc[f.age_scheme.eq(settings['age_scheme'])].copy()
-    if f.empty: raise ValueError('No age feature history; rebuild first')
+    if f.empty:
+        raise ValueError('No age feature history; rebuild first')
     if not f.date.eq(f.date.dt.to_period('M').dt.to_timestamp()).all():
         raise ValueError('Age dates must be month starts')
-    if f.duplicated(['date']+KEY).any(): raise ValueError('Duplicate age history keys')
+    if f.duplicated(['date']+KEY).any():
+        raise ValueError('Duplicate age history keys')
     dates = pd.DatetimeIndex(sorted(f.date.unique()))
     expected = pd.date_range(settings['baseline_start'], dates.max(), freq='MS')
-    if not dates.equals(expected): raise ValueError('Age history has missing months')
+    if not dates.equals(expected):
+        raise ValueError('Age history has missing months')
     codes = set(f.loc[f.date.eq(dates[0]), '_area'])
     for _, group in f.groupby('date'):
         if len(codes) != 22 or len(group) != 110 or set(group.age_band) != set(BANDS) or set(group['_area']) != codes:
             raise ValueError('Expected all 22 dongs and five age bands per month')
-    if dates.max() < pd.Timestamp(settings['baseline_end']): raise ValueError('Incomplete initial age baseline')
+    if dates.max() < pd.Timestamp(settings['baseline_end']):
+        raise ValueError('Incomplete initial age baseline')
     return f.sort_values(KEY+['date']).reset_index(drop=True)
 
 
@@ -84,10 +88,14 @@ def historical_z(values, minimum, scale):
     for pos, value in enumerate(values):
         history = values[:pos][np.isfinite(values[:pos])]
         counts[pos] = len(history)
-        if len(history) < minimum or not np.isfinite(value): continue
-        median = np.median(history); mad = np.median(np.abs(history-median))
-        medians[pos] = median; mads[pos] = mad
-        if mad > 0: scores[pos] = scale * (value-median)/mad
+        if len(history) < minimum or not np.isfinite(value):
+            continue
+        median = np.median(history)
+        mad = np.median(np.abs(history-median))
+        medians[pos] = median
+        mads[pos] = mad
+        if mad > 0:
+            scores[pos] = scale * (value-median)/mad
     return scores, counts, medians, mads
 
 
@@ -167,8 +175,10 @@ def scope_flags(frame, scope, calibration):
 
 
 def detect(scores, common, calibration, settings):
-    f = scores.copy(); c = common.copy()
-    for scope in ['absolute','local']: scope_flags(f,scope,calibration)
+    f = scores.copy()
+    c = common.copy()
+    for scope in ['absolute','local']:
+        scope_flags(f,scope,calibration)
     scope_flags(c,'common',calibration)
     for domain in ['communication','mobility']:
         assessable = f[domain+'_absolute_assessable'] | f[domain+'_local_assessable']
@@ -192,7 +202,8 @@ def detect(scores, common, calibration, settings):
     # Detect large source-population changes as a review reason, not proof of a demographic cause.
     f['estimated_population_change_pct'] = f.groupby(KEY).total_population.pct_change(fill_method=None)*100
     f['population_shift_review'] = f.estimated_population_change_pct.abs().ge(10)
-    if 'source_male_ratio' not in f: f['source_male_ratio'] = np.nan
+    if 'source_male_ratio' not in f:
+        f['source_male_ratio'] = np.nan
     f['sex_composition_change_pp'] = f.groupby(KEY).source_male_ratio.diff()*100
     f['sex_composition_shift_review'] = f.sex_composition_change_pp.abs().ge(5)
     f['review_reasons'] = ''
@@ -208,18 +219,26 @@ def detect(scores, common, calibration, settings):
     f['signal_status'] = 'baseline_only'
     f['adjacent_signal_run'] = 0
     for _, group in f.groupby(KEY, sort=False):
-        previous = None; run_length = 0
+        previous = None
+        run_length = 0
         for idx in group.index:
-            if f.at[idx,'date'] < start: continue
+            if f.at[idx,'date'] < start:
+                continue
             signal = f.at[idx,'any_signal']
             if pd.isna(signal):
-                status = 'Deferred'; previous = None; run_length = 0
+                status = 'Deferred'
+                previous = None
+                run_length = 0
             elif signal:
                 status = 'Continuing' if previous is True else ('New_after_gap' if previous is None and f.at[idx,'date'] > start else 'New')
-                run_length = run_length+1 if previous is True else 1; previous = True
+                run_length = run_length+1 if previous is True else 1
+                previous = True
             else:
-                status = 'No_signal'; run_length = 0; previous = False
-            f.at[idx,'signal_status'] = status; f.at[idx,'adjacent_signal_run'] = run_length
+                status = 'No_signal'
+                run_length = 0
+                previous = False
+            f.at[idx,'signal_status'] = status
+            f.at[idx,'adjacent_signal_run'] = run_length
     f['signal_interpretation'] = 'aggregate isolation-related behavior-change screening; not confirmed social isolation or individual diagnosis'
     f['persistence_note'] = 'adjacent months can overlap in the source three-month aggregation; run length is not independent repeated evidence'
     return f, c
@@ -233,17 +252,21 @@ def pipeline(frame, settings=None):
     baseline = scores.loc[scores.date.le(pd.Timestamp(settings['baseline_end']))].drop(columns=['_area']).sort_values(['date','행정동코드','age_band'])
     fingerprint = hashlib.sha256(canonical(records(baseline)).encode()).hexdigest()
     version = settings['method']+'_'+hashlib.sha256((canonical(settings)+fingerprint).encode()).hexdigest()[:12]
-    result['detection_model_version'] = version; common['detection_model_version'] = version
+    result['detection_model_version'] = version
+    common['detection_model_version'] = version
     model = {'model_version':version,'baseline_fingerprint':fingerprint,'settings':settings,'calibration':records(calibration)}
     return result.drop(columns=['_area']), common, calibration, model
 
 
 def add_context(con, result, model_version):
     result = result.copy()
-    if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a1_context'").fetchone(): return result
+    if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a1_context'").fetchone():
+        return result
     contexts = database.read_frame('SELECT adm_cd,period,effective_from,cluster,cluster_type FROM a1_context',con)
-    if contexts.empty: return result
-    result['context_period'] = None; result['a1_cluster_type'] = None
+    if contexts.empty:
+        return result
+    result['context_period'] = None
+    result['a1_cluster_type'] = None
     saved_context = {
         (row[0],row[1],row[2]):(row[3],row[4])
         for row in con.execute("SELECT adm_cd,date,age_band,json_extract_path_text((result_json)::json, 'context_period'),json_extract_path_text((result_json)::json, 'a1_cluster_type') FROM a2_age_detection WHERE model_version=%s",(model_version,))
@@ -287,24 +310,30 @@ def commit(con, result, common, model):
         existing = con.execute('SELECT result_json FROM a2_age_detection WHERE adm_cd=%s AND date=%s AND age_scheme=%s AND age_band=%s AND model_version=%s',key).fetchone()
         payload = canonical(row)
         if existing:
-            if existing[0] != payload: raise ValueError(f'{key}: changed detection result; explicit model revision required')
+            if existing[0] != payload:
+                raise ValueError(f'{key}: changed detection result; explicit model revision required')
             continue
         flags = [None if row[k] is None else int(row[k]) for k in ['communication_signal','mobility_signal','combined_signal','isolation_related_candidate']]
-        con.execute('INSERT INTO a2_age_detection VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(*key,row['assessment_status'],*flags,payload)); saved+=1
+        con.execute('INSERT INTO a2_age_detection VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',(*key,row['assessment_status'],*flags,payload))
+        saved+=1
     for row in records(common):
-        date = pd.Timestamp(row['date']).strftime('%Y-%m-%d'); payload=canonical(row)
+        date = pd.Timestamp(row['date']).strftime('%Y-%m-%d')
+        payload=canonical(row)
         old=con.execute('SELECT result_json FROM a2_age_common_change WHERE date=%s AND age_band=%s AND model_version=%s',(date,row['age_band'],version)).fetchone()
-        if old and old[0] != payload: raise ValueError('Common age change results differ on rerun')
+        if old and old[0] != payload:
+            raise ValueError('Common age change results differ on rerun')
         con.execute('INSERT INTO a2_age_common_change VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING',(date,row['age_band'],version,payload))
     return saved
 
 
 def export(db, output):
-    output=Path(output);output.mkdir(parents=True,exist_ok=True)
+    output=Path(output)
+    output.mkdir(parents=True,exist_ok=True)
     with database.connect(db) as con:
         for table,filename in [('a2_age_detection','analysis2_age_detection.csv'),('a2_age_common_change','analysis2_age_common_change.csv')]:
             frame=pd.DataFrame([json.loads(row[0]) for row in con.execute(f'SELECT result_json FROM {table}')])
-            if not frame.empty: frame.sort_values(['date','age_band']).to_csv(output/filename,index=False,encoding='utf-8-sig')
+            if not frame.empty:
+                frame.sort_values(['date','age_band']).to_csv(output/filename,index=False,encoding='utf-8-sig')
 
 
 def run(db, output, settings=None):
@@ -315,14 +344,16 @@ def run(db, output, settings=None):
     result=result.loc[result.date.ge(start)].copy()
     common=common.loc[common.date.ge(start)].copy()
     with database.connect(db) as con,con:
-        con.execute('SET CONSTRAINTS ALL IMMEDIATE;');con.executescript(SCHEMA)
+        con.execute('SET CONSTRAINTS ALL IMMEDIATE;')
+        con.executescript(SCHEMA)
         # Existing model baseline/config cannot silently change when future data arrive.
         old=con.execute('SELECT model_version FROM a2_age_model').fetchall()
         if old and model['model_version'] not in [r[0] for r in old]:
             raise ValueError('Existing age baseline/settings changed; explicit version migration required')
         result=add_context(con,result,model['model_version'])
         saved=commit(con,result,common,model)
-    output=Path(output);output.mkdir(parents=True,exist_ok=True)
+    output=Path(output)
+    output.mkdir(parents=True,exist_ok=True)
     calibration.to_csv(output/'age_detection_calibration.csv',index=False,encoding='utf-8-sig')
     diagnostic.to_csv(output/'age_detection_score_history.csv',index=False,encoding='utf-8-sig')
     (output/'age_detection_model.json').write_text(json.dumps(model,ensure_ascii=False,indent=2),encoding='utf-8')
@@ -335,9 +366,11 @@ def run(db, output, settings=None):
     summary.to_csv(output/'age_detection_monthly_summary.csv',index=False,encoding='utf-8-sig')
     sensitivity=[]
     for threshold in [-2.0,-2.5,-3.0,-4.0]:
-        modified=calibration.copy();modified['threshold']=threshold
+        modified=calibration.copy()
+        modified['threshold']=threshold
         scores=diagnostic.assign(_area=diagnostic['행정동코드'].astype(str))
-        f,_=detect(scores,common_history,modified,model['settings']); f=f.loc[f.date.le(pd.Timestamp(model['settings']['baseline_end'])) & f.date.ge(pd.Timestamp('2023-02-01'))]
+        f,_=detect(scores,common_history,modified,model['settings'])
+        f=f.loc[f.date.le(pd.Timestamp(model['settings']['baseline_end'])) & f.date.ge(pd.Timestamp('2023-02-01'))]
         sensitivity.append({'threshold':threshold,'baseline_fully_assessed_rows':int(f.assessment_status.eq('assessed').sum()),'baseline_partially_assessed_rows':int(f.assessment_status.eq('partially_assessed').sum()),'baseline_any_signal_rows':int(f.any_signal.fillna(False).sum()),'baseline_joint_signal_rows':int(f.combined_signal.fillna(False).sum()),'note':'baseline screening frequency, not false positives or accuracy'})
     pd.DataFrame(sensitivity).to_csv(output/'age_detection_baseline_sensitivity.csv',index=False,encoding='utf-8-sig')
     print(json.dumps({'model_version':model['model_version'],'rows':len(result),'saved_rows':saved,'joint_candidates':int(result.combined_signal.fillna(False).sum()),'partially_assessed':int(result.assessment_status.eq('partially_assessed').sum()),'deferred':int(result.assessment_status.eq('deferred').sum())},ensure_ascii=False),flush=True)
@@ -363,8 +396,11 @@ def main():
     parser.add_argument('--settings',help='Optional JSON settings; changes require explicit model migration after first run')
     parser.add_argument('--export-only',action='store_true')
     a=parser.parse_args()
-    if a.export_only: export(a.db,a.output)
-    else: run(a.db,a.output,json.loads(Path(a.settings).read_text(encoding='utf-8')) if a.settings else None)
+    if a.export_only:
+        export(a.db,a.output)
+    else:
+        run(a.db,a.output,json.loads(Path(a.settings).read_text(encoding='utf-8')) if a.settings else None)
 
 
-if __name__=='__main__': main()
+if __name__=='__main__':
+    main()

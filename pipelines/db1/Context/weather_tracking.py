@@ -26,12 +26,14 @@ def finite(value):
     return isinstance(value,(float,int)) and math.isfinite(value) and value>=0
 
 def months(start=START,end=END):
-    y,m=map(int,start.split('-'));last_y,last_m=map(int,end.split('-'))
+    y,m=map(int,start.split('-'))
+    last_y,last_m=map(int,end.split('-'))
     result=[]
     while (y,m)<=(last_y,last_m):
         result.append(f'{y:04d}-{m:02d}')
         m+=1
-        if m==13:y,m=y+1,1
+        if m==13:
+            y,m=y+1,1
     return result
 
 def summary(current,candidates,metric):
@@ -62,7 +64,8 @@ def candidates_for_window(stored,label):
         candidate=f'{year:04d}'+label[4:]
         w=window(candidate)
         periods=w['observation_months']
-        if candidate>=label or periods[0]<START or periods[-1]>END:continue
+        if candidate>=label or periods[0]<START or periods[-1]>END:
+            continue
         values={metric:sum(stored[p][metric] for p in periods)
                 if all(p in stored and finite(stored[p].get(metric)) for p in periods) else None
                 for metric in METRICS}
@@ -71,15 +74,20 @@ def candidates_for_window(stored,label):
 
 def payload(stored,current_period,observation=None):
     if observation is None:
-        periods=[current_period];candidates=candidates_for_month(stored,current_period)
+        periods=[current_period]
+        candidates=candidates_for_month(stored,current_period)
         values=stored[current_period]
-        scope='actual_weather_month';observed_start=current_period+'-01'
+        scope='actual_weather_month'
+        observed_start=current_period+'-01'
         year,month=map(int,current_period.split('-'))
         observed_end=f'{current_period}-{calendar.monthrange(year,month)[1]:02d}'
     else:
-        periods=observation['observation_months'];candidates=candidates_for_window(stored,current_period)
-        values=observation['totals'];scope='behavior_observation_three_month_window'
-        observed_start=observation['observation_start'];observed_end=observation['observation_end']
+        periods=observation['observation_months']
+        candidates=candidates_for_window(stored,current_period)
+        values=observation['totals']
+        scope='behavior_observation_three_month_window'
+        observed_start=observation['observation_start']
+        observed_end=observation['observation_end']
     metrics={metric:summary(values.get(metric),candidates,metric) for metric in METRICS}
     return {'method_version':VERSION,'period':current_period,'scope':scope,
             'observation_months':periods,'observation_start':observed_start,'observation_end':observed_end,
@@ -95,21 +103,28 @@ def payload(stored,current_period,observation=None):
 def upsert(c,scope,period,p):
     table='ctx_weather_month_tracking' if scope=='month' else 'ctx_weather_window_tracking'
     key='period' if scope=='month' else 'date'
-    text=canonical(p);old=c.execute(f"""SELECT payload_json FROM {table} WHERE {key}=%s""",(period,)).fetchone()
-    if old and old[0]==text:return 0
+    text=canonical(p)
+    old=c.execute(f"""SELECT payload_json FROM {table} WHERE {key}=%s""",(period,)).fetchone()
+    if old and old[0]==text:
+        return 0
     if old:
         previous=json.loads(old[0])
-        if previous['method_version']!=VERSION:raise ValueError('Weather tracking version migration required')
+        if previous['method_version']!=VERSION:
+            raise ValueError('Weather tracking version migration required')
         changed=[]
         for metric in METRICS:
-            a=previous['metrics'][metric]['current'];b=p['metrics'][metric]['current']
+            a=previous['metrics'][metric]['current']
+            b=p['metrics'][metric]['current']
             if a!=b:
-                if a is not None or not finite(b):raise ValueError('Historical tracked weather change blocked '+period)
+                if a is not None or not finite(b):
+                    raise ValueError('Historical tracked weather change blocked '+period)
                 changed.append(metric)
-        if not changed:raise ValueError('Historical weather comparison revision blocked '+period)
+        if not changed:
+            raise ValueError('Historical weather comparison revision blocked '+period)
         c.execute('INSERT INTO ctx_weather_tracking_revision(scope,period,previous_json,current_json) VALUES(%s,%s,%s,%s)',(scope,period,old[0],text))
         c.execute(f"""UPDATE {table} SET payload_json=%s WHERE {key}=%s""",(text,period))
-    else:c.execute(f"""INSERT INTO {table} VALUES(%s,%s)""",(period,text))
+    else:
+        c.execute(f"""INSERT INTO {table} VALUES(%s,%s)""",(period,text))
     return 1
 
 def run(c):
@@ -117,21 +132,28 @@ def run(c):
     reference={p:stored.get(p) for p in months()}
     fingerprint=hashlib.sha256(canonical(reference).encode()).hexdigest()
     old=c.execute('SELECT fingerprint FROM ctx_weather_tracking_reference WHERE version=%s',(VERSION,)).fetchone()
-    if old and old[0]!=fingerprint:raise ValueError('Weather baseline revision requires explicit new method version')
-    if not old:c.execute('INSERT INTO ctx_weather_tracking_reference VALUES(%s,%s,%s)',(VERSION,fingerprint,canonical(reference)))
-    month_n=0;window_n=0
+    if old and old[0]!=fingerprint:
+        raise ValueError('Weather baseline revision requires explicit new method version')
+    if not old:
+        c.execute('INSERT INTO ctx_weather_tracking_reference VALUES(%s,%s,%s)',(VERSION,fingerprint,canonical(reference)))
+    month_n=0
+    window_n=0
     for period in sorted(stored):
-        if period>=TRACK_START:month_n+=upsert(c,'month',period,payload(stored,period))
+        if period>=TRACK_START:
+            month_n+=upsert(c,'month',period,payload(stored,period))
     for label,j in c.execute('SELECT date,payload_json FROM ctx_weather_window ORDER BY date').fetchall():
-        if label[:7]>=TRACK_START:window_n+=upsert(c,'window',label,payload(stored,label,json.loads(j)))
+        if label[:7]>=TRACK_START:
+            window_n+=upsert(c,'window',label,payload(stored,label,json.loads(j)))
     return {'new_or_enriched_months':month_n,'new_or_enriched_windows':window_n,'baseline_fingerprint':fingerprint,'existing_detection_modified':False}
 
 def export(c,output):
-    path=Path(output);path.mkdir(parents=True,exist_ok=True)
+    path=Path(output)
+    path.mkdir(parents=True,exist_ok=True)
     fields=['period','observation_months','metric','current','unit','baseline_n','baseline_mean','baseline_median','baseline_min','baseline_max','difference','change_pct','percent_status','historical_range_position','quality_status','baseline_periods']
     for table,filename,key in [('ctx_weather_month_tracking','weather_month_tracking.csv','period'),('ctx_weather_window_tracking','weather_window_tracking.csv','date')]:
         with (path/filename).open('w',encoding='utf-8-sig',newline='') as f:
-            writer=csv.DictWriter(f,fieldnames=fields);writer.writeheader()
+            writer=csv.DictWriter(f,fieldnames=fields)
+            writer.writeheader()
             for (j,) in c.execute('SELECT payload_json FROM '+table+' ORDER BY '+key):
                 p=json.loads(j)
                 for metric,m in p['metrics'].items():
