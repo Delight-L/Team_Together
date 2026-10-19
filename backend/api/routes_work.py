@@ -143,8 +143,27 @@ def experience_save(request):
     return experience_store.save(context, request.params)
 
 
+def analysis_start(data, evidence):
+    """업무를 처음 저장할 때 근거로 기록할 지금 분석 결과(mission_store.save_event의 start)."""
+    return {'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']}
+
+
+def report_workflow(context, data, evidence):
+    """보고서에 쓸 업무 상태입니다. 아직 업무가 없으면 지금 분석 결과를 근거로 둡니다(저장하지 않음).
+
+    사업 검토 없이도 대화·구상·업무 기록으로 보고서를 만들 수 있게 합니다.
+    두 번째 값은 최종 저장 때 업무 근거로 기록할 start이며, 이미 근거가 있으면 None입니다.
+    """
+    current = load_workflow(context)
+    if 0 in current.get('done', []):
+        return current, None
+    start = analysis_start(data, evidence)
+    return dict(current, analysis_run_id=start['run_id'], analysis_evidence=evidence,
+                analysis_source=start['source_note']), start
+
+
 def report_content(request):
-    """POST /api/report/content: 저장된 분석·사업 검토로 보고서 문장 초안을 만듭니다.
+    """POST /api/report/content: 분석 근거·사업 검토·업무 기록으로 보고서 문장 초안을 만듭니다.
 
     ai=true이면 AI가 문장을 다듬고, 저장된 근거와 대조를 통과한 경우에만 그 문장을 씁니다.
     """
@@ -153,23 +172,27 @@ def report_content(request):
     if use_ai:
         limits.check_chat(request.user)  # AI 문장 다듬기도 보미 사용량에 포함합니다.
     selection = request.params.get('selection')
+    current, _ = report_workflow(context, data, evidence)
     if request.params.get('include_record') is True and selection is None:
         # 보고서 탭의 '업무 기록 포함': 저장된 지표·사업 검토는 모두 넣고 업무 기록의 의견·후속 조치를 더합니다.
-        current = load_workflow(context)
         from backend.agents.report_material import latest_reviews
         selection = {'metrics': [row['metric_label'] for row in current.get('analysis_evidence', [])],
                      'services': list(latest_reviews(current.get('reviews', []))),
                      'include_note': True, 'include_followup': True}
     experience = experience_store.load(context) if isinstance(selection, dict) and (selection.get('include_note') or selection.get('include_followup')) else None
-    return report_writer.write_draft(context, load_workflow(context), use_ai=use_ai, selection=selection, experience=experience)
+    draft = report_writer.write_draft(context, current, use_ai=use_ai, selection=selection, experience=experience)
+    # 업무를 아직 저장하지 않았어도 보고서 탭의 검토 도움말이 수치를 대조할 수 있게 쓴 근거를 함께 돌려줍니다.
+    return dict(draft, analysis_evidence=current['analysis_evidence'], analysis_source=current['analysis_source'])
 
 
 def report_preview(request):
-    """POST /api/report/preview: 작성 내용으로 Word 파일을 만들고, 확인용 토큰을 돌려줍니다."""
+    """POST /api/report/preview: 작성 내용으로 Word 파일을 만들고, 확인용 토큰을 돌려줍니다.
+
+    사업 검토가 없어도 됩니다. 업무가 아직 없으면 지금 분석 결과로 만들고, 그 근거를 토큰에 담아 두었다가
+    최종 저장 때 업무 근거로 기록합니다. 확인한 파일과 저장되는 근거가 같게 하기 위해서입니다.
+    """
     context, data, evidence = work_context(request)
-    current = load_workflow(context)
-    if 2 not in current.get('done', []):
-        raise ValueError('사업 검토 기록을 먼저 저장하세요.')
+    current, start = report_workflow(context, data, evidence)
 
     fields = {
         'author': request.text('author'),
@@ -224,7 +247,7 @@ def report_preview(request):
     record['review_id'] = mission_store.review_revision(current)
     record['_document'] = document
 
-    preview = {'identity': mission_store.identity(context), 'document': document, 'record': record}
+    preview = {'identity': mission_store.identity(context), 'document': document, 'record': record, 'start': start}
     token = sessions.store_preview(request.user, 'report', preview)
     return {'token': token}
 
@@ -301,7 +324,7 @@ def workflow_review(request):
             'reasons': chosen['reasons'],
             'source_url': chosen['service'].get('source_url'),
             'service_snapshot': service_snapshot(chosen['service']),
-        }, start={'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']})
+        }, start=analysis_start(data, evidence))
         return with_analysis_note(load_workflow(context), data)
 
 
@@ -317,6 +340,6 @@ def report_save(request):
             raise ValueError('초안 지역·월과 다릅니다.')
         record = dict(draft['record'])
         record['confirmed'] = True
-        mission_store.save_event(context, 3, record)
+        mission_store.save_event(context, 3, record, start=draft.get('start'))
         sessions.remove_preview(token)
         return with_analysis_note(load_workflow(context), data)

@@ -26,7 +26,9 @@ LIMIT_NOTE = '개인의 고립 여부나 변화 원인을 확정할 수 없음'
 # 복지사업 담당이 신규 사업 기획안을 답할 때 맨 앞에 붙이는 표시입니다(bomi/agents/welfare.py).
 PLANNING_LABEL = '신규 사업 기획 아이디어 · 현재 운영 중인 사업이 아님'
 NEED_MATERIAL = ('보고서 초안을 만들 근거가 아직 없어요. 보미에게 "어르신 돌봄 사업 찾아 줘"처럼 사업을 찾거나 '
-                 '"신규 사업 구상해 줘"라고 요청한 뒤 다시 "보고서 작성해줘"라고 하거나, 사업 매칭 검토에서 판단을 저장하세요.')
+                 '"신규 사업 구상해 줘"라고 요청한 뒤 다시 "보고서 작성해줘"라고 하거나, 보고서 작성 탭에서 초안을 만드세요.')
+# 사업 검토 없이 만드는 초안(구상 보고서)의 제안 칸 안내입니다. 담당자가 직접 채웁니다.
+PLANNING_PROPOSAL = '검토한 사업 없음. 구상한 사업이나 제안 내용을 직접 작성'
 
 
 def evidence_sentence(row):
@@ -111,11 +113,15 @@ def _review_proposal(review):
 
 
 def generate_draft(context, workflow, selection=None, experience=None):
-    """외부 AI 없이 저장된 기록을 구성합니다. 첨부 예시는 업무 사실로 쓰지 않습니다."""
+    """외부 AI 없이 저장된 기록을 구성합니다. 첨부 예시는 업무 사실로 쓰지 않습니다.
+
+    사업 검토가 없으면 지역 현황과 업무 기록으로 구상 보고서 초안을 만들고, 제안 칸은 담당자가 채우게 둡니다.
+    """
     if not context.get('district'):
         raise ValueError('보고서를 작성할 행정동을 먼저 선택하세요.')
-    if 2 not in workflow.get('done', []) or not workflow.get('analysis_evidence'):
-        raise ValueError('사업 매칭 검토 기록을 먼저 저장하세요.')
+    if not workflow.get('analysis_evidence'):
+        raise ValueError('이 동의 분석 결과가 없어 보고서 초안을 만들 수 없습니다.')
+    planning = not workflow.get('reviews')
     from backend.agents.report_material import select_material, record_sections
     rows, reviews, options = select_material(workflow, selection)
     chosen = selection is not None
@@ -124,16 +130,22 @@ def generate_draft(context, workflow, selection=None, experience=None):
     proposals = [_review_proposal(review) for review in reviews[:4]]
     if len(reviews) > 4:
         proposals.append(f'전체 {len(reviews)}건 중 4건 요약. 나머지는 사업 검토 기록에서 확인')
-    if not proposals:
+    if not proposals and planning:
+        proposals.append(PLANNING_PROPOSAL)
+    elif not proposals:
         proposals.append('이번 초안에 사업 상세를 포함하지 않음. 저장된 사업 검토 기록에서 확인 필요' if chosen else '저장된 사업 검토 내용 확인 필요')
     note, followup = record_sections(experience or {}, options)
     if note:
         situation.append('담당자 검토 의견: ' + note)
-    next_steps = followup or '운영기관에 지원 대상·거주·연령·소득·신청 기간 및 모집 여부 확인\n현장 수요와 담당 기관 의견을 확인한 후 연계·추진 여부 검토'
+    next_steps = followup or ('구상 내용의 수요·예산·운영 기관을 확인한 후 추진 여부 검토\n'
+                              '관련 기존 사업이 있으면 사업 매칭 검토에서 연계 가능성 확인' if planning else
+                              '운영기관에 지원 대상·거주·연령·소득·신청 기간 및 모집 여부 확인\n현장 수요와 담당 기관 의견을 확인한 후 연계·추진 여부 검토')
     viable = any(r.get('decision') == '적합' for r in reviews)
     summary = (f'{_region(context)}의 지역 분석 및 사업 검토 결과를 바탕으로 '
                + ('관련 복지서비스 연계 가능성을 검토하고자 함' if viable else
                   '서비스 이용 조건과 현장 수요를 추가 확인한 후 연계 여부를 검토하고자 함'))
+    if planning:
+        summary = f'{_region(context)}의 지역 분석 결과를 바탕으로 필요한 복지서비스와 신규 사업 추진 방향을 검토하고자 함'
     uses_record = options.get('include_note') or options.get('include_followup')
     return _draft(context, workflow, title_note='', summary=summary, situation=situation, proposals=proposals,
                   next_steps=next_steps.split('\n'), mode='저장된 근거로 구성 · 외부 AI 호출 없음',
@@ -187,7 +199,7 @@ def conversation_draft(context, workflow, evidence_rows, history, sources):
                   proposals=proposals,
                   next_steps=['각 사업 운영기관에 지원 대상·신청 기간·모집 여부 확인',
                               '신규 구상안은 수요 조사·예산·운영 기관 협의 후 추진 여부 결정',
-                              '사업 매칭 검토에 판단을 기록한 뒤 최종 보고서로 저장'],
+                              '담당자 검토 후 보고서 작성 탭에서 최종 저장'],
                   mode=f'대화 기반 초안 · {PENDING_TEXT}',
                   conversation_sources=[dict(r) for r in sources])
 
@@ -390,7 +402,7 @@ def report_reply(context, workflow, use_ai=False, request='', evidence_rows=(), 
         f'□ {label}\n{draft[key]}' for key, label in SECTIONS)
     notices = [draft['notice']] if draft.get('notice') else []
     if from_chat:
-        notices.append('대화 내용으로 만든 검토 전 초안입니다. 최종 보고서는 사업 매칭 검토에 판단을 기록한 뒤 저장하세요.')
+        notices.append('대화 내용으로 만든 검토 전 초안입니다. 보고서 작성 탭에서 내용을 확인·수정한 뒤 최종 저장하세요.')
     if notices:
         answer = '\n'.join('ⓘ ' + text for text in notices) + '\n\n' + answer
     return {'answer': answer, 'mode': '보고서 작성 에이전트 · ' + draft['mode'],

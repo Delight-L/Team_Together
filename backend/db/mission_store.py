@@ -59,7 +59,10 @@ def save_event(request, step, record=None, start=None):
     """단계 순서를 검사하고 기록·Word 파일·보고서 이력을 함께 저장합니다.
 
     start(run_id·evidence·source_note)를 주면 아직 시작하지 않은 업무의 분석 확인(0)·근거 확인(1)을
-    같은 트랜잭션에서 먼저 기록합니다. 사업 검토를 처음 저장할 때 업무가 생기게 하는 용도입니다.
+    같은 트랜잭션에서 먼저 기록합니다. 사업 검토나 보고서를 처음 저장할 때 업무가 생기게 하는 용도입니다.
+
+    사업 검토(2)와 업무 기록은 선택 단계라, 보고서(3)는 분석 근거(0)만 있으면 저장할 수 있습니다.
+    보고서를 저장한 뒤에도 사업 검토를 더할 수 있고, 그 경우 reviews_after_report로 표시합니다.
     """
     if step not in range(4):
         raise ValueError("유효하지 않은 업무 단계입니다.")
@@ -83,9 +86,10 @@ def save_event(request, step, record=None, start=None):
         elif start and 1 not in done:
             item["evidence_reviewed_at"] = timestamp()
             done.add(1)
-        if step > 0 and not set(range(step)).issubset(done):
-            raise ValueError("분석 확인 → 근거 검토 → 사업 매칭 검토 → 보고서 저장 순서로 진행하세요.")
-        if item.get("workflow_complete") and step in (1, 2):
+        required = {0} if step == 3 else set(range(step))
+        if not required.issubset(done):
+            raise ValueError("이 동의 분석 근거를 먼저 확인하세요.")
+        if item.get("workflow_complete") and step == 1:
             raise ValueError("보고서 완료된 업무는 수정할 수 없습니다. 새 업무로 진행하세요.")
         record["created_at"] = timestamp()
         record["actor"] = request["user"]["id"]
@@ -111,6 +115,9 @@ def save_event(request, step, record=None, start=None):
             if record.get("decision") not in ["적합", "보류", "부적합"]:
                 raise ValueError("검토 결과가 필요합니다.")
             item["reviews"].append(record)
+            if item.get("workflow_complete"):
+                # 저장한 보고서에는 이 검토가 없습니다. 다시 저장하면 다음 차수 보고서가 됩니다.
+                item["reviews_after_report"] = True
         elif step == 3:
             if not all(record.get(field) for field in ["sha256", "filename", "author", "department", "opinion", "confirmed"]):
                 raise ValueError("보고서 파일과 필수 항목, 최종 확인이 필요합니다.")
@@ -131,6 +138,9 @@ def save_event(request, step, record=None, start=None):
                                                 record=json.dumps(item.get('report', {}), ensure_ascii=False)))
             record['revision'] = revision + 1
             record['analysis_run_id'] = item.get('analysis_run_id')
+            # 사업 검토 없이 대화·구상·업무 기록으로 만든 보고서는 구상 보고서로 구분합니다.
+            record['kind'] = 'service_review' if item.get('reviews') else 'planning'
+            item["reviews_after_report"] = False
             db.execute(insert_version, dict(key=key, revision=record['revision'], document=document,
                                             record=json.dumps(record, ensure_ascii=False)))
             db.execute(text("""INSERT INTO work.report_files (key,document) VALUES (:key,:document)
@@ -290,5 +300,7 @@ def report_versions(request):
         items.append({"revision": revision, "created_at": record.get("created_at", ""),
                       "author": record.get("author", ""), "department": record.get("department", ""),
                       "title": (record.get("content") or {}).get("title", ""),
-                      "analysis_run_id": record.get("analysis_run_id", "")})
+                      "analysis_run_id": record.get("analysis_run_id", ""),
+                      # kind가 없는 예전 저장본은 사업 검토 보고서입니다.
+                      "kind": record.get("kind", "service_review")})
     return items
