@@ -13,6 +13,7 @@ import GroupDashboard from './GroupDashboard';
 import RegionAnalysis from './RegionAnalysis';
 import { normalizeAgeNames } from './ageSignals.mjs';
 import { userName } from './personas.mjs';
+import { serviceBrief, serviceSections } from './serviceText.mjs';
 
 const menus = [
   ['dashboard', '종합 현황'],
@@ -747,6 +748,7 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
         )}
         {visibleMatches.map((m) => {
           const review = reviewDrafts[m.key] || { decision: '보류', note: '' };
+          const brief = serviceBrief(m.service);
           return (
           <article className={`service-card ${selected === m.key ? 'chosen' : ''}`} key={m.key}>
             <h3>{m.service.name}{focus?.keys.includes(m.key) && <small className="service-chat-badge"> · 보미 안내</small>}</h3>
@@ -757,10 +759,13 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
                 <p>시행기간: {m.service.effective_start || '시작일 미확인'} ~ {m.service.effective_end || '종료일 미확인'}</p>
               </>
             )}
-            <p>{m.service.target_text || m.service.description || '사업 대상 정보 확인 필요'}</p>
-            <p>{m.service.eligibility_text || '이용 조건 확인 필요'}</p>
-            <p>{m.service.support_text || m.service.summary}</p>
-            {m.service.application_text && <p>신청 방법: {m.service.application_text}</p>}
+            {/* 원문은 항목이 붙어 있고 칸마다 반복되므로 카드에는 원문을 짧게 자른 3줄만 보이고, 전체는 아래에서 펼칩니다. */}
+            {brief.intro && <p className="service-intro">{brief.intro}</p>}
+            <dl className="service-brief">
+              <dt>대상</dt><dd>{brief.target || '운영기관 확인 필요'}</dd>
+              <dt>지원</dt><dd>{brief.support || '운영기관 확인 필요'}</dd>
+              <dt>신청</dt><dd>{brief.application || '운영기관 확인 필요'}</dd>
+            </dl>
             {/^https?:\/\//i.test(m.service.source_url || '') && (
               <a className="text-button" href={m.service.source_url} target="_blank" rel="noopener noreferrer">사업 안내 원문 확인 →</a>
             )}
@@ -774,7 +779,16 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
                     .join(' / ')
                 : '지표와 직접 연결되는 키워드 근거 없음'}
             </small>
-            <details><summary>적합성·추가 확인 조건</summary><p>게시 지역은 이용 자격을 의미하지 않습니다. 선택 지역 {context.city} {context.district}의 주민이 이용 가능한지 확인하세요.</p><ul><li>지원 대상: {m.service.target_text || '운영기관 확인 필요'}</li><li>이용 조건: {m.service.eligibility_text || '운영기관 확인 필요'}</li><li>신청 방법: {m.service.application_text || '운영기관 확인 필요'}</li><li>현재 접수 여부·정원·거주 요건을 운영기관에 확인하세요.</li></ul></details>
+            <details className="service-full">
+              <summary>원문 전체·추가 확인 조건</summary>
+              {serviceSections(m.service).map((section) => (
+                <div className="service-section" key={section.label}>
+                  <b>{section.label}</b>
+                  <ul>{section.items.map((item, i) => <li key={i}>{item}</li>)}</ul>
+                </div>
+              ))}
+              <p>게시 지역은 이용 자격을 의미하지 않습니다. 선택 지역 {context.city} {context.district}의 주민이 이용 가능한지, 현재 접수 여부·정원·거주 요건을 운영기관에 확인하세요.</p>
+            </details>
             <button
               className="secondary"
               disabled={busy || loading || workflow.workflow_complete}

@@ -2130,3 +2130,27 @@ tr:last-child td {
 .toast { margin: 0; padding: 12px 20px; border-radius: var(--radius-pill); background: var(--text-strong); color: var(--surface); font-size: 14px; font-weight: 500; line-height: 1.5; box-shadow: 0 8px 24px #12213e33; animation: toast-in .2s ease-out; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+/* 사업 카드 요약: 원문을 짧게 자른 대상·지원·신청 3줄. 전체 원문은 .service-full에서 펼칩니다. */
+.service-card .service-intro {
+  color: var(--text-muted);
+}
+.info-card .service-brief {
+  grid-template-columns: max-content 1fr;
+  gap: 8px 14px;
+  padding: 14px 16px;
+  margin: 10px 0;
+}
+.info-card .service-brief dt {
+  font-weight: 600;
+}
+.service-full .service-section {
+  margin-top: 10px;
+}
+.service-full ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.service-full li {
+  margin: 3px 0;
+  overflow-wrap: anywhere;
+}
