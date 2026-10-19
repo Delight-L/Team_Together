@@ -70,6 +70,7 @@ ROUTES = {
     ('GET', '/api/services'): routes_work.services,
     ('GET', '/api/report'): routes_work.saved_report,
     ('GET', '/api/report/versions'): routes_work.saved_report_versions,
+    ('GET', '/api/report/material'): routes_work.report_material,
     ('GET', '/api/report/draft'): routes_work.report_draft_file,
     ('POST', '/api/report/content'): routes_work.report_content,
     ('POST', '/api/report/proposal'): routes_work.report_proposal,

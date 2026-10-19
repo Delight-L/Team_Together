@@ -95,6 +95,18 @@ def saved_report_versions(request):
     return {'items': mission_store.report_versions(context)}
 
 
+def report_material(request):
+    """GET /api/report/material: 저장 없이 초안에 포함할 근거를 조회합니다."""
+    context, data, evidence = work_context(request)
+    current, _ = report_workflow(context, data, evidence)
+    from backend.agents.report_material import latest_reviews
+    return {'metrics': list(dict.fromkeys(row['metric_label'] for row in current['analysis_evidence'])),
+            'services': [{'key': key, 'name': value.get('name'), 'decision': value.get('decision')}
+                         for key, value in latest_reviews(current.get('reviews', [])).items()],
+            'analysis_run_id': current.get('analysis_run_id'),
+            'analysis_source': current.get('analysis_source')}
+
+
 def report_draft_file(request):
     """GET /api/report/draft: 저장 전에 확인할 Word 초안을 내려받습니다."""
     context = region_context(request, dashboard_data())
@@ -138,21 +150,25 @@ def report_content(request):
     current, _ = report_workflow(context, data, evidence)
     draft = report_writer.write_draft(context, current, use_ai=use_ai, selection=selection)
     # 업무를 아직 저장하지 않았어도 보고서 탭의 검토 도움말이 수치를 대조할 수 있게 쓴 근거를 함께 돌려줍니다.
-    return dict(draft, analysis_evidence=current['analysis_evidence'], analysis_source=current['analysis_source'])
+    return dict(draft, analysis_evidence=current['analysis_evidence'], analysis_source=current['analysis_source'],
+                analysis_run_id=current.get('analysis_run_id'))
 
 
 def report_proposal(request):
     """POST /api/report/proposal: 편집 중인 초안의 제안 칸만 최신 사업 검토로 다시 만듭니다.
 
     초안을 만든 뒤 사업 검토가 바뀌었을 때, 나머지 항목의 편집 내용을 지키며 근거 버전만 맞추는 용도입니다.
-    초안의 지표 선택은 유지하고, 사업은 지금 저장된 검토를 모두 넣습니다.
+    초안의 지표·사업 선택을 유지하며, 더 이상 없는 사업만 선택에서 제외합니다.
     """
     context, data, evidence = work_context(request)
     current, _ = report_workflow(context, data, evidence)
     selection = request.params.get('selection')
     if isinstance(selection, dict):
+        if not isinstance(selection.get('services', []), list):
+            raise ValueError('보고서 포함 항목이 올바르지 않습니다.')
         from backend.agents.report_material import latest_reviews
-        selection = dict(selection, services=list(latest_reviews(current.get('reviews', []))))
+        available = latest_reviews(current.get('reviews', []))
+        selection = dict(selection, services=[key for key in selection.get('services', []) if key in available])
     elif selection is not None:
         raise ValueError('보고서 포함 항목이 올바르지 않습니다.')
     draft = report_writer.generate_draft(context, current, selection)
@@ -167,6 +183,10 @@ def report_preview(request):
     """
     context, data, evidence = work_context(request)
     current, start = report_workflow(context, data, evidence)
+
+    submitted = request.params.get('content')
+    if isinstance(submitted, dict) and submitted.get('analysis_run_id') and submitted['analysis_run_id'] != current.get('analysis_run_id'):
+        raise ValueError('초안의 분석 근거가 현재 업무와 다릅니다. 최신 근거로 초안을 다시 만들어 주세요.')
 
     fields = {
         'author': request.text('author'),
@@ -194,6 +214,9 @@ def report_preview(request):
         select_material(current, selection)
         if selection is not None:
             content['selection'] = selection
+        content['review_id'] = mission_store.review_revision(current)
+        content['review_snapshot'] = current.get('reviews', [])
+        content['analysis_run_id'] = current.get('analysis_run_id')
     contact = request.text('contact')
 
     for value in fields.values():
@@ -216,6 +239,7 @@ def report_preview(request):
     record['sha256'] = hashlib.sha256(document).hexdigest()
     record['filename'] = report_filename(context)
     record['review_id'] = mission_store.review_revision(current)
+    record['analysis_run_id'] = current.get('analysis_run_id')
     record['_document'] = document
 
     preview = {'identity': mission_store.identity(context), 'document': document, 'record': record, 'start': start}

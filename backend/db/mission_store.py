@@ -112,6 +112,8 @@ def save_event(request, step, record=None, start=None):
                 # 저장한 보고서에는 이 검토가 없습니다. 다시 저장하면 다음 차수 보고서가 됩니다.
                 item["reviews_after_report"] = True
         elif step == 3:
+            if record.get('analysis_run_id') and record['analysis_run_id'] != item.get('analysis_run_id'):
+                raise ValueError('확인한 보고서의 분석 근거가 변경되었습니다. 초안을 다시 만들어 주세요.')
             if not all(record.get(field) for field in ["sha256", "filename", "author", "department", "opinion", "confirmed"]):
                 raise ValueError("보고서 파일과 필수 항목, 최종 확인이 필요합니다.")
             if record.get("review_id") != review_revision(item):
@@ -289,6 +291,7 @@ def report_versions(request):
         record = json.loads(record or "{}")
         items.append({"revision": revision, "created_at": record.get("created_at", ""),
                       "author": record.get("author", ""), "department": record.get("department", ""),
+                      "contact": record.get("contact", ""), "content": record.get("content"),
                       "title": (record.get("content") or {}).get("title", ""),
                       "analysis_run_id": record.get("analysis_run_id", ""),
                       # kind가 없는 예전 저장본은 사업 검토 보고서입니다.

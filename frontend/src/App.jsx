@@ -16,6 +16,7 @@ import RegionAnalysis from './RegionAnalysis';
 import ServiceCase from './ServiceCase.jsx';
 import ServiceCandidate from './ServiceCandidate.jsx';
 import { selectedServiceContext, serviceDetection, confirmServiceEvidence, dashboardCaseFocus } from './serviceCase.mjs';
+import { ReportMaterials, ReportHistory, ReportReadingPreview } from './ReportTools.jsx';
 import { normalizeAgeNames } from './ageSignals.mjs';
 import {serviceReviewCases, selectedReviewCase, serviceReviewContext} from './serviceReview.mjs';
 import { userName } from './personas.mjs';
@@ -933,6 +934,28 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   const initial = { author: userName(user), department: context.city + ' 복지정책과', contact: '', content: null, seedId: null };
   const [localDraft, setLocalDraft, clearLocalDraft, storageFailed] = useDraft(draftKey(user, context, 'report'), initial);
   const { author, department, contact, content } = localDraft;
+  const [material, setMaterial] = useState(null), [materialError, setMaterialError] = useState('');
+  const [versions, setVersions] = useState([]), [historyLoading, setHistoryLoading] = useState(true), [historyError, setHistoryError] = useState('');
+  useEffect(() => {
+    let live = true;
+    setMaterial(null);
+    setMaterialError('');
+    api('/report/material?' + query(context)).then(value => { if (live) setMaterial(value); }).catch(e => { if (live) setMaterialError(e.message); });
+    return () => { live = false; };
+  }, [JSON.stringify(context), workflow.analysis_run_id, JSON.stringify(workflow.reviews || [])]);
+  useEffect(() => {
+    let live = true;
+    setHistoryLoading(true);
+    setHistoryError('');
+    api('/report/versions?' + query(context)).then(value => { if (live) setVersions(value.items); }).catch(e => { if (live) setHistoryError(e.message); }).finally(() => { if (live) setHistoryLoading(false); });
+    return () => { live = false; };
+  }, [JSON.stringify(context), workflow.report?.revision]);
+  const rawSelection = localDraft.selection ?? content?.selection;
+  const selection = rawSelection && material ? {
+    metrics: (rawSelection.metrics || []).filter(key => material.metrics.includes(key)),
+    services: (rawSelection.services || []).filter(key => material.services.some(item => item.key === key)),
+  } : null;
+  const staleAnalysis = !!(content?.analysis_run_id && material?.analysis_run_id && content.analysis_run_id !== material.analysis_run_id);
   const [step, setStep] = useState(() => localDraft.content ? 2 : 1);
   const setAuthor = author => setLocalDraft(prev => ({ ...prev, author }));
   const setDepartment = department => setLocalDraft(prev => ({ ...prev, department }));
@@ -975,7 +998,7 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     setDraftBusy(true);
     setError('');
     try {
-      setContent(await api('/report/content', { ...context, ai: aiAvailable && useAi }));
+      setContent(await api('/report/content', { ...context, ai: aiAvailable && useAi, selection }));
       setStep(2);
     } catch (e) {
       setError(e.message);
@@ -1024,6 +1047,14 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     }
   }
   const working = busy || draftBusy;
+  function copyVersion(item) {
+    if (content && !window.confirm('작성 중인 내용을 선택한 저장본으로 바꿀까요?')) return;
+    const copied = Object.fromEntries(['title', 'summary', 'situation', 'proposal', 'next_steps', 'selection', 'review_id', 'review_snapshot', 'kind'].map(key => [key, item.content[key]]));
+    setLocalDraft(prev => ({ ...prev, author: item.author || userName(user), department: item.department || initial.department, contact: item.contact || '', selection: copied.selection,
+      content: { ...copied, analysis_run_id: item.analysis_run_id, notice: `${item.revision}차 저장본을 복사했습니다. 현재 근거와 내용을 확인한 후 새 차수로 저장하세요.` } }));
+    setStep(2);
+    setError('');
+  }
   // 사업 검토가 없으면 구상 보고서입니다. 검토 도움말은 업무 근거가 아직 없을 때 초안에 담긴 분석 근거로 대조합니다.
   const planning = !workflow.reviews?.length;
   const qualityWorkflow = { ...workflow, analysis_evidence: workflow.analysis_evidence || content?.analysis_evidence, analysis_source: workflow.analysis_source || content?.analysis_source };
@@ -1033,6 +1064,8 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
   const emptyFields = Object.keys(REPORT_LIMITS).filter(key => !(content?.[key] || '').trim()).map(key => fieldLabels[key]);
   const longFields = Object.entries(REPORT_LIMITS).filter(([key, limit]) => (content?.[key] || '').length > limit).map(([key]) => fieldLabels[key]);
   const fileBlockers = !content ? [] : [
+    staleAnalysis && '초안의 분석 근거가 현재 업무와 다릅니다. 초안 준비에서 현재 근거로 다시 만들어 주세요.',
+    !material && '보고서 근거를 불러온 후 파일을 만들 수 있습니다.',
     staleContent && '사업 검토 근거가 달라졌습니다. 위의 ‘제안 칸만 최신 검토로 갱신’을 먼저 눌러 주세요.',
     !(author.trim() && department.trim()) && '작성 부서와 작성자를 입력해 주세요.',
     emptyFields.length && `비어 있는 항목: ${emptyFields.join(', ')}`,
@@ -1044,12 +1077,21 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     <WorkflowSteps context={context} workflow={workflow} current="report" onView={onView} />
     <div className="workspace-heading"><div><h2>{context.district || '지역 선택 필요'} · {planning ? '복지 사업 구상 검토보고' : '복지서비스 연계 검토보고'}</h2><p className="hint">{context.month} 기준</p></div></div>
     {workflow.workflow_complete && <div className="saved-report"><span>{workflow.reviews_after_report ? '보고서를 저장한 뒤 사업 검토가 추가되었습니다. 초안을 다시 만들어 저장하면 다음 차수 보고서가 됩니다.' : '최종 보고서가 저장되어 있습니다. 새로 작성해도 이전 저장본은 이력에 남습니다.'}</span><a className="text-button" href={'/api/report?' + query(context)}>저장된 Word 보고서 내려받기 →</a></div>}
+    <ReportHistory versions={versions} loading={historyLoading} error={historyError} context={context} onCopy={copyVersion} disabled={working} />
+    {workflow.analysis_changed && <div className="notice" role="status"><p>새 분석 자료가 있습니다. 현재 보고서는 저장 당시 분석 근거로 작성됩니다. 최신 분석으로 전환하면 기존 사업 검토는 이전 회차에 보관됩니다.</p><button className="secondary" disabled={working} onClick={async () => {
+      if (!window.confirm('최신 분석으로 업무를 다시 시작할까요? 기존 검토는 이전 회차에 보관됩니다. 편집 중인 보고서는 남지만 새 근거로 초안을 다시 만들어야 합니다.')) return;
+      const result = await mutate('/workflow/restart', { confirmed: true });
+      if (result) { setDraft(null); setConfirmed(false); setStep(1); }
+    }}>최신 분석으로 다시 작성</button></div>}
+    {materialError && <p className="error" role="alert">근거 조회 실패: {materialError} <button className="text-button" onClick={() => { setMaterialError(''); api('/report/material?' + query(context)).then(setMaterial).catch(e => setMaterialError(e.message)); }}>다시 조회</button></p>}
+    {staleAnalysis && <p className="notice" role="status">편집 중인 초안은 이전 분석 근거로 작성되었습니다. 초안 준비에서 현재 근거로 다시 만들어 주세요. <button className="text-button" onClick={() => setStep(1)}>초안 준비로 이동</button></p>}
     <ol className="report-steps" aria-label="보고서 작업 순서">{['초안 준비', '내용 수정', '파일 확인·저장'].map((label, i) => <li key={label} className={step === i + 1 ? 'current' : ''}><button aria-current={step === i + 1 ? 'step' : undefined} disabled={working || (i > 0 && !content) || (i === 2 && !draft)} onClick={() => setStep(i + 1)}><span>{i + 1}</span>{label}</button></li>)}</ol>
     {storageFailed && <p className="error" role="alert">브라우저 임시 보관에 실패했습니다. 새로고침 전에 내용을 복사해 두세요.</p>}
     {staleContent && <p className="notice">사업 검토 근거가 달라졌습니다. 제안 칸만 최신 검토로 갱신하면 다른 항목의 편집 내용은 그대로 남습니다. <button className="text-button" disabled={working} onClick={refreshProposal}>{draftBusy ? '갱신 중…' : '제안 칸만 최신 검토로 갱신'}</button></p>}
     {error && <p className="error" role="alert">{error}</p>}
     {step === 1 && <section className="report-stage" aria-label="초안 준비">
       <h3>작성 정보 확인</h3>
+      <ReportMaterials material={material} selection={selection} onChange={value => setLocalDraft(prev => ({ ...prev, selection: value }))} disabled={working} />
       <div className="report-form">
         <label>작성 부서<input value={department} maxLength={100} disabled={working} onChange={e => setDepartment(e.target.value)} /></label>
         <label>작성자<input value={author} maxLength={60} disabled={working} onChange={e => setAuthor(e.target.value)} /></label>
@@ -1058,9 +1100,9 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
       <label className="confirmation"><input type="checkbox" disabled={working || !aiAvailable} checked={aiAvailable && useAi} onChange={e => setUseAi(e.target.checked)} />
         <span>AI로 문장 다듬기<small>{aiAvailable ? '외부 AI 사용 · 근거와 대조를 통과한 문장만 반영' : 'AI 연결 설정 필요'}</small></span></label>
       <div className="form-actions">
-        {!content ? <button className="primary" disabled={working || !context.district} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '보고서 초안 만들기'}</button> : <button className="primary" disabled={working} onClick={() => setStep(2)}>작성 중인 초안 이어서 수정</button>}
+        {!content ? <button className="primary" disabled={working || !context.district || !material} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '보고서 초안 만들기'}</button> : <button className="primary" disabled={working} onClick={() => setStep(2)}>작성 중인 초안 이어서 수정</button>}
       </div>
-      {content && <div className="regenerate-section"><button className="text-button" disabled={working || !context.district} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '초안 새로 만들기'}</button></div>}
+      {content && <div className="regenerate-section"><button className="text-button" disabled={working || !context.district || !material} onClick={generate}>{draftBusy ? '초안 만드는 중…' : '선택한 근거로 초안 새로 만들기'}</button></div>}
     </section>}
     {step === 2 && content && <section className="report-stage" aria-label="내용 수정">
       <div className="report-stage-head"><h3>내용 수정</h3>{content.mode && <span className={`bomi-badge ${content.mode.includes('AI') ? 'ai' : 'data'}`}>{content.mode}</span>}</div>
@@ -1074,6 +1116,7 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     </section>}
     {step === 3 && content && <section className="report-stage" aria-label="파일 확인·저장">
       <h3>파일 확인·저장</h3>
+      <ReportReadingPreview content={content} author={author} department={department} contact={contact} month={context.month} fields={reportFields(planning)} />
       {draft ? <div className="report-file"><span><strong>{content.title}</strong><small>Word 문서 · 현재 편집 내용</small></span><a className="secondary" href={'/api/report/draft?' + query({ ...context, token: draft.token })}>내려받기</a></div> : <p className="notice">내용이나 근거가 변경되었습니다. 내용 수정 단계에서 Word 파일을 다시 만들어 주세요.</p>}
       <label className="confirmation report-confirm"><input type="checkbox" disabled={working || !draft || !!staleContent} checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />{planning ? '분석 근거와 구상·제안 내용을 확인했습니다(구상 보고서로 저장).' : '분석 근거와 사업 검토 내용을 확인했습니다.'}</label>
       <div className="form-actions"><button className="primary" disabled={working || !confirmed || !draft || !canCreateFile} onClick={save}>{busy ? '저장 중…' : '최종 보고서 저장'}</button><button className="secondary" disabled={working} onClick={() => setStep(2)}>내용 다시 수정</button></div>
