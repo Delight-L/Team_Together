@@ -602,7 +602,8 @@ export function WorkflowSteps({ context, workflow, current, onView }) {
     { key: 'report', label: '보고서 저장', done: !!workflow.workflow_complete },
   ];
   const index = steps.findIndex(s => s.key === current);
-  const blocker = !context.district ? { key: 'map', label: '지역 선택' } : steps.slice(0, index).find(s => !s.done);
+  // 사업 매칭 검토는 지역 분석 화면을 거치지 않아도 진행할 수 있습니다(검토 저장 때 앞 단계를 함께 기록).
+  const blocker = !context.district ? { key: 'map', label: '지역 선택' } : current === 'services' ? null : steps.slice(0, index).find(s => !s.done);
   // 보고서 화면에는 자체 작성 단계가 있으므로, 앞 단계가 막혔을 때만 업무 단계를 보여 줍니다.
   if (current === 'report' && !blocker) return null;
   return <div className={`workflow-steps ${blocker ? 'blocked' : ''}`}>
@@ -671,7 +672,7 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
         <button
           className="primary"
           onClick={load}
-          disabled={busy || loading || !workflow.done?.includes(1)}
+          disabled={busy || loading || !context.district}
         >
           {loading ? '사업을 찾는 중…' : '관련 사업 조회'}
         </button>
@@ -748,6 +749,11 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
                 </label>
                 <button className="primary" disabled={busy || !review.note.trim() || workflow.workflow_complete}
                   onClick={async () => {
+                    // 서버는 분석 확인 → 근거 검토 → 사업 검토 순서를 요구하므로, 아직 기록되지 않은 앞 단계를 먼저 저장합니다.
+                    let done = workflow.done || [];
+                    if (!done.includes(0)) done = (await mutate('/workflow/start'))?.done;
+                    if (done && !done.includes(1)) done = (await mutate('/workflow/confirm'))?.done;
+                    if (!done) return;
                     const result = await mutate('/workflow/review', { serviceKey: m.key, ...review });
                     if (result) {
                       const remaining = { ...reviewDrafts }; delete remaining[m.key];
