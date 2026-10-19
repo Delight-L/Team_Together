@@ -13,6 +13,7 @@ import GroupDashboard from './GroupDashboard';
 import RegionAnalysis from './RegionAnalysis';
 import { normalizeAgeNames } from './ageSignals.mjs';
 import { userName } from './personas.mjs';
+import { serviceBrief, serviceSections } from './serviceText.mjs';
 
 const menus = [
   ['dashboard', '종합 현황'],
@@ -188,6 +189,7 @@ export default function App() {
   const [workflow, setWorkflow] = useState({}),
     [reportSeed, setReportSeed] = useState(null),
     [reviewSeed, setReviewSeed] = useState(null),
+    [serviceSeed, setServiceSeed] = useState(null),
     [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(false);
   const [chatDraft, setChatDraft] = useState(null);
@@ -502,6 +504,8 @@ export default function App() {
                   user={user}
                   mutate={mutate}
                   busy={busy}
+                  seed={serviceSeed}
+                  onSeedUsed={() => setServiceSeed(null)}
                   onView={go}
                 />
               )}
@@ -569,9 +573,14 @@ export default function App() {
           onAction={(action) => {
             // 보고서 작성 에이전트의 초안은 보고서 탭의 편집 칸으로 넘깁니다.
             // 그룹 화면에서 요청한 경우 앱의 선택 동이 비어 있으므로 초안의 지역·기준월로 맞춥니다.
+            // 복지사업 에이전트가 안내한 사업은 사업 매칭 검토 탭에서 바로 검토하도록 key를 넘깁니다.
             const target = action.reportDraft?.context;
             if (target) { setCity(target.city); setMonth(target.month); setDistrict(target.district); }
             if (action.reportDraft) setReportSeed(action.reportDraft);
+            // 복지사업 에이전트가 안내한 사업은 질문한 동의 사업 매칭 검토 탭에서 바로 검토하도록 key를 넘깁니다.
+            const asked = action.serviceKeys && action.context;
+            if (asked?.district) { setCity(asked.city || city); setMonth(asked.month || month); setDistrict(asked.district); }
+            if (action.serviceKeys) setServiceSeed({ id: Date.now(), keys: action.serviceKeys, names: action.serviceNames || {} });
             if (action.view) go(action.view);
           }}
           visible={true}
@@ -615,7 +624,7 @@ export function WorkflowSteps({ context, workflow, current, onView }) {
   </div>;
 }
 
-export function Services({ context, workflow, mutate, busy, user, onView }) {
+export function Services({ context, workflow, mutate, busy, user, seed, onSeedUsed, onView }) {
   const [matches, setMatches] = useState([]),
     [error, setError] = useState(''),
     [loading, setLoading] = useState(false),
@@ -623,12 +632,15 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
     [pageSize, setPageSize] = useState(5),
     [page, setPage] = useState(1),
     [selected, setSelected] = useState(''),
-    [showAll, setShowAll] = useState(false);
+    [showAll, setShowAll] = useState(false),
+    // 보미 채팅에서 넘긴 사업: { keys, names, missing } — 목록 맨 위에 두고 첫 사업의 검토 입력을 펼칩니다.
+    [focus, setFocus] = useState(null);
   const [reviewDrafts, setReviewDrafts, clearReviewDrafts, storageFailed] = useDraft(draftKey(user, context, 'services'), {});
   // 이번 달 신호와 연결 근거가 있는 사업을 먼저 보여 주고, 나머지 같은 시·도 사업은 요청할 때만 펼칩니다.
   // 근거 있는 사업이 하나도 없으면 전체 후보를 그대로 보여 줍니다.
   const related = matches.filter((m) => m.reasons.length);
-  const shown = showAll || !related.length ? matches : related;
+  const focused = matches.filter((m) => focus?.keys.includes(m.key));
+  const shown = [...focused, ...(showAll || !related.length ? matches : related).filter((m) => !focus?.keys.includes(m.key))];
   const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
   const pageStart = (page - 1) * pageSize;
   const visibleMatches = shown.slice(pageStart, pageStart + pageSize);
@@ -649,21 +661,38 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
       <button className="secondary" disabled={busy || loading || page === pageCount} onClick={() => changePage(page + 1)}>다음</button>
     </div>
   );
-  async function load() {
+  async function load(fromChat = null) {
     setLoading(true);
     setError('');
     setSelected('');
+    if (!fromChat) setFocus(null);
     try {
-      setMatches((await api('/services?' + query(context))).matches);
+      const found = (await api('/services?' + query(context))).matches;
+      setMatches(found);
       setLoaded(true);
       setShowAll(false);
       setPage(1);
+      if (fromChat) {
+        const keys = fromChat.keys.filter((key) => found.some((m) => m.key === key));
+        const missing = fromChat.keys.filter((key) => !keys.includes(key)).map((key) => fromChat.names[key] || '이름 미확인 사업');
+        setFocus({ keys, missing });
+        if (keys.length && !workflow.workflow_complete) setSelected(keys[0]);
+      }
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
   }
+  // 보미 채팅의 '사업 매칭 검토에서 검토하기'로 들어오면 바로 조회합니다. 동이 정해질 때까지는 넘긴 사업을 보관합니다.
+  useEffect(() => {
+    if (!seed || !context.district) return;
+    onSeedUsed();
+    load(seed);
+  }, [seed?.id, context.district]);
+  useEffect(() => {
+    if (selected && focus?.keys[0] === selected) document.getElementById('service-review-form')?.scrollIntoView({ block: 'center' });
+  }, [selected, focus]);
   return (
     <div className="scroll-view">
       <section className="card info-card service-review-workspace">
@@ -677,7 +706,7 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
         </p>
         <button
           className="primary"
-          onClick={load}
+          onClick={() => load()}
           disabled={busy || loading || !context.district}
         >
           {loading ? '사업을 찾는 중…' : '관련 사업 조회'}
@@ -685,6 +714,13 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
         {error && (
           <p className="error" role="alert">
             {error}
+          </p>
+        )}
+        {seed && !context.district && <p className="hint" role="status">보미가 안내한 사업 {seed.keys.length}개를 받았습니다. 검토할 동을 선택하면 바로 조회합니다.</p>}
+        {focus && (focus.keys.length > 0 || focus.missing.length > 0) && (
+          <p className="hint service-chat-focus" role="status">
+            {focus.keys.length > 0 && `보미가 안내한 사업 ${focus.keys.length}개를 맨 위에 두었습니다. `}
+            {focus.missing.length > 0 && `${focus.missing.join(', ')}은(는) ${context.district} 검토 후보에 없어 여기서 검토할 수 없습니다. 이 탭은 선택 지역과 같은 시·도의 지자체 사업만 후보로 조회합니다.`}
           </p>
         )}
         {matches.length > 0 && (
@@ -712,9 +748,10 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
         )}
         {visibleMatches.map((m) => {
           const review = reviewDrafts[m.key] || { decision: '보류', note: '' };
+          const brief = serviceBrief(m.service);
           return (
           <article className={`service-card ${selected === m.key ? 'chosen' : ''}`} key={m.key}>
-            <h3>{m.service.name}</h3>
+            <h3>{m.service.name}{focus?.keys.includes(m.key) && <small className="service-chat-badge"> · 보미 안내</small>}</h3>
             {m.service.source_id === 'local_welfare_api' && (
               <>
                 <small>게시 지역: {m.service.province} · {m.service.district && m.service.district !== '-' ? m.service.district : '시·군·구 미지정'} / 이용 가능 지역은 별도 확인</small>
@@ -722,10 +759,13 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
                 <p>시행기간: {m.service.effective_start || '시작일 미확인'} ~ {m.service.effective_end || '종료일 미확인'}</p>
               </>
             )}
-            <p>{m.service.target_text || m.service.description || '사업 대상 정보 확인 필요'}</p>
-            <p>{m.service.eligibility_text || '이용 조건 확인 필요'}</p>
-            <p>{m.service.support_text || m.service.summary}</p>
-            {m.service.application_text && <p>신청 방법: {m.service.application_text}</p>}
+            {/* 원문은 항목이 붙어 있고 칸마다 반복되므로 카드에는 원문을 짧게 자른 3줄만 보이고, 전체는 아래에서 펼칩니다. */}
+            {brief.intro && <p className="service-intro">{brief.intro}</p>}
+            <dl className="service-brief">
+              <dt>대상</dt><dd>{brief.target || '운영기관 확인 필요'}</dd>
+              <dt>지원</dt><dd>{brief.support || '운영기관 확인 필요'}</dd>
+              <dt>신청</dt><dd>{brief.application || '운영기관 확인 필요'}</dd>
+            </dl>
             {/^https?:\/\//i.test(m.service.source_url || '') && (
               <a className="text-button" href={m.service.source_url} target="_blank" rel="noopener noreferrer">사업 안내 원문 확인 →</a>
             )}
@@ -739,7 +779,16 @@ export function Services({ context, workflow, mutate, busy, user, onView }) {
                     .join(' / ')
                 : '지표와 직접 연결되는 키워드 근거 없음'}
             </small>
-            <details><summary>적합성·추가 확인 조건</summary><p>게시 지역은 이용 자격을 의미하지 않습니다. 선택 지역 {context.city} {context.district}의 주민이 이용 가능한지 확인하세요.</p><ul><li>지원 대상: {m.service.target_text || '운영기관 확인 필요'}</li><li>이용 조건: {m.service.eligibility_text || '운영기관 확인 필요'}</li><li>신청 방법: {m.service.application_text || '운영기관 확인 필요'}</li><li>현재 접수 여부·정원·거주 요건을 운영기관에 확인하세요.</li></ul></details>
+            <details className="service-full">
+              <summary>원문 전체·추가 확인 조건</summary>
+              {serviceSections(m.service).map((section) => (
+                <div className="service-section" key={section.label}>
+                  <b>{section.label}</b>
+                  <ul>{section.items.map((item, i) => <li key={i}>{item}</li>)}</ul>
+                </div>
+              ))}
+              <p>게시 지역은 이용 자격을 의미하지 않습니다. 선택 지역 {context.city} {context.district}의 주민이 이용 가능한지, 현재 접수 여부·정원·거주 요건을 운영기관에 확인하세요.</p>
+            </details>
             <button
               className="secondary"
               disabled={busy || loading || workflow.workflow_complete}
