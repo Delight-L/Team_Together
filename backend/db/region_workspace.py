@@ -77,6 +77,25 @@ def _is_region_type_question(question):
     return any(term in question for term in REGION_TYPE_TERMS)
 
 
+def region_type_explanation(context, data):
+    """Explain the cluster label actually assigned to the selected dong."""
+    district = context.get('district')
+    structures = data.get('regionalStructures', []) if isinstance(data, dict) else []
+    row = next((item for item in structures
+                if item.get('dong_name') == district or item.get('행정동명') == district), None)
+    cluster = (row or {}).get('cluster_type') or (row or {}).get('a1_cluster_type')
+    if not cluster:
+        return REGION_TYPE_EXPLANATION
+    return (
+        f'“{cluster}”은 **머신러닝 군집화 결과**로 붙인 지역유형 이름입니다. '
+        '2025년 하반기 강남구 22개 동의 유동 활동·인구·가구 구성·구조적 복지 배경을 13개 지표로 요약하고, '
+        'PCA로 비교 기준을 정리한 뒤 K-means(k=3)로 특성이 비슷한 동을 세 묶음으로 나눴습니다. '
+        f'{district or "선택한 동"}은 이 군집에 속해 대시보드에 “{cluster}”로 표시됩니다. '
+        '군집 이름은 결과를 이해하기 위한 요약일 뿐, 특정 주민의 고립 위험·복지 필요·이상신호 원인이나 우열을 판정하지 않습니다. '
+        '실제 변화 여부는 별도의 통화·문자·이동 분석 결과로 확인해야 합니다.'
+    )
+
+
 def _is_survey_metrics_question(question):
     return any(term in question for term in SURVEY_METRIC_TERMS)
 
@@ -257,7 +276,7 @@ def explain_region(context, question, data):
     elif _is_survey_metrics_question(question):
         answer = survey_metrics_answer(context, question)
     elif _is_region_type_question(question):
-        answer = REGION_TYPE_EXPLANATION
+        answer = region_type_explanation(context, data)
     elif any(term in question for term in ['평소 대비', '전월 변화율']):
         answer = SCORE_TERMS
     elif any(word in question for word in ['독거', '지역 배경', '장애인']):
