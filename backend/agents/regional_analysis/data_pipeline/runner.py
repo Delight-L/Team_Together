@@ -59,7 +59,7 @@ def status(db):
         row=con.execute('SELECT payload_json FROM pipeline_state WHERE id=1').fetchone()
         result=json.loads(row[0]) if row else {'status':'uninitialized'}
         try:
-            from data_pipeline.publication import active_snapshot
+            from backend.agents.regional_analysis.data_pipeline.publication import active_snapshot
             snapshot=active_snapshot(db)
         except Exception:
             snapshot=None

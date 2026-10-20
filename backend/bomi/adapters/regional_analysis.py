@@ -2,8 +2,7 @@
 
 지역 분석 에이전트가 이 모듈을 거쳐 엔진을 호출합니다.
 
-엔진은 자체 의도 해석기·오케스트레이터를 가진 별도 패키지라 최상위 이름(`chatbot_agent`, `data_pipeline`)으로 임포트됩니다.
-그 sys.path 조정과 임포트는 이 파일 한 곳에만 둡니다.
+엔진의 의도 해석기·오케스트레이터는 backend.agents.regional_analysis 패키지 경로로 직접 임포트합니다.
 - AI 사용 여부·제공사·키는 관리자 «AI 설정»(chatbot/ai_settings.py)을 따릅니다. 지역 분석 전용 .env 키는 쓰지 않습니다.
   Gemini면 JSON 스키마를 지정하고, 다른 제공사면 공용 llm 창구로 질문 의도를 분류합니다.
 - 게시된 run은 PostgreSQL에서 읽습니다(data_pipeline/publish_postgres.py의 publish 함수).
@@ -18,25 +17,21 @@ from __future__ import annotations
 import json
 import logging
 import re
-import sys
 from dataclasses import replace
 from pathlib import Path
 
 from sqlalchemy.exc import OperationalError
 
+from backend.agents.regional_analysis.chatbot_agent.conversation_memory import ConversationMemory, ConversationTurn
+from backend.agents.regional_analysis.chatbot_agent.district_normalizer import explicit_districts
+from backend.agents.regional_analysis.chatbot_agent.intent_parser import age_condition, comparison_ages, parse_intent
+from backend.agents.regional_analysis.chatbot_agent.llm_intent_resolver import INTENT_SCHEMA, IntentResolver, _json_object
+from backend.agents.regional_analysis.chatbot_agent.orchestrator import Chatbot
+from backend.agents.regional_analysis.chatbot_agent.schemas import GuardResult
 from backend.bomi import aio
 from backend.chatbot import ai_settings
 
 REGIONAL_ANALYSIS_ROOT = Path(__file__).resolve().parents[2] / "agents" / "regional_analysis"
-if str(REGIONAL_ANALYSIS_ROOT) not in sys.path:
-    sys.path.insert(0, str(REGIONAL_ANALYSIS_ROOT))
-
-from chatbot_agent.conversation_memory import ConversationMemory, ConversationTurn
-from chatbot_agent.district_normalizer import explicit_districts
-from chatbot_agent.intent_parser import age_condition, comparison_ages, parse_intent
-from chatbot_agent.llm_intent_resolver import INTENT_SCHEMA, IntentResolver, _json_object
-from chatbot_agent.orchestrator import Chatbot
-from chatbot_agent.schemas import GuardResult
 
 LOGGER = logging.getLogger(__name__)
 CONTEXTUAL_TYPES = {"reason", "previous", "activity", "age_activity", "age_data_coverage", "context", "support", "consumption"}
@@ -103,7 +98,7 @@ def _engine():
 
 def _repository():
     """게시 run 또는 기존 대시보드 자료를 읽는 저장소."""
-    from chatbot_agent.pg_repository import PostgresDb1Repository
+    from backend.agents.regional_analysis.chatbot_agent.pg_repository import PostgresDb1Repository
     return PostgresDb1Repository(_engine())
 
 

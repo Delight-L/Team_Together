@@ -300,7 +300,7 @@ DB1 폴더에서 전체 1·2·3 업데이트:
 
 DB 원본 집계는 `a3a_industry`, `a3b_industry`, 파생 결과는 위 파일과 같은 테이블, 처리 provenance는 `a3_run`, 고정 전처리 정책은 `a3_policy`입니다. 기존 `db1_run`/Analysis1·2 테이블은 변경하지 않습니다. 카드 수기 행정동 배분은 하지 않습니다.
 
-검증은 `run_tests.ps1`, 수치/건수 결과는 `docs/validation_20261006.md`를 참조하세요.
+검증은 `run_tests.ps1`, 수치/건수 결과는 `docs/validation/analysis12_20261006.md`를 참조하세요.
 
 ### 정리 후 경로
 소비 분석 CSV는 outputs, 동·업종 연결표는 outputs/mappings, 통합 CSV와 신호 연결 CSV는 상위 outputs/integrated에 저장합니다. 마지막 scan 기록은 logs/last_scan.json, 검증 기록은 docs에 있습니다. 공통 실행·설정은 상위 README.md를 참조하세요.

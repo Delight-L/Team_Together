@@ -54,10 +54,9 @@ def _api_key(project_root: Path) -> str | None:
     value=os.getenv("GEMINI_API_KEY","").strip()
     if value:
         return value
-    # `start_chatbot.bat` normally imports backend.app.config, which loads
-    # .env.  The resolver is also used directly by the CLI and tests, though,
-    # so it must not silently fall back to rule parsing merely because that
-    # import path was skipped.
+    # The API server loads .env through backend.common, but the resolver is
+    # also used directly by the CLI and tests, so read .env here as well
+    # instead of silently falling back to rule parsing.
     try:
         from dotenv import dotenv_values
         value=(dotenv_values(project_root / ".env").get("GEMINI_API_KEY") or "").strip()

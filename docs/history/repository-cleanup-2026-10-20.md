@@ -92,3 +92,11 @@ Git 제외인 로컬 테스트 원본에는 예전 import가 남아 있습니다
 - 전달본 검사와 원자료 재계산의 차이, 보고서 작성 조건, 템플릿 위치·해시,
   수집 테스트 경로·예약 작업 시간대 검사, 초기 OCI 도구의 이전 범위를 현재 소스로 확인했습니다.
 - 문서만 수정했습니다. 공유 DB 반영·수집·예약 작업 등록·인프라 이전·Word 렌더를 실행한 것은 아닙니다.
+
+## 마무리 정리 (2026-10-20)
+
+- 지역 분석 연결 모듈(`backend/bomi/adapters/regional_analysis.py`)이 `sys.path` 조정 없이 `backend.agents.regional_analysis` 패키지 경로로 엔진을 임포트합니다.
+- 같은 이유로 조용히 실패하던 `data_pipeline/runner.py`의 활성 스냅샷 조회 import를 패키지 경로로 고쳤습니다.
+- 호출하는 곳이 없던 `backend/tools/export_activity_tracking.py`, `pipelines/db1/Analysis1/integration/`, `pipelines/db1/Analysis1/preprocessing/validate_reference.py`를 삭제했습니다.
+- 없는 파일을 가리키던 `pipelines/db1/README.md`, `pipelines/README.md`의 경로와 `llm_intent_resolver.py`의 오래된 주석을 고쳤습니다.
+- 백엔드 모듈 전체 import, `npm run build`, 문서 상대 링크 검사를 다시 통과했습니다.

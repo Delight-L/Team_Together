@@ -217,7 +217,7 @@ python main.py --risk --input "pipelines/risk_analysis/data/gangnam_db1_dong_mon
 - `outputs/risk_metric_signals.csv`: 두 기준을 모두 통과한 변화 후보
 - `outputs/risk_region_alerts.csv`: 동·월별 후보 요약
 
-실행이 끝나면 위 CSV 저장 경로 아래에 `[사용자용 위험 변화 후보]`가 바로 출력됩니다. Analysis 1의 확정 `k=3` 동별 지역 Context를 **행정동코드**로 조회해, 지역 유형과 특징을 함께 보여줍니다. 반복되는 확인 포인트는 실행 화면에서 제외하고 코드 내부에만 보관합니다. 따라서 동 이름의 과거 명칭·띄어쓰기와 무관하게 같은 지역을 연결합니다. `data/gangnam_analysis1_cluster_profile_2025H2(1).csv`는 유형별 대표 지표를 보관한 근거 파일입니다. 군집은 위험도 확정값이 아니라 해석 보조 정보입니다.
+실행이 끝나면 위 CSV 저장 경로 아래에 `[사용자용 위험 변화 후보]`가 바로 출력됩니다. Analysis 1의 확정 `k=3` 동별 지역 Context를 **행정동코드**로 조회해, 지역 유형과 특징을 함께 보여줍니다. 반복되는 확인 포인트는 실행 화면에서 제외하고 코드 내부에만 보관합니다. 따라서 동 이름의 과거 명칭·띄어쓰기와 무관하게 같은 지역을 연결합니다. `pipelines/risk_analysis/data/gangnam_analysis1_cluster_profile_2025H2(1).csv`는 유형별 대표 지표를 보관한 근거 파일입니다. 군집은 위험도 확정값이 아니라 해석 보조 정보입니다.
 
 ### 위험 방향
 
