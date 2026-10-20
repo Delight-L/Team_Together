@@ -65,7 +65,8 @@ def is_survey_metric_question(question: str) -> bool:
 
 def is_tab_question(question: str) -> bool:
     """Questions about labels and comparison methods shown in a dashboard tab."""
-    return any(word in question for word in TAB_WORDS)
+    compact = question.replace(' ', '')
+    return any(word in question or word.replace(' ', '') in compact for word in TAB_WORDS)
 
 
 def program_name_hit(question: str, city: str = '') -> bool:
