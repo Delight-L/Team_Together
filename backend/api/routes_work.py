@@ -10,7 +10,7 @@ from datetime import date, datetime
 
 from backend.agents import report_writer, service_matching, service_eligibility
 from backend.db import mission_store
-from backend.db.analysis_identity import evidence_fingerprint
+from backend.db.analysis_identity import evidence_matches
 from backend.services import report
 from backend.api import limits, sessions
 from backend.api.common import ApiError, Response, dashboard_data, evidence_for, region_context
@@ -51,7 +51,7 @@ def with_analysis_note(current, data, context):
     """Compare the case's saved evidence, including snapshots with legacy timestamp IDs."""
     saved = current.get('analysis_evidence')
     if saved:
-        changed = evidence_fingerprint(saved) != evidence_fingerprint(evidence_for(data, context))
+        changed = not evidence_matches(saved, evidence_for(data, context))
     else:
         run_id = current.get('analysis_run_id')
         changed = bool(run_id) and run_id != str(data.get('runId', ''))
