@@ -1,27 +1,13 @@
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
 
 import pandas as pd
 
-from preprocessing.monthly_features import build_month_feature_table
-from analysis.sequential import run_month
-from data.ingestion import load_analysis2_input
 from common.config import DATE_COLUMN, AREA_CODE_COLUMN
 
 
 BASE_DIR = Path(__file__).resolve().parent
-
-def parse_month(value: str) -> pd.Timestamp:
-    try:
-        period = pd.Period(value, freq="M")
-    except Exception as exc:
-        raise argparse.ArgumentTypeError(
-            "month must be YYYY-MM, for example 2025-07"
-        ) from exc
-
-    return period.to_timestamp()
 
 
 def find_month_file(directory: Path, year: int, month: int, keyword: str) -> Path:
@@ -39,28 +25,6 @@ def find_month_file(directory: Path, year: int, month: int, keyword: str) -> Pat
         )
 
     return matches[0]
-
-
-def load_history() -> pd.DataFrame:
-    STATE_DIR.mkdir(parents=True, exist_ok=True)
-
-    if HISTORY_PATH.exists():
-        history = load_analysis2_input(HISTORY_PATH)
-        source = HISTORY_PATH
-    else:
-        history = load_analysis2_input(INITIAL_HISTORY_PATH)
-        source = INITIAL_HISTORY_PATH
-
-    # History의 날짜 형식을 내부적으로 통일
-    history[DATE_COLUMN] = pd.to_datetime(
-        history[DATE_COLUMN],
-        format="mixed",
-    ).dt.normalize()
-
-    print(f"History source: {source}")
-    print(f"History rows: {len(history)}")
-
-    return history
 
 
 def validate_current_month(

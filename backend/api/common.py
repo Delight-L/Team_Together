@@ -90,17 +90,6 @@ def evidence_for(data, context):
     return rows
 
 
-def rows_for_month(data, context):
-    """동을 고르지 않았을 때 쓰는, 그 달 전체 동의 분석 결과입니다."""
-    if context['city'] != ANALYZED_CITY:
-        return []
-    rows = []
-    for row in data['assessment']:
-        if row['기준연월'] == context['month']:
-            rows.append(row)
-    return rows
-
-
 def check_city_access(user, city):
     """관리자가 아니면 자기 소속 지역의 자료만 볼 수 있습니다."""
     if not user['admin'] and city != user['org']:

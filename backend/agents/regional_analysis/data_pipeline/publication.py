@@ -1,7 +1,7 @@
 """Immutable serving versions published from a PostgreSQL analysis workspace."""
 from sqlalchemy import text
 from backend.common import get_engine
-from backend.agents.regional_v16.data_pipeline.publish_postgres import publish as publish_run
+from backend.agents.regional_analysis.data_pipeline.publish_postgres import publish as publish_run
 
 
 def active_snapshot(database=None):

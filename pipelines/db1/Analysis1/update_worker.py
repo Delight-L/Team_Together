@@ -7,7 +7,7 @@ from pathlib import Path as _SettingsPath
 _settings_sys.path.insert(0, str(_SettingsPath(__file__).resolve().parents[1]))
 from db1_settings import load_settings
 from pathlib import Path
-import argparse,json,shutil,sys,re
+import argparse, json, sys, re
 import joblib,numpy as np,pandas as pd
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))

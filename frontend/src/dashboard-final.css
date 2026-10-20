@@ -555,15 +555,4 @@
 .app-shell.group-shell .gd-clean-directory .gd-file-list .gd-candidate {white-space:nowrap;}
 .app-shell.group-shell .gd-clean-directory footer {margin-top:0;}
 .app-shell.group-shell .gd-quality-panel {padding:10px 12px 8px;overflow:hidden;container-type:size;container-name:quality;}
-/* 보미 패널 너비 조절: 사용자가 정한 폭이 있으면 모든 화면에서 세 번째 열로 씁니다(서랍 모드 제외). */
-.app-shell.with-chat.chat-resized:not(.chat-drawer) { grid-template-columns:var(--nav-width) minmax(0,1fr) min(var(--chat-width),50vw); }
 .app-shell:not(.chat-drawer) .bomi-chat.panel { position:relative; }
-.chat-resizer { position:absolute;z-index:35;top:0;bottom:0;left:-7px;width:14px;cursor:col-resize;touch-action:none;outline:none; }
-.chat-resizer::before { content:"";position:absolute;top:0;bottom:0;left:6px;width:2px;background:transparent;transition:background .15s; }
-.chat-resizer::after { content:"";position:absolute;top:50%;left:2px;width:10px;height:46px;transform:translateY(-50%);box-sizing:border-box;border:1px solid #d5dce6;border-radius:6px;box-shadow:0 2px 6px #172b4d14;
-  background:radial-gradient(circle,#94a3b8 1.2px,transparent 1.6px) center/4px 6px repeat-y,#fff;transition:border-color .15s,background-color .15s; }
-.chat-resizer:hover::before,.chat-resizer:focus-visible::before,body.chat-resizing .chat-resizer::before { background:#2563eb80; }
-.chat-resizer:hover::after,.chat-resizer:focus-visible::after,body.chat-resizing .chat-resizer::after { border-color:#2563eb;background-color:#f5f8ff; }
-.chat-resizer:focus-visible::after { outline:2px solid #2563eb;outline-offset:2px; }
-body.chat-resizing,body.chat-resizing * { cursor:col-resize!important;user-select:none!important; }
-

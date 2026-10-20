@@ -1,9 +1,11 @@
-"""v16 지역 변화 신호 엔진(backend/agents/regional_v16) 어댑터. 지역 분석 에이전트가 이 모듈만 거쳐 v16을 씁니다.
+"""지역 변화 신호 엔진(backend/agents/regional_analysis) 어댑터.
+
+지역 분석 에이전트가 이 모듈을 거쳐 엔진을 호출합니다.
 
 엔진은 자체 의도 해석기·오케스트레이터를 가진 별도 패키지라 최상위 이름(`chatbot_agent`, `data_pipeline`)으로 임포트됩니다.
 그 sys.path 조정과 임포트는 이 파일 한 곳에만 둡니다.
-- AI 사용 여부·제공사·키는 관리자 «AI 설정»(chatbot/ai_settings.py)을 따릅니다. v16 전용 .env 키는 쓰지 않습니다.
-  Gemini면 v16 원래 방식(JSON 스키마 지정)으로, 다른 제공사면 공용 llm 창구로 질문 의도를 분류합니다.
+- AI 사용 여부·제공사·키는 관리자 «AI 설정»(chatbot/ai_settings.py)을 따릅니다. 지역 분석 전용 .env 키는 쓰지 않습니다.
+  Gemini면 JSON 스키마를 지정하고, 다른 제공사면 공용 llm 창구로 질문 의도를 분류합니다.
 - 게시된 run은 PostgreSQL에서 읽습니다(data_pipeline/publish_postgres.py의 publish 함수).
   게시 테이블이 없으면 기존 DB1 서비스 테이블과 전달 CSV를 읽는 대시보드 호환 저장소를 씁니다.
   저장소에 사용 가능한 자료가 없으면
@@ -25,9 +27,9 @@ from sqlalchemy.exc import OperationalError
 from backend.bomi import aio
 from backend.chatbot import ai_settings
 
-V16_ROOT = Path(__file__).resolve().parents[2] / "agents" / "regional_v16"
-if str(V16_ROOT) not in sys.path:
-    sys.path.insert(0, str(V16_ROOT))
+REGIONAL_ANALYSIS_ROOT = Path(__file__).resolve().parents[2] / "agents" / "regional_analysis"
+if str(REGIONAL_ANALYSIS_ROOT) not in sys.path:
+    sys.path.insert(0, str(REGIONAL_ANALYSIS_ROOT))
 
 from chatbot_agent.conversation_memory import ConversationMemory, ConversationTurn
 from chatbot_agent.district_normalizer import explicit_districts
@@ -112,10 +114,10 @@ def data_ready():
         repository = _repository()
         return repository.has_data()
     except OperationalError as exc:  # «자료 없음»과 구분해 장애로 기록합니다(답변은 대체 담당이 이어 받음)
-        LOGGER.error("v16 저장소에 연결하지 못했습니다: %s", type(exc).__name__)
+        LOGGER.error("지역 분석 저장소에 연결하지 못했습니다: %s", type(exc).__name__)
         return False
     except Exception as exc:  # 설정 오류·게시 전(테이블 없음) 등도 «자료 없음»으로 보고 기존 담당으로 넘깁니다.
-        LOGGER.warning("v16 자료 확인 실패: %s: %s", type(exc).__name__, str(exc).splitlines()[0][:120])
+        LOGGER.warning("지역 분석 자료 확인 실패: %s: %s", type(exc).__name__, str(exc).splitlines()[0][:120])
         return False
     finally:
         if repository is not None:
@@ -350,7 +352,7 @@ class _ScopedResolver(IntentResolver):
                         intent = replace(intent, age_band=None, age_scope_explicit=True)
             except Exception as exc:
                 self.failure_status = getattr(exc, "code", None)
-                LOGGER.warning("v16 AI intent unavailable (%s, status=%s)", type(exc).__name__, self.failure_status)
+                LOGGER.warning("지역 분석 AI intent unavailable (%s, status=%s)", type(exc).__name__, self.failure_status)
                 self.last_source = "local_model_error"
                 intent = self._fallback(question, districts, memory, names)
         else:
@@ -410,12 +412,12 @@ class _ScopedResolver(IntentResolver):
 
 
 def reply(question, history, context, use_ai=True, group=None):
-    """질문 하나에 대한 v16 답변 dict(answer, mode, sources, followUps, notice)를 요청 단위 기억으로 만듭니다."""
+    """질문 하나에 대한 지역 분석 답변 dict(answer, mode, sources, followUps, notice)를 요청 단위 기억으로 만듭니다."""
     config = _configuration()
     model = config.model if config and config.provider == "gemini" else DEFAULT_MODEL
     public_context = {name: str(context.get(name) or "") for name in ("city", "district", "month", "age")}
-    resolver = _ScopedResolver(V16_ROOT, model, None, public_context, config, bool(use_ai))
-    bot = Chatbot(V16_ROOT, model=model, intent_resolver=resolver, moderator=_SupervisorModerator(),
+    resolver = _ScopedResolver(REGIONAL_ANALYSIS_ROOT, model, None, public_context, config, bool(use_ai))
+    bot = Chatbot(REGIONAL_ANALYSIS_ROOT, model=model, intent_resolver=resolver, moderator=_SupervisorModerator(),
                   repository=_repository())
     bot.allow_ai_generation = False
     bot.activate_dashboard_context({
@@ -437,9 +439,9 @@ def reply(question, history, context, use_ai=True, group=None):
         answer = f"{public_context['city'] or '강남구'} 전체 지역을 살펴본 결과예요.\n\n{answer}"
     result_dict = {
         "answer": answer,
-        "mode": ("v16 · AI 의도 판단 · DB1 근거" if source == "ai"
-                 else "v16 · 저장된 자료 답변 · DB1 근거" if source == "local_model_error"
-                 else "v16 · 외부 AI 호출 없음 · DB1 근거"),
+        "mode": ("지역 분석 · AI 의도 판단 · DB1 근거" if source == "ai"
+                 else "지역 분석 · 저장된 자료 답변 · DB1 근거" if source == "local_model_error"
+                 else "지역 분석 · 외부 AI 호출 없음 · DB1 근거"),
         "sources": [{"label": _display_source(label)} for label in result.evidence.sources] or [{"label": "지역 분석 자료"}],
         "intentSource": source, "memoryMode": "request_history", "followUps": list(result.follow_ups),
     }

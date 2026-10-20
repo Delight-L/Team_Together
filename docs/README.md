@@ -10,10 +10,11 @@
 | [폴더 구성](folder-organization.md) | 폴더 역할과 이동 이력 |
 | [코드 읽기·가독성 기준](code-reading-guide.md) | 초급 개발자의 읽기 순서·DB 조회 흐름·파일 정리 기준 |
 | [2026-10-19 코드·파일 정리](repository-cleanup-2026-10-19.md) | 정리 대상·이동 내역·검증·남은 기능 문제 |
+| [2026-10-20 main 기준 정리](repository-cleanup-2026-10-20.md) | 미사용 코드 제거·지역 분석 엔진 이름 변경·검증 범위 |
 | [DB1 서비스 통합](db1-integration.md) | 검사·서비스 DB 반영 |
 | [디자인 규칙](design-rules.md) | 화면 디자인 기준 |
 | [보고서 에이전트](report-agent.md) | 보고서 생성과 검토 |
-| [보미 챗봇 구조](bomi-architecture.md) | 요청 흐름·규제·이벤트 계약·v16 저장소 |
+| [보미 챗봇 구조](bomi-architecture.md) | 요청 흐름·규제·이벤트 계약·지역 분석 저장소 |
 
 | [PostgreSQL 저장소](postgresql-storage.md) | 분석·전처리·서비스 스키마와 원문 보존·복원 |
 

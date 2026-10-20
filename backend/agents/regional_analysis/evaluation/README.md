@@ -9,11 +9,11 @@
 아래 명령은 프로젝트 루트 기준입니다. 결과 변환은 입력 파일을 읽고 지정한 출력만 만듭니다.
 
 ```powershell
-python backend/agents/regional_v16/evaluation/validate_dataset.py backend/agents/regional_v16/evaluation/datasets/v16_questions_32.jsonl
-python backend/agents/regional_v16/evaluation/make_human_report.py --help
-python backend/agents/regional_v16/evaluation/make_case_guide.py --help
-python backend/agents/regional_v16/evaluation/report32.py --help
-python backend/agents/regional_v16/evaluation/summarize_human_review.py --help
+python backend/agents/regional_analysis/evaluation/validate_dataset.py backend/agents/regional_analysis/evaluation/datasets/v16_questions_32.jsonl
+python backend/agents/regional_analysis/evaluation/make_human_report.py --help
+python backend/agents/regional_analysis/evaluation/make_case_guide.py --help
+python backend/agents/regional_analysis/evaluation/report32.py --help
+python backend/agents/regional_analysis/evaluation/summarize_human_review.py --help
 ```
 
 `validate_dataset.py`는 단계·필수 필드·사례 구성을 검사합니다. 실제 답변의 정확성을 검증하거나

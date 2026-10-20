@@ -35,8 +35,8 @@ context: []
 
 ## Code Map
 
-- `backend/agents/regional_v16/chatbot_agent/answer_generator.py` -- builds chat narratives, including the automatic age-change addendum currently appended to overall signal/reason answers.
-- `backend/agents/regional_v16/chatbot_agent/query_service.py` -- prepares evidence and currently performs supplementary per-age change lookups solely for that addendum.
+- `backend/agents/regional_analysis/chatbot_agent/answer_generator.py` -- builds chat narratives, including the automatic age-change addendum currently appended to overall signal/reason answers.
+- `backend/agents/regional_analysis/chatbot_agent/query_service.py` -- prepares evidence and currently performs supplementary per-age change lookups solely for that addendum.
 - `backend/db/group_workspace.py` -- routes group-dashboard chat questions and constructs grounded non-AI answers.
 - `backend/db/group_repository.py` -- exposes the processed group-flow source files and mapping actually used by the dashboard.
 - `pipelines/db1/docs/DATA_PUBLICATION_AUDIT_20261007.md` -- verified official source locations and provenance limitations for Analysis2 inputs.
@@ -45,8 +45,8 @@ context: []
 ## Tasks & Acceptance
 
 **Execution:**
-- [x] `backend/agents/regional_v16/chatbot_agent/answer_generator.py` -- remove the automatic age-change story helper and all calls that append it from overall `reason`/`signals` narrative paths -- prevents sparse age comparisons from being displayed unsolicited.
-- [x] `backend/agents/regional_v16/chatbot_agent/query_service.py` -- remove the age-change-only fetch, temporary state, and supplementary-evidence insertion -- ensures the backend does not perform data work for a panel no longer rendered.
+- [x] `backend/agents/regional_analysis/chatbot_agent/answer_generator.py` -- remove the automatic age-change story helper and all calls that append it from overall `reason`/`signals` narrative paths -- prevents sparse age comparisons from being displayed unsolicited.
+- [x] `backend/agents/regional_analysis/chatbot_agent/query_service.py` -- remove the age-change-only fetch, temporary state, and supplementary-evidence insertion -- ensures the backend does not perform data work for a panel no longer rendered.
 - [x] `backend/db/group_workspace.py` and source metadata helpers -- recognize source/raw-data questions ahead of broad keyword routes and generate a concise, verified provenance answer for displayed data families -- answers the user’s actual question without generic feature copy.
 - [x] `backend/**/tests/` -- add or extend focused regression tests for source answers and automatic versus explicitly requested age output -- protects both scope boundaries.
 
@@ -61,7 +61,7 @@ context: []
 
 **Commands:**
 - `npm run build` (from `frontend`) -- expected: successful frontend production build; confirms the repository's available UI build remains healthy.
-- `python -m compileall backend/agents/regional_v16/chatbot_agent` -- expected: no Python syntax errors.
+- `python -m compileall backend/agents/regional_analysis/chatbot_agent` -- expected: no Python syntax errors.
 - Focused Python test command for the added/located chatbot test module -- expected: the two automatic-vs-explicit age assertions pass.
 
 ## Suggested Review Order
@@ -80,18 +80,18 @@ context: []
 **Regional chatbot source-answer boundary**
 
 - Recognizes direct raw-data questions while avoiding a bare `출처` false positive.
-  [intent_parser.py:122](../backend/agents/regional_v16/chatbot_agent/intent_parser.py#L122)
+  [intent_parser.py:122](../backend/agents/regional_analysis/chatbot_agent/intent_parser.py#L122)
 
 - Returns a deterministic, source-scoped explanation rather than generated text.
-  [answer_generator.py:34](../backend/agents/regional_v16/chatbot_agent/answer_generator.py#L34)
+  [answer_generator.py:34](../backend/agents/regional_analysis/chatbot_agent/answer_generator.py#L34)
 
 - Avoids query work when the source explanation needs no regional data rows.
-  [query_service.py:56](../backend/agents/regional_v16/chatbot_agent/query_service.py#L56)
+  [query_service.py:56](../backend/agents/regional_analysis/chatbot_agent/query_service.py#L56)
 
 **Removed sparse age-change addendum**
 
 - Overall signal narratives no longer append an unsolicited age-by-age comparison.
-  [answer_generator.py:266](../backend/agents/regional_v16/chatbot_agent/answer_generator.py#L266)
+  [answer_generator.py:266](../backend/agents/regional_analysis/chatbot_agent/answer_generator.py#L266)
 
 **Regression checks**
 

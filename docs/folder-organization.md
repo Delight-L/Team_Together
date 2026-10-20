@@ -12,7 +12,7 @@ Team_Together/
 │  ├─ chatbot/               공용 AI 설정·가드레일·AI 연결
 │  │  └─ welfare/app/dialogue/  복지사업 검색·근거 표현
 │  ├─ agents/                보고서 작성·사업 매칭
-│  │  └─ regional_v16/       지역 변화 엔진·계산·평가 기록
+│  │  └─ regional_analysis/       지역 변화 엔진·계산·평가 기록
 │  ├─ db/                    공유 DB 연결·조회·저장
 │  ├─ services/              계정·Word 보고서 생성
 │  └─ resources/             지도 자료·보고서 서식
@@ -42,7 +42,7 @@ Team_Together/
 | `chatbot/welfare/app/agent/` | `backend/chatbot/welfare/app/dialogue/` |
 | `agents/supervisor.py`, `report_writer.py`, `service_matching.py` | `backend/agents/` |
 | `agents/regional_analysis/` | `pipelines/regional_analysis/` |
-| `agents/regional_analysis/chatbot_v16/` (shinwon 브랜치) | `backend/agents/regional_v16/` (DB1 복사본·단독 서버는 정리하고 `pipelines/db1` 사용) |
+| `agents/regional_analysis/chatbot_v16/` (shinwon 브랜치) | `backend/agents/regional_analysis/` (DB1 복사본·단독 서버는 정리하고 `pipelines/db1` 사용) |
 | `agents/risk_analysis/` | `pipelines/risk_analysis/` |
 | `db/` | `backend/db/` |
 | `db/collect_welfare.py` | `pipelines/welfare/collect.py` |
@@ -71,7 +71,7 @@ Analysis2 구현은 `pipelines/db1/Analysis2` 하나입니다. `python main.py -
 예전 복사본(`pipelines/regional_analysis/Analysis2`)은 2026-10-16에 정리했습니다. 같은 feature table로 실행한 탐지 결과·근거 카드가 바이트 단위로 같음을 확인했습니다.
 다만 통합본은 입력 검증이 더 엄격해(이력 검증, Analysis1 지역 유형 누락 검사) 앞으로 들어올 자료에 문제가 있으면 예전보다 일찍 멈출 수 있습니다.
 
-v16 지역 변화 신호 에이전트는 PostgreSQL의 게시된 run(`db1_v16`)을 읽습니다.
+지역 변화 신호 에이전트는 PostgreSQL의 게시된 run(`db1_v16`)을 읽습니다.
 게시 테이블이 없으면 `DashboardDb1Repository`가 기존 DB1 서비스 테이블과 전달된 연령·소비·날씨 CSV를 읽습니다.
 계산·게시 입력은 PostgreSQL `db1_pipeline`입니다.
 `DB1_PIPELINE_SCHEMA`는 분석 작업 스키마를 지정합니다. 이 DB를 만드는 작업기도 `pipelines/db1`의 분석 코드를 그대로 씁니다.

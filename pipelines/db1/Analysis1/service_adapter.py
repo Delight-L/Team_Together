@@ -2,7 +2,6 @@
 from pathlib import Path
 import argparse
 import json
-import pandas as pd
 
 from preprocessing.pipeline import build_analysis1_pca_input
 from preprocessing.resident import preprocess_resident

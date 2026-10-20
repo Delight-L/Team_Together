@@ -145,7 +145,7 @@ function useChat(context, group, userId, basis) {
         else if (event === 'sources') update(m => ({ ...m, sources: payload.records, mode: payload.mode }));
         else if (event === 'replace') update(m => ({ ...m, text: payload.text, mode: payload.mode, source: payload.source || m.source }));
         else if (event === 'actions') update(m => ({ ...m, actions: payload.actions }));
-        // v16 지역 변화 신호 에이전트가 제안하는 다음 질문: 답변 아래 버튼으로 보여 주고 누르면 바로 보냅니다.
+        // 지역 분석 에이전트가 제안하는 다음 질문: 답변 아래 버튼으로 보여 주고 누르면 바로 보냅니다.
         else if (event === 'follow_ups') update(m => ({ ...m, followUps: payload.questions }));
         else if (event === 'notice') {
           // 가드레일 안내(개인정보 가림, 자료에 없는 정보 가림)는 해당 답변 아래에 표시합니다.

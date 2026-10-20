@@ -1,6 +1,4 @@
 """Prepare a DB1 delivery or read-only PostgreSQL workspace for service publication."""
-from pathlib import Path
-from contextlib import closing
 import json
 from pipelines.db1 import database
 import pandas as pd

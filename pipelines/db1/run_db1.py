@@ -9,7 +9,6 @@ from db1_settings import load_settings
 """Run each analysis in its own process to isolate the existing package names."""
 from pathlib import Path
 import argparse
-import json
 import subprocess
 import sys
 import time

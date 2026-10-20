@@ -1,6 +1,6 @@
 # 보미 챗봇 구조
 
-보미의 요청 흐름, 모듈 책임, 규제 계층, 이벤트 계약, v16 근거 저장소 설계를 정리합니다.
+보미의 요청 흐름, 모듈 책임, 규제 계층, 이벤트 계약, 지역 분석 근거 저장소 설계를 정리합니다.
 실행·테스트·설정 방법은 [백엔드 안내](../backend/README.md#bomi), 재설계 과정과 측정 결과는 [보미 재설계 보고서](postgresql-storage.md)를 보세요.
 
 ## 1. 요청 흐름
@@ -47,7 +47,7 @@ flowchart TD
 | `phrases.py` | 고정 문구, AI 담당 선택 지시문 | 로직 |
 | `aio.py` | 동기↔비동기 변환의 유일한 접점(`asyncio.run`은 여기서만) | |
 | `agents/` | 담당별 답변 | `route`·`done` 이벤트 |
-| `adapters/v16.py` | v16 엔진 연결(`sys.path` 조정을 이 파일 한 곳에 가둠) | |
+| `adapters/regional_analysis.py` | 지역 분석 엔진 연결(`sys.path` 조정을 이 파일 한 곳에 가둠) | |
 
 `backend/chatbot/`에는 챗봇과 다른 기능이 함께 쓰는 부품만 남아 있습니다: AI 설정(`ai_settings.py`), 규칙 정의(`guardrails.py`), 분석 근거 AI 설명(`explain_ai.py`), 외부 AI 창구(`welfare/app/llm/`), 복지사업 자료 검색(`welfare/app/dialogue/resources.py`).
 
@@ -55,7 +55,7 @@ flowchart TD
 
 | 에이전트 | 역할 | 근거 |
 |---|---|---|
-| **region_analysis** | 동·그룹 분석 근거, 이상신호, 판정 기준, 지역 배경, 소비 | v16(PostgreSQL), 동·그룹 분석 결과 |
+| **region_analysis** | 동·그룹 분석 근거, 이상신호, 판정 기준, 지역 배경, 소비 | 지역 분석(PostgreSQL), 동·그룹 분석 결과 |
 | **welfare** | 복지사업 조회, 신규 사업 구상 | 공유 DB2 복지자료, 스트리밍 |
 | **report** | 약식보고서 초안 + «보고서 탭에서 수정» 버튼 | 업무 기록(`work`), 대화에서 찾은 사업 |
 | **guide** | 업무 방법 질문·업무 무관 질문 | 고정 문구, 외부 AI 없음 |
@@ -67,8 +67,8 @@ flowchart TD
 ```
 화면 판정 용어를 묻는 질문            → workspace (그룹이 열려 있으면 group, 아니면 district)
 그룹이 열려 있고 그 그룹을 묻는 질문    → group
-v16 자료(게시된 활성 run)가 없음        → workspace
-그 밖                                → v16
+지역 분석 자료(게시된 활성 run)가 없음        → workspace
+그 밖                                → 지역 분석
 ```
 
 AI 해석이 실패하면 외부 AI 없이 같은 근거로 다시 답하고, 그 앞에 `error` 이벤트를 보냅니다.
@@ -135,9 +135,9 @@ AI 해석이 실패하면 외부 AI 없이 같은 근거로 다시 답하고, �
 
 `conversation.py`는 세션·지역·기준월·연령에 묶인 24시간짜리 사업 원문 스냅샷을 서명합니다. 파이프라인은 이 상태 이벤트를 연결한 뒤 `events.seal`로 마감하므로 저장 오류나 연결 취소에도 기존 예외 처리·종료 규칙을 따릅니다. 보고서 에이전트와 최종 미리보기는 서명된 대화 당시 근거를 사용합니다.
 
-## 6. v16 근거 저장소
+## 6. 지역 분석 근거 저장소
 
-v16 엔진(`backend/agents/regional_v16/chatbot_agent`)의 데이터 접근을 하나의 계약 뒤로 모았습니다.
+지역 분석 엔진(`backend/agents/regional_analysis/chatbot_agent`)의 데이터 접근을 하나의 계약 뒤로 모았습니다.
 
 ```
 query_service · consumption_trends · orchestrator
@@ -152,7 +152,7 @@ pg_repository.PostgresDb1Repository ← 유일한 구현: 고정한 run의 뷰�
 
 - `Chatbot`은 저장소를 반드시 주입받습니다(없으면 `ValueError`). 과거 단독 실행 `cli/main/menu`는 제거했습니다.
 - 챗봇 로직에 SQL가 다시 들어오지 않도록 `bomi/tests/test_db1_repository.py`의 `SqlStaysInsideRepositoryTest`가 소스를 검사합니다.
-- 저장소 객체당 연결 1개를 재사용하고, 같은 표·코드 표는 요청 동안 한 번만 읽습니다(호출부에는 사본). `v16.reply()`는 요청이 끝나면 `repo.close()`를 부릅니다.
+- 저장소 객체당 연결 1개를 재사용하고, 같은 표·코드 표는 요청 동안 한 번만 읽습니다(호출부에는 사본). `regional_analysis.reply()`는 요청이 끝나면 `repo.close()`를 부릅니다.
 - 탐지 표(JSON 행)의 기간·동 조건은 SQL로 내리지 않습니다. 열 집합이 «읽은 행들의 키 합집합»이라 일부 행만 읽으면 열 구성이 달라질 수 있어, 동별 정렬 인덱스(이진 탐색)로 같은 목표를 달성합니다. 소비 원자료는 행 단위라 필요한 기간·동·연령만 SQL로 읽습니다.
 
 ### PostgreSQL 저장 구조
@@ -189,7 +189,7 @@ PostgreSQL 작업 스키마 ──publish──▶ db1.v16_<테이블>(run_id, �
 
 ### 파이프라인 산출물 게시 (`pipeline_state`·`ctx_weather`)
 
-분석 작업 스키마 `db1_pipeline`에는 v16 월별 작업기가 만드는 두 테이블이 없습니다. **작업 원본을 고치지 않고** 게시 단계에서 메웁니다(`data_pipeline/db1_compat.py`).
+분석 작업 스키마 `db1_pipeline`에는 지역 분석 월별 작업기가 만드는 두 테이블이 없습니다. **작업 원본을 고치지 않고** 게시 단계에서 메웁니다(`data_pipeline/db1_compat.py`).
 
 | 대상 | 산출물 | 게시 때의 처리 |
 |---|---|---|

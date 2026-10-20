@@ -5,17 +5,17 @@
 
 | 설명기 | 근거 | 쓰는 경우 |
 |---|---|---|
-| group    | 열어 둔 연령·성별 그룹 자료 (db/group_workspace) | 그룹 화면에서 그 그룹을 묻거나, v16 자료가 없을 때 |
-| district | 동 분석 결과 (db/region_workspace)               | 화면 판정 용어를 묻거나, v16 자료가 없을 때 |
-| v16      | PostgreSQL·대시보드 근거 (bomi/adapters/v16)              | 이상신호 목록·기준·연령별·지역 배경·소비 질문 |
+| group    | 열어 둔 연령·성별 그룹 자료 (db/group_workspace) | 그룹 화면에서 그 그룹을 묻거나, 지역 분석 자료가 없을 때 |
+| district | 동 분석 결과 (db/region_workspace)               | 화면 판정 용어를 묻거나, 지역 분석 자료가 없을 때 |
+| 지역 분석      | PostgreSQL·대시보드 근거 (bomi/adapters/regional_analysis)              | 이상신호 목록·기준·연령별·지역 배경·소비 질문 |
 
-v16 자료가 없는 서버에서는 group/district가 대신 답합니다. AI 해석이 실패하면 외부 AI 없이 같은 근거로 다시 답합니다.
+지역 분석 자료가 없는 서버에서는 group/district가 대신 답합니다. AI 해석이 실패하면 외부 AI 없이 같은 근거로 다시 답합니다.
 """
 import logging
 from typing import Iterator
 
 from backend.bomi import questions
-from backend.bomi.adapters import v16
+from backend.bomi.adapters import regional_analysis
 from backend.bomi.agents.base import RegulatedAgent, Reply
 from backend.bomi.events import Event
 from backend.bomi.phrases import AI_ANALYSIS_FALLBACK_NOTICE
@@ -44,36 +44,36 @@ class RegionAnalysisAgent(RegulatedAgent):
     def _reply(self, request: ChatRequest) -> Reply:
         if self._uses_workspace(request):
             return self._workspace(request)
-        return self._v16(request)
+        return self._engine_reply(request)
 
     @staticmethod
     def _uses_workspace(request: ChatRequest) -> bool:
-        """동·그룹 분석 근거(workspace)가 답해야 하는지. 아니면 v16."""
+        """동·그룹 분석 근거(workspace)가 답해야 하는지. 아니면 regional_analysis."""
         question = request.question
         if questions.is_screen_summary(question):
             return True
         if questions.is_screen_term_question(question):
             return True
         # 연령대가 선택된 사회적 연결 카드의 추가 지표는 DB1 서울서베이
-        # 집계 목록으로 답한다. 일반 v16 신호 설명으로 보내면 현재 카드와
+        # 집계 목록으로 답한다. 일반 지역 분석 신호 설명으로 보내면 현재 카드와
         # 관계없는 탐지 요약이 될 수 있다.
         if region_workspace._is_survey_metrics_question(question):
             return True
         if questions.is_tab_question(question):
             return True
         # 원본·다운로드 출처 질문은 화면에 열린 그룹의 실제 입력 메타데이터로
-        # 답해야 한다. v16의 일반 신호 설명이나 외부 AI가 이를 대신하면,
+        # 답해야 한다. 엔진의 일반 신호 설명이나 외부 AI가 이를 대신하면,
         # 현재 화면과 무관한 탐지 요약으로 흘러갈 수 있다.
         if request.group and group_workspace._is_provenance_question(question):
             return True
         if request.group and questions.is_group_focused(question):
             return True
-        return not v16.data_ready()
+        return not regional_analysis.data_ready()
 
     # ── 설명기 ───────────────────────────────────────────────────
-    def _v16(self, request: ChatRequest) -> Reply:
+    def _engine_reply(self, request: ChatRequest) -> Reply:
         group = (request.group.context, request.group.detail) if request.group else None
-        result = v16.reply(request.question, request.history, request.context,
+        result = regional_analysis.reply(request.question, request.history, request.context,
                            use_ai=request.use_ai, group=group)
         return Reply.from_legacy(result)
 

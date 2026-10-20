@@ -21,7 +21,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
-from backend.api import (routes_account, routes_admin, routes_analysis, routes_chat, routes_groups, routes_v16,
+from backend.api import (routes_account, routes_admin, routes_analysis, routes_chat, routes_groups, routes_regional_analysis,
                          routes_work, sessions)
 from backend.api import routes_region_insights
 from backend.api.common import ROOT, ApiError, Request, Response, StreamResponse
@@ -64,7 +64,7 @@ ROUTES = {
 
     ('GET', '/api/chat/config'): routes_chat.config,
     ('POST', '/api/chat'): routes_chat.chat,
-    ('POST', '/api/chat/v16'): routes_v16.chat,
+    ('POST', '/api/chat/v16'): routes_regional_analysis.chat,
 
     ('GET', '/api/workflow'): routes_work.workflow,
     ('GET', '/api/services'): routes_work.services,

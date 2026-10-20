@@ -35,7 +35,7 @@ DB1 결과 생성과 서비스 PostgreSQL 반영은 별도 단계입니다. [DB1
 작업 기준 폴더: `pipelines/regional_analysis/`
 
 `python main.py --analysis`의 실행점(`main.py`)과, `python main.py --preprocess`가 쓰는 예전 Analysis2 실행기를 둡니다.
-분석 코드 본체는 `pipelines/db1`, 보미의 v16 지역 변화 신호 에이전트는 `backend/agents/regional_v16`에 있습니다.
+분석 코드 본체는 `pipelines/db1`, 보미의 지역 변화 신호 에이전트는 `backend/agents/regional_analysis`에 있습니다.
 
 ```powershell
 python main.py --analysis --no-download

@@ -3,7 +3,6 @@ import sys as _database_sys
 _database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
 from pipelines.db1 import database
 """Transactional, period-aware storage shared by the two analysis workers."""
-from contextlib import contextmanager
 from pathlib import Path
 import hashlib
 import json

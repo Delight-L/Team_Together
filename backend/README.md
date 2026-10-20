@@ -10,7 +10,7 @@ API 서버·보미·에이전트·공유 DB 접근 코드를 관리합니다. �
 | `api/` | HTTP API, 로그인, 관리자, 업무·대화 요청 |
 | `bomi/` | 보미 챗봇 코어: 담당 선택, 입력·출력 규제, 이벤트 계약, 담당 에이전트 4종 |
 | `chatbot/` | 챗봇과 다른 기능이 함께 쓰는 부품: AI 설정, 규칙 정의, 외부 AI 창구, 복지사업 검색 |
-| `agents/` | 보고서 작성·사업 매칭, v16 지역 변화 신호 엔진(`regional_v16/`) |
+| `agents/` | 보고서 작성·사업 매칭, 지역 변화 신호 엔진(`regional_analysis/`) |
 | `db/` | PostgreSQL 연결·조회·저장 |
 | `services/`, `resources/` | 공통 서비스와 지도·보고서 서식 |
 | `common.py` | 여러 폴더가 함께 쓰는 작은 도구: 프로젝트 경로(`ROOT`), `.env` 읽기, 서울 시각(`seoul_now`·`now_text`), 공용 DB 엔진(`get_engine`) |
@@ -28,14 +28,14 @@ python scripts/audit_repository.py
 `python -m pytest backend/api/tests backend/db/tests backend/chatbot/tests backend/bomi/tests -q`로 실행할 수 있습니다.
 
 웹 서비스는 공유 PostgreSQL(`db1`·`db1_v16`·`db2`·`work` 스키마)을 사용합니다.
-v16 게시 테이블이 없으면 지역 분석 에이전트는 대시보드와 같은 DB1 조회 경로와 전달된 연령·소비·날씨 CSV를 사용합니다.
+지역 분석 게시 테이블이 없으면 지역 분석 에이전트는 대시보드와 같은 DB1 조회 경로와 전달된 연령·소비·날씨 CSV를 사용합니다.
 구조와 설계 이유는 [보미 챗봇 구조](../docs/bomi-architecture.md), 재설계 과정은 [보미 재설계 보고서](../docs/postgresql-storage.md)를 보세요.
 
 ## 문서 목차
 
 - [보미 챗봇](#bomi)
 - [복지사업 검색](#welfare)
-- [지역 변화 신호 에이전트](#regional-v16)
+- [지역 변화 신호 에이전트](#regional-analysis)
 
 <a id="bomi"></a>
 
@@ -48,7 +48,7 @@ v16 게시 테이블이 없으면 지역 분석 에이전트는 대시보드와 
 
 | 담당 에이전트 | 처리하는 코드 | 내용 |
 |---|---|---|
-| 지역 분석 (`region_analysis`) | `bomi/agents/region_analysis.py` → v16(`bomi/adapters/v16.py` → `agents/regional_v16/`), `db/region_workspace.py`(동), `db/group_workspace.py`(연령·성별 그룹) | 동 단위 이상신호 지역·탐지 기준·연령별 활동·지역 배경·소비 변화를 v16 근거로 답하고 다음 질문을 제안합니다. 열어 둔 그룹의 근거와 화면 판정 용어(판단 보류·기준 미해당·평소 대비 차이 등)도 설명합니다. v16 자료가 없으면 동·그룹 분석 근거로 답합니다. [v16 안내](#regional-v16) |
+| 지역 분석 (`region_analysis`) | `bomi/agents/region_analysis.py` → 지역 분석(`bomi/adapters/regional_analysis.py` → `agents/regional_analysis/`), `db/region_workspace.py`(동), `db/group_workspace.py`(연령·성별 그룹) | 동 단위 이상신호 지역·탐지 기준·연령별 활동·지역 배경·소비 변화를 지역 분석 근거로 답하고 다음 질문을 제안합니다. 열어 둔 그룹의 근거와 화면 판정 용어(판단 보류·기준 미해당·평소 대비 차이 등)도 설명합니다. 지역 분석 자료가 없으면 동·그룹 분석 근거로 답합니다. [지역 분석 안내](#regional-analysis) |
 | 복지사업 (`welfare`) | `bomi/agents/welfare.py`, `chatbot/welfare/` | 공유 DB2의 복지사업 자료에서 관련 사업을 찾아 안내합니다. JSON은 적재 원본과 오프라인 검증용입니다. |
 | 보고서 작성 (`report`) | `bomi/agents/report.py` → `agents/report_writer.py` | 대화에서 찾은 사업·신규 구상안이 있으면 그것으로 «담당자 검토 전» 초안을, 없으면 저장된 분석·사업 검토 기록으로 초안을 만듭니다. [보고서 문서](../docs/report-agent.md) 참고. |
 | 보미 안내 (`guide`) | `bomi/agents/guide.py` | 검토 의견 작성·현장 확인·보고서 작성 주의점 같은 업무 방법(정해진 답)과, 업무와 무관한 질문을 안내합니다. |
@@ -88,7 +88,7 @@ AI 분석 해석이 실패하면 데이터 근거 안내로 답하고, 보고서
   최종 저장은 사업 매칭 검토에 판단을 기록한 뒤 «보고서 작성»에서 합니다.
 
 요청 흐름: 화면(`frontend/src/BomiChat.jsx`) → `POST /api/chat`(stream) → `backend/api/routes_chat.py` → `backend/bomi/pipeline.py`(규제·담당 선택) → 담당 에이전트 → `events.seal`.
-응답은 `route`(담당) → `sources`/`token`(복지사업) 또는 `replace`(분석·보고서·안내) → `follow_ups`(v16 다음 질문) → `notice` → `actions`(보고서 탭 이동) → `done` 이벤트 순서로 옵니다.
+응답은 `route`(담당) → `sources`/`token`(복지사업) 또는 `replace`(분석·보고서·안내) → `follow_ups`(지역 분석 다음 질문) → `notice` → `actions`(보고서 탭 이동) → `done` 이벤트 순서로 옵니다.
 복지사업 답변은 끝에 «검토 자료와 확인 상태»(출처·확인 상태)를 붙이고, 미확인 자격을 단정한 AI 답은 자료상 대상·확인 기관 안내로 바꿉니다.
 화면의 «내보내기» 버튼은 대화를 텍스트 파일(.txt)로 내려받습니다(`frontend/src/chatExport.mjs`, 서버로 보내지 않음).
 이벤트 10종의 계약과 순서 규칙은 `bomi/events.py`와 [보미 챗봇 구조 5장](../docs/bomi-architecture.md#5-이벤트-계약-eventspy)에 있습니다. `conversation` 이벤트는 `sources` 직전에 서명된 대화 상태를 갱신하고, 마지막 `done`은 계속 `events.seal`에서 한 번만 보냅니다.
@@ -211,14 +211,14 @@ python -m backend.chatbot.welfare.app.dialogue.semantic --all-regions
 
 API 키는 서버 `.env` 또는 관리자 AI 설정에 저장하며 저장소나 화면 코드에 노출하지 않습니다.
 
-<a id="regional-v16"></a>
+<a id="regional-analysis"></a>
 
 ## 지역 변화 신호 에이전트
 
-작업 기준 폴더: `backend/agents/regional_v16/`
+작업 기준 폴더: `backend/agents/regional_analysis/`
 
 지역 분석 에이전트(`bomi/agents/region_analysis.py`)가 동 단위 질문을 이 엔진에 넘깁니다.
-연결 모듈은 `backend/bomi/adapters/v16.py` 하나이며, 엔진의 `sys.path` 조정과 임포트도 이 파일에만 있습니다.
+연결 모듈은 `backend/bomi/adapters/regional_analysis.py` 하나이며, 엔진의 `sys.path` 조정과 임포트도 이 파일에만 있습니다.
 어댑터는 화면에서 고른 동·기준월·연령을 질의 계획에 넘기고, 지표 버튼 입력·«화면 정리해 줘» 같은 짧은 질문을 구체 질문으로 바꿉니다.
 
 ### 폴더 구성
@@ -238,7 +238,7 @@ DB를 새로 만드는 작업기는 공식 분석 코드 `pipelines/db1`을 그�
 ### 근거 자료 (PostgreSQL)
 
 - 게시 모드의 챗봇은 **PostgreSQL에서** 읽습니다. 게시 테이블이 없으면 대시보드 호환 모드(DB1 서비스 테이블 + 전달 CSV)를 사용합니다. 계산 파이프라인은 PostgreSQL `db1_pipeline`에 결과를 쓰고, 게시가 이를 서비스의 `db1.v16_*` 테이블과 `db1_v16` 뷰로 옮깁니다.
-- 게시는 `data_pipeline/publish_postgres.py`의 `publish(workspace_schema, engine)`, 이전 run으로 되돌리기는 `activate(engine, run_id)`입니다. 저장 구조는 [보미 챗봇 구조 6장](../docs/bomi-architecture.md#6-v16-근거-저장소)을 보세요.
+- 게시는 `data_pipeline/publish_postgres.py`의 `publish(workspace_schema, engine)`, 이전 run으로 되돌리기는 `activate(engine, run_id)`입니다. 저장 구조는 [보미 챗봇 구조 6장](../docs/bomi-architecture.md#6-지역-분석-근거-저장소)을 보세요.
 - 게시 테이블이 없을 때는 대시보드 호환 저장소의 자료 유무를 확인합니다. 사용할 자료가 없거나 DB에 연결하지 못하면 `data_ready()`가 False이고 동·그룹 분석 근거로 답합니다.
 
 ### 외부 AI

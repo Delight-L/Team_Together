@@ -4,9 +4,8 @@ _database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve
 from pipelines.db1 import database
 from pathlib import Path
 from contextlib import closing
-import importlib.util,sys,json,hashlib,math,csv
+import sys,json,hashlib
 import pandas as pd
-import numpy as np
 R=Path(__file__).resolve().parent
 DB1=next((p for p in R.parents if (p/'run_db1.py').exists()),Path(r'C:\Users\user\Desktop\Team_Together\DB1'))
 O=DB1/'outputs/validation/retrospective_20261007' if (R/'DEPLOYED.txt').exists() else R/'outputs'

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 import joblib, pandas as pd
-from common.config import CONFIG, Analysis1Config
+from common.config import CONFIG
 from analysis.analysis1 import build_feature_table, balance_domains, fit_final_clusters
 PCA_COLUMNS={'active_pop':['male_ratio','age_10_ratio','age_20_ratio','age_30_ratio','age_40_ratio','age_50_ratio','age_60_plus_ratio'],'time_structure':['night_ratio','morning_ratio','daytime_ratio','evening_ratio'],'resident_age':['resident_ratio_0_19','resident_ratio_20_29','resident_ratio_30_39','resident_ratio_40_49','resident_ratio_50_64','resident_ratio_65_plus'],'household_structure':['hh_1_ratio','hh_2_ratio','hh_3_ratio','hh_4plus_ratio']}
 CLUSTER_TYPE={0:'고활동·청년유동·1인가구 중심형',1:'고령·2인가구·구조적 복지배경 특화형',2:'중간활동·다인가구 중심형'}

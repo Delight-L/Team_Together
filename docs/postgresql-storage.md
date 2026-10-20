@@ -46,7 +46,7 @@ python scripts/import_db1.py --workspace db1_pipeline
 
 ## 게시
 
-v16 서비스 버전은 `backend/agents/regional_v16/data_pipeline/publish_postgres.py`의
+지역 분석 서비스 버전은 `backend/agents/regional_analysis/data_pipeline/publish_postgres.py`의
 `publish(workspace_schema, engine)`로 게시합니다. 작업 스키마를 읽기 전용으로 고정하고 내용 해시를 계산한 뒤
 버전별 자료와 활성 포인터를 하나의 트랜잭션으로 저장합니다. 이전 버전 활성화는 `activate(engine, run_id)`입니다.
 계산 작업기의 게시 연결은 `data_pipeline/publication.py`에 있습니다.

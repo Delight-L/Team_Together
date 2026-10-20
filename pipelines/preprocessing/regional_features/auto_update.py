@@ -7,7 +7,6 @@ import re
 import shutil
 import subprocess
 import sys
-from datetime import date
 from pathlib import Path
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen

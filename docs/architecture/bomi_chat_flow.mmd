@@ -1,6 +1,6 @@
 flowchart TD
     FE["프론트엔드 BomiChat.jsx"]
-    CFG["GET /api/chat/config<br/>AI 사용 가능 여부 · 자료 수 · v16 자료 여부"]
+    CFG["GET /api/chat/config<br/>AI 사용 가능 여부 · 자료 수 · 지역 분석 자료 여부"]
     FE -. "GET" .-> CFG
     FE -->|"POST /api/chat"| RT["api/routes_chat.chat<br/>화면·그룹 맥락 검사 · limits.check_chat 한도 429<br/>validate_messages 대화 1~40개 · 6000자 → ChatRequest"]
 
@@ -27,12 +27,12 @@ flowchart TD
     IN -->|"통과"| WHO{"어느 에이전트?"}
 
     WHO -->|"region_analysis"| RA{"설명기 선택"}
-    RA -->|"화면 용어 · 열린 그룹 질문 · v16 자료 없음"| WS["workspace<br/>group_workspace · region_workspace"]
-    RA -->|"그 밖"| V16["v16 어댑터<br/>Db1Repository → 이전 파일 저장소 공개본"]
+    RA -->|"화면 용어 · 열린 그룹 질문 · 지역 분석 자료 없음"| WS["workspace<br/>group_workspace · region_workspace"]
+    RA -->|"그 밖"| ENGINE["지역 분석 어댑터<br/>Db1Repository → PostgreSQL 게시본 · 대시보드 호환 조회"]
     WS -->|"AI 해석 실패"| WSF["외부 AI 없이 데이터 근거로 재답변<br/>error 이벤트 후 replace"]
     WS --> DLV
     WSF --> DLV
-    V16 --> DLV
+    ENGINE --> DLV
 
     WHO -->|"welfare"| WF["팀 JSON 자료 검색<br/>resources.search"]
     WF --> SRC["sources 이벤트"]
@@ -70,6 +70,6 @@ flowchart TD
     classDef data fill:#eaf6ea,stroke:#3c8d40,color:#222
     classDef event fill:#fff6dd,stroke:#b9770e,color:#222
     class PRE,FLAG,SAFE,IN,BLK,DLV,OMOD,OBLK guard
-    class AG,RA,WS,WSF,V16,WF,STM,LOC,RP,POL,GD agent
+    class AG,RA,WS,WSF,ENGINE,WF,STM,LOC,RP,POL,GD agent
     class RT data
     class ROUTE,SRC,FOOT,RPL,SEAL,RESP event

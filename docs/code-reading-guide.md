@@ -12,11 +12,11 @@
 | 3 | [채팅 요청](../backend/api/routes_chat.py) | 화면에서 보낸 질문·선택 지역·기간을 받는 부분 |
 | 4 | [보미 파이프라인](../backend/bomi/pipeline.py) | 입력 검사 → 담당 선택 → 답변 → 종료 흐름 |
 | 5 | [지역 분석 담당](../backend/bomi/agents/region_analysis.py) | 지역 분석을 어떤 조건에서 실행하는지 |
-| 6 | [v16 연결](../backend/bomi/adapters/v16.py) | 질문과 화면 정보를 지역 분석 엔진에 전달하는 부분 |
-| 7 | [저장소 계약](../backend/agents/regional_v16/chatbot_agent/db1_repository.py) | DB 조회 함수가 무엇을 받고 무엇을 돌려주는지 |
-| 8 | [공통 DB 조회](../backend/agents/regional_v16/chatbot_agent/repository.py) | SQL 결과를 표로 바꾸고 지역·기간·신호로 거르는 부분 |
+| 6 | [지역 분석 연결](../backend/bomi/adapters/regional_analysis.py) | 질문과 화면 정보를 지역 분석 엔진에 전달하는 부분 |
+| 7 | [저장소 계약](../backend/agents/regional_analysis/chatbot_agent/db1_repository.py) | DB 조회 함수가 무엇을 받고 무엇을 돌려주는지 |
+| 8 | [공통 DB 조회](../backend/agents/regional_analysis/chatbot_agent/repository.py) | SQL 결과를 표로 바꾸고 지역·기간·신호로 거르는 부분 |
 
-게시된 v16 자료 유무에 따라 실제 조회 구현은 `pg_repository.py` 또는
+게시된 지역 분석 자료 유무에 따라 실제 조회 구현은 `pg_repository.py` 또는
 `dashboard_repository.py`로 이어집니다. 모든 질문이 공통 DB 조회 파일을 거치는 것은 아닙니다.
 분석 수식을 공부할 때는 [DB1 안내](../pipelines/db1/README.md)를 별도로 읽습니다.
 

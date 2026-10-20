@@ -1,7 +1,6 @@
 """Verified item-level summaries of 2022 youth surveys, separate from detection inputs."""
 from pathlib import Path
-from contextlib import closing
-import json,hashlib,re
+import json, hashlib
 import numpy as np
 import pandas as pd
 from openpyxl import load_workbook

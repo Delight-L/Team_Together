@@ -5,10 +5,10 @@ Usage: ``python -m backend.db.group_workspace_regression``.
 import unittest
 from pathlib import Path
 
-from backend.agents.regional_v16.chatbot_agent.answer_generator import _age_activity_answer, _reason_answer
-from backend.agents.regional_v16.chatbot_agent.conversation_memory import ConversationMemory
-from backend.agents.regional_v16.chatbot_agent.schemas import Evidence, QueryIntent
-from backend.bomi.adapters.v16 import _ScopedResolver
+from backend.agents.regional_analysis.chatbot_agent.answer_generator import _age_activity_answer, _reason_answer
+from backend.agents.regional_analysis.chatbot_agent.conversation_memory import ConversationMemory
+from backend.agents.regional_analysis.chatbot_agent.schemas import Evidence, QueryIntent
+from backend.bomi.adapters.regional_analysis import _ScopedResolver
 from backend.db.group_workspace import _is_provenance_question, _provenance_answer
 from backend.db.region_workspace import (REGION_TYPE_EXPLANATION, SURVEY_OTHER_METRICS_EXPLANATION,
                                          _is_region_type_question, _is_survey_metrics_question, explain_region,

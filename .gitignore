@@ -24,7 +24,7 @@ frontend/dist/
 .tmp/
 # 담당자 업무 기록 DB와 관리자 «AI 설정»(서버에만 보관)
 backend/db/runtime/ai_settings.json
-backend/agents/regional_v16/outputs/runtime/
+backend/agents/regional_analysis/outputs/runtime/
 # DB1 파이프라인의 실행 상태·로컬 설정·백업
 pipelines/db1/outputs/runtime/
 pipelines/db1/outputs/backups/

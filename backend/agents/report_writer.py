@@ -57,7 +57,7 @@ def evidence_sentence(row):
 
 
 def _split_items(text):
-    """원문을 항목 목록으로 나눕니다. "- 지원대상 : …- 지원내용 : …"처럼 붙은 항목도 나눕니다(frontend serviceText.mjs splitItems와 같은 규칙)."""
+    """원문을 항목 목록으로 나눕니다. "- 지원대상 : …- 지원내용 : …"처럼 붙은 항목도 나눕니다."""
     text = re.sub(r'[ \t\u00a0]+', ' ', str(text or ''))
     text = re.sub(r'\s*-\s+(?=[가-힣A-Za-z ]{1,15}:)', '\n', text)
     text = re.sub(r'\s*[○●■□▶•※]\s*', '\n', text)
@@ -137,7 +137,7 @@ def _review_proposal(review):
     # 검토 당시 저장한 사업 원문에서 무엇을 누구에게 지원하는지 한 줄씩 붙입니다.
     snapshot = review.get('service_snapshot') or {}
     support = _brief(snapshot.get('benefit_text') or snapshot.get('support_text'))
-    # 대상은 지원 대상과 이용 조건 중 짧은 쪽이 보통 핵심만 담고 있습니다(화면의 serviceBrief와 같음).
+    # 대상은 지원 대상과 이용 조건 중 짧은 쪽이 보통 핵심만 담고 있습니다.
     who = [value for value in (snapshot.get('eligibility_text'), snapshot.get('target_text')) if value]
     target = _brief(min(who, key=len)) if who else ''
     if support:

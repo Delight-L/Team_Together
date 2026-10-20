@@ -35,18 +35,18 @@ context:
 
 ## Code Map
 
-- `backend/bomi/adapters/v16.py` -- 화면 요약 정규식과 대시보드 문맥 강제 적용 분기.
-- `backend/agents/regional_v16/chatbot_agent/answer_generator.py` -- 원자료 증감 및 보정 후 신호의 자연어 설명 생성.
-- `backend/agents/regional_v16/chatbot_agent/test_answer_generator.py` -- 신호 설명 회귀 테스트.
+- `backend/bomi/adapters/regional_analysis.py` -- 화면 요약 정규식과 대시보드 문맥 강제 적용 분기.
+- `backend/agents/regional_analysis/chatbot_agent/answer_generator.py` -- 원자료 증감 및 보정 후 신호의 자연어 설명 생성.
+- `backend/agents/regional_analysis/chatbot_agent/test_answer_generator.py` -- 신호 설명 회귀 테스트.
 - `backend/bomi/tests/test_v16_adapter.py` -- 새로 추가할 화면 요약 의도 회귀 테스트.
 
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `backend/bomi/adapters/v16.py` -- 화면 요약 정규식을 명시적 화면 지칭으로 제한한다.
+- [ ] `backend/bomi/adapters/regional_analysis.py` -- 화면 요약 정규식을 명시적 화면 지칭으로 제한한다.
 - [ ] `backend/bomi/tests/test_v16_adapter.py` -- 전체 신호 질의와 실제 화면 요약 질의를 함께 고정하는 회귀 테스트를 추가한다.
-- [ ] `backend/agents/regional_v16/chatbot_agent/answer_generator.py` -- 증가한 이동 지표의 설명을 원자료와 보정 판정이 바로 구분되도록 다듬는다.
-- [ ] `backend/agents/regional_v16/chatbot_agent/test_answer_generator.py` -- 세곡동 형태의 증가 원자료·하방 신호 문구를 검증한다.
+- [ ] `backend/agents/regional_analysis/chatbot_agent/answer_generator.py` -- 증가한 이동 지표의 설명을 원자료와 보정 판정이 바로 구분되도록 다듬는다.
+- [ ] `backend/agents/regional_analysis/chatbot_agent/test_answer_generator.py` -- 세곡동 형태의 증가 원자료·하방 신호 문구를 검증한다.
 
 **Acceptance Criteria:**
 - Given 특정 동이 선택된 대시보드, when 전체 이상신호 상세 질의를 입력하면, then `rule_dashboard_summary`가 아니라 전체 `signals` 의도로 처리된다.
@@ -63,4 +63,4 @@ context:
 
 **Commands:**
 - `.\.venv\Scripts\python.exe -m unittest backend.bomi.tests.test_v16_adapter` -- 전체 조회와 화면 요약 의도 테스트 통과.
-- `.\.venv\Scripts\python.exe -m unittest backend.agents.regional_v16.chatbot_agent.test_answer_generator` -- 신호 설명 테스트 통과.
+- `.\.venv\Scripts\python.exe -m unittest backend.agents.regional_analysis.chatbot_agent.test_answer_generator` -- 신호 설명 테스트 통과.

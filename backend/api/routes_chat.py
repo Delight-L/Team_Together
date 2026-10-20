@@ -5,7 +5,7 @@
 """
 from backend.api import limits
 from backend.api.common import Request, StreamResponse, dashboard_data, group_context, region_context
-from backend.bomi.adapters import v16
+from backend.bomi.adapters import regional_analysis
 from backend.bomi.pipeline import default_pipeline
 from backend.bomi.request import ChatRequest, GroupSelection, validate_messages, validate_source_ids
 from backend.bomi.conversation import unpack
@@ -14,14 +14,14 @@ from backend.chatbot.welfare.app.dialogue.resources import resource_counts, reso
 
 
 def config(request):
-    """GET /api/chat/config: 관리자가 외부 AI를 허용했는지, 어느 제공사인지, 검색할 복지사업 자료 수, v16 자료가 있는지입니다."""
+    """GET /api/chat/config: 관리자가 외부 AI를 허용했는지, 어느 제공사인지, 검색할 복지사업 자료 수, 지역 분석 자료가 있는지입니다."""
     ai = ai_settings.current()
     provider = ai_settings.PROVIDERS[ai.provider]['label'] if ai.ready else ''
     counts = resource_counts()
     return {'aiAvailable': ai.ready, 'aiProvider': provider, 'resourceCount': sum(counts.values()),
             'resourceCounts': counts,
             'resourceSource': resource_source(),
-            'v16Available': v16.data_ready()}
+            'v16Available': regional_analysis.data_ready()}
 
 
 def _group_selection(request):

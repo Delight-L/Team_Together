@@ -5,7 +5,6 @@
 단계 순서는 mission_store.save_event가 서버에서 다시 검사합니다.
 """
 import hashlib
-import json
 import logging
 from datetime import date, datetime
 

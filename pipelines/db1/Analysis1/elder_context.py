@@ -8,7 +8,7 @@ _settings_sys.path.insert(0, str(_SettingsPath(__file__).resolve().parents[1]))
 from db1_settings import load_settings
 """Annual dong-level living-alone elderly context, separate from fitted PCA."""
 from pathlib import Path
-import argparse,calendar,csv,glob,hashlib,io,json,re
+import argparse, csv, glob, hashlib, io, json, re
 import pandas as pd
 
 ROOT=Path(__file__).resolve().parents[1]
