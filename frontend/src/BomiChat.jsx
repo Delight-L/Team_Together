@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { api, streamChat } from './api';
+import { api, query, streamChat } from './api';
 import { Icon } from './components';
 import { chatFileName, chatTranscript, downloadChat, sourceLabel, usedAi } from './chatExport.mjs';
+import { comparisonRows } from './regionalPresentation.mjs';
 import './bomi-chat.css';
 import welcomeArtwork from './assets/bomi-detective-welcome.png';
 
@@ -78,9 +79,44 @@ export { usedAi };
 // 서버의 대화 근거는 지역·연령·기준월 조건마다 서명됩니다(backend/bomi/conversation.py scope).
 const scopeKey = body => JSON.stringify(['city', 'district', 'age', 'month'].map(k => body[k] || ''));
 
+// 대시보드와 챗봇이 같은 탐지 수치를 보도록, 열린 사례의 원자료만 카드용으로 정리합니다.
+// 비교할 수 없는 값은 보여 주지 않아 숫자를 추정한 것처럼 보이지 않게 합니다.
+function detectionMetrics(payload) {
+  return comparisonRows(payload, [
+    ['call_contacts', '전화 연락'], ['text_contacts', '문자 연락'],
+    ['weekday_move_count', '평일 이동'], ['weekend_move_count', '휴일 이동'],
+  ]).filter(metric => Number.isFinite(metric.local));
+}
+
+function isDetectionQuestion(question) {
+  return /탐지|이유|변화|감소|증가|요약|수치|지표|연락|이동/.test(question);
+}
+
+function DetectionMetricSummary({ metrics }) {
+  if (!metrics?.length) return null;
+  return <section className="bomi-detection-summary" aria-label="대시보드와 같은 변화 수치">
+    <header><strong>변화 수치 요약</strong><span>직전 관측기간 대비</span></header>
+    <div className="bomi-detection-metrics">
+      {metrics.map(metric => {
+        const direction = metric.local < 0 ? '감소' : metric.local > 0 ? '증가' : '변화 없음';
+        return <div key={metric.label} className={`bomi-detection-metric ${metric.local < 0 ? 'down' : metric.local > 0 ? 'up' : 'steady'}`}>
+          <span>{metric.label}</span><strong>{Math.abs(metric.local).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}%</strong><em>{direction}</em>
+        </div>;
+      })}
+    </div>
+  </section>;
+}
+
 // basis: 질문할 때의 대화 기준(대상·기준월). 메뉴를 옮겨 기준이 바뀌어도 대화는 남기고, 말풍선 사이에 칩으로 표시합니다.
-function useChat(context, group, userId, basis) {
+function useChat(context, group, userId, basis, metricSnapshot) {
   const [messages, setMessages] = useState([]), [busy, setBusy] = useState(false), [error, setError] = useState('');
+  // 늦게 도착한 수치도 질문 당시 사례에만 붙이고, 다른 사례로 이동해도 그 값을 보존합니다.
+  useEffect(() => {
+    if (!metricSnapshot?.metrics.length) return;
+    setMessages(previous => previous.map(message =>
+      message.metricsScope === metricSnapshot.scope && !message.metrics?.length
+        ? { ...message, metrics: metricSnapshot.metrics } : message));
+  }, [metricSnapshot]);
   const [config, setConfig] = useState(null);
   const [configError, setConfigError] = useState(''), [configRevision, setConfigRevision] = useState(0);
   const [retryQuestion, setRetryQuestion] = useState('');
@@ -111,7 +147,7 @@ function useChat(context, group, userId, basis) {
     setMessages(previous => previous.map((m, i) => i === previous.length - 1 && m.role === 'assistant'
       ? { ...m, text: m.text || '응답이 중지되었습니다.', interrupted: true } : m));
   }
-  async function send(question, retry = false) {
+  async function send(question, retry = false, metrics = [], metricsScope = null) {
     if (request.current) return;
     const controller = new AbortController(); request.current = controller;
     // 화면에는 대화 전체를 남기고, 서버에는 최근 3쌍과 이번 질문만 보냅니다.
@@ -120,7 +156,7 @@ function useChat(context, group, userId, basis) {
     const recent = kept.slice(-HISTORY_SIZE);
     const next = [...base, { role: 'user', text: question, basis }];
     const index = next.length;
-    setMessages([...next, { role: 'assistant', text: '', sources: [] }]);
+    setMessages([...next, { role: 'assistant', text: '', sources: [], metrics, metricsScope }]);
     setError(''); setRetryQuestion(''); setBusy(true);
     let safeQuestion = question;
     const update = fn => { if (request.current === controller) setMessages(previous => previous.map((m, i) => i === index ? fn(m) : m)); };
@@ -168,13 +204,14 @@ function useChat(context, group, userId, basis) {
 // inert: 좁은 화면에서 서랍이 닫혀 있을 때 키보드 초점이 숨은 대화창으로 들어가지 않게 합니다.
 export default function BomiChat({ context, group, userId, view, layout = 'embedded', expanded = false, onExpand, draft, actions = [], onAction, visible = true, inert, resizer }) {
   const [input, setInput] = useState('');
+  const [metricSnapshot, setMetricSnapshot] = useState(null);
   // guided: 다른 화면에서 예시 질문을 넣어 준 상태. 입력란을 강조하고 보내는 방법을 안내합니다.
   const [guided, setGuided] = useState(false);
   const place = group ? `${group.district} · ${group.age}${group.sex === '통합' ? '' : ` · ${group.sex}`}` : `${context.city} ${context.district || '전체'}${context.age ? ` · ${context.age}` : ''}`;
   const month = group?.month || context.month;
   const targetName = group || context.age ? place : context.district || `${context.city} 전체`;
   const basis = `${targetName}${month ? ` · ${month}` : ''}`;
-  const chat = useChat(context, group, userId, basis);
+  const chat = useChat(context, group, userId, basis, metricSnapshot);
   const end = useRef(null), field = useRef(null), appliedDraft = useRef(null), guidedRef = useRef(false);
   guidedRef.current = guided;
   const contextKey = JSON.stringify(context);
@@ -183,6 +220,17 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
   // 지역이 바뀌면 예전 지역용 예시 질문만 지웁니다. 직접 쓰던 질문은 남깁니다.
   // 아래 예시 질문 효과보다 먼저 실행되어야 같은 순간에 넣은 안내가 남습니다.
   useEffect(() => { if (guidedRef.current) { setGuided(false); setInput(''); } }, [targetKey]);
+  // 그룹 화면의 탐지 근거와 같은 API를 읽어, 챗봇 답변에도 같은 변화율을 카드로 붙입니다.
+  useEffect(() => {
+    let live = true;
+    setMetricSnapshot(null);
+    if (!group) return () => { live = false; };
+    api('/groups/detail?' + query(group)).then(data => {
+      const next = detectionMetrics(data?.regional?.detection?.payload);
+      if (live) setMetricSnapshot({ scope: targetKey, metrics: next });
+    }).catch(() => { if (live) setMetricSnapshot(null); });
+    return () => { live = false; };
+  }, [targetKey]);
   useEffect(() => {
     if (draft?.contextKey === contextKey && appliedDraft.current !== draft.id) {
       appliedDraft.current = draft.id;
@@ -196,7 +244,10 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
   function submit(value = input) {
     const question = value.trim();
     if (!question || chat.busy || question.length > 2000) return;
-    setInput(''); setGuided(false); chat.send(question);
+    setInput(''); setGuided(false);
+    const showDetectionSummary = Boolean(group && isDetectionQuestion(question));
+    const metrics = metricSnapshot?.scope === targetKey ? metricSnapshot.metrics : [];
+    chat.send(question, false, showDetectionSummary ? metrics : [], showDetectionSummary ? targetKey : null);
   }
   const target = group || context.age ? 'group' : context.district ? 'district' : 'city';
   const suggestions = group || !context.district ? SUGGESTIONS[target] : MENU_SUGGESTIONS[view] || SUGGESTIONS[target];
@@ -253,6 +304,7 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
         {m.role === 'assistant' && !m.text && chat.busy && i === chat.messages.length - 1 ? <Typing /> : <article className={`bomi-message ${m.role}`}>
         <small>{m.role === 'user' ? '나' : m.agent ? `보미 · ${m.agent}` : '보미'}</small>
         <p>{m.role === 'assistant' ? formatAssistantText(m.text || '답변을 완료하지 못했습니다.') : (m.text || '답변을 완료하지 못했습니다.')}</p>
+        {m.role === 'assistant' && <DetectionMetricSummary metrics={m.metrics} />}
         {m.interrupted && <span className="bomi-notice">완료되지 않은 응답입니다.</span>}
         {m.role === 'assistant' && m.mode && <div className="bomi-meta">
           <span className={`bomi-badge ${usedAi(m.mode) ? 'ai' : 'data'}`}>{usedAi(m.mode) ? 'AI 답변' : '자료 기반'}</span>

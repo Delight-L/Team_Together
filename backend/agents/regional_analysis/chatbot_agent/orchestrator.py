@@ -20,6 +20,14 @@ from .dialogue_router import DIALOGUE_REPLIES
 from .analysis2_knowledge import methodology_answer
 from .observation_period import observation_period
 
+
+def _next_label_month(label_month: str | None) -> str | None:
+ """Return the next source-label month without treating it as an observation month."""
+ match=re.fullmatch(r"(20\d{2})-(0[1-9]|1[0-2])",str(label_month or "").strip())
+ if not match:return None
+ year,month=map(int,match.groups())
+ return f"{year + (month == 12):04d}-{1 if month == 12 else month + 1:02d}"
+
 class Chatbot:
  def __init__(self, project_root: Path, model: str="gemini-2.5-flash-lite", intent_resolver=None, moderator=None, repository: Db1Repository=None):
   self.project_root=project_root
@@ -54,6 +62,18 @@ class Chatbot:
   if re.search(r"고립.*(?:확정|판단)|(?:확정|판단).*고립", question):
    text='확정할 수 없습니다. 화면의 신호는 지역 집단에서 관찰된 행동 변화에 관한 정보이며, 해당 동 주민이나 특정 개인의 고립을 판단하는 근거가 아닙니다.'
    return AnswerResult(text,Evidence("해석 범위 안내",text))
+  # 화면의 ‘우리 동은 어떤 지역일까?’ 문구가 가리키는 기능을 묻는
+  # 질문은 선택 동의 실제 클러스터를 조회하는 요청과 구분한다.
+  feature_question = (
+   re.search(r"우리\s*동(?:은)?\s*어떤\s*지역(?:일까)?", question)
+   and re.search(r"무슨\s*기능|어떤\s*기능|기능(?:이야|인가|인지|을)?", question)
+  )
+  if feature_question:
+   text=("‘우리 동은 어떤 지역일까?’는 행정동별 인구·가구 구성과 구조적 복지 배경 지표를 함께 비교해, "
+         "서로 비슷한 지역을 유형으로 묶어 보여주는 기능입니다. 지도 색과 유형 범례로 우리 동과 다른 동의 지역적 특징을 비교할 수 있습니다. "
+         "이는 개인의 상태나 지역의 우열·위험도를 판정하는 기능은 아닙니다.")
+   return AnswerResult(text,Evidence("지역유형 기능 안내",text),
+                       ("우리 동의 지역유형을 알려줘", "지역유형은 어떤 지표로 나뉘나요?"))
   # 기준월과 실제 관측월을 혼동하지 않도록, 직전 확정 조회의 기간을
   # 바로 설명한다. 처리 이력·전체 데이터 범위는 이 질문에 포함하지 않는다.
   previous=self.memory.last_scope()
@@ -62,6 +82,14 @@ class Chatbot:
    if start and end:
     text=f"{previous.start_month[:4]}년 {int(previous.start_month[5:])}월은 자료의 기준월입니다. 실제 관측기간은 {start[:4]}년 {int(start[5:])}~{int(end[5:])}월입니다."
     return AnswerResult(text,Evidence("관측기간 안내",text))
+  # 선택된 기준월에서 “이후 변화”를 물으면 다음 기준월의 활동 변화를
+  # 조회한다. 기준월은 실제 관측월이 아니라 직전 3개월의 집계 라벨이다.
+  vague_after_change = (
+   re.search(r"이후\s*(?:변화|어때|어떻게|달라|추이)", question.replace(" ", ""))
+   and not re.search(r"20\d{2}|상반기|하반기|분기|\d+\s*월|전월|이전", question)
+  )
+  next_selected_period=(_next_label_month((self.dashboard_scope or {}).get('label_month'))
+                        if vague_after_change else None)
   # 2. 목적 체크와 메뉴 필터링
   self.intent_resolver.available_period=self.repo.available_period()
   # 클러스터명을 직접 물은 경우에는 화면에서 선택한 동을 자동으로
@@ -78,6 +106,20 @@ class Chatbot:
     return AnswerResult(text,Evidence('클러스터 설명',text),
                         ('다른 클러스터도 설명해줘', '이 클러스터에 속한 동을 알려줘'))
   intent=self.intent_resolver.resolve(question,self.repo.districts(),self.memory)
+  if next_selected_period:
+   available_start,available_end=self.repo.available_period()
+   if not available_start or not available_end or not (available_start <= next_selected_period <= available_end):
+    selected_period=self.dashboard_scope['label_month']
+    text=(f"{selected_period[:4]}년 {int(selected_period[5:])}월 기준 다음 변화는 "
+          f"{next_selected_period[:4]}년 {int(next_selected_period[5:])}월 기준 자료로 확인합니다. "
+          f"하지만 현재 제공된 탐지 결과는 {available_start or '확인 불가'}~{available_end or '확인 불가'}까지만 있어 다음 달 자료는 아직 없습니다.")
+    return AnswerResult(text,Evidence("다음 기준월 자료 없음",text),
+                        ("현재 기준월 변화 다시 보여줘", "자료 갱신 상태 알려줘"))
+   # 짧은 후속 질문도 항상 화면의 선택 동·연령에서 네 가지 활동 지표를
+   # 함께 보여 주도록 조회 목적을 고정한다. LLM의 모호한 분류에 맡기지 않는다.
+   intent=replace(intent,purpose='track_change',question_type='activity',dong=None,dongs=(),
+                  start_month=next_selected_period,end_month=next_selected_period,metric=None,
+                  needs=(),use_previous_scope=False,all_available_period=False,clarifying_question=None)
   if intent.question_type in {'capabilities','consumption_criteria'}:
    text=age_capabilities_answer() if intent.question_type=='capabilities' else consumption_criteria_answer()
    return AnswerResult(text,Evidence('연령별 조회 안내' if intent.question_type=='capabilities' else '소비 증감 비교 기준',text))

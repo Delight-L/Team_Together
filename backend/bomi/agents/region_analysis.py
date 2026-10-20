@@ -54,6 +54,18 @@ class RegionAnalysisAgent(RegulatedAgent):
             return True
         if questions.is_screen_term_question(question):
             return True
+        # 후보·이상신호 목록과 확인 여부는 화면 헤더와 같은 공식 탐지
+        # 집계에서 답해야 합니다. v16 별도 저장소 결과를 섞지 않습니다.
+        if (region_workspace._is_signal_list_question(question)
+                or region_workspace._is_signal_presence_question(question)):
+            return True
+        if region_workspace._is_signal_reason_question(question):
+            # A selected dashboard case is authoritative only for that same dong.
+            # Explicit questions about another dong, missing selections, or missing
+            # assessment payloads remain on v16 where their scope can be resolved.
+            named = {match.group() for match in questions.DISTRICT_NAME.finditer(question)}
+            return bool(request.district and 'assessment' in request.data
+                        and (not named or request.district in named))
         # 연령대가 선택된 사회적 연결 카드의 추가 지표는 DB1 서울서베이
         # 집계 목록으로 답한다. 일반 지역 분석 신호 설명으로 보내면 현재 카드와
         # 관계없는 탐지 요약이 될 수 있다.
@@ -93,6 +105,13 @@ class RegionAnalysisAgent(RegulatedAgent):
 
     def _explain(self, request: ChatRequest, use_ai: bool) -> dict:
         question = request.question
+        if (region_workspace._is_signal_list_question(question)
+                or region_workspace._is_signal_presence_question(question)):
+            return region_workspace.explain_region(request.context, question, request.data)
+        if region_workspace._is_signal_reason_question(question):
+            if use_ai:
+                return region_workspace.ai_explain_region(request.context, question, request.data, _recent(request))
+            return region_workspace.explain_region(request.context, question, request.data)
         # Social-connection survey questions use the DB1 annual survey context,
         # even when the dashboard also has a group selection.  Do not let the
         # generic group explanation or welfare agent turn them into a refusal.

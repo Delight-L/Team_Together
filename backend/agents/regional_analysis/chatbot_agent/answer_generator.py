@@ -613,6 +613,9 @@ def template_answer(intent:QueryIntent,evidence:Evidence,knowledge:str,explanati
         return _concise_signal_list(intent,evidence)
     if intent.question_type=='support':
         return _support_answer(evidence)
+    if intent.question_type=='reason' and not evidence.rows:
+        dong = intent.dong or '선택한 지역'
+        return f'{dong}의 조건에 맞는 신호 기록은 0건입니다. 현재 조회 범위와 선택한 연령대에서 확인된 신호 근거가 없어 탐지 이유를 설명할 수 없습니다.'
     if intent.question_type=='reason' and evidence.rows:
         # Explain this signal and same-month age changes; detailed contextual
         # evidence remains available through the background-information follow-up.

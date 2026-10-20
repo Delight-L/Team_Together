@@ -13,7 +13,7 @@ from typing import Iterator
 from backend.bomi import aio, events, regularization
 from backend.bomi.agents import default_agents
 from backend.bomi.events import Event
-from backend.bomi.phrases import PII_NOTICE
+from backend.bomi.phrases import BLOCKED, BLOCKED_MODE, PII_NOTICE
 from backend.bomi.request import ChatRequest
 from backend.bomi.routing import Route, Router
 
@@ -41,12 +41,18 @@ class ChatPipeline:
         request = prepared.request
         if prepared.pii_kinds:
             yield events.notice(PII_NOTICE.format(kinds='·'.join(prepared.pii_kinds)), question=request.question)
+        # Deterministic injection rules run before the AI router. Agent-specific
+        # moderation still runs in RegulatedAgent with that agent's own policy.
+        if regularization.history_rule_flagged(request):
+            yield events.route(SAFETY_ROUTE.agent, SAFETY_ROUTE.label, SAFETY_ROUTE.by)
+            yield events.replace(BLOCKED, BLOCKED_MODE, '')
+            return
         route = self._choose(request)
         yield events.route(route.agent, route.label, route.by)
         yield from self.agents[route.agent].respond(request)
 
     def _choose(self, request: ChatRequest) -> Route:
-        """담당 선택. 단어 규칙에 걸린 질문은 외부 호출 없이 보미 안내로 보내 에이전트가 차단하게 합니다."""
+        """담당 선택. 안전 규칙 검사는 AI 담당 분류보다 먼저 적용합니다."""
         if regularization.rule_flagged(request.question):
             return SAFETY_ROUTE
         if not request.use_ai or self.router.fixed(request):
