@@ -168,11 +168,28 @@ TAB_EXPLANATION = (
 
 def _is_tab_question(question):
     return any(term in question for term in ('어느 지역을 살펴볼까요', '우리 동은 어떤 지역', '어떤 지역일까', '소비는 어떻게 달라졌', '탭에 대해', '탭 설명', '이 탭', '자체 과거 비교', '공통 변화 제거 후 비교', '두 비교 모두', '탐지 이후',
-                                             '탐지월', '통신 지표 흐름', '이동 지표 흐름', '실제 활동량', '계절성 고려', '강남구 흐름 고려'))
+                                             '탐지월', '통신 탐지', '통신탐지', '탐지 직전 기준월', '탐지직전 기준월', '통신 지표 흐름', '이동 지표 흐름', '실제 활동량', '계절성 고려', '강남구 흐름 고려'))
+
+
+def _tracking_term_answer(question):
+    """Return fixed explanations for the compact labels in the tracking view."""
+    compact = question.replace(' ', '')
+    if '통신탐지' in compact:
+        return ('통신 탐지는 전화·문자 연락 지표에서 평소와 다른 변화가 보여 추가 확인이 필요한 신호입니다. '
+                '개인의 고립 여부나 변화 원인을 확정하는 진단은 아닙니다.')
+    if '탐지직전기준월' in compact:
+        return ('탐지 직전 기준월은 탐지월 바로 전의 기준월입니다. 그래프에서는 이 시점을 100으로 두고, '
+                '그 뒤 흐름이 얼마나 달라졌는지 비교하는 출발점으로 사용합니다.')
+    if '탐지월' in compact:
+        return '탐지월은 이 화면에서 추가 확인이 필요한 변화가 표시된 기준월입니다. 변화 원인이나 개인의 상태를 뜻하지는 않습니다.'
+    return None
 
 
 def _tab_function_answer(context, question, data):
     compact = question.replace(' ', '')
+    tracking_answer = _tracking_term_answer(question)
+    if tracking_answer:
+        return tracking_answer
     if '우리동은어떤지역' in compact or '어떤지역일까' in compact:
         return region_type_explanation(context, data)
     if '소비는어떻게달라졌' in compact:

@@ -10,12 +10,13 @@ from backend.agents.regional_analysis.chatbot_agent.conversation_memory import C
 from backend.agents.regional_analysis.chatbot_agent.schemas import Evidence, QueryIntent
 from backend.bomi.adapters.regional_analysis import _ScopedResolver
 from backend.bomi.agents.region_analysis import RegionAnalysisAgent
+from backend.bomi.questions import is_tab_question
 from backend.bomi.request import ChatRequest
 from backend.db.group_workspace import _is_provenance_question, _provenance_answer
 from backend.db.region_workspace import (REGION_TYPE_EXPLANATION, SURVEY_OTHER_METRICS_EXPLANATION,
                                          _is_region_type_question, _is_signal_presence_question,
                                          _is_signal_reason_question, _is_survey_metrics_question, explain_region,
-                                         survey_metrics_answer)
+                                         ai_explain_region, survey_metrics_answer)
 
 
 class ProvenanceAnswerTests(unittest.TestCase):
@@ -94,6 +95,29 @@ class ProvenanceAnswerTests(unittest.TestCase):
 
         tab_answer = explain_region(context, '어느 지역을 살펴볼까요? 탭에 대해 설명해줘', data)['answer']
         self.assertIn('탐지월 전후의 지역 변화 흐름', tab_answer)
+
+    def test_tracking_screen_terms_use_fixed_plain_language_answers(self):
+        context = {'city': '강남구', 'district': '개포3동', 'month': '2025-12'}
+        data = {'assessment': []}
+        cases = {
+            '통신 탐지가 뭐예요?': ('전화·문자 연락 지표', '추가 확인이 필요한 신호', '개인의 고립 여부'),
+            '통신탐지 뜻': ('전화·문자 연락 지표', '추가 확인이 필요한 신호', '개인의 고립 여부'),
+            '탐지월이 뭐야?': ('표시된 기준월', '변화 원인이나 개인의 상태'),
+            '탐지 직전 기준월은 무엇인가요?': ('탐지월 바로 전', '100', '비교하는 출발점'),
+            '탐지직전 기준월 뜻': ('탐지월 바로 전', '100', '비교하는 출발점'),
+        }
+
+        for question, expected_phrases in cases.items():
+            with self.subTest(question=question):
+                self.assertTrue(is_tab_question(question))
+                self.assertTrue(RegionAnalysisAgent._uses_workspace(ChatRequest(
+                    messages=({'role': 'user', 'content': question},), context=context, data=data)))
+                answer = explain_region(context, question, data)['answer']
+                for phrase in expected_phrases:
+                    self.assertIn(phrase, answer)
+                self.assertNotIn('이 탭은 탐지월 전후의 지역 변화 흐름', answer)
+                ai_answer = ai_explain_region(context, question, data, [])['answer']
+                self.assertEqual(ai_answer, answer)
 
     def test_empty_reason_answer_names_the_selected_dong(self):
         intent = QueryIntent(purpose='track_change', question_type='reason', dong='개포3동', age_band='40s', age_scope_explicit=True)
