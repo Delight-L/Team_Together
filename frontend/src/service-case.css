@@ -1,6 +1,7 @@
 .service-case { padding:20px;flex-shrink:0; }
 .app-shell .service-case > .service-case-heading { padding:0;display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:0 0 12px; }
 .app-shell .service-case-heading h2 { margin:0;font-size:28px;line-height:1.2;letter-spacing:-.8px;color:#10234c; }
+.app-shell .service-case-heading:has(.service-review-lifecycle) h2 { flex:0 0 300px;max-width:100%; }
 .service-case-chip { display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--case-border);border-radius:8px;background:var(--case-soft);color:var(--case-ink);font-size:14px;font-weight:700; }
 .service-case .absolute { --case-ink:#946200;--case-border:#f2d37b;--case-soft:#fffbeb; }
 .service-case .local { --case-ink:#0f766e;--case-border:#99e2d8;--case-soft:#f0fdfa; }
@@ -32,7 +33,7 @@
 .service-case .service-review-select {display:flex;flex-direction:row;align-items:center;gap:10px;margin:0 0 0 auto;max-width:100%;font-size:14px;color:#607695;}
 .service-review-select > span {white-space:nowrap;}
 .service-review-select select {width:340px;max-width:100%;min-height:42px;border:1px solid #cbdcf4;border-radius:8px;background:white;padding:8px 12px;color:#173052;font-size:15px;font-weight:600;}
-.service-review-lifecycle {font-size:14px;font-weight:600;padding:6px 10px;border-radius:20px;white-space:nowrap;}
+.service-review-lifecycle {display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;flex:0 0 148px;font-size:14px;font-weight:600;padding:6px 10px;border-radius:20px;white-space:nowrap;}
 .service-review-lifecycle.new {background:#edf4ff;color:#2563c8;}
 .service-review-lifecycle.tracking {background:#eef2f7;color:#52647d;}
 .service-review-dates {display:flex;gap:22px;flex-wrap:wrap;color:#607695;font-size:14px;margin:0 0 18px;}

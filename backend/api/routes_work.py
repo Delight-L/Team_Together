@@ -10,6 +10,7 @@ from datetime import date, datetime
 
 from backend.agents import report_writer, service_matching, service_eligibility
 from backend.db import mission_store
+from backend.db.analysis_identity import evidence_fingerprint
 from backend.services import report
 from backend.api import limits, sessions
 from backend.api.common import ApiError, Response, dashboard_data, evidence_for, region_context
@@ -46,17 +47,22 @@ def work_context(request):
 
 # ── 조회(GET) ─────────────────────────────────────────────
 
-def with_analysis_note(current, data):
-    """저장된 근거가 지금 화면의 분석 버전과 다르면 analysis_changed로 알려 줍니다."""
-    saved = current.get('analysis_run_id')
-    return dict(current, analysis_changed=bool(saved) and saved != str(data.get('runId', '')))
+def with_analysis_note(current, data, context):
+    """Compare the case's saved evidence, including snapshots with legacy timestamp IDs."""
+    saved = current.get('analysis_evidence')
+    if saved:
+        changed = evidence_fingerprint(saved) != evidence_fingerprint(evidence_for(data, context))
+    else:
+        run_id = current.get('analysis_run_id')
+        changed = bool(run_id) and run_id != str(data.get('runId', ''))
+    return dict(current, analysis_changed=changed)
 
 
 def workflow(request):
     """GET /api/workflow: 선택한 동의 업무 진행 상황."""
     data = dashboard_data()
     context = region_context(request, data)
-    return with_analysis_note(load_workflow(context), data)
+    return with_analysis_note(load_workflow(context), data, context)
 
 
 def services(request):
@@ -262,7 +268,7 @@ def workflow_start(request):
     context, data, evidence = work_context(request)
     with sessions.write_lock:
         mission_store.save_event(context, 0, {'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']})
-        return with_analysis_note(load_workflow(context), data)
+        return with_analysis_note(load_workflow(context), data, context)
 
 
 def workflow_restart(request):
@@ -275,7 +281,7 @@ def workflow_restart(request):
         raise ValueError('다시 시작을 확인하세요.')
     with sessions.write_lock:
         mission_store.restart(context, {'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']})
-        return with_analysis_note(load_workflow(context), data)
+        return with_analysis_note(load_workflow(context), data, context)
 
 
 def workflow_confirm(request):
@@ -283,7 +289,7 @@ def workflow_confirm(request):
     context, data, evidence = work_context(request)
     with sessions.write_lock:
         mission_store.save_event(context, 1, {'confirmed': True})
-        return with_analysis_note(load_workflow(context), data)
+        return with_analysis_note(load_workflow(context), data, context)
 
 
 def workflow_review(request):
@@ -319,7 +325,7 @@ def workflow_review(request):
             'source_url': chosen['service'].get('source_url'),
             'service_snapshot': service_snapshot(chosen['service']),
         }, start=analysis_start(data, evidence))
-        return with_analysis_note(load_workflow(context), data)
+        return with_analysis_note(load_workflow(context), data, context)
 
 
 def report_save(request):
@@ -336,4 +342,4 @@ def report_save(request):
         record['confirmed'] = True
         mission_store.save_event(context, 3, record, start=draft.get('start'))
         sessions.remove_preview(token)
-        return with_analysis_note(load_workflow(context), data)
+        return with_analysis_note(load_workflow(context), data, context)
