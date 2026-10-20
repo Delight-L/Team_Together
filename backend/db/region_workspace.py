@@ -183,6 +183,22 @@ TRACKING_STATUS_EXPLANATION = (
     '이는 동·연령대 집계의 비교 결과일 뿐 개인의 활동량·고립 여부·변화 원인을 확정하지 않습니다.'
 )
 
+COMMUNICATION_FLOW_EXPLANATION = (
+    '«통신 지표 흐름 추적하기»는 탐지월 전후로 선택한 동·연령대의 전화 연락과 문자 연락이 어떻게 변했는지 보는 그래프입니다.\n'
+    '• 실선은 전화 연락, 점선은 문자 연락을 뜻합니다.\n'
+    '• 탐지 직전 기준월을 100으로 놓고, 이후 값이 기준보다 높거나 낮은지 비교합니다. 예를 들어 95라면 기준월보다 약 5% 낮다는 뜻입니다.\n'
+    '• 두 지표 모두 기준 미달이면 전화와 문자가 모두 기준보다 낮고, 두 지표 모두 기준 이상이면 둘 다 기준 이상입니다. 한쪽만 다르거나 방향이 엇갈리면 두 지표 흐름이 다름으로 표시될 수 있습니다.\n\n'
+    '이 수치는 선택한 동·연령대의 집계 흐름을 보여주는 참고 자료이며, 개인의 연락 여부나 고립 원인을 확정하는 진단은 아닙니다.'
+)
+
+MOBILITY_FLOW_EXPLANATION = (
+    '«이동 지표 흐름 추적하기»는 탐지월 전후로 선택한 동·연령대의 평일 이동과 휴일 이동이 어떻게 변했는지 보는 그래프입니다.\n'
+    '• 실선은 평일 이동, 점선은 휴일 이동을 뜻합니다.\n'
+    '• 탐지 직전 기준월을 100으로 놓고, 이후 값이 기준보다 높거나 낮은지 비교합니다. 예를 들어 80이라면 기준월보다 약 20% 낮다는 뜻입니다.\n'
+    '• 두 지표 모두 기준 미달이면 평일과 휴일 이동이 모두 기준보다 낮고, 두 지표 모두 기준 이상이면 둘 다 기준 이상입니다. 한쪽만 다르거나 방향이 엇갈리면 두 지표 흐름이 다름으로 표시될 수 있습니다.\n\n'
+    '이 수치는 선택한 동·연령대의 집계 흐름을 보여주는 참고 자료이며, 개인의 외출·활동량이나 변화 원인을 확정하는 진단은 아닙니다.'
+)
+
 
 def _tracking_indicator_keys(question):
     compact = ''.join(str(question).split())
@@ -225,6 +241,10 @@ def _is_tab_question(question):
 def _tracking_term_answer(question):
     """Return fixed explanations for the compact labels in the tracking view."""
     compact = question.replace(' ', '')
+    if '통신지표흐름추적' in compact:
+        return COMMUNICATION_FLOW_EXPLANATION
+    if '이동지표흐름추적' in compact:
+        return MOBILITY_FLOW_EXPLANATION
     indicator_answer = _tracking_indicator_answer(question)
     if indicator_answer:
         return indicator_answer

@@ -119,6 +119,25 @@ class ProvenanceAnswerTests(unittest.TestCase):
                 ai_answer = ai_explain_region(context, question, data, [])['answer']
                 self.assertEqual(ai_answer, answer)
 
+    def test_tracking_flow_headings_are_explained_for_first_time_users(self):
+        context = {'city': '강남구', 'district': '개포3동', 'month': '2025-11', 'age': '30대'}
+        data = {'assessment': []}
+        cases = {
+            '통신 지표 흐름 추적하기가 뭐예요?': ('전화 연락', '문자 연락', '탐지 직전 기준월을 100', '개인의 연락 여부'),
+            '이동 지표 흐름 추적하기가 뭐예요?': ('평일 이동', '휴일 이동', '탐지 직전 기준월을 100', '개인의 외출·활동량'),
+        }
+        for question, expected_phrases in cases.items():
+            with self.subTest(question=question):
+                self.assertTrue(is_tab_question(question))
+                answer = explain_region(context, question, data)['answer']
+                for phrase in expected_phrases:
+                    self.assertIn(phrase, answer)
+                self.assertIn('두 지표 모두 기준 미달', answer)
+                self.assertIn('두 지표 모두 기준 이상', answer)
+                self.assertNotIn('이 탭은 탐지월 전후의 지역 변화 흐름', answer)
+                ai_answer = ai_explain_region(context, question, data, [])['answer']
+                self.assertEqual(ai_answer, answer)
+
     def test_followup_cards_explain_their_comparison_basis_for_first_time_users(self):
         context = {'city': '강남구', 'district': '개포3동', 'month': '2025-12', 'age': '40대'}
         data = {'assessment': []}
