@@ -15,15 +15,16 @@ function ScorePlot({row,path,state}) {
  if(!Number.isFinite(z)||!Number.isFinite(threshold))return <p className="ev-missing">탐지 점수·기준값 자료 없음</p>;
  const min=Math.min(z,threshold,0)-Math.max(1,Math.abs(Math.min(z,threshold))*.15),max=Math.max(0,z,threshold)+.5;
  const x=v=>35+(v-min)/(max-min)*430, color=state==='both'?'#c53d55':path==='local'?'#0f766e':'#946200',distance=z-threshold;
+ const markerX=x(threshold)+(x(z)-x(threshold))*progress;
  return <><div className="ev-chart-space" role="img" aria-label={`${row.metric_label}: 탐지 점수 ${z}, 기준 ${threshold}, 차이 ${distance}`} style={{'--ev-signal-color':color}}>
  <span className="ev-chart-threshold" style={{left:`${x(threshold)/5}%`,color}}>탐지 기준 {fmt(threshold)}</span>
  <span className="ev-chart-zero" style={{left:`${x(0)/5}%`}}>평소 수준 0</span>
  <span className="ev-chart-observation" style={{left:`${x(z)/5}%`,color}}>이번 관측 {fmt(z)}</span>
  <i className="ev-shape-track"/>
  <i className="ev-shape-threshold" style={{left:`${x(threshold)/5}%`}}/>
- <i className="ev-shape-distance" style={{left:`${Math.min(x(threshold)+(x(z)-x(threshold))*progress,x(threshold))/5}%`,width:`${Math.abs(x(z)-x(threshold))*progress/5}%`}}/>
+ <i className="ev-shape-distance" style={{left:`${Math.min(markerX,x(threshold))/5}%`,width:`${Math.abs(markerX-x(threshold))/5}%`}}/>
  <i className="ev-shape-zero" style={{left:`${x(0)/5}%`}}/>
- <i className="ev-shape-observation" style={{left:`${x(z)/5}%`,opacity:progress}}/>
+ <i className="ev-shape-observation" style={{left:`${markerX/5}%`}}/>
  </div><p className="ev-score-detail">기준과의 차이 <b style={{color}}>{fmt(distance)}</b> · {z<=threshold?'기준선보다 낮음':'기준선보다 높음'}</p></>;
 
 }
