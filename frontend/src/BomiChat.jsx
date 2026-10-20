@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { api, streamChat } from './api';
+import { api, query, streamChat } from './api';
 import { Icon } from './components';
 import { chatFileName, chatTranscript, downloadChat, sourceLabel, usedAi } from './chatExport.mjs';
+import { comparisonRows } from './regionalPresentation.mjs';
 import './bomi-chat.css';
 import welcomeArtwork from './assets/bomi-detective-welcome.png';
 
@@ -68,6 +69,34 @@ function saveAiSwitch(userId, on) {
 }
 export { usedAi };
 
+// 대시보드와 챗봇이 같은 탐지 수치를 보도록, 열린 사례의 원자료만 카드용으로 정리합니다.
+// 비교할 수 없는 값은 보여 주지 않아 숫자를 추정한 것처럼 보이지 않게 합니다.
+function detectionMetrics(payload) {
+  return comparisonRows(payload, [
+    ['call_contacts', '전화 연락'], ['text_contacts', '문자 연락'],
+    ['weekday_move_count', '평일 이동'], ['weekend_move_count', '휴일 이동'],
+  ]).filter(metric => Number.isFinite(metric.local));
+}
+
+function isDetectionQuestion(question) {
+  return /탐지|이유|변화|감소|증가|요약|수치|지표|연락|이동/.test(question);
+}
+
+function DetectionMetricSummary({ metrics }) {
+  if (!metrics?.length) return null;
+  return <section className="bomi-detection-summary" aria-label="대시보드와 같은 변화 수치">
+    <header><strong>변화 수치 요약</strong><span>직전 관측기간 대비</span></header>
+    <div className="bomi-detection-metrics">
+      {metrics.map(metric => {
+        const direction = metric.local < 0 ? '감소' : metric.local > 0 ? '증가' : '변화 없음';
+        return <div key={metric.label} className={`bomi-detection-metric ${metric.local < 0 ? 'down' : metric.local > 0 ? 'up' : 'steady'}`}>
+          <span>{metric.label}</span><strong>{Math.abs(metric.local).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}%</strong><em>{direction}</em>
+        </div>;
+      })}
+    </div>
+  </section>;
+}
+
 function useChat(context, group, userId) {
   const contextKey = JSON.stringify([context, group || null]);
   const [messages, setMessages] = useState([]), [busy, setBusy] = useState(false), [error, setError] = useState('');
@@ -102,7 +131,7 @@ function useChat(context, group, userId) {
     setMessages(previous => previous.map((m, i) => i === previous.length - 1 && m.role === 'assistant'
       ? { ...m, text: m.text || '응답이 중지되었습니다.', interrupted: true } : m));
   }
-  async function send(question, retry = false) {
+  async function send(question, retry = false, metrics = [], showDetectionSummary = false) {
     if (request.current) return;
     const controller = new AbortController(); request.current = controller;
     // 화면에는 대화 전체를 남기고, 서버에는 최근 3쌍과 이번 질문만 보냅니다.
@@ -111,7 +140,7 @@ function useChat(context, group, userId) {
     const recent = kept.slice(-HISTORY_SIZE);
     const next = [...base, { role: 'user', text: question }];
     const index = next.length;
-    setMessages([...next, { role: 'assistant', text: '', sources: [] }]);
+    setMessages([...next, { role: 'assistant', text: '', sources: [], metrics, showDetectionSummary }]);
     setError(''); setRetryQuestion(''); setBusy(true);
     let safeQuestion = question;
     const update = fn => { if (request.current === controller) setMessages(previous => previous.map((m, i) => i === index ? fn(m) : m)); };
@@ -156,6 +185,7 @@ function useChat(context, group, userId) {
 // inert: 좁은 화면에서 서랍이 닫혀 있을 때 키보드 초점이 숨은 대화창으로 들어가지 않게 합니다.
 export default function BomiChat({ context, group, userId, view, layout = 'embedded', expanded = false, onExpand, draft, actions = [], onAction, visible = true, inert, resizer }) {
   const [input, setInput] = useState('');
+  const [metrics, setMetrics] = useState([]);
   // guided: 다른 화면에서 예시 질문을 넣어 준 상태. 입력란을 강조하고 보내는 방법을 안내합니다.
   const [guided, setGuided] = useState(false);
   const chat = useChat(context, group, userId);
@@ -165,6 +195,17 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
   useEffect(() => { if (chat.messages.length) end.current?.scrollIntoView({ block: 'nearest' }); }, [chat.messages, chat.busy]);
   // 지역이 바뀌면 안내를 지웁니다. 아래 예시 질문 효과보다 먼저 실행되어야 같은 순간에 넣은 안내가 남습니다.
   useEffect(() => { setGuided(false); setInput(''); }, [targetKey]);
+  // 그룹 화면의 탐지 근거와 같은 API를 읽어, 챗봇 답변에도 같은 변화율을 카드로 붙입니다.
+  useEffect(() => {
+    let live = true;
+    setMetrics([]);
+    if (!group) return () => { live = false; };
+    api('/groups/detail?' + query(group)).then(data => {
+      const next = detectionMetrics(data?.regional?.detection?.payload);
+      if (live) setMetrics(next);
+    }).catch(() => { if (live) setMetrics([]); });
+    return () => { live = false; };
+  }, [targetKey]);
   useEffect(() => {
     if (draft?.contextKey === contextKey && appliedDraft.current !== draft.id) {
       appliedDraft.current = draft.id;
@@ -178,7 +219,9 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
   function submit(value = input) {
     const question = value.trim();
     if (!question || chat.busy || question.length > 2000) return;
-    setInput(''); setGuided(false); chat.send(question);
+    setInput(''); setGuided(false);
+    const showDetectionSummary = Boolean(group && isDetectionQuestion(question));
+    chat.send(question, false, showDetectionSummary ? metrics : [], showDetectionSummary);
   }
   const target = group || context.age ? 'group' : context.district ? 'district' : 'city';
   const place = group ? `${group.district} · ${group.age}${group.sex === '통합' ? '' : ` · ${group.sex}`}` : `${context.city} ${context.district || '전체'}${context.age ? ` · ${context.age}` : ''}`;
@@ -231,6 +274,8 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
       {chat.messages.map((m, i) => m.role === 'assistant' && !m.text && chat.busy && i === chat.messages.length - 1 ? <Typing key={i} /> : <article key={i} className={`bomi-message ${m.role}`}>
         <small>{m.role === 'user' ? '나' : m.agent ? `보미 · ${m.agent}` : '보미'}</small>
         <p>{m.role === 'assistant' ? formatAssistantText(m.text || '답변을 완료하지 못했습니다.') : (m.text || '답변을 완료하지 못했습니다.')}</p>
+        {/* 수치 API가 답변보다 늦게 끝나도, 탐지 질문의 기존 답변에 즉시 카드를 붙입니다. */}
+        {m.role === 'assistant' && <DetectionMetricSummary metrics={m.metrics?.length ? m.metrics : m.showDetectionSummary ? metrics : []} />}
         {m.interrupted && <span className="bomi-notice">완료되지 않은 응답입니다.</span>}
         {m.role === 'assistant' && m.mode && <div className="bomi-meta">
           <span className={`bomi-badge ${usedAi(m.mode) ? 'ai' : 'data'}`}>{usedAi(m.mode) ? 'AI 답변' : '자료 기반'}</span>

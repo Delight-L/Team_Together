@@ -39,6 +39,17 @@
 .bomi-message p { margin: 0; white-space: pre-wrap; }
 .bomi-message.user { align-self: flex-end; background: var(--line); border-radius: 12px 12px 0 12px; }
 .bomi-message.assistant { align-self: flex-start; background: var(--surface-tint); border: 1px solid var(--line); border-radius: 12px 12px 12px 0; }
+.bomi-detection-summary { margin-top: 10px; padding: 9px; border: 1px solid #b9e5df; border-radius: 9px; background: #f4fffc; }
+.bomi-detection-summary header { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 7px; color: #0f766e; }
+.bomi-detection-summary header strong { font-size: 12px; }
+.bomi-detection-summary header span { font-size: 10px; color: var(--text-muted); }
+.bomi-detection-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.bomi-detection-metric { display: grid; grid-template-columns: 1fr auto; gap: 1px 5px; padding: 7px; border: 1px solid #d7ebe8; border-radius: 7px; background: #fff; }
+.bomi-detection-metric span { grid-column: 1 / -1; font-size: 10px; color: var(--text-sub); }
+.bomi-detection-metric strong { font-size: 15px; line-height: 1.25; color: #0f766e; }
+.bomi-detection-metric em { align-self: end; font-size: 10px; font-style: normal; font-weight: 700; color: #0f766e; }
+.bomi-detection-metric.up strong,.bomi-detection-metric.up em { color: #b45309; }
+.bomi-detection-metric.steady strong,.bomi-detection-metric.steady em { color: var(--text-muted); }
 .bomi-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 4px; margin-top: 6px; font-size: 11px; color: var(--text-muted); }
 .bomi-basis summary { cursor: pointer; color: var(--text-muted); }
 .bomi-basis[open] { flex-basis: 100%; }
@@ -71,6 +82,7 @@
 @media (max-width: 760px) {
   .bomi-chat.embedded { height: 620px; }
   .bomi-chat { padding: 14px; }
+  .bomi-detection-metrics { grid-template-columns: 1fr; }
 }
 .bomi-chat.panel:not(.expanded) .bomi-chat-head small { white-space: normal; }
 /* 답변 작성 중 표시 */
