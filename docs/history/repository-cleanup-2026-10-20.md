@@ -100,3 +100,6 @@ Git 제외인 로컬 테스트 원본에는 예전 import가 남아 있습니다
 - 호출하는 곳이 없던 `backend/tools/export_activity_tracking.py`, `pipelines/db1/Analysis1/integration/`, `pipelines/db1/Analysis1/preprocessing/validate_reference.py`를 삭제했습니다.
 - 없는 파일을 가리키던 `pipelines/db1/README.md`, `pipelines/README.md`의 경로와 `llm_intent_resolver.py`의 오래된 주석을 고쳤습니다.
 - 백엔드 모듈 전체 import, `npm run build`, 문서 상대 링크 검사를 다시 통과했습니다.
+- 코드·문서 어디에서도 읽지 않는 과거 검증 기록 JSON 13개(`pipelines/db1`의 `deployment_validation`·`execution_checks` 등, `docs/maintenance/`)를 삭제했습니다.
+- 테스트 파일(저장소의 `frontend/tests/*.test.mjs` 2개, `Analysis3/run_tests.ps1`, 로컬 전용 테스트 전체)을 삭제하고 `run_tests.ps1` 안내를 문서에서 뺐습니다.
+- 삭제 후 백엔드 import, 프런트엔드 빌드, 로컬 서버의 메뉴 5개와 지역 분석 질문 응답을 확인했습니다.

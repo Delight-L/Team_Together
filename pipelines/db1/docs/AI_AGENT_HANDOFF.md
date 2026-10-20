@@ -157,7 +157,6 @@ FROM a3_run GROUP BY source;
 .\run_db1.ps1 -Command status
 .\run_db1.ps1 -Command scan
 .\run_db1.ps1 -Command export
-.\run_tests.ps1
 ```
 
 `scan`은 Analysis1→2→3 순서로 신규 자료를 처리한다. Analysis1은 반기, Analysis2는 월, Analysis3A는 분기, 3B는 월별 자료를 처리하며 필요한 기간의 원본이 충족되어야 한다. CSV 내보내기는 DB 저장 후 실행한다. 세 분석 전체가 하나의 transaction은 아니므로 한 단계가 실패하면 이미 성공한 단계의 결과는 남을 수 있다. 소비 누락 시에도 행동 월의 상세 행은 유지되고 소비값은 NULL일 수 있다.
