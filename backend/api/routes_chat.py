@@ -39,6 +39,10 @@ def chat(request):
     """POST /api/chat: 대화 전체(messages)를 받아 답변을 이어서 보냅니다. 동을 고르지 않아도 질문할 수 있습니다."""
     data = dashboard_data()
     context = region_context(request, data, district_required=False)
+    group = _group_selection(request)
+    if group:
+        # 그룹 카드의 기준월·대상을 모든 에이전트와 대화 근거 검증에 동일하게 사용합니다.
+        context.update({key: group.context[key] for key in ('city', 'district', 'month', 'age')})
     # 가드레일: 사용자별 질문 수 제한(1분·하루). 한도를 넘으면 429입니다.
     limits.check_chat(request.user)
     messages = validate_messages(request.params.get('messages'))
@@ -46,7 +50,7 @@ def chat(request):
     source_ids = validate_source_ids(request.params.get('sources'))
     chat_request = ChatRequest(
         messages=tuple(messages), context=context, data=data,
-        group=_group_selection(request),
+        group=group,
         # 화면의 «AI 사용» 스위치가 켜져 있을 때(mode='ai')만 외부 AI를 씁니다. 기본은 자료 기반 답변입니다.
         use_ai=request.params.get('mode') == 'ai',
         source_ids=tuple(state.get('selected_ids', source_ids)), welfare_state=state)

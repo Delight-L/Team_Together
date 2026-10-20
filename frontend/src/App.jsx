@@ -21,6 +21,7 @@ import { normalizeAgeNames } from './ageSignals.mjs';
 import {serviceReviewCases, selectedReviewCase, serviceReviewContext} from './serviceReview.mjs';
 import { userName } from './personas.mjs';
 import { PLANNING_PROPOSAL } from './experienceLogic.mjs';
+import { importReportDraft } from './reportDraft.mjs';
 
 const menus = [
   ['dashboard', '종합 현황'],
@@ -635,13 +636,14 @@ export default function App() {
             // 그룹 화면에서 요청한 경우 앱의 선택 동이 비어 있으므로 초안의 지역·기준월로 맞춥니다.
             // 복지사업 에이전트가 안내한 사업은 사업 매칭 검토 탭에서 바로 검토하도록 key를 넘깁니다.
             const target = action.reportDraft?.context;
-            if (target) { setCity(target.city); setMonth(target.month); setDistrict(target.district); }
+            if (target) { setCity(target.city); setMonth(target.month); setDistrict(target.district); setAge(target.age || ''); }
             if (action.reportDraft) setReportSeed(action.reportDraft);
             // 복지사업 에이전트가 안내한 사업은 질문한 동의 사업 매칭 검토 탭에서 바로 검토하도록 key를 넘깁니다.
             const asked = action.serviceKeys && action.context;
             if (asked?.district) { setCity(asked.city || city); setMonth(asked.month || month); setDistrict(asked.district); setAge(asked.age || ''); }
             if (action.serviceKeys) { setServiceChatContext(true); setServiceSeed({ id: Date.now(), keys: action.serviceKeys, names: action.serviceNames || {} }); }
             if (action.view === 'services' && action.serviceKeys) setView('services');
+            else if (action.reportDraft) { setView('report'); if (window.innerWidth <= 760) setNavCollapsed(true); }
             else if (action.view) go(action.view);
           }}
           visible={true}
@@ -992,14 +994,13 @@ export function Report({ context, workflow, user, mutate, busy, seed, onSaved, o
     setDraft(null);
   }, [reviewKey]);
   useEffect(() => {
-    if (!content && seed && localDraft.seedId !== JSON.stringify(seed) && JSON.stringify(seed.review_snapshot || []) === reviewKey &&
-      ['city', 'district', 'month'].every((k) => seed.context?.[k] === context[k])) {
-      setLocalDraft(prev => ({ ...prev, content: seed, seedId: JSON.stringify(seed) }));
+    if (importReportDraft(localDraft, seed, context)) {
+      setLocalDraft(prev => importReportDraft(prev, seed, context) || prev);
       setStep(2);
       setDraft(null);
       setConfirmed(false);
     }
-  }, [seed, reviewKey]);
+  }, [seed, reviewKey, JSON.stringify(context)]);
   const staleContent = content && JSON.stringify(content.review_snapshot || []) !== reviewKey;
   async function generate() {
     if (content && !window.confirm('현재 편집 내용을 새 초안으로 바꿀까요? 기존 편집 내용은 사라집니다.')) return;

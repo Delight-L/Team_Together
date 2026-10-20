@@ -18,7 +18,7 @@ class ReportAgent(RegulatedAgent):
 
     def answer(self, request: ChatRequest) -> Iterator[Event]:
         reply = Reply.from_legacy(self._draft(request))
-        if request.group and request.district:
+        if request.group and request.district and request.group.sex != '통합':
             reply.notice = GROUP_REPORT_NOTICE.format(
                 district=request.district, age=request.group.age, sex=request.group.sex)
         yield from self.deliver(reply)

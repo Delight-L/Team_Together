@@ -219,9 +219,43 @@ def generate_draft(context, workflow, selection=None):
 def latest_plan(history):
     """대화에서 가장 최근의 신규 사업 기획안(복지사업 담당의 답)을 찾습니다. 없으면 빈 문자열입니다."""
     for message in reversed(history or []):
-        if message.get('role') == 'assistant' and message.get('content', '').startswith(PLANNING_LABEL):
-            return message['content'][len(PLANNING_LABEL):].strip()
+        content = message.get('content', '')
+        if message.get('role') == 'assistant' and PLANNING_LABEL in content:
+            return content.replace(PLANNING_LABEL, '').strip()
     return ''
+
+
+def selected_plan(history, request=''):
+    """번호가 붙은 기획안 중 요청한 안만 선택합니다. 참고 사업은 선택 대상이 아닙니다."""
+    plan = latest_plan(history)
+    if not plan:
+        return '', []
+    heading = re.compile(r'^\s*(?:#{1,6}\s*)?(?:\*\*)?\[?신규 사업 기획 아이디어\s*(\d+)\]?[^\n]*', re.M)
+    matches = list(heading.finditer(plan))
+    choice = re.search(r'(?:아이디어\s*|사업\s*|^|\s)(\d+)\s*(?:번|(?=소모임)|(?=\s))', request)
+    if not choice:
+        choice = re.search(r'아이디어\s*(\d+)', request)
+    selected = [m for m in matches if not choice or m[1] == choice[1]]
+    if choice and not selected:
+        raise ValueError('요청한 번호의 신규 기획안을 찾지 못했어요. 기획안 번호나 이름을 다시 알려 주세요.')
+    if not matches:
+        return plan, []
+    blocks, names = [], []
+    for match in selected:
+        index = matches.index(match)
+        stop = matches[index + 1].start() if index + 1 < len(matches) else len(plan)
+        block = plan[match.start():stop].strip()
+        # 마지막 기획안 뒤의 공통 안내와 자료 목록은 사업 내용에서 제외합니다.
+        block = re.split(r'\n\s*---|\n참고한 팀 자료:', block)[0].strip()
+        blocks.append(block)
+        name = re.sub(r'^[\s*:\]-]+|[\s*]+$', '', match[0][match[0].find(match[1]) + len(match[1]):])
+        # AI가 제목 대신 다음 줄에 사업명을 적는 형식도 보존 검사에 포함합니다.
+        named = re.search(r'^\s*[-*]\s*\*{0,2}사업명(?:\(가칭\))?\s*[:：]\*{0,2}\s*(.+)', block, re.M)
+        if named:
+            name = named[1].strip().strip('*')
+        if name:
+            names.append(name)
+    return '\n\n'.join(blocks), names
 
 
 def _shorten(text, limit):
@@ -236,7 +270,7 @@ def _shorten(text, limit):
     return '\n'.join(kept) + '\n…(이하 보미 대화 원문에서 확인)'
 
 
-def conversation_draft(context, workflow, evidence_rows, history, sources):
+def conversation_draft(context, workflow, evidence_rows, history, sources, request=''):
     """보미 대화에서 찾은 기존 사업(sources)과 신규 구상안(history)으로 «담당자 검토 전» 초안을 만듭니다.
 
     사실 정보는 서버 자료에서만 가져옵니다: 지역 현황은 이 동의 분석 결과, 기존 사업은 팀 복지사업 자료.
@@ -244,16 +278,17 @@ def conversation_draft(context, workflow, evidence_rows, history, sources):
     """
     if not context.get('district'):
         raise ValueError('보고서를 작성할 행정동을 먼저 선택하세요.')
-    plan = latest_plan(history)
+    plan, plan_names = selected_plan(history, request)
     if not sources and not plan:
         raise ValueError(NEED_MATERIAL)
-    sources = sources[:4]
+    # 신규안의 검색 참고 자료를 실제로 선택·검토한 기존 사업으로 바꾸지 않습니다.
+    sources = [] if plan else sources[:4]
     from backend.chatbot.welfare.app.dialogue.resources import source_citation
     proposals = [f"{r['name']}: {PENDING_TEXT}\n- 지원 내용: {r['description']}\n- 자료상 대상: {r['target']}\n"
                  f"- 기관: {r['agency']}\n- 출처: {source_citation(r)} · {r['status']}" for r in sources]
     found = [f'기존 사업 {len(sources)}건'] if sources else []
     if plan:
-        proposals.append(f'신규 사업 구상안(보미 대화에서 제안 · {NOT_RUNNING_TEXT} · {PENDING_TEXT})\n' + _shorten(plan, 650))
+        proposals.append(f'신규 사업 구상안(보미 대화에서 제안 · {NOT_RUNNING_TEXT} · {PENDING_TEXT})\n' + _shorten(plan, 1000))
         found.append('신규 사업 구상안')
     summary = (f"{_region(context)} 관련 보미 대화에서 검토한 {'·'.join(found)}을 바탕으로 "
                f'복지서비스 연계·추진 가능성을 검토하기 위한 초안임({PENDING_TEXT})')
@@ -264,6 +299,7 @@ def conversation_draft(context, workflow, evidence_rows, history, sources):
                               '신규 구상안은 수요 조사·예산·운영 기관 협의 후 추진 여부 결정',
                               '담당자 검토 후 보고서 작성 탭에서 최종 저장'],
                   mode=f'대화 기반 초안 · {PENDING_TEXT}',
+                  conversation_plans=plan_names,
                   conversation_sources=[dict(r) for r in sources])
 
 
@@ -313,6 +349,7 @@ def _draft_names(draft):
     """초안 제안 항목에 들어간 사업 이름들(저장된 검토 기록 + 대화에서 찾은 사업)."""
     names = [review.get('name') for review in draft.get('review_snapshot', [])]
     names += [source.get('name') for source in draft.get('conversation_sources', [])]
+    names += draft.get('conversation_plans', [])
     return [name for name in names if name and name in draft['proposal']]
 
 
@@ -460,7 +497,7 @@ def report_reply(context, workflow, use_ai=False, request='', evidence_rows=(), 
     from_chat = bool(sources) or bool(latest_plan(history))
     try:
         if from_chat:
-            draft = conversation_draft(context, workflow, list(evidence_rows), history, list(sources))
+            draft = conversation_draft(context, workflow, list(evidence_rows), history, list(sources), request)
         else:
             try:
                 draft = generate_draft(context, workflow)
