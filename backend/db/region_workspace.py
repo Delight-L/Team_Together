@@ -166,14 +166,68 @@ TAB_EXPLANATION = (
 )
 
 
+# 추적 화면의 세 카드는 같은 값을 반복해서 보여 주는 것이 아니라, 비교 기준을
+# 차례로 달리한 결과다. 화면의 표기와 띄어쓰기 없이 입력한 질문을 함께 받는다.
+TRACKING_INDICATOR_TERMS = {
+    'raw': ('실제활동량', '실제활동', '원값변화', '원값'),
+    'seasonal': ('계절성고려', '계절성', '같은달비교', '과거같은달'),
+    'local': ('강남구흐름고려', '강남구흐름', '강남구전체흐름', '구전체흐름', '공통흐름'),
+}
+
+TRACKING_STATUS_EXPLANATION = (
+    '화면의 상태는 이렇게 읽으면 됩니다.\n'
+    '• «두 지표 모두 기준 미달»: 현재 카드의 두 항목이 모두 탐지 직전 기준보다 낮습니다.\n'
+    '• «두 지표 모두 기준 이상»: 두 항목이 모두 탐지 직전 기준 이상입니다.\n'
+    '• «두 지표 흐름이 다름»: 두 항목이 같은 결론을 보이지 않습니다. 한 항목만 기준 이상이거나 방향이 엇갈릴 수 있습니다.\n\n'
+    '통신 카드의 두 항목은 전화 연락·문자 연락이고, 이동 카드의 두 항목은 평일 이동·휴일 이동입니다. '
+    '이는 동·연령대 집계의 비교 결과일 뿐 개인의 활동량·고립 여부·변화 원인을 확정하지 않습니다.'
+)
+
+
+def _tracking_indicator_keys(question):
+    compact = ''.join(str(question).split())
+    return tuple(key for key, terms in TRACKING_INDICATOR_TERMS.items()
+                 if any(term in compact for term in terms))
+
+
+def _tracking_indicator_answer(question):
+    """Explain each follow-up card in a fixed, beginner-friendly way."""
+    keys = _tracking_indicator_keys(question)
+    if not keys:
+        return None
+    answers = {
+        'raw': (
+            '«실제 활동량»은 선택한 동·연령대에서 관측된 통신·이동 지표가 탐지 직전 기준월과 비교해 '
+            '어떻게 달라졌는지 먼저 보는 기준입니다. 그래프의 100은 탐지 직전 기준월이고, 예를 들어 95는 '
+            '그 기준보다 약 5% 낮다는 뜻입니다. 계절이나 강남구 전체가 함께 움직인 영향은 아직 빼지 않은 '
+            '원래 변화입니다.'
+        ),
+        'seasonal': (
+            '«계절성 고려»는 같은 달에 반복될 수 있는 계절·방학·명절 등의 영향을 덜어 보기 위한 비교입니다. '
+            '선택한 동·연령대의 과거 같은 달 중앙값을 기준으로 먼저 보정한 뒤, 탐지 직전 수준과 비교합니다. '
+            '따라서 단순히 이번 달 수치가 낮은지보다, 이 계절에 흔한 변화까지 감안해도 낮은지를 확인합니다. '
+            '날씨를 직접 보정했다는 뜻은 아닙니다.'
+        ),
+        'local': (
+            '«강남구 흐름 고려»는 선택한 동만 달라진 것인지, 강남구 여러 동이 함께 달라진 것인지를 구분하기 위한 비교입니다. '
+            '계절성을 고려한 뒤 같은 연령대 강남구 여러 동의 중앙 변화를 공통 흐름으로 보고, 그 영향을 분리한 뒤 '
+            '선택한 동에 남는 차이를 확인합니다. 그래서 강남구 전체의 공통 변화만으로 설명하기 어려운 변화가 있는지 살펴볼 수 있습니다.'
+        ),
+    }
+    return '\n\n'.join([*(answers[key] for key in keys), TRACKING_STATUS_EXPLANATION])
+
+
 def _is_tab_question(question):
     return any(term in question for term in ('어느 지역을 살펴볼까요', '우리 동은 어떤 지역', '어떤 지역일까', '소비는 어떻게 달라졌', '탭에 대해', '탭 설명', '이 탭', '자체 과거 비교', '공통 변화 제거 후 비교', '두 비교 모두', '탐지 이후',
-                                             '탐지월', '통신 탐지', '통신탐지', '탐지 직전 기준월', '탐지직전 기준월', '통신 지표 흐름', '이동 지표 흐름', '실제 활동량', '계절성 고려', '강남구 흐름 고려'))
+                                             '탐지월', '통신 탐지', '통신탐지', '탐지 직전 기준월', '탐지직전 기준월', '통신 지표 흐름', '이동 지표 흐름')) or bool(_tracking_indicator_keys(question))
 
 
 def _tracking_term_answer(question):
     """Return fixed explanations for the compact labels in the tracking view."""
     compact = question.replace(' ', '')
+    indicator_answer = _tracking_indicator_answer(question)
+    if indicator_answer:
+        return indicator_answer
     if '통신탐지' in compact:
         return ('통신 탐지는 전화·문자 연락 지표에서 평소와 다른 변화가 보여 추가 확인이 필요한 신호입니다. '
                 '개인의 고립 여부나 변화 원인을 확정하는 진단은 아닙니다.')
@@ -359,6 +413,17 @@ def elderly_background(structure):
             '월별 증가나 개인의 고립 판정이 아닙니다. 공개 시점이 미확인인 사후 지역 배경자료이며, 60세 이상 집단과 연령 범위가 다릅니다.')
 
 
+def _workspace_source_label(question):
+    """Expose a concrete source only when it helps the person understand the answer."""
+    if _tracking_indicator_keys(question):
+        return '신호 이후 변화 추적 자료'
+    if _is_survey_metrics_question(question):
+        return '서울서베이'
+    if _is_region_type_question(question):
+        return '지역유형·지역 구조 자료'
+    return '동별 분석 결과'
+
+
 def explain_region(context, question, data):
     """외부 LLM 없이 조회한 동 분석 결과와 제한을 명시해 답한다."""
     if context.get('age') and 'assessment' in data:
@@ -405,7 +470,8 @@ def explain_region(context, question, data):
         if asks_next:
             answer += '\n\n' + NEXT_STEPS
     return dict(answer=answer, context={k: context.get(k, '') for k in ['city', 'district', 'month', 'age']},
-                mode='데이터 근거 안내 · 외부 AI 호출 없음', sources=[dict(label='동별 분석 결과', runId=str(data.get('runId', '')))])
+                mode='데이터 근거 안내 · 외부 AI 호출 없음',
+                sources=[dict(label=_workspace_source_label(question), runId=str(data.get('runId', '')))])
 
 
 def ai_explain_region(context, question, data, history):

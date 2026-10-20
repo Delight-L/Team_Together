@@ -119,6 +119,23 @@ class ProvenanceAnswerTests(unittest.TestCase):
                 ai_answer = ai_explain_region(context, question, data, [])['answer']
                 self.assertEqual(ai_answer, answer)
 
+    def test_followup_cards_explain_their_comparison_basis_for_first_time_users(self):
+        context = {'city': '강남구', 'district': '개포3동', 'month': '2025-12', 'age': '40대'}
+        data = {'assessment': []}
+        cases = {
+            '실제 활동량은 무엇인가요?': ('탐지 직전 기준월', '그래프의 100', '계절이나 강남구 전체'),
+            '계절성 고려는 무슨 뜻인가요?': ('과거 같은 달 중앙값', '날씨를 직접 보정했다는 뜻은 아닙니다'),
+            '강남구 흐름 고려가 뭐예요?': ('강남구 여러 동의 중앙 변화', '공통 흐름'),
+        }
+        for question, expected_phrases in cases.items():
+            with self.subTest(question=question):
+                self.assertTrue(is_tab_question(question))
+                answer = explain_region(context, question, data)['answer']
+                for phrase in expected_phrases:
+                    self.assertIn(phrase, answer)
+                self.assertIn('두 지표 모두 기준 미달', answer)
+                self.assertIn('개인의 활동량·고립 여부·변화 원인을 확정하지 않습니다', answer)
+
     def test_empty_reason_answer_names_the_selected_dong(self):
         intent = QueryIntent(purpose='track_change', question_type='reason', dong='개포3동', age_band='40s', age_scope_explicit=True)
         answer = template_answer(intent, Evidence('선정 근거', '조건에 맞는 신호 기록은 0건입니다.', []), '')

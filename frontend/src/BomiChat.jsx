@@ -308,8 +308,8 @@ export default function BomiChat({ context, group, userId, view, layout = 'embed
         {m.interrupted && <span className="bomi-notice">완료되지 않은 응답입니다.</span>}
         {m.role === 'assistant' && m.mode && <div className="bomi-meta">
           <span className={`bomi-badge ${usedAi(m.mode) ? 'ai' : 'data'}`}>{usedAi(m.mode) ? 'AI 답변' : '자료 기반'}</span>
-          {/* 내부 자료 이름은 접어 두고, 펼치면 담당자가 알아볼 수 있는 말로 보여 줍니다. */}
-          {m.source && <details className="bomi-basis"><summary>근거 보기</summary>{sourceLabel(m.source)}</details>}
+          {/* 기본값인 '저장된 분석 자료'는 구체적인 근거를 알려 주지 않으므로 숨깁니다. */}
+          {m.source && sourceLabel(m.source) !== '저장된 분석 자료' && <details className="bomi-basis"><summary>근거 보기</summary>{sourceLabel(m.source)}</details>}
         </div>}
         {m.notices?.map(n => <p key={n} className="bomi-notice" role="status">ⓘ {n}</p>)}
         {m.role === 'assistant' && m.followUps?.length > 0 && <div className="bomi-followups" aria-label="다음 질문">
