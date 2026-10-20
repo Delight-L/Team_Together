@@ -4,9 +4,11 @@ from functools import lru_cache
 from copy import deepcopy
 import json
 import math
+from io import BytesIO
 import pandas as pd
 
 from backend.common import ROOT
+from backend.db.analysis_identity import evidence_fingerprint
 SOURCE = ROOT / 'pipelines/db1/Analysis2/outputs/age_detection/analysis2_age_detection.csv'
 AGE_LABELS = {'20s':'20대','30s':'30대','40s':'40대','50s':'50대','60plus':'60대 이상'}
 AGE_BANDS = {v:k for k,v in AGE_LABELS.items()}
@@ -82,20 +84,20 @@ def prepare_age_analysis(frame, source):
             assessment.append(row)
     months=sorted(frame.month.unique().tolist())
     return dict(connected=True,isDemo=False,source='DB1 · 동·연령별 통화·문자·이동 탐지 (성별 통합)',
-                runId='analysis2-age-'+str(Path(source).stat().st_mtime_ns) if Path(source).exists() else 'analysis2-age-test',
+                runId='analysis2-age-content-'+evidence_fingerprint(assessment),
                 analysisScope='dong_age',assessment=assessment,signals=[r for r in assessment if r['is_risk_signal']],
                 alerts=alerts,ageDetections=cases,months=months,activity=[],
                 signalCounts={m:sum(c['month']==m for c in alerts) for m in months},
                 runs=[dict(kind='monthly',source_name=source,period=months[0]+' ~ '+months[-1],rule_version=frame.detection_model_version.iloc[0])])
 
 @lru_cache(maxsize=2)
-def _load(path, modified_ns):
-    return prepare_age_analysis(pd.read_csv(path,dtype={'행정동코드':str}),path)
+def _load(path, content):
+    return prepare_age_analysis(pd.read_csv(BytesIO(content),dtype={'행정동코드':str}),path)
 
 def load_age_analysis():
     if not SOURCE.is_file():
         raise FileNotFoundError('DB1 동·연령별 탐지 결과를 준비하세요: '+str(SOURCE))
-    return deepcopy(_load(str(SOURCE),SOURCE.stat().st_mtime_ns))
+    return deepcopy(_load(str(SOURCE),SOURCE.read_bytes()))
 
 def detection_for(context, data=None):
     if context['city']!='강남구':
