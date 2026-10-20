@@ -2,7 +2,7 @@
 
 | 위치 | 기능 |
 |---|---|
-| 루트 run_db1.py/.ps1, run_tests.ps1, db1_store.py, requirements.txt | 공통 실행·저장·검증 |
+| 루트 run_db1.py/.ps1, db1_store.py, requirements.txt | 공통 실행·저장 |
 | config/ | 운영 설정 |
 | Analysis1~3/ | 분석 코드·모델·기준 입력·각 분석 산출물 |
 | Context/ | 조사·기상·관측 기간·소비 보충 근거 및 재현용 원본 보관 |
@@ -27,7 +27,6 @@
 ## 근거별 설명 파일 정리
 
 - `tools/explain_signals.py`: 기존 신호를 읽기 전용으로 설명하는 생성기.
-- `tests/test_explain_signals.py`: 기본 `run_tests.ps1`에 포함되는 설명 규칙 검증.
 - `docs/ISOLATION_SIGNAL_EXPLANATIONS.md`: 현재 10건의 상태 비교표와 개별 설명.
 - `outputs/handoff/isolation_signal_explanations.json`: AI agent가 사용할 `isolation_explanation_v2` 구조화 결과.
 - `docs/ISOLATION_EXPLANATION_USAGE.md`: 실행·갱신 방법과 상태 정의.

@@ -29,7 +29,7 @@ DB1 폴더의 PowerShell에서 실행합니다.
 .\run_db1.ps1 -Command scan
 .\run_db1.ps1 -Command export
 ```
-테스트 파일·fixture·`run_tests.ps1`은 Git 추적에서 제외되어 새 checkout에는 포함되지 않습니다.
+테스트 파일·fixture·`run_tests.ps1`은 프로젝트 마무리(2026-10-20) 때 삭제했습니다.
 이 문서의 테스트 명령·건수는 로컬 검증 자료가 있는 환경 또는 당시 실행 기록을 설명합니다.
 `scan`은 새 자료를 전처리하고 DB에 통합한 후 CSV를 갱신합니다. `export`는 저장된 DB 결과를 다시 내보냅니다. `watch`는 실행 중 주기적으로 scan을 반복합니다. Analysis1 특정 반기는 `-Command analysis1 -Period 2026H1`, Analysis2 특정 월은 `-Command analysis2 -Month 2026-01`로 실행합니다. 해당 기간 원본과 공공자료가 준비되어야 합니다.
 
@@ -300,7 +300,7 @@ DB1 폴더에서 전체 1·2·3 업데이트:
 
 DB 원본 집계는 `a3a_industry`, `a3b_industry`, 파생 결과는 위 파일과 같은 테이블, 처리 provenance는 `a3_run`, 고정 전처리 정책은 `a3_policy`입니다. 기존 `db1_run`/Analysis1·2 테이블은 변경하지 않습니다. 카드 수기 행정동 배분은 하지 않습니다.
 
-검증은 `run_tests.ps1`, 수치/건수 결과는 `docs/validation/analysis12_20261006.md`를 참조하세요.
+당시 수치/건수 검증 결과는 `docs/validation/analysis12_20261006.md`를 참조하세요.
 
 ### 정리 후 경로
 소비 분석 CSV는 outputs, 동·업종 연결표는 outputs/mappings, 통합 CSV와 신호 연결 CSV는 상위 outputs/integrated에 저장합니다. 마지막 scan 기록은 logs/last_scan.json, 검증 기록은 docs에 있습니다. 공통 실행·설정은 상위 README.md를 참조하세요.

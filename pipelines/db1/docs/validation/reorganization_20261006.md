@@ -4,4 +4,4 @@
 
 정리 전 전체 백업: C:\Users\user\Desktop\Team_Together\DB1_backups\DB1_before_cleanup_20261006_153430.zip
 
-변경·이동·제거 목록 및 파일 해시는 docs/maintenance의 JSON 기록을 참조하세요. 정리 후 README.md가 현재 실행 안내입니다.
+변경·이동·제거 목록 JSON(docs/maintenance)은 2026-10-20 정리 때 삭제했습니다. 정리 후 README.md가 현재 실행 안내입니다.
