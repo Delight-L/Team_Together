@@ -101,6 +101,36 @@ def services(context, need):
                 note='집단의 유동인구 변화로 개인의 수급 자격을 판정하지 않습니다. 운영정보는 기관 확인이 필요할 수 있습니다.')
 
 
+def _metric_definition_answer(question):
+    """Explain each metric label visible on the group dashboard in plain language."""
+    q = str(question).replace(' ', '')
+    if not any(word in q for word in ('뜻', '의미', '무엇', '뭐', '설명', '무슨', '비율')):
+        return None
+    answers = []
+    if any(term in q for term in ('전화연락', '통화')):
+        answers.append('«전화 연락»은 선택한 동·연령대에서 관측된 통화 상대 수의 전월 대비 변화입니다. 증가·감소는 통화한 고유 주민 수가 아니라 집계 지표의 변화이며, 개인의 연락 여부를 뜻하지 않습니다.')
+    if any(term in q for term in ('문자연락', '문자')):
+        answers.append('«문자 연락»은 선택한 동·연령대에서 관측된 문자 상대 수의 전월 대비 변화입니다. 값이 감소해도 특정 개인이 연락을 끊었다는 뜻은 아닙니다.')
+    if '평일이동' in q:
+        answers.append('«평일 이동»은 월~금요일에 관측된 이동 횟수의 전월 대비 변화입니다. 선택한 연령대의 모든 개인이 이동한 횟수를 세는 값이 아니라, 분석 구역에서 집계한 유동 지표입니다.')
+    if '휴일이동' in q or '주말이동' in q:
+        answers.append('«휴일 이동»은 토·일요일과 공휴일에 관측된 이동 횟수의 전월 대비 변화입니다. 집계된 활동 규모를 보여주는 값이며 개인의 외출 여부를 뜻하지 않습니다.')
+    if any(term in q for term in ('유동량변화', '전체유동량변화', '월별추이', '유동량추이')):
+        answers.append('«유동량 변화»는 같은 동의 분석 구역에서 관측된 활동 규모가 이전 달과 비교해 얼마나 달라졌는지 보여줍니다. 실제 거주 인구나 고유 인원 수가 아닙니다.')
+    if any(term in q for term in ('전체유동량중', '유동량중', '연령비율', '30대비율', '40대비율', '20대비율', '50대비율', '60대비율')):
+        answers.append('«전체 유동량 중 연령 비율»은 해당 동에서 관측된 전체 유동량 가운데 선택한 연령대가 차지하는 비중입니다. 그 연령대 주민 비율이나 실제 인구 비율과는 다릅니다.')
+    if any(term in q for term in ('가구구성비율', '가구구성', '1인가구', '2인가구', '3인가구', '4인이상')):
+        answers.append('«가구 구성 비율»은 해당 동의 가구를 가구원 수별로 나눈 지역 배경 통계입니다. 1인·2인·3인·4인 이상 가구가 각각 얼마나 차지하는지 보여주며, 선택한 연령대의 가구 비율은 아닙니다.')
+    if any(term in q for term in ('독거노인비율', '65세이상등록인구중독거노인')):
+        answers.append('«65세 이상 등록인구 중 독거노인 비율»은 해당 지역의 65세 이상 등록인구 가운데 혼자 사는 어르신이 차지하는 비율입니다. 연간 지역 배경 통계이며, 현재 선택된 30대 등 특정 연령대의 수치나 개인의 고립 판정이 아닙니다.')
+    if any(term in q for term in ('힘들때이야기할사람없는비율', '이야기할사람없는비율', '도움받을사람')):
+        answers.append('«힘들 때 이야기할 사람이 없는 비율»은 어려운 일이 있을 때 이야기하거나 도움을 구할 사람이 없다고 답한 서울서베이 응답자의 비율입니다. 강남구·연령대별 연간 설문 통계이며, 특정 주민을 확인하는 자료가 아닙니다.')
+    if not answers:
+        return None
+    answers.append('화면의 수치는 지역·연령대 집계와 설문 통계를 함께 보여주는 참고 자료입니다. 이 값만으로 개인의 고립 여부나 복지 필요를 확정하지 않습니다.')
+    return '\n\n'.join(answers)
+
+
 def explain(context, question, detail=None):
     """외부 LLM 없이 서버가 조회한 집단의 숫자와 제한을 명시해 답한다."""
     question = str(question).strip()
@@ -109,7 +139,10 @@ def explain(context, question, detail=None):
     detail = group_detail(context) if detail is None else detail
     row = detail['current']
     label = f"{row['district']} · {row['age']} · {row['sex']}"
-    if _is_provenance_question(question):
+    metric_answer = _metric_definition_answer(question)
+    if metric_answer:
+        answer = metric_answer
+    elif _is_provenance_question(question):
         answer = _provenance_answer(detail)
     elif any(word in question for word in ['독거', '지역 배경', '장애인']):
         from backend.db.region_workspace import elderly_background

@@ -12,7 +12,7 @@ from backend.bomi.adapters.regional_analysis import _ScopedResolver
 from backend.bomi.agents.region_analysis import RegionAnalysisAgent
 from backend.bomi.questions import is_tab_question
 from backend.bomi.request import ChatRequest
-from backend.db.group_workspace import _is_provenance_question, _provenance_answer
+from backend.db.group_workspace import _is_provenance_question, _provenance_answer, _metric_definition_answer
 from backend.db.region_workspace import (REGION_TYPE_EXPLANATION, SURVEY_OTHER_METRICS_EXPLANATION,
                                          _is_region_type_question, _is_signal_presence_question,
                                          _is_signal_reason_question, _is_survey_metrics_question, explain_region,
@@ -151,6 +151,23 @@ class ProvenanceAnswerTests(unittest.TestCase):
         answer = explain_region(context, '사회적 연결 마음 지표가 뭐예요?', {'assessment': []})['answer']
         self.assertIn('서울서베이', answer)
         self.assertNotIn('가구·관계망 함께 보기', answer)
+
+    def test_group_dashboard_metric_labels_have_beginner_explanations(self):
+        context = {'city': '강남구', 'code': '11680660', 'month': '2025-11', 'age': '30대', 'sex': '전체'}
+        cases = {
+            '전화 연락은 무슨 뜻이야?': ('통화 상대 수', '개인의 연락 여부'),
+            '문자 연락이 뭐예요?': ('문자 상대 수', '특정 개인'),
+            '평일 이동 -30.15%는 무슨 뜻이야?': ('월~금요일', '개인의 외출 여부'),
+            '휴일 이동이 뭐야?': ('토·일요일과 공휴일', '개인의 외출 여부'),
+            '가구 구성 비율은?': ('가구원 수별', '선택한 연령대'),
+            '65세 이상 등록인구 중 독거노인 비율이 뭐야?': ('65세 이상 등록인구', '개인의 고립 판정'),
+            '힘들 때 이야기할 사람이 없는 비율은?': ('서울서베이 응답자', '특정 주민'),
+        }
+        for question, phrases in cases.items():
+            with self.subTest(question=question):
+                answer = _metric_definition_answer(question)
+                for phrase in phrases:
+                    self.assertIn(phrase, answer)
 
     def test_followup_cards_explain_their_comparison_basis_for_first_time_users(self):
         context = {'city': '강남구', 'district': '개포3동', 'month': '2025-12', 'age': '40대'}
