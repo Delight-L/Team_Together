@@ -89,7 +89,6 @@
 .gd-process { grid-area: 1 / 1; display:flex; align-items:center; gap:14px; list-style:none; margin:0; padding:14px; background:#fff; border:1px solid #d8e8fc; border-radius:14px; }
 .gd-process li { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
 .gd-process li + li:before { content:'→'; color:#819bbd; margin-right:4px; }
-.gd-process li > b { background:#1680ff; color:white; border:5px solid #eaf4ff; border-radius:50%; width:36px; height:36px; display:grid; place-items:center; flex-shrink:0; }
 .gd-process strong { display:block; font-size:13px; color:#102044; }
 .gd-process span { display:block; margin-top:5px; font-size:10px; line-height:1.5; color:#7087a7; }
 .gd-overview { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(140px,1fr) minmax(125px,.7fr); gap:12px; align-items:center; }
@@ -112,7 +111,7 @@
 .gd-senior { background:#f3f8ff; border:1px solid #e3edfa; border-radius:10px; }.gd-senior span { font-size:12px; color:#617fa6; }.gd-senior strong { display:block; font-size:28px; margin:8px 0; }
 .gd-context-note { font-size:11px; line-height:1.6; color:#738bad; }
 @media(max-width:1250px) { .gd-overview { grid-template-columns:1fr 1fr; }.gd-context-cards { grid-template-columns:1fr; }.gd-process span { display:none; }.gd-process { gap:5px; padding:8px; }.gd-process li { gap:4px; }.gd-process li+li:before { display:none; } }
-@media(max-width:760px) { .gd-workspace { grid-template-rows:auto 70px auto 62px auto; }.gd-process { min-height:64px; }.gd-process strong { font-size:11px; }.gd-process li>b { width:28px; height:28px; border-width:3px; }.gd-context-cards >article { padding:14px; }.gd-case-heading h2 { font-size:23px; } }
+@media(max-width:760px) { .gd-workspace { grid-template-rows:auto 70px auto 62px auto; }.gd-process { min-height:64px; }.gd-process strong { font-size:11px; }.gd-context-cards >article { padding:14px; }.gd-case-heading h2 { font-size:23px; } }
 .gd-context-cards > article { padding:15px; }.gd-senior { margin:14px 0; padding:11px; }.gd-context-cards h4 { margin-top:15px; }.gd-mini-trend .gd-line { height:80px; }.gd-overview { padding-bottom:14px; }
 /* 조사 파일은 왼쪽 첫 탭, 오른쪽은 보미에게 질문만 고정합니다. */
 .gd-files-panel { padding: 0; }
@@ -124,10 +123,6 @@
   .gd-workspace { grid-template-rows: auto 70px auto auto; }
   .gd-files-panel .gd-file-list { max-height: none; }
 }
-.gd-process li > button { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; text-align: left; padding: 4px 6px; border-radius: 10px; }
-.gd-process li > button:hover:not(:disabled) { background: #f0f6ff; }
-.gd-process li > button:disabled { opacity: 1; cursor: default; }
-.gd-process li > button > b { background:#1680ff; color:white; border:5px solid #eaf4ff; border-radius:50%; width:36px; height:36px; display:grid; place-items:center; flex-shrink:0; }
 /* 후보 동의 그룹 표시 */
 .gd-file-list .gd-candidate { font-style: normal; flex-shrink: 0; font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 12px; background: #ffe9ee; color: #c2264a; }
 
@@ -139,3 +134,39 @@
 .group-shell .gd-summary[data-summary-page='3'] .gd-signal-card { display:block; flex:1; min-height:0; overflow:auto; }
 
 .gd-evidence-back { margin:0 0 12px; font-size:13px; font-weight:600; }
+
+/* Brief, local feedback: values change directly; layout and selection remain intact. */
+@keyframes gd-content-reveal {
+  from { opacity:.4; }
+  to { opacity:1; }
+}
+.app-shell.group-shell .gd-case:not([hidden]) .gd-summary[data-summary-page='0'] > .gd-unified-overview,
+.app-shell.group-shell .gd-case:not([hidden]) .gd-summary[data-summary-page='3'] > .gd-signal-card,
+.app-shell.group-shell .gd-files-panel:not([hidden]) .gd-directory,
+.app-shell.group-shell .gd-quality-panel:not([hidden]) .dq-panel {
+  animation:gd-content-reveal 200ms ease-out;
+}
+.app-shell.group-shell .gd-tabs-track .gd-tab,
+.app-shell.group-shell .gd-file-list button,
+.app-shell.group-shell .detection-case-selector select,
+.app-shell.group-shell #group-period-slot select {
+  transition:background-color 150ms ease-out,border-color 150ms ease-out,color 150ms ease-out,box-shadow 150ms ease-out;
+}
+@media(prefers-reduced-motion:reduce) {
+  .app-shell.group-shell .gd-case:not([hidden]) .gd-summary[data-summary-page='0'] > .gd-unified-overview,
+  .app-shell.group-shell .gd-case:not([hidden]) .gd-summary[data-summary-page='3'] > .gd-signal-card,
+  .app-shell.group-shell .gd-files-panel:not([hidden]) .gd-directory,
+  .app-shell.group-shell .gd-quality-panel:not([hidden]) .dq-panel { animation:none; }
+  .app-shell.group-shell .gd-tabs-track .gd-tab,
+  .app-shell.group-shell .gd-file-list button,
+  .app-shell.group-shell .detection-case-selector select,
+  .app-shell.group-shell #group-period-slot select { transition:none; }
+}
+
+/* Keep numeric labels aligned while only the graphs animate. */
+.app-shell.group-shell .gd-metric-value strong,
+.app-shell.group-shell .gd-summary-bar small,
+.app-shell.group-shell .gd-narrative,
+.app-shell.group-shell .gd-mini-share strong,
+.app-shell.group-shell .gd-households span,
+.app-shell.group-shell .gd-senior strong { font-variant-numeric:tabular-nums; }

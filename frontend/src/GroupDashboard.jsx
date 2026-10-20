@@ -12,6 +12,7 @@ import { draftKey } from './draftStore.mjs';
 import { groupKey, groupLabel, openGroup, restoreWorkspace, availableWorkspace, pickInitialGroup, CANDIDATE_ORDER } from './groupTabs.mjs';
 import { summarizeRegions } from './Briefing';
 import './group-dashboard.css';
+import {ChartMotion,useChartProgress} from './ChartMotion';
 import RegionContextCards from './RegionContextCards';
 import { comparisonRows, signedBar } from './regionalPresentation.mjs';
 import { ageStatus, detectionTabs, observationWindow } from './ageSignals.mjs';
@@ -22,7 +23,8 @@ const emptyTabs = { tabs: [], active: '' };
 const PAGE_SIZE = 9;
 
 function LineChart({ points, label }) {
-  const fillId = useId(), chartRef = useRef(null);
+  const fillId = useId(), clipId=fillId+'-reveal', chartRef = useRef(null);
+  const progress=useChartProgress();
   const [size, setSize] = useState({width: 360, height: 150});
   useEffect(() => {
     const observer = new ResizeObserver(([entry]) => {
@@ -45,21 +47,22 @@ function LineChart({ points, label }) {
   });
   if (segment.length) segments.push(segment);
   return <div ref={chartRef} className="gd-flow-chart">{values.length ? <svg className="gd-line" viewBox={`0 0 ${size.width} ${size.height}`} role="img" aria-label={label}>
-    <defs><linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1"><stop stopColor="#60a5fa" stopOpacity=".24"/><stop offset="1" stopColor="#60a5fa" stopOpacity=".02"/></linearGradient></defs>
-    {segments.map((seg, i) => <polygon key={i} points={[...seg, [seg.at(-1)[0], bottom], [seg[0][0], bottom]].map(p => p.join(',')).join(' ')} fill={`url(#${fillId})`}/>)}
+    <defs><linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1"><stop stopColor="#60a5fa" stopOpacity=".24"/><stop offset="1" stopColor="#60a5fa" stopOpacity=".02"/></linearGradient><clipPath id={clipId} clipPathUnits="userSpaceOnUse"><rect x="26" y="0" width={Math.max(0,(size.width-26)*progress)} height={size.height}/></clipPath></defs>
+    {segments.map((seg, i) => <polygon key={i} points={[...seg, [seg.at(-1)[0], bottom], [seg[0][0], bottom]].map(p => p.join(',')).join(' ')} fill={`url(#${fillId})`} clipPath={`url(#${clipId})`}/>)}
     {[0, max / 2, max].map(v => <g key={v}><line x1="30" x2={size.width - 14} y1={y(v)} y2={y(v)} stroke="#e2e8f0"/><text x="24" y={y(v)+4} textAnchor="end">{fmt(v,0)}</text></g>)}
-    {segments.map((seg,i) => <polyline key={i} points={seg.map(p => p.join(',')).join(' ')} fill="none" stroke="#2563eb" strokeWidth="2"/>)}
-    {points.map((p,i) => <g key={p.month}>{Number.isFinite(p.mean) && <circle cx={x(i)} cy={y(p.mean)} r="3" fill="#2563eb"><title>{p.month}: {fmt(p.mean,2)}</title></circle>}{(points.length < 9 || i % 6 === 0 || i === points.length-1) && <text x={x(i)} y={size.height-5} textAnchor="middle">{Number(p.month.slice(5))}월</text>}</g>)}
+    {segments.map((seg,i) => <polyline key={i} points={seg.map(p => p.join(',')).join(' ')} fill="none" stroke="#2563eb" strokeWidth="2" clipPath={`url(#${clipId})`}/>)}
+    {points.map((p,i) => <g key={p.month}>{Number.isFinite(p.mean) && <circle cx={x(i)} cy={y(p.mean)} r="3" fill="#2563eb" clipPath={`url(#${clipId})`}><title>{p.month}: {fmt(p.mean,2)}</title></circle>}{(points.length < 9 || i % 6 === 0 || i === points.length-1) && <text x={x(i)} y={size.height-5} textAnchor="middle">{Number(p.month.slice(5))}월</text>}</g>)}
   </svg> : <p className="gd-empty">표시할 자료가 없습니다.</p>}</div>;
 }
 
 function DetectionSummary({detection, group}) {
+  const progress=useChartProgress();
   const metrics = comparisonRows(detection?.payload, [['call_contacts','전화 연락'],['text_contacts','문자 연락'],['weekday_move_count','평일 이동'],['weekend_move_count','휴일 이동']]);
   const extent = Math.max(1,...metrics.flatMap(r => [r.local,r.common]).filter(Number.isFinite).map(Math.abs));
   return <section className="gd-detection-summary gd-summary-with-graphs" aria-label="통신·이동 탐지 요약">
     <div className="gd-metrics-heading"><div className="gd-heading-with-note"><h3>통신·이동 변화</h3><small className="gd-period-note">직전 기준월 대비</small></div><div className="gd-summary-graph-legend"><span><i/>{group.district} {group.age}</span><span><i/>{group.city} {group.age} 공통 변화</span></div></div>
     <div className="gd-summary-graphs">{metrics.map((r,i) => <article key={r.label} className={`gd-summary-metric ${detection[i<2?'communication_signal':'mobility_signal'] === true ? `is-detected signal-${signalState(detection.payload?.[(i<2?'communication':'mobility')+'_absolute_signal'],detection.payload?.[(i<2?'communication':'mobility')+'_local_signal'])}` : ''}`}><header><h4><Icon name={i<2?'chat':'chart'} size={22}/>{r.label}</h4></header><div className="gd-metric-value"><strong>{pct(r.local)}</strong>{Number.isFinite(r.local) && <span>{r.local<0?'감소':r.local>0?'증가':'변화 없음'}</span>}</div><div className="gd-summary-bars" role="img" aria-label={`${r.label}: ${group.district} ${pct(r.local)}, ${group.city} 같은 연령 공통 변화 ${pct(r.common)}`}>
-      {['local','common'].map(key => <div key={key} className={`gd-summary-bar ${key}`}><span>{key === 'local' ? group.district : group.city}</span><div className="gd-summary-track"><i style={signedBar(r[key],extent)}/></div><small>{pct(r[key])}</small></div>)}
+      {['local','common'].map(key => <div key={key} className={`gd-summary-bar ${key}`}><span>{key === 'local' ? group.district : group.city}</span><div className="gd-summary-track"><i style={signedBar(Number.isFinite(r[key])?r[key]*progress:r[key],extent)}/></div><small>{pct(r[key])}</small></div>)}
     </div></article>)}</div>
   </section>;
 }
@@ -120,6 +123,11 @@ function Directory({ catalog, loading, error, retry, city, month, onOpen, state,
   </div>;
 }
 
+function CaseShare({value}) {
+  const progress=useChartProgress();
+  return <div className="gd-share-track"><i style={{width:`${Number.isFinite(value)?Math.max(0,Math.min(100,value))*progress:0}%`}}/></div>;
+}
+
 function GroupCase({ group, shown, summaryStep, onEvidence, onSummary, onServices, analysis, caseOptions, onCaseChange, onEvidenceCaseChange }) {
   const summaryPage = summaryStep === 3 ? 3 : 0;
   const [data, setData] = useState(null), [error, setError] = useState(''), [retry, setRetry] = useState(0);
@@ -134,14 +142,14 @@ function GroupCase({ group, shown, summaryStep, onEvidence, onSummary, onService
   const evidenceRows = (analysis?.assessment || []).filter(r => r['행정동코드'] === group.code && r.age_label === group.age && r['기준연월'] === group.month);
   return <><section hidden={!shown} className="gd-case" role="tabpanel" id={'panel-' + groupKey(group)} aria-label={groupLabel(group)}>
     {error ? <div role="alert" className="gd-error">{error}<button onClick={() => { setError(''); setRetry(r => r + 1); }}>다시 연결</button></div> : !row ? <p role="status">집단별 근거를 읽고 있습니다…</p> : <>
-      <div className="gd-summary" data-summary-page={summaryPage}><div className="gd-overview gd-unified-overview"><DetectionHeading group={group} detection={detection} onEvidence={onEvidence} caseOptions={shown ? caseOptions : undefined} onCaseChange={onCaseChange}/>
+      <ChartMotion active={shown} replayKey={`${groupKey(group)}:${summaryPage}`}><div className="gd-summary" data-summary-page={summaryPage}><div className="gd-overview gd-unified-overview"><DetectionHeading group={group} detection={detection} onEvidence={onEvidence} caseOptions={shown ? caseOptions : undefined} onCaseChange={onCaseChange}/>
       {detection && <DetectionSummary detection={detection} group={group}/>}
       <section className="gd-unified-flow" aria-label="유동량 참고"><div className="gd-heading-with-note"><h3 className="gd-flow-reference-label">{group.district} {group.age} 유동량 변화</h3><small className="gd-period-note">직전 기준월 대비</small></div>
-      <h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `${fmt(Math.abs(row.change_pct), 2)}% ${row.change_pct > 0 ? '증가' : row.change_pct < 0 ? '감소' : '변화 없음'}` : '비교 자료 부족'}</h3>
+      <h3 className="gd-narrative">{Number.isFinite(row.change_pct) ? `${fmt(Math.abs(row.change_pct),2)}% ${row.change_pct > 0 ? '증가' : row.change_pct < 0 ? '감소' : '변화 없음'}` : '비교 자료 부족'}</h3>
       <article className="gd-mini-trend"><LineChart points={data.series} label={`${groupLabel(group)} 월별 구역별 평균 유동량`}/></article>
-      <article className="gd-mini-share"><h4>{group.district} 전체 유동량 중 {group.age} 비율</h4><strong>{fmt(row.share, 2)}<small>%</small></strong><div className="gd-share-track"><i style={{width: `${Number.isFinite(row.share) ? Math.max(0, Math.min(100, row.share)) : 0}%`}}/></div></article></section><button className="primary gd-support-link gd-standalone-support" onClick={onServices}><span>지원사업 후보 확인</span><Icon name="arrow" size={18}/></button><div className="gd-inline-background"><RegionContextCards structure={structure} survey={data.regional?.survey} group={group} /></div></div>
+      <article className="gd-mini-share"><h4>{group.district} 전체 유동량 중 {group.age} 비율</h4><strong>{fmt(row.share,2)}<small>%</small></strong><CaseShare value={row.share}/></article></section><button className="primary gd-support-link gd-standalone-support" onClick={onServices}><span>지원사업 후보 확인</span><Icon name="arrow" size={18}/></button><div className="gd-inline-background"><RegionContextCards structure={structure} survey={data.regional?.survey} group={group} /></div></div>
       {evidenceRows.length > 0 && <div className="gd-signal-card"><DetectionEvidence rows={evidenceRows} group={group} detection={detection} onBack={onSummary} caseOptions={shown ? caseOptions : undefined} onCaseChange={onEvidenceCaseChange}/></div>}
-      </div>
+      </div></ChartMotion>
 
     </>}
   </section></>;
@@ -223,12 +231,11 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
       {!catalog?.months.includes(month) && <option value="">{loading ? '기간 확인 중…' : '제공 자료 없음'}</option>}{catalog?.months.slice().reverse().map(m => <option key={m} value={m}>{m}{cases.length ? ` · 탐지 ${cases.filter(r => r.month === m && r.any_signal).length}건` : ''}</option>)}
     </select>{cases.length > 0 && <small className="gd-observation-window">통신·이동 관측 {observationWindow(month)}</small>}</label>, document.getElementById('group-period-slot'))}
     {workspaceStorageFailed && <p className="gd-scope-note" role="status">탭 임시 저장에 실패했습니다. 새로고침 시 열린 탭을 복원하지 못할 수 있습니다.</p>}
-    {active && active.month !== month && <p className="gd-scope-note">조사 파일 기준월은 {month}, 현재 열린 브리핑은 <b>{active.month} · {groupLabel(active)}</b>입니다.</p>}
     <div className="gd-workspace"><ol className="gd-process" aria-label="브리핑 읽는 순서">{[['연락·이동 변화 확인', '탐지된 변화와 감소 폭을 살펴봅니다.'], ['가구·관계망 함께 보기', '가구 구성과 사회적 연결을 함께 봅니다.'], ['필요한 지원 검토', '확인한 필요에 맞는 지원을 검토합니다.']].map(([title, text], i) => <li key={title}><div className="gd-step-guide"><b>{i + 1}</b><span className="gd-step-icon"><Icon name={['discover', 'neighborhood', 'support'][i]} size={26}/></span><div><strong>{title}</strong><span>{text}</span></div></div></li>)}</ol><div className="gd-tabbar"><div className="gd-tabs-window"><div className="gd-tabs-track" role="tablist" aria-label="사례 검토 파일">
         {[['overview','탐지 현황','clipboard'],['files','조사 파일','report'],['quality','자료 확인','clipboard']].map(([id,label,icon],index)=>{const selected=id==='quality'?qualityShown:id==='files'?filesShown:!filesShown&&!qualityShown;return <div key={id} className={`gd-tab ${selected?'active':''}`}><button role="tab" id={'tab-'+id} aria-selected={selected} aria-controls={id==='quality'?'panel-quality':id==='files'?'panel-files':active?'panel-'+groupKey(active):'panel-evidence-empty'} tabIndex={selected?0:-1} ref={el=>{tabRefs.current[id]=el;}} onKeyDown={e=>changeTab(e,index)} onClick={()=>{setWorkspaceTab(['group','files','quality'][index]);setSummaryStep(1);}}><Icon name={icon} size={22}/><span><b>{label}</b></span></button></div>;})}
       </div></div></div>
       <section className="gd-case gd-files-panel" role="tabpanel" id="panel-files" aria-labelledby="tab-files" hidden={!filesShown}><Directory catalog={catalog} city={city} month={month} loading={loading} error={error} retry={() => setRetry(n => n + 1)} onOpen={open} state={state} statusOf={statusOf} detectionMode={cases.length > 0} /></section>
-      <section className="gd-case gd-quality-panel" role="tabpanel" id="panel-quality" aria-labelledby="tab-quality" hidden={!qualityShown}><DataQuality analysis={analysis} city={city}/></section>
+      <section className="gd-case gd-quality-panel" role="tabpanel" id="panel-quality" aria-labelledby="tab-quality" hidden={!qualityShown}><DataQuality analysis={analysis} city={city} active={qualityShown}/></section>
       {state.tabs.map(g => <GroupCase key={groupKey(g)} group={g} shown={!filesShown && !qualityShown && activeKey === groupKey(g)} onServices={() => onServices(g)} caseOptions={cases.length ? detectionTabs(cases,city,month) : state.tabs.filter(item => item.month === month)} onCaseChange={open} onEvidenceCaseChange={group => open(group, true)} onEvidence={() => setSummaryStep(3)} onSummary={() => setSummaryStep(1)} summaryStep={summaryStep} analysis={analysis} />)}
 <section id="panel-evidence-empty" role="tabpanel" aria-labelledby="tab-overview" className="gd-case" hidden={filesShown || qualityShown || !!active}/>
     </div>

@@ -7,10 +7,6 @@
 .group-shell .gd-process { min-height: 0; padding: 0; border: 1px solid #c8dcfa; background: #fff; border-radius: 9px; gap: 18px; overflow: visible; }
 .group-shell .gd-process li { position: relative; height: 100%; border: 0; border-radius: 0; background: transparent; }
 .group-shell .gd-process li + li::before { display: none; }
-.group-shell .gd-process li > button { padding: 5px 12px; gap: 10px; height: 100%; }
-.group-shell .gd-process li > button > b { width: 26px; height: 26px; border: 0; font-size: 14px; background: linear-gradient(140deg, #06b8ff, #045cff); box-shadow: 0 3px 8px #0086ff22; }
-.group-shell .gd-process li:nth-child(2) button > b { background: linear-gradient(140deg, #b862ff, #762bff); }
-.group-shell .gd-process li:nth-child(3) button > b { background: linear-gradient(140deg, #12e2dd, #00aaca); }
 .group-shell .gd-process .gd-step-icon { display: flex; color: #2563eb; margin: 0; flex-shrink: 0; }
 .group-shell .gd-process .gd-step-icon svg { width: 26px; height: 26px; }
 .group-shell .gd-process strong { color: #12213e; font-size: 13px; }
@@ -92,8 +88,6 @@
 
 /* Keep every card reachable on smaller screens instead of clipping content. */
 @media (max-width: 1500px) {
-
-  .group-shell .gd-process li > button { padding: 7px 10px; gap: 8px; }
   .group-shell .gd-process strong { font-size: 13px; }
   .group-shell .gd-process .gd-step-icon svg { width: 26px; }
   .group-shell .gd-process span:not(.gd-step-icon) { font-size: 10px; }
@@ -113,8 +107,6 @@
 
   .group-shell .gd-process { gap: 8px; }
   .group-shell .gd-process li + li::before { display: none; }
-  .group-shell .gd-process li > button { padding: 5px; gap: 4px; }
-  .group-shell .gd-process li > button > b { width: 22px; height: 22px; font-size: 12px; }
   .group-shell .gd-process strong { font-size: 11px; }
   .group-shell .gd-tabbar { padding: 0 10px; }
   .group-shell .gd-case { padding: 22px 8px 10px; border-width: 5px; }
@@ -125,7 +117,6 @@
 @media (max-width: 480px) {
   .group-shell .gd-summary .gd-overview { grid-template-columns: 1fr; }
   .group-shell .gd-files-panel .gd-file-list { grid-template-columns: 1fr; }
-  .group-shell .gd-process li > button { flex-direction: row; }
 }
 
 /* Fit the file to the available panel; smaller panels show one section per page. */
@@ -187,7 +178,6 @@
 }
 .group-shell .gd-files-panel .gd-file-list button { min-height: 0; }
 .group-shell .gd-summary .gd-population-grid .gd-senior { margin: 0; }
-.group-shell .gd-process li.current > button { background: #f0f6ff; }
 .group-shell .gd-process li:nth-child(2) .gd-step-icon { color: #762bff; }
 .group-shell .gd-process li:nth-child(3) .gd-step-icon { color: #00aaca; }
 .group-shell .gd-summary .gd-context-cards > article { overflow-y: auto; scrollbar-width: thin; }

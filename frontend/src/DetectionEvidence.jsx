@@ -1,5 +1,6 @@
 import DetectionCaseSelector from './DetectionCaseSelector';
 import React from 'react';
+import {useChartProgress} from './ChartMotion';
 import { Icon } from './components';
 const fmt=v=>Number.isFinite(v)?v.toLocaleString('ko-KR',{maximumFractionDigits:2}):'자료 없음';
 export const signalState=(absolute,local)=>absolute&&local?'both':absolute?'absolute':local?'local':'none';
@@ -9,6 +10,7 @@ export function signalExplanation(absolute, local, city) {
 }
 export function SignalBadges({absolute,local}) {const state=signalState(absolute,local);return <span className="ev-badges"><span className={`ev-badge ${state}`}>{signalLabel[state]}</span></span>;}
 function ScorePlot({row,path,state}) {
+ const progress=useChartProgress();
  const z=row[path+'_rz'], threshold=row[path+'_threshold'];
  if(!Number.isFinite(z)||!Number.isFinite(threshold))return <p className="ev-missing">탐지 점수·기준값 자료 없음</p>;
  const min=Math.min(z,threshold,0)-Math.max(1,Math.abs(Math.min(z,threshold))*.15),max=Math.max(0,z,threshold)+.5;
@@ -19,9 +21,9 @@ function ScorePlot({row,path,state}) {
  <span className="ev-chart-observation" style={{left:`${x(z)/5}%`,color}}>이번 관측 {fmt(z)}</span>
  <i className="ev-shape-track"/>
  <i className="ev-shape-threshold" style={{left:`${x(threshold)/5}%`}}/>
- <i className="ev-shape-distance" style={{left:`${Math.min(x(z),x(threshold))/5}%`,width:`${Math.abs(x(z)-x(threshold))/5}%`}}/>
+ <i className="ev-shape-distance" style={{left:`${Math.min(x(threshold)+(x(z)-x(threshold))*progress,x(threshold))/5}%`,width:`${Math.abs(x(z)-x(threshold))*progress/5}%`}}/>
  <i className="ev-shape-zero" style={{left:`${x(0)/5}%`}}/>
- <i className="ev-shape-observation" style={{left:`${x(z)/5}%`}}/>
+ <i className="ev-shape-observation" style={{left:`${x(z)/5}%`,opacity:progress}}/>
  </div><p className="ev-score-detail">기준과의 차이 <b style={{color}}>{fmt(distance)}</b> · {z<=threshold?'기준선보다 낮음':'기준선보다 높음'}</p></>;
 
 }

@@ -1,10 +1,11 @@
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useState,useId} from 'react';
 import {createPortal} from 'react-dom';
 import {api,query} from './api';
 import {Icon} from './components';
 import {MissionMap} from './MissionMap';
 import {DOMAINS,TRACKING_AGES,pathState,trackingMonthOptions,eventsInMonth,preferredMonthlyEvent,trackingSeries,latestObservation,stateLabel} from './activityTracking.mjs';
 import './regional-followup.css';
+import {ChartMotion,useChartProgress} from './ChartMotion';
 import {trackingCase,signalForGroup} from './linkedSelection.mjs';
 import {DETECTION_METHODS,detectionMapRegions,detectionMethodsForAge} from './detectionMap.mjs';
 
@@ -12,6 +13,7 @@ const fmt=(v,d=2)=>Number.isFinite(v)?v.toLocaleString('ko-KR',{maximumFractionD
 const monthName=m=>`${Number(m.slice(5))}월`;
 
 function FlowChart({series,domain,signalMonth,referenceMonth}) {
+ const progress=useChartProgress(),clipId=useId();
  const values=series.flatMap(p=>domain.metrics.map(([k])=>p.values[k])).filter(Number.isFinite);
  if(!values.length)return <div className="rf-chart-empty">활동량 비교 자료가 없습니다.</div>;
  const low=Math.min(100,...values),high=Math.max(100,...values),span=Math.max(10,high-low);
@@ -26,11 +28,11 @@ function FlowChart({series,domain,signalMonth,referenceMonth}) {
   {at>=0&&<div className="rf-detection-band" style={{left:`${x(at)}%`}}><span>탐지월</span></div>}
   {ticks.map(v=><React.Fragment key={v}><span className="rf-y-tick" style={{top:`${y(v)}%`}}>{v}</span><i className={`rf-gridline ${v===100?'reference':''}`} style={{top:`${y(v)}%`}}/></React.Fragment>)}
   <span className="rf-reference-label" style={{top:`${y(100)}%`}}>탐지 전 수준 100</span>
-  <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">{domain.metrics.flatMap(([key,,color],j)=>{
+  <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id={clipId} clipPathUnits="userSpaceOnUse"><rect x="-1" y="-4" width={92*progress} height="108"/></clipPath></defs><g clipPath={`url(#${clipId})`}>{domain.metrics.flatMap(([key,,color],j)=>{
    const segments=[];let line=[];series.forEach((p,i)=>{const v=p.values[key];if(Number.isFinite(v))line.push([x(i),y(v)]);else if(line.length){segments.push(line);line=[];}});if(line.length)segments.push(line);
    return segments.map((s,i)=><polyline key={key+i} points={s.map(p=>p.join(',')).join(' ')} fill="none" stroke={color} strokeWidth="2.5" strokeDasharray={j?'7 5':undefined} vectorEffect="non-scaling-stroke"/>);
-  })}</svg>
-  {domain.metrics.map(([key,label,color],j)=><React.Fragment key={key}>{series.map((p,i)=>Number.isFinite(p.values[key])&&<i key={p.month} className={`rf-dot ${j?'square':''}`} style={{left:`${x(i)}%`,top:`${y(p.values[key])}%`,background:color}} title={`${p.month} ${label}: ${fmt(p.values[key])}`}/>)}{Number.isFinite(series.at(-1)?.values[key])&&<b className="rf-end-label" style={{left:'90%',top:`${ends[j]}%`,color}}>{label} {fmt(series.at(-1).values[key])}</b>}</React.Fragment>)}
+  })}</g></svg>
+  {domain.metrics.map(([key,label,color],j)=><React.Fragment key={key}>{series.map((p,i)=>Number.isFinite(p.values[key])&&<i key={p.month} className={`rf-dot ${j?'square':''}`} style={{left:`${x(i)}%`,top:`${y(p.values[key])}%`,background:color,opacity:progress>=i/Math.max(1,series.length-1)?1:0}} title={`${p.month} ${label}: ${fmt(p.values[key])}`}/>)}{Number.isFinite(series.at(-1)?.values[key])&&<b className="rf-end-label" style={{left:'90%',top:`${ends[j]}%`,color}}>{label} {fmt(series.at(-1).values[key])}</b>}</React.Fragment>)}
   {series.map((p,i)=><span className="rf-x-tick" key={p.month} style={{left:`${x(i)}%`}}>{monthName(p.month)}</span>)}
  </div></div>;
 }
@@ -83,7 +85,7 @@ export default function RegionalFollowup({city,month,geometry,assessment=[],sele
   title={`${mapMonth} · ${a} · ${methods.length?methods.map(key=>DETECTION_METHODS[key].label).join(' / '):'탐지 없음'}`}
   aria-pressed={a===selectedAge} onClick={()=>selectGroup(selected,a)}>{a}{methods.length>1&&<span className="rf-age-method-dots" aria-hidden="true">{methods.map(key=><i key={key} style={{background:DETECTION_METHODS[key].color}}/>)}</span>}</button>;
 })}</div><label>최초 탐지월<select aria-label="추적할 탐지월 선택" value={monthOptions.length?mapMonth:''} onChange={e=>selectSignalMonth(e.target.value)} disabled={!monthOptions.length}>{!monthOptions.length&&<option value="">제공 자료 없음</option>}{[...monthOptions].reverse().map(m=><option key={m.month} value={m.month}>{m.month} · 탐지 {m.count}건</option>)}</select></label></div></header>
-   {error?<div className="rf-empty" role="alert">{error}<button onClick={()=>setRetry(v=>v+1)}>다시 연결</button></div>:!data?<div className="rf-empty" role="status">DB1 추적 자료를 읽고 있습니다…</div>:!tracking?.available?<div className="rf-empty">{city}의 추적 관찰 자료가 연결되지 않았습니다.</div>:!event?<div className="rf-empty">{monthlyEvents.length?`${mapMonth} ${selected||'선택한 지역'} · ${selectedAge}에는 탐지 이력이 없습니다.`:`${mapMonth}에는 탐지된 사례가 없습니다.`}<p>{monthlyEvents.length?'지도에서 다른 지역이나 연령대를 선택해 주세요.':'다른 탐지월을 선택해 주세요.'}</p></div>:<div className="rf-domains">{DOMAINS.map(d=><DomainCard key={d.key} domain={d} event={event} endMonth={endMonth}/>)}</div>}
+   {error?<div className="rf-empty" role="alert">{error}<button onClick={()=>setRetry(v=>v+1)}>다시 연결</button></div>:!data?<div className="rf-empty" role="status">DB1 추적 자료를 읽고 있습니다…</div>:!tracking?.available?<div className="rf-empty">{city}의 추적 관찰 자료가 연결되지 않았습니다.</div>:!event?<div className="rf-empty">{monthlyEvents.length?`${mapMonth} ${selected||'선택한 지역'} · ${selectedAge}에는 탐지 이력이 없습니다.`:`${mapMonth}에는 탐지된 사례가 없습니다.`}<p>{monthlyEvents.length?'지도에서 다른 지역이나 연령대를 선택해 주세요.':'다른 탐지월을 선택해 주세요.'}</p></div>:<ChartMotion replayKey={`${city}:${selected}:${selectedAge}:${mapMonth}:${endMonth}`}><div className="rf-domains">{DOMAINS.map(d=><DomainCard key={d.key} domain={d} event={event} endMonth={endMonth}/>)}</div></ChartMotion>}
   </section>
  </div>;
 }

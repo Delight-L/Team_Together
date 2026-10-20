@@ -18,11 +18,8 @@
 .app-shell.group-shell .page-heading .filters select { height:36px;padding:8px 10px; }
 .app-shell.group-shell #group-period-slot label { position:relative; }
 .app-shell.group-shell .page-heading .gd-observation-window { position:absolute;top:100%;right:0; }
-
-.app-shell.group-shell .gd-process li > button { padding:8px 12px; }
 .app-shell.group-shell .gd-process strong { font-size:clamp(13px,.9vw,17px); }
 .app-shell.group-shell .gd-process span:not(.gd-step-icon) { font-size:clamp(10px,.7vw,13px); }
-.app-shell.group-shell .gd-process li > button > b { width:34px;height:34px;font-size:19px; }
 .app-shell.group-shell .gd-tabbar { height:58px; background-size:100% 58px; padding-left:50px; }
 .app-shell.group-shell .gd-tabs-window,.app-shell.group-shell .gd-tabs-track { height:58px; }
 .app-shell.group-shell .gd-tabbar .gd-tab { width:clamp(145px,12vw,205px);height:55px;padding:0 15px;display:flex; }
@@ -304,37 +301,17 @@
 .app-shell.group-shell .ev-badge.both { background:#ffe4e9;color:#c53d55; }
 .app-shell.group-shell .gd-domain-chip { display:inline-flex;align-items:center;gap:8px;border:1px solid var(--signal-border);border-radius:8px;background:var(--signal-soft);color:var(--signal-ink);font-size:var(--type-body);font-weight:700; }
 .gd-domain-explanation { display:inline-flex;align-items:center;gap:8px; }
-.app-shell.group-shell .gd-case-title h2,.app-shell.group-shell .ev-heading h2,
-.app-shell.group-shell .gd-summary .gd-metric-value strong,
-.app-shell.group-shell .gd-summary .gd-unified-flow .gd-narrative,
-.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-share strong,
-.app-shell.group-shell .gd-inline-background .gd-senior strong,
-.app-shell.group-shell .ev-actual-cards strong { font-size:var(--type-title);line-height:1.25; }
+.app-shell.group-shell .gd-case-title h2,.app-shell.group-shell .ev-heading h2,.app-shell.group-shell .gd-summary .gd-metric-value strong,.app-shell.group-shell .gd-summary .gd-unified-flow .gd-narrative,.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-share strong,.app-shell.group-shell .gd-inline-background .gd-senior strong,.app-shell.group-shell .ev-actual-cards strong { font-size:var(--type-title);line-height:1.25; }
 .app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-share strong small { font-size:inherit; }
 .app-shell.group-shell .gd-summary .gd-summary-metric h4,
 .app-shell.group-shell .gd-metrics-heading h3,
 .app-shell.group-shell .gd-inline-background article > header h3,
 .app-shell.group-shell .gd-summary .gd-unified-flow .gd-flow-reference-label,
 .app-shell.group-shell .gd-summary .gd-unified-flow h4,
-.app-shell.group-shell .ev-screen h3,.app-shell.group-shell .ev-screen h4 { font-size:var(--type-section);line-height:1.4;margin:0;letter-spacing:normal; }
-.app-shell.group-shell .gd-path-explanation p,.app-shell.group-shell .gd-domain-explanation,
-.app-shell.group-shell .gd-heading-evidence,.app-shell.group-shell .ev-heading .gd-evidence-back,
-.app-shell.group-shell .ev-badge,
-.app-shell.group-shell .ev-intro,.app-shell.group-shell .ev-actual p,
-.app-shell.group-shell .ev-comparison > p,
-.app-shell.group-shell .ev-bridge span,.app-shell.group-shell .ev-interpretation strong,
-.app-shell.group-shell .gd-inline-background .gd-senior > span,
-.app-shell.group-shell .gd-metric-value > span   { font-size:var(--type-body);line-height:1.45; }
-.app-shell.group-shell .gd-summary-bar > span,.app-shell.group-shell .gd-summary-bar small,
-.app-shell.group-shell .gd-summary-graph-legend,
-.app-shell.group-shell .gd-inline-background .gd-household-legend,
-.app-shell.group-shell .gd-inline-background .gd-context-note,
-.app-shell.group-shell .gd-inline-background .gd-senior .hint,
-.app-shell.group-shell .gd-inline-background .gd-households span,
-.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-trend small,
-.app-shell.group-shell .ev-score-detail,.app-shell.group-shell .ev-score-detail b,
-.app-shell.group-shell .ev-chart-threshold,.app-shell.group-shell .ev-chart-zero,
-.app-shell.group-shell .ev-chart-observation   { font-size:var(--type-note);line-height:1.4; }
+.app-shell.group-shell .ev-screen h3,
+.app-shell.group-shell .ev-screen h4 { font-size:var(--type-section);line-height:1.4;margin:0;letter-spacing:normal; }
+.app-shell.group-shell .gd-path-explanation p,.app-shell.group-shell .gd-domain-explanation,.app-shell.group-shell .gd-heading-evidence,.app-shell.group-shell .ev-heading .gd-evidence-back,.app-shell.group-shell .ev-badge,.app-shell.group-shell .ev-intro,.app-shell.group-shell .ev-actual p,.app-shell.group-shell .ev-comparison > p,.app-shell.group-shell .ev-bridge span,.app-shell.group-shell .ev-interpretation strong,.app-shell.group-shell .gd-inline-background .gd-senior > span,.app-shell.group-shell .gd-metric-value > span   { font-size:var(--type-body);line-height:1.45; }
+.app-shell.group-shell .gd-summary-bar > span,.app-shell.group-shell .gd-summary-bar small,.app-shell.group-shell .gd-summary-graph-legend,.app-shell.group-shell .gd-inline-background .gd-household-legend,.app-shell.group-shell .gd-inline-background .gd-context-note,.app-shell.group-shell .gd-inline-background .gd-senior .hint,.app-shell.group-shell .gd-inline-background .gd-households span,.app-shell.group-shell .gd-summary .gd-unified-flow .gd-mini-trend small,.app-shell.group-shell .ev-score-detail,.app-shell.group-shell .ev-score-detail b,.app-shell.group-shell .ev-chart-threshold,.app-shell.group-shell .ev-chart-zero,.app-shell.group-shell .ev-chart-observation   { font-size:var(--type-note);line-height:1.4; }
 .app-shell.group-shell .gd-summary-bar { grid-template-columns:58px minmax(0,1fr) 68px; }
 .app-shell.group-shell .gd-summary[data-summary-page='3'] .gd-signal-card { display:block;overflow-y:auto;overflow-x:hidden;min-height:0; }
 .app-shell.group-shell .gd-signal-card > .ev-screen { display:flex;flex-direction:column;height:auto;min-height:0; }
@@ -555,4 +532,5 @@
 .app-shell.group-shell .gd-clean-directory .gd-file-list .gd-candidate {white-space:nowrap;}
 .app-shell.group-shell .gd-clean-directory footer {margin-top:0;}
 .app-shell.group-shell .gd-quality-panel {padding:10px 12px 8px;overflow:hidden;container-type:size;container-name:quality;}
+
 .app-shell:not(.chat-drawer) .bomi-chat.panel { position:relative; }
