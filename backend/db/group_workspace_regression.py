@@ -138,6 +138,13 @@ class ProvenanceAnswerTests(unittest.TestCase):
                 ai_answer = ai_explain_region(context, question, data, [])['answer']
                 self.assertEqual(ai_answer, answer)
 
+    def test_household_network_overview_explains_screen_purpose_before_source(self):
+        context = {'city': '강남구', 'district': '신사동', 'month': '2025-11', 'age': '30대'}
+        answer = explain_region(context, '가구·관계망 함께 보기가 뭐야?', {'assessment': []})['answer']
+        self.assertIn('가구 구성과 사회적 연결 관련 자료', answer)
+        self.assertIn('지역의 배경을 이해하기 위한 참고 자료', answer)
+        self.assertNotIn('이 지표의 원본은 서울시 서울서베이', answer)
+
     def test_followup_cards_explain_their_comparison_basis_for_first_time_users(self):
         context = {'city': '강남구', 'district': '개포3동', 'month': '2025-12', 'age': '40대'}
         data = {'assessment': []}

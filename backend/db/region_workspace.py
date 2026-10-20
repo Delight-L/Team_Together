@@ -234,7 +234,7 @@ def _tracking_indicator_answer(question):
 
 
 def _is_tab_question(question):
-    return any(term in question for term in ('어느 지역을 살펴볼까요', '우리 동은 어떤 지역', '어떤 지역일까', '소비는 어떻게 달라졌', '탭에 대해', '탭 설명', '이 탭', '자체 과거 비교', '공통 변화 제거 후 비교', '두 비교 모두', '탐지 이후',
+    return any(term in question for term in ('어느 지역을 살펴볼까요', '우리 동은 어떤 지역', '어떤 지역일까', '소비는 어떻게 달라졌', '가구·관계망 함께 보기', '가구 관계망 함께 보기', '탭에 대해', '탭 설명', '이 탭', '자체 과거 비교', '공통 변화 제거 후 비교', '두 비교 모두', '탐지 이후',
                                              '탐지월', '통신 탐지', '통신탐지', '탐지 직전 기준월', '탐지직전 기준월', '통신 지표 흐름', '이동 지표 흐름')) or bool(_tracking_indicator_keys(question))
 
 
@@ -261,6 +261,12 @@ def _tracking_term_answer(question):
 
 def _tab_function_answer(context, question, data):
     compact = question.replace(' ', '')
+    if '가구·관계망함께보기' in compact or '가구관계망함께보기' in compact:
+        return ('«가구·관계망 함께 보기»는 통신·이동 변화만으로 판단하지 않고, 선택 지역의 가구 구성과 사회적 연결 관련 자료를 함께 살펴보는 화면입니다.\n\n'
+                '• 가구 구성: 1인 가구 등 지역의 생활 배경을 확인합니다.\n'
+                '• 관계망: 어려울 때 도움을 받을 사람이나 외로움처럼 사회적 연결과 관련된 강남구·연령대별 설문 통계를 참고합니다.\n'
+                '• 이 자료들은 지역의 배경을 이해하기 위한 참고 자료이며, 특정 개인의 가족관계·고립 여부나 복지 필요를 판정하는 자료는 아닙니다.\n\n'
+                '즉, 앞에서 본 연락·이동 변화가 지역의 생활 배경과 함께 나타나는지 넓게 확인하는 단계입니다.')
     tracking_answer = _tracking_term_answer(question)
     if tracking_answer:
         return tracking_answer

@@ -115,11 +115,11 @@ class RegionAnalysisAgent(RegulatedAgent):
         # Social-connection survey questions use the DB1 annual survey context,
         # even when the dashboard also has a group selection.  Do not let the
         # generic group explanation or welfare agent turn them into a refusal.
-        if region_workspace._is_survey_metrics_question(question):
+        if questions.is_tab_question(question):
             if use_ai:
                 return region_workspace.ai_explain_region(request.context, question, request.data, _recent(request))
             return region_workspace.explain_region(request.context, question, request.data)
-        if questions.is_tab_question(question):
+        if region_workspace._is_survey_metrics_question(question):
             if use_ai:
                 return region_workspace.ai_explain_region(request.context, question, request.data, _recent(request))
             return region_workspace.explain_region(request.context, question, request.data)
