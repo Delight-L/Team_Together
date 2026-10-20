@@ -261,7 +261,7 @@ def _tracking_term_answer(question):
 
 def _tab_function_answer(context, question, data):
     compact = question.replace(' ', '')
-    if any(term in compact for term in ('최초탐지월', '탐지사례', '연령대선택', '연령버튼')):
+    if any(term in compact for term in ('최초탐지월', '탐지사례', '연령대선택', '연령대버튼', '연령버튼')):
         return ('화면 위의 «최초 탐지월»과 연령대 선택은 어떤 사례를 볼지 정하는 필터입니다. 최초 탐지월은 선택한 연령대에서 처음 확인된 변화가 있는 기준월이고, 연령대를 바꾸면 지도와 아래 통신·이동 그래프의 대상 집단도 함께 바뀝니다.\n\n'
                 '따라서 화면의 지역·기준월·연령대를 먼저 확인한 뒤 수치를 비교해야 합니다. 선택을 바꾼다고 개인의 상태가 바뀌는 것은 아니며, 해당 조건의 지역 집계 결과를 새로 보는 것입니다.')
     if any(term in compact for term in ('지도', '어느지역을살펴볼까요', '지역을고르는')):
