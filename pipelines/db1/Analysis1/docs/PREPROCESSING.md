@@ -25,7 +25,7 @@ H1은 전년도까지, H2는 해당 연도까지의 관측을 선택합니다. �
 
 전체 원천자료 경로는 `run_full_preprocessing.py`, 반기 갱신은 `update_worker.py`를 사용합니다.
 메인 서비스의 관리자 5종 업로드는 `service_adapter.py`를 통해 동일한 고정 모델을 적용합니다.
-실행 방법은 [Analysis1 안내](../../README.md#analysis1)와 [서비스 통합 안내](../../../../docs/db1-integration.md)를 참조하세요.
+실행 방법은 [Analysis1 안내](../../README.md#analysis1)와 [서비스 통합 안내](../../../../docs/data-operations.md)를 참조하세요.
 기존 참조·검증 자료는 과거 결과 재현용이며, 현재 지표명을 바꾸기 위해 과거 숫자나 검증 결과를 수정하지 않습니다.
 
 ## 이전 전처리 기록 (구 모델)

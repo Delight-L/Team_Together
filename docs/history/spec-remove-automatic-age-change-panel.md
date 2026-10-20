@@ -1,3 +1,5 @@
+> 과거 계획·구현·검증 기록입니다. 현재 실행 방법은 [문서 안내](../README.md)를 따르세요.
+
 ---
 title: 'Give accurate raw-data source explanations in analysis chat'
 type: 'feature'
@@ -69,31 +71,31 @@ context: []
 **Dashboard source-answer boundary**
 
 - Routes explicit data-source questions before generic dashboard explanations.
-  [group_workspace.py:22](../backend/db/group_workspace.py#L22)
+  [group_workspace.py:22](../../backend/db/group_workspace.py#L22)
 
 - Uses current snapshot file families and only verified public-source links.
-  [group_workspace.py:29](../backend/db/group_workspace.py#L29)
+  [group_workspace.py:29](../../backend/db/group_workspace.py#L29)
 
 - Prevents a generic service-source question from being treated as data provenance.
-  [group_workspace.py:112](../backend/db/group_workspace.py#L112)
+  [group_workspace.py:112](../../backend/db/group_workspace.py#L112)
 
 **Regional chatbot source-answer boundary**
 
 - Recognizes direct raw-data questions while avoiding a bare `출처` false positive.
-  [intent_parser.py:122](../backend/agents/regional_analysis/chatbot_agent/intent_parser.py#L122)
+  [intent_parser.py:122](../../backend/agents/regional_analysis/chatbot_agent/intent_parser.py#L122)
 
 - Returns a deterministic, source-scoped explanation rather than generated text.
-  [answer_generator.py:34](../backend/agents/regional_analysis/chatbot_agent/answer_generator.py#L34)
+  [answer_generator.py:34](../../backend/agents/regional_analysis/chatbot_agent/answer_generator.py#L34)
 
 - Avoids query work when the source explanation needs no regional data rows.
-  [query_service.py:56](../backend/agents/regional_analysis/chatbot_agent/query_service.py#L56)
+  [query_service.py:56](../../backend/agents/regional_analysis/chatbot_agent/query_service.py#L56)
 
 **Removed sparse age-change addendum**
 
 - Overall signal narratives no longer append an unsolicited age-by-age comparison.
-  [answer_generator.py:266](../backend/agents/regional_analysis/chatbot_agent/answer_generator.py#L266)
+  [answer_generator.py:266](../../backend/agents/regional_analysis/chatbot_agent/answer_generator.py#L266)
 
 **Regression checks**
 
 - Covers source boundaries plus automatic-versus-explicit age behavior.
-  [group_workspace_regression.py:12](../backend/db/group_workspace_regression.py#L12)
+  [group_workspace_regression.py:12](../../backend/db/group_workspace_regression.py#L12)

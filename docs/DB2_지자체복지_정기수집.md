@@ -8,7 +8,7 @@
 
 - [공식 서비스](https://www.data.go.kr/data/15108347/openapi.do): 목록 `LcgvWelfarelist`, 상세 `LcgvWelfaredetailed`.
 - 엔드포인트: `https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations`.
-- 공식 Swagger 사본: `docs/db2_api_spec.json` (2026-10-07 확인).
+- 공식 Swagger 보관 사본: [db2_api_spec.json](db2_api_spec.json) (2026-10-07 확인 당시 기준).
 - `db2.local_welfare_services`: 서비스 ID별 목록·상세 최신 정보, 대상·기준·지원내용·신청방법·사업 시행일.
 - `db2.welfare_api_snapshots`: 성공적으로 저장한 목록/상세의 XML 원문과 수집 시점. 문의처·홈페이지·근거법령·서식 등 반복 필드도 상세 JSON에 보존합니다.
 - `db2.welfare_collection_runs`: 실행 범위, 결과, 목록·상세·오류·요청 건수.
@@ -29,7 +29,7 @@
 인증키를 다른 프로그램에서 사용한 횟수는 알 수 없으므로 공공데이터포털의 전체 사용량과 별도로 관리해야 합니다.
 예산에 도달하면 `budget_exhausted`로 정상 종료하고 저장분을 유지합니다.
 상세는 다음 날 대기 항목부터 이어집니다. 목록은 실행마다 1페이지부터 다시 확인합니다.
-전국 약 4,819건 기준 초기 상세 수집은 여러 날이 필요하며, 변동/실패/다른 키 사용량에 따라 더 걸릴 수 있습니다.
+초기 상세 수집은 전체 사업 수와 호출 예산에 따라 여러 날이 걸릴 수 있습니다.
 
 XML 결과 코드와 HTTP 상태를 모두 확인합니다. 일시적인 연결/서버/초당한도 오류는 최대 두 번 재시도합니다.
 인증·일일한도 오류는 즉시 중단합니다. 개별 상세 오류는 기존 상세 값을 유지하고 다음 항목을 처리합니다.
@@ -60,7 +60,9 @@ DB 세션 잠금으로 동일 DB에 대한 중복 수집을 막습니다.
 
 ## Windows 예약 작업
 
-`TeamTogether-DB2-Welfare`: 한국 시간 매일 03:00, 현재 사용자 로그인 상태에서 실행합니다.
+`scripts/install_db2_welfare_task.ps1`로 등록할 때 기본값은 `TeamTogether-DB2-Welfare`, 매일 03:00입니다.
+설치 스크립트는 Windows 시간대가 `Korea Standard Time`인지 검사하고 다른 시간대이면 등록을 중단합니다.
+등록된 작업의 현재 상태는 아래 조회 명령으로 확인합니다. 현재 사용자 로그인 상태에서 실행합니다.
 PC가 켜져 있고 PostgreSQL/API에 연결할 수 있어야 합니다.
 놓친 실행은 실행 가능한 시점에 시작하며, 동시 실행은 무시하고 최대 2시간 실행합니다.
 절전 해제나 로그아웃 중 실행은 설정하지 않았습니다.
@@ -115,13 +117,15 @@ SELECT count(*) AS services, count(detail_payload) AS detailed,
 FROM db2.local_welfare_services;
 ```
 
+아래 테스트는 Git 제외인 로컬 테스트를 별도로 보관한 환경에서만 실행할 수 있습니다.
+
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s db\tests -v
+.\.venv\Scripts\python.exe -m unittest discover -s backend/db/tests -v
 # 실제 DB 테스트: 테스트 데이터/호출 카운터 변경은 트랜잭션 끝에 모두 롤백
 $env:RUN_DB2_TESTS='1'
-.\.venv\Scripts\python.exe -m unittest discover -s db\tests -v
+.\.venv\Scripts\python.exe -m unittest discover -s backend/db/tests -v
 ```
 
-실제 API 목록 2건·상세 2건을 총 3회 호출하여 저장 확인했습니다.
+2026-10-07 구현 당시 목록 2건·상세 2건을 총 3회 호출해 저장 확인한 기록입니다. 현재 수집 상태를 보증하지 않습니다.
 전국 전체 상세 적재는 예약 작업이 호출 예산 안에서 순차적으로 진행합니다.
 원문 스냅샷과 실행 로그는 자동 삭제하지 않으므로 운영 시 저장량을 확인해야 합니다.

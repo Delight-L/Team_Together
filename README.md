@@ -38,7 +38,7 @@
 
 > 발표용 16:9 그림입니다. [고해상도 PNG](docs/architecture/system_architecture.png) · [편집 가능한 SVG](docs/architecture/system_architecture.svg) · [그림 안내](docs/README.md#architecture)
 
-- 웹 서비스의 업무 기록은 공유 PostgreSQL `work`, 분석·전처리는 `db1_pipeline` 스키마에 저장합니다. [저장소 구성과 실행 방법](docs/postgresql-storage.md)을 참고하세요.
+- 웹 서비스의 업무 기록은 공유 PostgreSQL `work`, 분석·전처리는 `db1_pipeline` 스키마에 저장합니다. [저장소 구성과 실행 방법](docs/data-operations.md)을 참고하세요.
 - 위험신호 수치는 Python 통계 분석으로 만들고, LLM은 수치를 계산하지 않고 근거를 설명합니다.
 
 ---
@@ -50,7 +50,7 @@
 지역 유형의 배경 지표는 **65세 이상 등록인구 중 독거노인 비율**을 사용합니다.
 2025년 연간 독거노인 수를 2025년 4분기 65세 이상 등록인구로 나눈 값입니다.
 월별 고립률이나 개인의 고립 여부를 뜻하지 않으며, 공개 시점이 확인되지 않은 사후 배경자료입니다.
-모델과 실행 기준은 [DB1 서비스 통합](docs/db1-integration.md)을 참조하세요.
+모델과 실행 기준은 [DB1 서비스 통합](docs/data-operations.md)을 참조하세요.
 
 DB1은 프로젝트의 **데이터 분석 및 위험신호 탐지 영역**입니다.
 
@@ -156,7 +156,7 @@ LLM에게 수치 계산이나 위험점수 산출을 맡기지 않고, Python �
 | Analysis2 변화 탐지 | 동별 월 변화에서 강남구 공통 변화를 뺀 잔차를 과거 중앙값·MAD로 표준화(robust z). 보정한 임계값 이하이고 감소 방향일 때 신호 | 신규·연속·변화 후보 판정 (`db1.analysis2_detections`) |
 | Analysis3 소비 맥락 | 상권·카드 소비영역별 과거 동일 분기·전월 대비 기술 통계 | 이동·통신 변화의 보조 맥락 |
 
-자세한 기준은 [DB1 서비스 통합](docs/db1-integration.md)과 `pipelines/db1/Analysis1`, `pipelines/db1/Analysis2`, `pipelines/db1/Analysis3`의 문서를 참고하세요.
+자세한 기준은 [DB1 서비스 통합](docs/data-operations.md)과 `pipelines/db1/Analysis1`, `pipelines/db1/Analysis2`, `pipelines/db1/Analysis3`의 문서를 참고하세요.
 
 ---
 
@@ -401,16 +401,19 @@ cd ..
 
 ## 15. 폴더 구조
 
-폴더별 역할과 이전 위치는 [폴더 구성 안내](docs/folder-organization.md)를 참고하세요.
+현재 안내와 과거 기록은 [문서 목차](docs/README.md)에서 찾습니다.
+
+폴더별 역할과 이전 위치는 [폴더 구성 안내](docs/development-guide.md)를 참고하세요.
 
 ```text
 main.py                     공통 실행 시작점
 frontend/                   React 화면·화면 테스트
 backend/
   api/                      Python HTTP API
-  chatbot/                  보미 대화·가드레일·AI 연결
+  bomi/                     담당 선택·입출력 규제·에이전트
+  chatbot/                  공용 AI 설정·가드레일·AI 연결
     welfare/app/dialogue/   복지사업 검색·대화 처리
-  agents/                   총괄·보고서 작성·사업 매칭
+  agents/                   지역 분석 엔진·보고서 작성·사업 매칭
     regional_analysis/           지역 변화 신호 에이전트(근거 DB는 git 제외)
   db/                       공유 DB 연결·조회·업무 기록 저장
   services/                 계정·Word 보고서 생성
@@ -436,7 +439,7 @@ runtime/                    로컬 실행 로그
 ```powershell
 python main.py --preprocess --no-download               # 월별 행동 자료 전처리
 python main.py --preprocess-analysis1 --raw-dir "pipelines/preprocessing/regional_types/raw_data"  # 지역 유형(Analysis1) 전처리
-python main.py --analysis --no-download                 # Analysis2 변화 탐지
+python main.py --analysis --no-download                 # 전달본 검사(원자료 재계산 아님)
 python main.py --risk --input "월별행동.csv"             # 위험 분석
 python -m pipelines.welfare.collect --help                      # 복지사업(DB2) 수집
 ```
@@ -456,7 +459,7 @@ cd ..
 `python -m pytest backend/api/tests backend/db/tests backend/chatbot/tests backend/bomi/tests -q` 또는
 `frontend`에서 `node --test tests/<파일명>`으로 실행합니다. 로컬 테스트 중 일부는 실제 분석·DB 자료를 읽으므로
 실행 전에 대상 DB와 mock 범위를 확인하세요. 현재 코드·파일 정리와 남은 검증 문제는
-[정리 기록](docs/repository-cleanup-2026-10-19.md)에 있습니다.
+[정리 기록](docs/history/repository-cleanup-2026-10-19.md)에 있습니다.
 
 ## 17. Team
 

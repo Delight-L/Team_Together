@@ -2,7 +2,7 @@
 
 API 서버·보미·에이전트·공유 DB 접근 코드를 관리합니다. 모든 실행 명령은 별도 안내가 없으면 프로젝트 루트 기준입니다.
 
-처음 읽는 팀원은 [코드 읽기 순서와 가독성 기준](../docs/code-reading-guide.md)에서
+처음 읽는 팀원은 [코드 읽기 순서와 가독성 기준](../docs/development-guide.md)에서
 실행 시작점 → API → 보미 → DB 조회 순서로 따라가세요.
 
 | 폴더 | 역할 |
@@ -29,7 +29,7 @@ python scripts/audit_repository.py
 
 웹 서비스는 공유 PostgreSQL(`db1`·`db1_v16`·`db2`·`work` 스키마)을 사용합니다.
 지역 분석 게시 테이블이 없으면 지역 분석 에이전트는 대시보드와 같은 DB1 조회 경로와 전달된 연령·소비·날씨 CSV를 사용합니다.
-구조와 설계 이유는 [보미 챗봇 구조](../docs/bomi-architecture.md), 재설계 과정은 [보미 재설계 보고서](../docs/postgresql-storage.md)를 보세요.
+구조와 설계 이유는 [보미 챗봇 구조](../docs/bomi-architecture.md), DB 구성·반영 절차는 [데이터 운영 안내](../docs/data-operations.md)를 보세요.
 
 ## 문서 목차
 
@@ -50,7 +50,7 @@ python scripts/audit_repository.py
 |---|---|---|
 | 지역 분석 (`region_analysis`) | `bomi/agents/region_analysis.py` → 지역 분석(`bomi/adapters/regional_analysis.py` → `agents/regional_analysis/`), `db/region_workspace.py`(동), `db/group_workspace.py`(연령·성별 그룹) | 동 단위 이상신호 지역·탐지 기준·연령별 활동·지역 배경·소비 변화를 지역 분석 근거로 답하고 다음 질문을 제안합니다. 열어 둔 그룹의 근거와 화면 판정 용어(판단 보류·기준 미해당·평소 대비 차이 등)도 설명합니다. 지역 분석 자료가 없으면 동·그룹 분석 근거로 답합니다. [지역 분석 안내](#regional-analysis) |
 | 복지사업 (`welfare`) | `bomi/agents/welfare.py`, `chatbot/welfare/` | 공유 DB2의 복지사업 자료에서 관련 사업을 찾아 안내합니다. JSON은 적재 원본과 오프라인 검증용입니다. |
-| 보고서 작성 (`report`) | `bomi/agents/report.py` → `agents/report_writer.py` | 대화에서 찾은 사업·신규 구상안이 있으면 그것으로 «담당자 검토 전» 초안을, 없으면 저장된 분석·사업 검토 기록으로 초안을 만듭니다. [보고서 문서](../docs/report-agent.md) 참고. |
+| 보고서 작성 (`report`) | `bomi/agents/report.py` → `agents/report_writer.py` | 대화에서 찾은 사업·신규 구상안이 있으면 그것으로 «담당자 검토 전» 초안을, 없으면 저장된 분석·사업 검토 기록으로 초안을 만듭니다. [보고서 문서](../docs/report-guide.md) 참고. |
 | 보미 안내 (`guide`) | `bomi/agents/guide.py` | 검토 의견 작성·현장 확인·보고서 작성 주의점 같은 업무 방법(정해진 답)과, 업무와 무관한 질문을 안내합니다. |
 
 ### 담당 선택

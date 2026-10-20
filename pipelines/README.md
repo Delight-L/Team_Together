@@ -13,13 +13,13 @@
 
 ## 복지사업 수집
 
-설정과 수집 옵션을 확인한 뒤 실행합니다. 예약 수집 구성은 [수집 운영 안내](../docs/folder-organization.md)와 저장소의 `scripts/`·`deploy/` 설정을 함께 확인하세요. 폴더 존재만으로 예약 실행이 배포된 것은 아닙니다.
+설정과 수집 옵션을 확인한 뒤 실행합니다. 예약 수집 구성은 [수집 운영 안내](../docs/DB2_지자체복지_정기수집.md)와 저장소의 `scripts/`·`deploy/` 설정을 함께 확인하세요. 폴더 존재만으로 예약 실행이 배포된 것은 아닙니다.
 
 ```powershell
 python -m pipelines.welfare.collect --help
 ```
 
-DB1 결과 생성과 서비스 PostgreSQL 반영은 별도 단계입니다. [DB1 서비스 통합](../docs/db1-integration.md)의 검사·반영 절차를 따릅니다.
+DB1 결과 생성과 서비스 PostgreSQL 반영은 별도 단계입니다. [DB1 서비스 통합](../docs/data-operations.md)의 검사·반영 절차를 따릅니다.
 
 ## 문서 목차
 
@@ -59,7 +59,7 @@ python main.py --analysis --publish
 신규 순차 분석은 `pipelines/db1/Analysis2`를 사용합니다. 기존 위험신호를 임의로 재계산하거나
 연간 독거노인 배경자료를 개인 고립 확정값으로 해석하지 않습니다.
 
-상세 실행과 검증 범위는 [DB1 서비스 통합](../docs/db1-integration.md)을 참고하세요.
+상세 실행과 검증 범위는 [DB1 서비스 통합](../docs/data-operations.md)을 참고하세요.
 
 <a id="regional-types"></a>
 

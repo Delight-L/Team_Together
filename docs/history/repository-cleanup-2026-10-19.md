@@ -1,3 +1,5 @@
+> 과거 계획·구현·검증 기록입니다. 현재 실행 방법은 [문서 안내](../README.md)를 따르세요.
+
 # 코드·파일 정리 기록 (2026-10-19)
 
 작업 기준은 `HyungWoo_React`의 `3d83955`입니다. 프런트엔드·백엔드·파이프라인·실행 도구·문서의
@@ -28,8 +30,8 @@ Git 관리 파일과 신규 소스를 조사했습니다. 기능 수정과 대�
 
 | 기존 위치 | 현재 위치·처리 |
 |---|---|
-| 루트 `챗봇.md` | [과거 챗봇 코드 안내](history/chatbot-guide-legacy.md) |
-| 루트 `CHANGES_2026-10-16.md` | [당시 변경 기록](history/changes-2026-10-16.md) |
+| 루트 `챗봇.md` | [과거 챗봇 코드 안내](chatbot-guide-legacy.md) |
+| 루트 `CHANGES_2026-10-16.md` | [당시 변경 기록](changes-2026-10-16.md) |
 | `evaluation/run_eval.py` | `evaluation/legacy/run_eval.py` |
 | `evaluation/prepare_dataset32.py` | `evaluation/legacy/prepare_dataset32.py` |
 | `evaluation/import_dataset.py` | `evaluation/legacy/import_dataset.py` |
@@ -38,7 +40,7 @@ Git 관리 파일과 신규 소스를 조사했습니다. 기능 수정과 대�
 
 평가 실행기 3개는 제거된 이전 파일 저장소 서비스·세션 모듈 또는 개발자 PC의 별도 자료 경로에 의존했습니다.
 이를 현재 서비스의 실행 도구와 구분하고 원본은 보존했습니다.
-[평가 안내](../backend/agents/regional_analysis/evaluation/README.md)에서 현재 사용할 수 있는
+[평가 안내](../../backend/agents/regional_analysis/evaluation/README.md)에서 현재 사용할 수 있는
 데이터셋 검증·보고서 변환 명령만 안내합니다. 현재 PostgreSQL 서비스용 평가 실행기를 구현한 것은 아닙니다.
 
 루트·프런트엔드·백엔드·파이프라인 README와 폴더·챗봇 구조 문서도 실제 경로에 맞췄습니다.
@@ -118,7 +120,7 @@ python scripts/audit_repository.py --output .tmp/repository-audit.json
 | `frontend/src/assets/bomi-tablet.png` | 소스·문서·실행 도구의 참조가 없는 이미지 제거. Git 이력으로 복원 가능 |
 | Python 64개 파일 | 한 줄 조건문·예외 처리 등 588개 블록과 세미콜론 구분 521곳을 펼침. 파일별 변경 전후 AST 동일 확인 |
 | `chatbot_agent/repository.py` | 별도로 압축 문장·긴 표현식을 펼치고 `frame`, `row`, `quarter`, `observation_window`, `query_cache` 등 역할이 드러나는 이름과 한국어 설명 적용 |
-| [코드 읽기 안내](code-reading-guide.md) | 실행 시작점 → API → 보미 → DB 조회를 읽는 순서와 앞으로의 가독성·삭제 기준 추가 |
+| [코드 읽기 안내](../development-guide.md) | 실행 시작점 → API → 보미 → DB 조회를 읽는 순서와 앞으로의 가독성·삭제 기준 추가 |
 
 가독성을 손본 Python 파일은 총 65개입니다. 64개는 문장 배치만 바꿨고,
 DB 조회 파일 1개는 동작 비교를 동반하여 이름과 표현식도 정리했습니다.
@@ -146,3 +148,33 @@ DB 조회 파일 1개는 동작 비교를 동반하여 이름과 표현식도 �
 프로젝트 루트 기준으로 압축을 풀면 원래 상대경로를 복원할 수 있습니다.
 실수로 기존 파일을 덮어쓰지 않도록 먼저 별도 폴더에 풀어 확인하세요.
 커밋·push·배포와 DB 변경은 수행하지 않았습니다.
+
+## 당시 폴더 이동 대응표
+
+2026-10-20 문서 통합 전 폴더 안내의 이동 이력을 보존합니다.
+
+### 이전 위치와 현재 위치
+
+| 기존 위치 | 새 위치 |
+|---|---|
+| `frontend/` | 동일 |
+| `webapp/` | `backend/api/` |
+| `chatbot/` | `backend/chatbot/` |
+| `chatbot/welfare/app/agent/` | `backend/chatbot/welfare/app/dialogue/` |
+| `agents/supervisor.py`, `report_writer.py`, `service_matching.py` | `backend/agents/` |
+| `agents/regional_analysis/` | `pipelines/regional_analysis/` |
+| `agents/regional_analysis/chatbot_v16/` (shinwon 브랜치) | `backend/agents/regional_analysis/` (DB1 복사본·단독 서버는 정리하고 `pipelines/db1` 사용) |
+| `agents/risk_analysis/` | `pipelines/risk_analysis/` |
+| `db/` | `backend/db/` |
+| `db/collect_welfare.py` | `pipelines/welfare/collect.py` |
+| `DB1/` | `pipelines/db1/` |
+| `preprocessing/` | `pipelines/preprocessing/` |
+| `shared/accounts.py`, `shared/report.py` | `backend/services/` |
+| `shared/data/` | `backend/resources/data/` |
+| `docs/약식보고서_서식_보고서.docx` | `backend/resources/templates/약식보고서_서식_보고서.docx` |
+| `ci/` | `assets/brand/` |
+| `external/` | `docs/references/` |
+
+`backend/db`는 DB를 읽고 저장하는 코드이고, `pipelines/db1`은 분석 결과를 만드는 코드입니다.
+PostgreSQL의 `db1`, `db2`, `work` 스키마 이름과 테이블은 폴더 이동과 관계없이 유지합니다.
+보미 챗봇 코어(담당 선택·규제·에이전트)는 `backend/bomi/`에 있습니다. 예전 총괄 `backend/agents/supervisor.py`와 복지 대화 `welfare/service.py`·`dialogue/orchestrator.py`는 2026-10-16에 `bomi`로 대체되어 삭제했습니다.

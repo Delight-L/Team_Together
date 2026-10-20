@@ -25,7 +25,7 @@ npm run build
 로컬에 검증 파일을 별도로 보관한 경우 `node --test tests/<파일명>`으로 실행합니다.
 현재 소스의 기본 확인은 `npm run build`입니다.
 
-디자인 기준은 [디자인 규칙](../docs/design-rules.md), 전체 폴더 역할은 [폴더 구성](../docs/folder-organization.md)을 참고하세요.
+디자인 기준은 [디자인 규칙](../docs/design-rules.md), 전체 폴더 역할은 [폴더 구성](../docs/development-guide.md)을 참고하세요.
 
 ## 문서 목차
 
