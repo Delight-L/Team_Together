@@ -6,8 +6,8 @@ def requested_fields(question):
     """명시적으로 물은 항목만 고릅니다. 사업 추천은 기본 요약을 사용합니다."""
     fields = []
     for words, key, label in (
-        (('대상', '자격', '조건'), 'target', '자료상 대상'),
-        (('신청', '절차', '서류'), 'procedure', '자료상 신청 절차'),
+        (('대상', '자격', '조건'), 'target', '자료에 적힌 이용 대상'),
+        (('신청', '절차', '서류'), 'procedure', '자료에 적힌 신청 방법'),
         (('기관', '문의', '연락처'), 'agency', '담당 기관'),
         (('기간', '언제', '운영', '모집', '접수'), 'period', '기간 안내'),
     ):
@@ -35,9 +35,9 @@ def record_cautions(record):
             ('application_future', '접수 시작 전')) if record.get(key)]
 
 FIELDS = {
-    'name': '사업명', 'description': '지원 내용', 'target': '자료상 대상', 'agency': '담당 기관',
+    'name': '사업명', 'description': '지원 내용', 'target': '자료에 적힌 이용 대상', 'agency': '담당 기관',
     'source': '출처', 'pages': '문서 페이지', 'url': '원문 주소', 'application_url': '자료상 신청 주소',
-    'region': '자료상 지역', 'procedure': '자료상 절차', 'plan_period': '당시 계획기간',
+    'region': '자료에 적힌 지역', 'procedure': '자료에 적힌 신청 방법', 'plan_period': '당시 계획 기간',
     'period': '기간 안내', 'effective_start': '적용 시작일', 'effective_end': '적용 종료일',
     'application_start': '접수 시작일', 'application_end': '접수 종료일',
     'record_kind': '자료 구분', 'status': '자료 상태', 'notes': '주의사항',
@@ -62,9 +62,9 @@ def answer_material(context, records):
                               ('eligibility_reviewed', '이용 자격 검토'),
                               ('application_details_verified', '신청 절차'))}
         if record.get('reference_only'):
-            item['지역 주의'] = '다른 지역 참고 사례이며 선택 지역의 신청 가능 사업으로 확인된 것이 아님'
+            item['지역 주의'] = '다른 지역의 참고 사례예요. 현재 선택한 지역에서 신청할 수 있는지는 확인되지 않았어요.'
         if record.get('collected_at'):
-            item['수집 시점'] = str(record['collected_at'])[:10] + ' (운영 확인일 아님)'
+            item['수집 시점'] = str(record['collected_at'])[:10] + ' (이 날짜가 지금 운영 중이라는 뜻은 아니에요)'
         if str(record.get('effective_end') or '').startswith('9999'):
             item['적용 종료일'] = '종료일 미정 (상시 모집의 근거가 아님)'
         if record.get('contacts'):

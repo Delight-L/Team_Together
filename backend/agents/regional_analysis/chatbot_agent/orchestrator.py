@@ -60,7 +60,7 @@ class Chatbot:
   # 지역·연령 집계는 개인의 상태를 판정할 수 없으므로, 이 요청에는
   # 신호·보조자료를 먼저 나열하지 않고 제한을 직접 답한다.
   if re.search(r"고립.*(?:확정|판단)|(?:확정|판단).*고립", question):
-   text='확정할 수 없습니다. 화면의 신호는 지역 집단에서 관찰된 행동 변화에 관한 정보이며, 해당 동 주민이나 특정 개인의 고립을 판단하는 근거가 아닙니다.'
+   text='개인의 고립 여부는 이 자료만으로 알 수 없어요. 화면의 신호는 동 전체에서 보인 행동 변화를 모아 본 결과예요. 특정 주민의 상태를 판단하는 자료는 아닙니다.'
    return AnswerResult(text,Evidence("해석 범위 안내",text))
   # 화면의 ‘우리 동은 어떤 지역일까?’ 문구가 가리키는 기능을 묻는
   # 질문은 선택 동의 실제 클러스터를 조회하는 요청과 구분한다.
@@ -110,9 +110,9 @@ class Chatbot:
    available_start,available_end=self.repo.available_period()
    if not available_start or not available_end or not (available_start <= next_selected_period <= available_end):
     selected_period=self.dashboard_scope['label_month']
-    text=(f"{selected_period[:4]}년 {int(selected_period[5:])}월 기준 다음 변화는 "
-          f"{next_selected_period[:4]}년 {int(next_selected_period[5:])}월 기준 자료로 확인합니다. "
-          f"하지만 현재 제공된 탐지 결과는 {available_start or '확인 불가'}~{available_end or '확인 불가'}까지만 있어 다음 달 자료는 아직 없습니다.")
+    text=(f"다음 달 변화 자료는 아직 없어요. 현재 확인할 수 있는 자료는 "
+          f"{available_start or '확인 불가'}~{available_end or '확인 불가'}까지예요. "
+          f"{selected_period[:4]}년 {int(selected_period[5:])}월 기준의 현재 변화를 다시 확인해 볼까요?")
     return AnswerResult(text,Evidence("다음 기준월 자료 없음",text),
                         ("현재 기준월 변화 다시 보여줘", "자료 갱신 상태 알려줘"))
    # 짧은 후속 질문도 항상 화면의 선택 동·연령에서 네 가지 활동 지표를

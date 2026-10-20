@@ -16,7 +16,7 @@ from backend.db.welfare_chatbot_repository import (
 
 DATA = Path(__file__).resolve().parents[2] / "data"
 
-UNCHECKED = "계획·검토 자료 / 현재 운영 및 자격 미확인"
+UNCHECKED = "계획·검토용 자료 / 지금 운영하는지와 이용 조건은 확인 필요"
 # 질문에 한 단어라도 있으면 같은 묶음의 다른 단어로도 찾습니다(예: '외로워' → 고립·관계·모임).
 SYNONYM_GROUPS = [
     ("외로", "고립", "관계", "모임", "친구", "소통"),
@@ -294,7 +294,7 @@ def local_answer(records, question=""):
     from backend.chatbot.welfare.app.dialogue.presentation import (
         brief_description, record_cautions, requested_fields)
     if not records:
-        return "관련 복지사업 자료를 찾지 못했어요. 거주 지역과 필요한 지원을 알려 주세요."
+        return "이번에 찾은 자료에서는 관련 복지사업을 찾지 못했어요. 예: “강남구에서 어르신 식사 지원을 찾고 있어요”처럼 지역과 필요한 도움을 알려 주세요."
     fields = requested_fields(question)
     detailed = any(word in question for word in ('자세히', '상세', '전체 내용'))
     if detailed:
@@ -323,7 +323,7 @@ def local_answer(records, question=""):
             blocks.append("\n".join(details))
         else:
             blocks.append(f'{title}\n{brief_description(record.get("description", "지원 내용은 원문 확인 필요"))}')
-    blocks.append('현재 운영 여부·이용 자격·신청 절차는 담당 기관 확인이 필요해요. 출처는 참고 자료에서 볼 수 있어요.')
+    blocks.append('이 사업이 지금 운영 중인지, 내가 이용할 수 있는지는 담당 기관에 확인해 주세요. 출처는 참고 자료에서 볼 수 있어요.')
     return "\n\n".join(blocks)
 
 

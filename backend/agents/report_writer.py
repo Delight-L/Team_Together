@@ -37,8 +37,8 @@ KEEP_PHRASES = [*DECISION_TEXT.values(), '담당자 판단 확인 필요', PENDI
 LIMIT_NOTE = '개인의 고립 여부나 변화 원인을 확정할 수 없음'
 # 복지사업 담당이 신규 사업 기획안을 답할 때 맨 앞에 붙이는 표시입니다(bomi/agents/welfare.py).
 PLANNING_LABEL = '신규 사업 기획 아이디어 · 현재 운영 중인 사업이 아님'
-NEED_MATERIAL = ('보고서 초안을 만들 근거가 아직 없어요. 보미에게 "어르신 돌봄 사업 찾아 줘"처럼 사업을 찾거나 '
-                 '"신규 사업 구상해 줘"라고 요청한 뒤 다시 "보고서 작성해줘"라고 하거나, 보고서 작성 탭에서 초안을 만드세요.')
+NEED_MATERIAL = ('아직 보고서 초안을 만들 자료가 없어요. 먼저 “어르신 돌봄 사업을 찾아 줘”처럼 필요한 사업을 찾거나 '
+                 '“새 사업을 구상해 줘”라고 요청해 주세요. 그다음 “보고서 작성해 줘”라고 다시 말해 주세요.')
 # 사업 검토 없이 만드는 초안(구상 보고서)의 제안 칸 안내입니다. 담당자가 직접 채웁니다.
 PLANNING_PROPOSAL = '검토한 사업 없음. 구상한 사업이나 제안 내용을 직접 작성'
 
@@ -509,8 +509,10 @@ def report_reply(context, workflow, use_ai=False, request='', evidence_rows=(), 
     except ValueError as exc:
         return {'answer': str(exc), 'mode': '보고서 작성 에이전트 · 준비 필요',
                 'actions': [{'label': '보고서 작성 열기', 'view': 'report'}]}
-    answer = draft['title'] + '\n\n' + '\n\n'.join(
+    answer = ('아래는 확인한 자료로 만든 보고서 초안이에요. 내용을 확인하고 고친 뒤 저장해 주세요.\n\n'
+              + draft['title'] + '\n\n' + '\n\n'.join(
         f'□ {label}\n{draft[key]}' for key, label in section_labels(draft.get('kind') == 'planning'))
+    )
     notices = [draft['notice']] if draft.get('notice') else []
     if from_chat:
         notices.append('대화 내용으로 만든 검토 전 초안입니다. 보고서 작성 탭에서 내용을 확인·수정한 뒤 최종 저장하세요.')

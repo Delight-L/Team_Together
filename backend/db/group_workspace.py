@@ -117,9 +117,9 @@ def explain(context, question, detail=None):
     elif any(word in question for word in ['뜻', '지표', '의미']):
         answer = '유동량은 해당 지역에서 관측된 활동 규모이며 실제 사람 수가 아닙니다. 변화율은 지난달과 이번 달 모두 자료가 있는 작은 구역끼리 비교한 값이고, 비중은 동 전체 유동량에서 선택 집단이 차지하는 몫입니다. 가구 구성과 연락·이동 비교는 동 전체 자료이므로 선택한 연령·성별만의 특성으로 해석하지 마세요.'
     elif any(word in question for word in ['다음', '무엇을 확인']):
-        answer = '먼저 월별 추이에서 변화가 이어지는지 확인하세요. 이어 가구 구성과 동 전체 변화를 함께 살펴보세요. 실제 지원 필요를 확인한 뒤 «지원 필요 확인하기»에서 메모를 남기고 지원 목적을 선택하면 관련 복지사업의 조건을 검토할 수 있습니다.'
+        answer = '먼저 월별 흐름에서 변화가 계속되는지 보세요. 그다음 가구 구성과 동 전체의 변화도 함께 확인하세요. 실제 도움이 필요한지 확인한 뒤 «지원 필요 확인하기»에 메모를 남기면 관련 복지사업을 살펴볼 수 있어요.'
     elif any(word in question for word in ['서비스', '사업', '지원', '복지']):
-        answer = f'{label}의 유동량만으로 필요한 서비스나 이용 자격을 확정할 수 없습니다. 아래 사업 검토에서 지원 목적을 선택하면 실제 복지사업 설명과 관련어를 비교합니다. 추천 이유·대상 조건·신청 방법을 확인하세요.'
+        answer = f'{label}의 유동량만으로 필요한 도움이나 이용 가능 여부를 정할 수는 없어요. 아래 사업 검토에서 필요한 도움을 고른 뒤, 사업 내용·이용 조건·신청 방법을 확인해 주세요.'
     elif any(word in question for word in ['통화', '문자', '연락', '위험', '신호', '고립']):
         detection = detail.get('ageDetection')
         if detection:
@@ -157,7 +157,7 @@ def ai_explain(context, question, detail, history):
     evidence['regional_background'] = detail.get('regional', {}).get('structure')
     evidence['age_detection'] = detail.get('ageDetection')
     prompt = ('독거노인 통계는 65세 이상 연간 자료이며 선택 집단이나 월별 변화의 수치가 아닙니다. '
-              '당신은 복지탐정의 집단별 분석 도우미입니다. 한국어로 간결하게 답하세요. '
+              '당신은 복지탐정의 집단별 분석 도우미입니다. 처음 보는 사람도 이해할 수 있는 쉬운 한국어로 답하세요. 첫 문장에서 질문에 바로 답하고, 한 문장에는 한 가지 내용만 담으세요. 어려운 말은 바로 뜻을 풀어 쓰고, 추가 확인이 필요하면 마지막에 할 일을 한 가지 알려 주세요. '
               '사용자가 출처를 직접 묻지 않으면 원본 자료를 무엇으로 참고했는지 설명하지 말고 분석 결과부터 말하세요. '
               'JSON 키·변수명·테이블명·파일명과 내부 상태 코드(age_detection, no_detected_joint_behavior_change 등)를 답변에 노출하지 마세요. '
               '내부 상태는 사용자 언어로 풀어 쓰세요. 예: 결합 신호는 탐지되지 않았어요. '
