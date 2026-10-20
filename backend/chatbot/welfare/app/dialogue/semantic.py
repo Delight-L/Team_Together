@@ -12,7 +12,7 @@ import math
 from backend.chatbot import ai_settings
 from backend.db import welfare_search_store
 from backend.chatbot.welfare.app.dialogue import resources
-from backend.chatbot.welfare.app.dialogue.query_rules import excludes_past, named_program
+from backend.chatbot.welfare.app.dialogue.query_rules import excludes_past, named_program, other_region_examples
 
 MODEL = "gemini-embedding-001"
 DIMENSIONS = 768
@@ -30,7 +30,8 @@ def rerank_messages(query, candidates):
         '무관하면 빈 배열. JSON {"indices": [0, 1]}만 출력하세요. '
         '공통 단어만 있고 지원 내용이 다르면 제외하세요.'},
         {"role": "user", "content": json.dumps({"query": query, "candidates": [
-            {"index": i, "name": r["name"], "benefit": r["description"][:900], "target": r["target"][:500]}
+            {"index": i, "name": r["name"], "region": r.get('region', ''),
+             "reference_only": bool(r.get('reference_only')), "benefit": r["description"][:900], "target": r["target"][:500]}
             for i, r in enumerate(candidates)]}, ensure_ascii=False)}]
 
 
@@ -133,6 +134,8 @@ async def hybrid_search(query, lexical, **filters):
         if past_excluded:
             filters = {**filters, 'include_past': False}
         corpus = resources.retrieval_corpus(**filters)
+        if filters.get('city') and filters.get('include_reference') and other_region_examples(query):
+            corpus = [r for r in corpus if r.get('reference_only')]
         if (resources.asks_current_recruitment(query) or past_excluded) and not filters.get("include_past"):
             corpus = [r for r in corpus if r.get("source_type") != "document" or
                 (r.get("current_operation_verified") and r.get("application_details_verified"))]

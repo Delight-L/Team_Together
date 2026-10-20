@@ -173,6 +173,23 @@ def search_terms(query):
     return terms
 
 
+def browse_request(query):
+    """지원 분야 없는 목록 조회만 허용합니다. 주거·돌봄 등 구체 조건은 검색을 유지합니다."""
+    text = compact(query)
+    if not any(word in text for word in ('복지', '서비스', '사업')):
+        return False
+    # 요청 표현을 제외하고 내용 조건이 남으면 전체 목록으로 넓히지 않습니다.
+    text = re.sub(r'\d{1,2}대(?:에게|에)?', '', text)
+    words = ('이연령대에', '이나이대에', '추천해줄만한', '참고할만한', '참고할수있는', '참고하려고하니까',
+             '전국에', '전국의', '전국', '다른지역의', '다른지역', '다른',
+             '복지서비스들은', '복지서비스는', '복지서비스', '복지사업', '복지',
+             '서비스들은', '서비스는', '서비스', '사업들은', '사업은', '사업',
+             '어떤게', '어떤것이', '있어', '있나요', '없어', '보여주세요', '보여줘',
+             '찾아주세요', '찾아줘', '알려주세요', '알려줘', '추천해주세요', '추천해줘')
+    text = re.sub('|'.join(re.escape(word) for word in sorted(words, key=len, reverse=True)), '', text)
+    return not text
+
+
 def has_program_name(query, *, city=""):
     terms = search_terms(query)
     documents = load_resources() if not city or city in COVERED_CITIES else []
@@ -227,9 +244,13 @@ def search(query, limit=5, *, city="", district="", include_reference=False, inc
     if (asks_current_recruitment(query) or past_excluded) and not include_past:
         resources = [r for r in resources if r.get("current_operation_verified") and r.get("application_details_verified")]
     terms = search_terms(query)
+    browse = browse_request(query)
+    if browse:
+        terms = set()  # '다른', '참고' 같은 요청 표현을 사업 내용의 관련성으로 계산하지 않습니다.
     if resource_source() == "db":
         resources += [database_record(row) for row in search_catalog(
             query, terms, city=city, include_reference=include_reference, include_past=include_past,
+            browse=browse,
             support_terms=HOUSING_TERMS if any(term in query for term in HOUSING_TERMS) else (),
             target_term="자립준비청년" if "자립준비청년" in compact(query) else "")]
     named = [r for r in resources if named_program(query, r['name'])]
@@ -250,7 +271,7 @@ def search(query, limit=5, *, city="", district="", include_reference=False, inc
     ranked = []
     for resource in resources:
         body = " ".join(str(resource[field]) for field in SEARCH_FIELDS)
-        score = 0
+        score = 1 if browse else 0
         for term in terms:
             if term in body:
                 score += 4 if term in resource["name"] else 1  # 사업 이름에 있으면 더 크게 봅니다.
@@ -259,11 +280,12 @@ def search(query, limit=5, *, city="", district="", include_reference=False, inc
             score += 2
         if score and resource.get("source_type") != "document":
             score += 2  # 상세 API 안내를 검토 문서의 짧은 설명 조각보다 우선합니다.
-        if resource.get("reference_only"):
+        if resource.get("reference_only") and not (browse and include_reference):
             score = score / 2
         if score:
             ranked.append((score, resource))
-    ranked.sort(key=lambda item: item[0], reverse=True)
+    ranked.sort(key=lambda item: (bool(browse and include_reference and item[1].get('reference_only')),
+                                  item[0]), reverse=True)
     return select_recommendations([resource for score, resource in ranked], limit)
 
 

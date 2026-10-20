@@ -7,6 +7,12 @@ def compact(text):
     return re.sub(r'[^가-힣a-zA-Z0-9]', '', text).lower()
 
 
+def other_region_examples(query):
+    """다른 지역의 참고 사례를 보여 달라는 요청. 일반 전국 사업 조회와 구분합니다."""
+    return bool(re.search(
+        r'다른\s*지역|타\s*지역|전국.*다른\s*(?:복지|서비스|사업)|참고(?:할|하려고|하고)', query))
+
+
 GENERIC_NAMES = frozenset((
     '주거비', '주거지원', '생활비', '생활지원', '교통비', '의료비', '교육비',
     '학비', '식비', '생계비', '지원금', '장려금', '응시료', '상담', '돌봄',
