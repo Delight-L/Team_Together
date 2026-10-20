@@ -22,7 +22,7 @@ from backend.bomi.events import Event
 from backend.bomi.phrases import BLOCKED_MODE, OUTPUT_BLOCKED
 from backend.bomi.regularization import Policy
 from backend.bomi.request import ChatRequest
-from backend.chatbot.welfare.app.dialogue.resources import compact, local_answer
+from backend.chatbot.welfare.app.dialogue.resources import browse_request, compact, local_answer
 from backend.chatbot.welfare.app.dialogue import retrieval
 from backend.chatbot.welfare.app.dialogue.evidence import validate_answer
 from backend.chatbot.welfare.app.dialogue.presentation import answer_material, contains_internal_metadata
@@ -57,7 +57,7 @@ def _is_followup(question: str) -> bool:
     return retrieval.is_followup(short)
 
 
-def search_question(messages: list[dict]) -> str:
+def search_question(messages: list[dict], context: dict | None = None) -> str:
     """새 주제는 독립 검색하고 후속 질문(«대상은?»)에서는 원래 사업 맥락을 유지합니다."""
     asked = [m['content'] for m in messages if m['role'] == 'user']
     query = asked[-1]
@@ -65,6 +65,10 @@ def search_question(messages: list[dict]) -> str:
         anchor = next((q for q in reversed(asked[:-1]) if not _is_followup(q)), '')
         if anchor:
             query = anchor + ' ' + query
+    if context and context.get('age'):
+        query = re.sub(r'이\s*(?:나이대|연령대)', lambda _: context['age'], query)
+        if browse_request(query) and context['age'] not in query:
+            query = context['age'] + ' ' + query
     return query[-3000:]
 
 
@@ -192,9 +196,10 @@ class WelfareAgent(RegulatedAgent):
         question = messages[-1]['content']
         planning = is_planning_request(question)
         state, prefetched = state or {}, prefetched or {}
-        query = search_question(messages)
+        query = search_question(messages, context)
         named_snapshot = any(named_program(question, r['name']) for r in state.get('records', []))
-        if (_is_followup(question) or named_snapshot) and state.get('records') and not excludes_past(question):
+        snapshot_followup = _is_followup(question) and not retrieval.is_browse_followup(question)
+        if (snapshot_followup or named_snapshot) and state.get('records') and not excludes_past(question):
             query = (state.get('anchor', '') + ' ' + question)[-3000:]
             found = {'records': state['records'], 'mode': 'conversation_snapshot'}
         elif use_ai and prefetched.get('query') == query:
