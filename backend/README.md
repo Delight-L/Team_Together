@@ -218,7 +218,7 @@ API 키는 서버 `.env` 또는 관리자 AI 설정에 저장하며 저장소나
 작업 기준 폴더: `backend/agents/regional_analysis/`
 
 지역 분석 에이전트(`bomi/agents/region_analysis.py`)가 동 단위 질문을 이 엔진에 넘깁니다.
-연결 모듈은 `backend/bomi/adapters/regional_analysis.py` 하나이며, 엔진의 `sys.path` 조정과 임포트도 이 파일에만 있습니다.
+연결 모듈은 `backend/bomi/adapters/regional_analysis.py` 하나이며, 엔진은 `backend.agents.regional_analysis` 패키지 경로로 직접 임포트합니다(`sys.path` 조정 없음).
 어댑터는 화면에서 고른 동·기준월·연령을 질의 계획에 넘기고, 지표 버튼 입력·«화면 정리해 줘» 같은 짧은 질문을 구체 질문으로 바꿉니다.
 
 ### 폴더 구성
