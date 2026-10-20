@@ -676,7 +676,7 @@ function DetectionWorkflowSteps({ context, workflow, current, onView }) {
   const blocker = !context.district ? { key: 'map', label: '지역 선택' } : steps.slice(0, index).find(s => !s.done);
   // 보고서 화면에는 자체 작성 단계가 있으므로, 앞 단계가 막혔을 때만 업무 단계를 보여 줍니다.
   if (current === 'report' && !blocker) return null;
-  return <div className={`workflow-steps ${blocker ? 'blocked' : ''}`}>
+  return <div className={`workflow-steps detection-workflow-steps ${blocker ? 'blocked' : ''}`}>
     <ol aria-label="업무 진행 단계">{steps.map((s, i) => <li key={s.key} className={`${s.done ? 'done' : ''} ${i === index ? 'current' : ''}`}>
       <span aria-hidden="true">{s.done ? '✓' : i + 1}</span><b>{s.label}</b>{s.done ? <small>완료</small> : i === index ? <small>지금 단계</small> : null}
     </li>)}</ol>

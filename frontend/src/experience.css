@@ -213,3 +213,7 @@ abbr[title] { text-decoration: underline dotted; cursor: help; }
 .service-inline-review fieldset, .report-materials fieldset { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px; margin: 12px 0; min-width: 0; }
 .service-inline-review legend, .report-materials legend { font-size: 12px; color: var(--text-sub); }
 .report-materials .confirmation { font-size: 13px; overflow-wrap: anywhere; }
+
+/* Keep the three detection-review stages on a single row. */
+.detection-workflow-steps ol { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.detection-workflow-steps li b { white-space:normal;overflow:visible;text-overflow:clip; }
