@@ -52,18 +52,23 @@ def _number(value):
 
 
 def survey_metrics_for(context, snapshot=None):
-    """Return selected-age Gangnam and Seoul values for all stored metrics.
+    """Return selected-age (or 15+ default) Gangnam and Seoul survey values.
 
     This deliberately keeps the district-level, annual scope visible so callers
     cannot present the values as dong-level measurements or individual scores.
     """
-    if context.get('city') != '강남구' or context.get('age') not in AGES:
+    if context.get('city') != '강남구':
         return None
     try:
         selected_year = int(str(context.get('month', ''))[:4])
     except ValueError:
         return None
-    age_band = AGES[context['age']]
+    # The regional-context screen has no age selector.  Its survey questions
+    # should still return the published 15세 이상 전체 values rather than
+    # repeating a generic instruction to choose an age.
+    requested_age = context.get('age')
+    age_band = AGES.get(requested_age, 'all15plus')
+    age_label = requested_age if requested_age in AGES else '15세 이상 전체'
     rows = _annual_rows(snapshot)
     normalized = []
     for row in rows:
@@ -87,7 +92,7 @@ def survey_metrics_for(context, snapshot=None):
         seoul_row = next((row for row in normalized if row['district'] == 'seoul' and row['year'] == survey_year and row.get('metric') == metric), None)
         if district_row:
             values[metric] = {'gangnam': district_row, 'seoul': seoul_row}
-    return {'year': survey_year, 'age': context['age'], 'metrics': values,
+    return {'year': survey_year, 'age': age_label, 'metrics': values,
             'scope': 'district_age', 'mode': 'annual_retrospective_context',
             'source': 'DB1 · 서울서베이',
             'note': '강남구 연령별 연간 조사 참고값이며 동별 고립률이나 탐지 입력이 아닙니다. 공표 시점 기준의 당시 가용값을 뜻하지 않습니다.'}
