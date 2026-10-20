@@ -183,7 +183,6 @@ export default function App() {
   // 메뉴 접힘 상태도 React가 관리합니다. 화면 내용/선택 지역은 그대로 유지됩니다.
   const [navCollapsed, setNavCollapsed] = useState(() => window.innerWidth <= 1100);
   const [analysisTab, setAnalysisTab] = useState('evidence');
-  const [trackingSelection, setTrackingSelection] = useState(null);
   const [dashboardFocus, setDashboardFocus] = useState(null);
   const [serviceSignalMonth, setServiceSignalMonth] = useState('');
   const [serviceCaseFilter, setServiceCaseFilter] = useState('all');
@@ -193,16 +192,19 @@ export default function App() {
   // 모든 화면 이동은 go를 거칩니다. 좁은 화면에서는 이동 후 메뉴를 접어 본문을 가리지 않게 합니다.
   function go(target, selectedCase) {
     const [next, tab] = legacyViews[target] || [target];
-    if (next === 'services') {
-      setServiceChatContext(false);
-      const selected = selectedCase ? selectedServiceContext('dashboard', context, selectedCase, null) : selectedServiceContext(view, context, chatGroup, trackingSelection);
-      setCity(selected.city); setDistrict(selected.district); setAge(selected.age || ''); setMonth(selected.month);
-      setServiceSignalMonth(selected.month); setServiceCaseFilter('all');
+    if (['dashboard','map','services'].includes(next)) {
+      if(next==='services')setServiceChatContext(false);
+      const selected=selectedCase ? selectedServiceContext('dashboard',context,selectedCase,null) : context;
+      setCity(selected.city);setDistrict(selected.district);setAge(selected.age||'');
+      if(next==='dashboard')setDashboardFocus(dashboardCaseFocus(data,selected,Date.now()));
+      if(next==='services')setServiceCaseFilter('all');
+      const origin=selectedCase;
+      const detection=serviceDetection(data,selected);
+      if(origin?.signalMonth)setServiceSignalMonth(origin.signalMonth);
+      else if(detection?.any_signal)setServiceSignalMonth(selected.month);
     }
-    if (view === 'services' && serviceSelection && !serviceChatContext && ['dashboard','report','chart'].includes(next)) {
-      setMonth(workflowContext.month);
-      if (next === 'dashboard') setDashboardFocus(dashboardCaseFocus(data, workflowContext, Date.now()));
-    } else if (next === 'dashboard') setDashboardFocus(null);
+    // Reports keep the original detected event's stored work context.
+    if(view==='services'&&next==='report'&&serviceSelection&&!serviceChatContext)setMonth(workflowContext.month);
     if (next === 'chart') setAnalysisTab(tab || 'evidence');
     setView(next);
     if (window.innerWidth <= 760) setNavCollapsed(true);
@@ -275,6 +277,10 @@ export default function App() {
     [inServices, serviceChatContext, context, serviceSelection]);
   const latestWorkflowContext = useRef(workflowContext);
   latestWorkflowContext.current = workflowContext;
+  function selectDashboardCase(selected) {
+    setDistrict(selected.district);setAge(selected.age||'');
+    if(serviceDetection(data,selected)?.any_signal)setServiceSignalMonth(selected.month);
+  }
   function selectServiceCase(selected) {
     setServiceChatContext(false);
     setCity(selected.city); setDistrict(selected.district); setAge(selected.age || '');
@@ -284,7 +290,7 @@ export default function App() {
     if (!inServices || serviceChatContext || !serviceTrackingReady) return;
     if (serviceSelection) {
       if (serviceSelection.district !== district || serviceSelection.age !== age || serviceSelection.signalMonth !== serviceSignalMonth) selectServiceCase(serviceSelection);
-    } else { setDistrict(''); setAge(''); setServiceSignalMonth(''); }
+    }
   }, [inServices, serviceChatContext, serviceTrackingReady, serviceSelection, district, age, serviceSignalMonth]);
 
   const latestContext = useRef(context);
@@ -362,7 +368,8 @@ export default function App() {
   const briefingProps = {
     regions,
     assessment: data?.assessment || [],
-    age, onAgeChange:setAge, onMonthChange:setMonth, onServiceCaseChange:setTrackingSelection,
+    age, onAgeChange:setAge, onMonthChange:setMonth,
+    signalMonth:serviceSignalMonth,onSignalMonthChange:setServiceSignalMonth,
     city,
     month,
     geometry: data?.geometry[city],
@@ -535,7 +542,7 @@ export default function App() {
                 </div>
               )}
               {!rows.length && view !== 'dashboard' && <div className="notice" role="status">{city} · {month}의 분석 자료가 없습니다. 지역 또는 기준월을 확인해 주세요.</div>}
-              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onActiveGroup={setChatGroup} onMonthChange={setMonth} focusCase={dashboardFocus} onServices={group => go('services', group)} />}
+              {view === 'dashboard' && <GroupDashboard key={user.id + ':' + city} city={city} month={month} user={user} analysis={dashboardAnalysis} onActiveGroup={setChatGroup} onMonthChange={setMonth} focusCase={dashboardFocus} selectedDistrict={district} selectedAge={age} onCaseSelect={selectDashboardCase} onServices={group => go('services', group)} />}
               {view === 'map' && <RegionalOverview {...briefingProps} />}
               {view === 'chart' && <div className="scroll-view"><RegionAnalysis city={city} district={district} onSelect={setDistrict} age={age} onAgeChange={setAge}/></div>}
               {view === 'services' && (
@@ -543,6 +550,7 @@ export default function App() {
                   key={user.id + JSON.stringify(workflowContext) + month}
                   context={workflowContext}
                   reviewMonth={month}
+                  requestedContext={context}
                   cases={serviceCases}
                   reviewSelection={serviceSelection}
                   caseFilter={serviceCaseFilter}
@@ -675,7 +683,7 @@ function DetectionWorkflowSteps({ context, workflow, current, onView }) {
   </div>;
 }
 
-export function Services({ context, workflow, mutate, busy, user, seed, onSeedUsed, onView, analysis, onCaseChange, fromChatContext = false, reviewMonth, cases, reviewSelection, casesLoading, casesError, caseFilter, onCaseFilter }) {
+export function Services({ context, workflow, mutate, busy, user, seed, onSeedUsed, onView, analysis, onCaseChange, fromChatContext = false, reviewMonth, cases, reviewSelection, casesLoading, casesError, caseFilter, onCaseFilter, requestedContext }) {
   const detection=serviceDetection(analysis, context);
   const [confirming, setConfirming]=useState(false);
   const requiresEvidence=Boolean(detection?.any_signal) && !fromChatContext;
@@ -766,7 +774,7 @@ export function Services({ context, workflow, mutate, busy, user, seed, onSeedUs
     <div className="scroll-view">
       {casesError && <p className="error" role="alert">추적 자료를 불러오지 못했습니다. {casesError}</p>}
       <ServiceCase context={context} detection={detection} assessment={analysis?.assessment || []} workflow={workflow} busy={busy || confirming} onConfirm={confirmEvidence} cases={cases} onCaseChange={onCaseChange}
-        reviewMonth={reviewMonth} reviewSelection={reviewSelection} casesLoading={casesLoading} casesError={casesError} caseFilter={caseFilter} onCaseFilter={filterCases} fromChatContext={fromChatContext} />
+        reviewMonth={reviewMonth} reviewSelection={reviewSelection} casesLoading={casesLoading} casesError={casesError} caseFilter={caseFilter} onCaseFilter={filterCases} fromChatContext={fromChatContext} requestedContext={requestedContext} />
       <section className="card info-card service-review-workspace">
         {fromChatContext && context.district && <WorkflowSteps context={context} workflow={workflow} current="services" onView={onView} />}
         {requiresEvidence && <DetectionWorkflowSteps context={context} workflow={workflow} current={reviewed ? 'services' : 'chart'} onView={onView} />}

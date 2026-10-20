@@ -3,12 +3,11 @@ export function dashboardCaseFocus(analysis, context, requestId) {
   return {...context,code:detection?.code,sex:'통합',requestId};
 }
 
-// Carry the detection month, never the follow-up observation end month.
+// Keep the shared review/observation month while carrying the chosen group.
 export function selectedServiceContext(view, context, group, tracking) {
-  const selected = view === 'dashboard' ? group : view === 'map' ? tracking : context;
-  if (!selected) return { city:context.city, district:'', month:context.month };
-  return { city:selected.city, district:selected.district || '', month:selected.month,
-    ...(selected.age ? {age:selected.age} : {}) };
+  const selected=(view==='dashboard'?group:view==='map'?tracking:context)||context;
+  return {city:context.city,month:context.month,district:selected.district||context.district||'',
+    ...((selected.age||context.age)?{age:selected.age||context.age}:{})};
 }
 
 export function serviceDetection(analysis, context) {

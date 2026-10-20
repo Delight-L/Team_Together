@@ -9,7 +9,7 @@ export function eventsFor(tracking,district,age,endMonth) {
   .sort((a,b)=>a.signalMonth.localeCompare(b.signalMonth));
 }
 export function trackingMonthOptions(tracking,endMonth) {
- return (tracking?.months||[]).filter(month=>month<=endMonth).map(month=>({month,count:(tracking.events||[]).filter(e=>e.signalMonth===month).length}));
+ return (tracking?.months||[]).filter(month=>month<=endMonth).map(month=>({month,count:(tracking.events||[]).filter(e=>e.signalMonth===month).length})).filter(item=>item.count>0);
 }
 export function eventsInMonth(tracking,month) {return (tracking?.events||[]).filter(e=>e.signalMonth===month);}
 export function preferredMonthlyEvent(events,district,age) {

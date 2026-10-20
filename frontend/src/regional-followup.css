@@ -20,7 +20,11 @@
 .rf-controls{display:flex;align-items:end;justify-content:space-between;gap:8px;}
 .rf-age-buttons{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
 .rf-age-buttons button{font-size:15px;padding:6px 8px;min-height:30px;border:1px solid #dce6f4;border-radius:7px;background:#f7faff;color:#526b8f;white-space:nowrap;}
-.rf-age-buttons button[aria-pressed=true]{background:#1769ff;border-color:#1769ff;color:white;font-weight:700;}
+.rf-age-buttons button[data-method]:not([data-method=none]):not([data-method=mixed]){background:var(--age-tint);border-color:var(--age-color);color:#173052;}
+.rf-age-buttons button[aria-pressed=true]{outline:2px solid #1769ff;outline-offset:2px;font-weight:700;}
+.rf-age-buttons button:focus-visible{outline:2px solid #1769ff;outline-offset:2px;}
+.rf-age-method-dots{display:inline-flex;gap:3px;margin-left:5px;vertical-align:middle;}
+.rf-age-method-dots i{width:7px;height:7px;border-radius:50%;}
 .rf-controls label{display:flex;align-items:center;gap:5px;font-size:12px;color:#637b9b;white-space:nowrap;}
 .rf-controls select{font-size:13px;height:30px;min-height:30px;padding:3px 24px 3px 8px;background:white;}
 

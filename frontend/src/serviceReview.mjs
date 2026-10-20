@@ -26,7 +26,8 @@ export function serviceReviewCases(analysis, tracking, context) {
 
 export function selectedReviewCase(items, context, signalMonth) {
   const sameGroup = items.filter(item => item.district === context.district && item.age === context.age);
-  return sameGroup.find(item => item.signalMonth === signalMonth) || sameGroup[0] || items[0] || null;
+  return sameGroup.find(item => item.signalMonth === signalMonth) || sameGroup[0] ||
+    (context.district&&context.age ? null : items[0]) || null;
 }
 
 export function serviceReviewContext(context, selected) {

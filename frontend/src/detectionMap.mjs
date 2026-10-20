@@ -22,3 +22,8 @@ export function detectionMapRegions(regions, tracking, month) {
 export function detectionDescription(region) {
   return (region.detectionCases || []).map(c => `${c.age} ${c.domain === 'communication' ? '통신' : '이동'} · ${DETECTION_METHODS[c.method].label}`).join(' / ');
 }
+
+export function detectionMethodsForAge(region, age) {
+  return Object.keys(DETECTION_METHODS).filter(method =>
+    (region?.detectionCases || []).some(item => item.age === age && item.method === method));
+}

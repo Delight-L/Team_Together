@@ -1,5 +1,6 @@
 import DataQuality from './DataQuality.jsx';
 import {orderedCases} from './caseOrder.mjs';
+import {overviewWorkspace} from './linkedSelection.mjs';
 import DetectionCaseSelector from './DetectionCaseSelector';
 import DetectionEvidence, { SignalBadges, signalState, signalExplanation } from './DetectionEvidence';
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -146,7 +147,7 @@ function GroupCase({ group, shown, summaryStep, onEvidence, onSummary, onService
   </section></>;
 }
 
-export default function GroupDashboard({ city, month: preferredMonth, user, analysis, onActiveGroup, onMonthChange, focusCase, onServices }) {
+export default function GroupDashboard({ city, month: preferredMonth, user, analysis, onActiveGroup, onMonthChange, focusCase, onServices, selectedDistrict, selectedAge, onCaseSelect }) {
   const [catalog, setCatalog] = useState(null), [loading, setLoading] = useState(true), [error, setError] = useState(''), [retry, setRetry] = useState(0);
   // v2: 후보 우선 규칙(처음 방문 시 1순위 후보 동의 그룹)이 생기기 전에 저장된 탭 기록은 한 번 새로 시작합니다.
   const [stored, setStored, , workspaceStorageFailed] = useDraft(draftKey(user, { city }, 'group-workspace-v2'), emptyTabs);
@@ -154,11 +155,7 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
   const cases = city === '강남구' && analysis?.analysisScope === 'dong_age' ? analysis.ageDetections || [] : [];
   const analysisVersion = cases[0]?.model_version || '';
   const migrate = Boolean(analysisVersion && state.analysisVersion !== analysisVersion);
-  const signalMonths = [...new Set(cases.filter(r => r.any_signal).map(r => r.month))].sort();
-  const [appliedFocus,setAppliedFocus]=useState(null);
-  const focusPending=focusCase?.city===city && focusCase.requestId !== appliedFocus;
-  const month = focusPending ? focusCase.month : migrate ? signalMonths.at(-1) || preferredMonth : state.month || preferredMonth;
-  useEffect(() => { if (month) onMonthChange?.(month); }, [month, onMonthChange]);
+  const month=preferredMonth||state.month||'';
   const setState = update => setStored(old => update(restoreWorkspace(old, city)));
   const tabRefs = useRef({});
   // 종합 현황에서 고른 기준월로 동별 판정을 다시 계산해, 후보 동의 그룹을 먼저 보여 줍니다.
@@ -179,7 +176,6 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
       const next={...old,month:focusCase.month,initialized:true,analysisVersion};
       return focusCase.code && focusCase.age && focusCase.district ? openGroup(next,focusCase) : next;
     });
-    setAppliedFocus(focusCase.requestId);
     setWorkspaceTab('group');setSummaryStep(1);
   }, [focusCase?.requestId]);
   const setShowFiles = value => { setWorkspaceTab(value ? 'files' : 'group'); if (!value) setSummaryStep(1); };
@@ -192,17 +188,9 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
       setState(old => {
         const valid = availableWorkspace(migrate ? { ...old, month, initialized:false, analysisVersion } : old, result, month);
         if (cases.length) {
-          const tabs = detectionTabs(cases, city, month);
-          if (!tabs.length) {
-            // Keep the basic screen and carry the selected group into the new month.
-            // These are actual monthly observations, never added to the detection list.
-            const previous=old.tabs.find(g=>groupKey(g)===old.active);
-            const observations=orderedCases(cases.filter(r=>r.month===month));
-            const row=observations.find(r=>r.code===previous?.code && r.age===previous?.age) || observations[0];
-            const group=row ? {city,code:row.code,district:row.district,age:row.age,sex:'통합',month} : null;
-            return {...valid,tabs:group?[group]:[],initialized:true,active:group?groupKey(group):''};
-          }
-          return {...valid, tabs, initialized:true, active:tabs.some(g => groupKey(g) === valid.active) ? valid.active : groupKey(tabs[0])};
+          const previous=old.tabs.find(group=>groupKey(group)===old.active);
+          const selected=overviewWorkspace(cases,city,month,{district:selectedDistrict,age:selectedAge},previous);
+          return {...valid,...selected,month,initialized:true};
         }
         if (valid.initialized || !result.groups.length || valid.month !== month) return valid;
         const first = pickInitialGroup(result.groups, statusOf);
@@ -210,12 +198,14 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
       });
     }).catch(e => live && setError(e.message)).finally(() => live && setLoading(false));
     return () => { live = false; };
-  }, [city, month, retry, analysisVersion]);
-  const open = (group, keepEvidence = false) => { setState(s => openGroup({ ...s, initialized: true }, group)); setShowFiles(false); if (keepEvidence) setSummaryStep(3); };
-  const active = state.tabs.find(g => groupKey(g) === state.active && g.month === month);
+  }, [city, month, retry, analysisVersion, selectedDistrict, selectedAge]);
+  const open = (group, keepEvidence = false) => { onCaseSelect?.(group);setState(s => openGroup({ ...s, initialized: true }, group)); setShowFiles(false); if (keepEvidence) setSummaryStep(3); };
+  const active = state.tabs.find(g => groupKey(g) === state.active && g.month === month
+    && (!selectedDistrict || !selectedAge || (g.district===selectedDistrict && g.age===selectedAge)));
   const qualityShown = workspaceTab === 'quality';
   const filesShown = workspaceTab === 'files';
   const activeKey = active ? groupKey(active) : '';
+  useEffect(()=>{if(!loading&&active&&(!selectedDistrict||!selectedAge))onCaseSelect?.(active);},[loading,activeKey,selectedDistrict,selectedAge]);
   useEffect(() => { onActiveGroup?.(active || null); }, [activeKey, onActiveGroup]);
   // 파일 탭의 키보드 탐색 순서입니다.
   const changeTab = (event,index) => {
@@ -229,7 +219,7 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
     requestAnimationFrame(()=>tabRefs.current[ids[next]]?.focus());
   };
   return <div className="gd-root">
-    {document.getElementById('group-period-slot') && createPortal(<label>기준월<select aria-label="집단 자료 기준월" value={catalog?.months.includes(month) ? month : ''} disabled={loading || !catalog?.months.length} onChange={e => { const selected = e.target.value; setState(s => ({ ...s, month: selected, initialized:false })); }}>
+    {document.getElementById('group-period-slot') && createPortal(<label>기준월<select aria-label="집단 자료 기준월" value={catalog?.months.includes(month) ? month : ''} disabled={loading || !catalog?.months.length} onChange={e => { const selected = e.target.value; onMonthChange?.(selected);setState(s => ({ ...s, month: selected, initialized:false })); }}>
       {!catalog?.months.includes(month) && <option value="">{loading ? '기간 확인 중…' : '제공 자료 없음'}</option>}{catalog?.months.slice().reverse().map(m => <option key={m} value={m}>{m}{cases.length ? ` · 탐지 ${cases.filter(r => r.month === m && r.any_signal).length}건` : ''}</option>)}
     </select>{cases.length > 0 && <small className="gd-observation-window">통신·이동 관측 {observationWindow(month)}</small>}</label>, document.getElementById('group-period-slot'))}
     {workspaceStorageFailed && <p className="gd-scope-note" role="status">탭 임시 저장에 실패했습니다. 새로고침 시 열린 탭을 복원하지 못할 수 있습니다.</p>}
@@ -239,7 +229,7 @@ export default function GroupDashboard({ city, month: preferredMonth, user, anal
       </div></div></div>
       <section className="gd-case gd-files-panel" role="tabpanel" id="panel-files" aria-labelledby="tab-files" hidden={!filesShown}><Directory catalog={catalog} city={city} month={month} loading={loading} error={error} retry={() => setRetry(n => n + 1)} onOpen={open} state={state} statusOf={statusOf} detectionMode={cases.length > 0} /></section>
       <section className="gd-case gd-quality-panel" role="tabpanel" id="panel-quality" aria-labelledby="tab-quality" hidden={!qualityShown}><DataQuality analysis={analysis} city={city}/></section>
-      {state.tabs.map(g => <GroupCase key={groupKey(g)} group={g} shown={!filesShown && !qualityShown && groupKey(g) === state.active} onServices={() => onServices(g)} caseOptions={cases.length ? detectionTabs(cases,city,month) : state.tabs.filter(item => item.month === month)} onCaseChange={open} onEvidenceCaseChange={group => open(group, true)} onEvidence={() => setSummaryStep(3)} onSummary={() => setSummaryStep(1)} summaryStep={summaryStep} analysis={analysis} />)}
+      {state.tabs.map(g => <GroupCase key={groupKey(g)} group={g} shown={!filesShown && !qualityShown && activeKey === groupKey(g)} onServices={() => onServices(g)} caseOptions={cases.length ? detectionTabs(cases,city,month) : state.tabs.filter(item => item.month === month)} onCaseChange={open} onEvidenceCaseChange={group => open(group, true)} onEvidence={() => setSummaryStep(3)} onSummary={() => setSummaryStep(1)} summaryStep={summaryStep} analysis={analysis} />)}
 <section id="panel-evidence-empty" role="tabpanel" aria-labelledby="tab-overview" className="gd-case" hidden={filesShown || qualityShown || !!active}/>
     </div>
   </div>;
