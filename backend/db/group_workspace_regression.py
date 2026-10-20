@@ -169,6 +169,20 @@ class ProvenanceAnswerTests(unittest.TestCase):
                 for phrase in phrases:
                     self.assertIn(phrase, answer)
 
+    def test_dashboard_tabs_have_separate_explanations(self):
+        context = {'city': '강남구', 'district': '역삼1동', 'month': '2025-11'}
+        cases = {
+            '탐지 현황 탭이 뭐예요?': ('통신·이동 지표', '개인의 상태'),
+            '조사 파일 탭은 뭐야?': ('조사 기간과 대상 집단', '자료가 충분한지'),
+            '자료 확인 탭을 설명해줘': ('세부 근거', '유효 비율'),
+        }
+        for question, phrases in cases.items():
+            with self.subTest(question=question):
+                self.assertTrue(is_tab_question(question))
+                answer = explain_region(context, question, {'assessment': []})['answer']
+                for phrase in phrases:
+                    self.assertIn(phrase, answer)
+
     def test_followup_cards_explain_their_comparison_basis_for_first_time_users(self):
         context = {'city': '강남구', 'district': '개포3동', 'month': '2025-12', 'age': '40대'}
         data = {'assessment': []}
