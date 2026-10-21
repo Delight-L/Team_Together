@@ -68,7 +68,11 @@ def is_survey_metric_question(question: str) -> bool:
 def is_tab_question(question: str) -> bool:
     """Questions about labels and comparison methods shown in a dashboard tab."""
     compact = question.replace(' ', '')
-    return any(word in question or word.replace(' ', '') in compact for word in (*TAB_WORDS, *TAB_DETAIL_WORDS))
+    if not any(word in question or word.replace(' ', '') in compact for word in (*TAB_WORDS, *TAB_DETAIL_WORDS)):
+        return False
+    # '독거노인'·'연령대'·'계절성'처럼 흔한 말은 복지사업 찾기에도 쓰입니다.
+    # 탭을 직접 묻지 않으면서 사업·지원을 찾는 질문(예: "독거노인 돌봄 사업 찾아줘")은 복지사업 담당이 답합니다.
+    return '탭' in question or not any(word in question for word in WELFARE_WORDS)
 
 
 def program_name_hit(question: str, city: str = '') -> bool:

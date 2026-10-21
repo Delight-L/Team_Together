@@ -41,7 +41,7 @@ class ProvenanceAnswerTests(unittest.TestCase):
     def test_survey_question_lists_only_the_available_extra_metrics(self):
         self.assertTrue(_is_survey_metrics_question("다른 지표는 더 없어?"))
         self.assertIn("금전적으로 도움받을 사람 없음", SURVEY_OTHER_METRICS_EXPLANATION)
-        self.assertIn("2025년 별도 문항", SURVEY_OTHER_METRICS_EXPLANATION)
+        self.assertIn("2025년 별도 질문", SURVEY_OTHER_METRICS_EXPLANATION)
         self.assertIn("동별 수치나 개인별 고립 판정은 아닙니다", SURVEY_OTHER_METRICS_EXPLANATION)
 
     def test_survey_detail_question_returns_stored_gangnam_and_seoul_values(self):
@@ -94,17 +94,17 @@ class ProvenanceAnswerTests(unittest.TestCase):
         self.assertIn('같은 분기 평균', consumption_answer)
 
         tab_answer = explain_region(context, '어느 지역을 살펴볼까요? 탭에 대해 설명해줘', data)['answer']
-        self.assertIn('탐지월 전후의 지역 변화 흐름', tab_answer)
+        self.assertIn('지도에서 동을 고르면', tab_answer)
 
     def test_tracking_screen_terms_use_fixed_plain_language_answers(self):
         context = {'city': '강남구', 'district': '개포3동', 'month': '2025-12'}
         data = {'assessment': []}
         cases = {
-            '통신 탐지가 뭐예요?': ('전화·문자 연락 지표', '추가 확인이 필요한 신호', '개인의 고립 여부'),
-            '통신탐지 뜻': ('전화·문자 연락 지표', '추가 확인이 필요한 신호', '개인의 고립 여부'),
+            '통신 탐지가 뭐예요?': ('전화·문자 연락 수', '한 번 더 확인해 볼 필요', '개인의 고립 여부'),
+            '통신탐지 뜻': ('전화·문자 연락 수', '한 번 더 확인해 볼 필요', '개인의 고립 여부'),
             '탐지월이 뭐야?': ('표시된 기준월', '변화 원인이나 개인의 상태'),
-            '탐지 직전 기준월은 무엇인가요?': ('탐지월 바로 전', '100', '비교하는 출발점'),
-            '탐지직전 기준월 뜻': ('탐지월 바로 전', '100', '비교하는 출발점'),
+            '탐지 직전 기준월은 무엇인가요?': ('탐지된 달 바로 전 달', '100', '비교하는 출발점'),
+            '탐지직전 기준월 뜻': ('탐지된 달 바로 전 달', '100', '비교하는 출발점'),
         }
 
         for question, expected_phrases in cases.items():
@@ -155,13 +155,13 @@ class ProvenanceAnswerTests(unittest.TestCase):
     def test_group_dashboard_metric_labels_have_beginner_explanations(self):
         context = {'city': '강남구', 'code': '11680660', 'month': '2025-11', 'age': '30대', 'sex': '전체'}
         cases = {
-            '전화 연락은 무슨 뜻이야?': ('통화 상대 수', '개인의 연락 여부'),
-            '문자 연락이 뭐예요?': ('문자 상대 수', '특정 개인'),
-            '평일 이동 -30.15%는 무슨 뜻이야?': ('월~금요일', '개인의 외출 여부'),
-            '휴일 이동이 뭐야?': ('토·일요일과 공휴일', '개인의 외출 여부'),
-            '가구 구성 비율은?': ('가구원 수별', '선택한 연령대'),
+            '전화 연락은 무슨 뜻이야?': ('전화로 연락한 상대 수', '개인의 연락 여부'),
+            '문자 연락이 뭐예요?': ('문자로 연락한 상대 수', '특정 개인'),
+            '평일 이동 -30.15%는 무슨 뜻이야?': ('월요일부터 금요일까지', '지역에서 모은 활동 자료'),
+            '휴일 이동이 뭐야?': ('토요일·일요일과 공휴일', '특정 개인이 외출했는지'),
+            '가구 구성 비율은?': ('1인·2인·3인·4인 이상', '선택한 연령대'),
             '65세 이상 등록인구 중 독거노인 비율이 뭐야?': ('65세 이상 등록인구', '개인의 고립 판정'),
-            '힘들 때 이야기할 사람이 없는 비율은?': ('서울서베이 응답자', '특정 주민'),
+            '힘들 때 이야기할 사람이 없는 비율은?': ('설문 응답자', '특정 주민'),
         }
         for question, phrases in cases.items():
             with self.subTest(question=question):
@@ -172,9 +172,9 @@ class ProvenanceAnswerTests(unittest.TestCase):
     def test_dashboard_tabs_have_separate_explanations(self):
         context = {'city': '강남구', 'district': '역삼1동', 'month': '2025-11'}
         cases = {
-            '탐지 현황 탭이 뭐예요?': ('통신·이동 지표', '개인의 상태'),
-            '조사 파일 탭은 뭐야?': ('조사 기간과 대상 집단', '자료가 충분한지'),
-            '자료 확인 탭을 설명해줘': ('세부 근거', '유효 비율'),
+            '탐지 현황 탭이 뭐예요?': ('통신·이동 숫자', '개인의 상태'),
+            '조사 파일 탭은 뭐야?': ('어느 기간과 누구의 자료', '자료가 충분한지'),
+            '자료 확인 탭을 설명해줘': ('왜 이 사례가 표시됐는지', '유효 비율'),
         }
         for question, phrases in cases.items():
             with self.subTest(question=question):
@@ -187,11 +187,11 @@ class ProvenanceAnswerTests(unittest.TestCase):
         context = {'city': '강남구', 'district': '개포3동', 'month': '2025-12', 'age': '40대'}
         data = {'assessment': []}
         cases = {
-            '실제 활동량은 무엇인가요?': ('탐지 직전 기준월', '그래프의 100', '계절이나 강남구 전체'),
-            '계절성 고려는 무슨 뜻인가요?': ('과거 같은 달 중앙값', '날씨를 직접 보정했다는 뜻은 아닙니다'),
+            '실제 활동량은 무엇인가요?': ('탐지 직전 달', '그래프의 100', '계절이나 강남구 전체'),
+            '계절성 고려는 무슨 뜻인가요?': ('과거 같은 달의 대표값(중앙값)', '날씨를 직접 고쳐 계산했다는 뜻은 아닙니다'),
             '강남구 흐름 고려가 뭐예요?': ('강남구 여러 동의 중앙 변화', '공통 흐름'),
             '강남구 흐름고려가 뭐예요?': ('강남구 여러 동의 중앙 변화', '공통 흐름'),
-            '과거 같은 달과 비교한다는 뜻은 뭐예요?': ('과거 같은 달 중앙값', '날씨를 직접 보정했다는 뜻은 아닙니다'),
+            '과거 같은 달과 비교한다는 뜻은 뭐예요?': ('과거 같은 달의 대표값(중앙값)', '날씨를 직접 고쳐 계산했다는 뜻은 아닙니다'),
             '강남구 전체 흐름은 무엇인가요?': ('강남구 여러 동의 중앙 변화', '공통 흐름'),
         }
         for question, expected_phrases in cases.items():
@@ -202,6 +202,17 @@ class ProvenanceAnswerTests(unittest.TestCase):
                     self.assertIn(phrase, answer)
                 self.assertIn('두 지표 모두 기준 미달', answer)
                 self.assertIn('개인의 활동량·고립 여부·변화 원인을 확정하지 않습니다', answer)
+
+    def test_welfare_searches_with_screen_words_are_not_tab_questions(self):
+        # '독거노인'·'연령대'·'계절성'은 화면 용어이면서 복지사업을 찾을 때도 쓰는 말입니다.
+        for question in ('독거노인 돌봄 사업 찾아줘', '독거노인 지원 서비스 있어?',
+                         '30대 연령대 복지사업 찾아줘', '계절성 우울 어르신 지원 사업'):
+            with self.subTest(question=question):
+                self.assertFalse(is_tab_question(question))
+        for question in ('65세 이상 등록인구 중 독거노인 비율이 뭐야?', '계절성 고려는 무슨 뜻인가요?',
+                         '자료 확인 탭을 설명해줘'):
+            with self.subTest(question=question):
+                self.assertTrue(is_tab_question(question))
 
     def test_empty_reason_answer_names_the_selected_dong(self):
         intent = QueryIntent(purpose='track_change', question_type='reason', dong='개포3동', age_band='40s', age_scope_explicit=True)
