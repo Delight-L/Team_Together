@@ -5,9 +5,11 @@ import re
 from .schemas import GuardResult
 
 MAX_CHARS = 1000
-OUT_OF_SCOPE = "지역 변화 신호와 관련된 질문을 해주세요. 예: ‘2025년 신호가 나온 동은?’"
+OUT_OF_SCOPE = (
+    "지역에서 나타난 변화에 대해 물어봐 주세요. 예: ‘2025년에 더 살펴볼 동은 어디인가요?’"
+)
 PERSONAL_REQUEST = (
-    "이 자료는 동 단위 집계입니다. 개인의 고립 여부나 대상자 명단은 확인할 수 없습니다."
+    "이 자료는 동 전체를 모아 본 자료예요. 특정 사람의 고립 여부나 명단은 알 수 없어요."
 )
 
 
@@ -20,5 +22,7 @@ def validate_input(question: str) -> GuardResult:
     if re.search(r"(명단|개인.*고립|누가.*고립|주민.*이름|전화번호)", q):
         return GuardResult(False, PERSONAL_REQUEST)
     if re.search(r"(지시.*무시|프롬프트.*공개|api.?key|비밀번호)", q, re.I):
-        return GuardResult(False, "자료 조회와 관계없는 요청은 처리할 수 없습니다.")
+        return GuardResult(
+            False, "이 요청은 처리할 수 없어요. 지역 변화나 복지 지원에 대해 물어봐 주세요."
+        )
     return GuardResult(True)

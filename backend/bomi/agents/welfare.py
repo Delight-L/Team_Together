@@ -42,19 +42,15 @@ from backend.db import region_workspace
 HISTORY_FOR_AI = 20
 PLANNING_LABEL = '신규 사업 기획 아이디어 · 현재 운영 중인 사업이 아님\n\n'
 PLANNING_NEEDS_AI = (
-    '신규 사업 기획 아이디어를 작성하려면 AI 대화 기능이 필요합니다. '
-    '현재는 저장된 기존 사업 조회만 가능합니다. AI 대화를 켠 뒤 다시 요청해 주세요.'
+    '새 사업 아이디어를 만들려면 AI 대화 기능이 필요해요. '
+    '지금은 저장된 기존 사업만 찾아볼 수 있어요. AI 대화를 켠 뒤 다시 요청해 주세요.'
 )
 PLANNING_AI_FAILED = (
-    'AI 연결 문제로 신규 사업 기획안을 완성하지 못했습니다. 잠시 후 다시 요청해 주세요.'
+    'AI 연결에 문제가 있어 새 사업 아이디어를 만들지 못했어요. 잠시 후 다시 요청해 주세요.'
 )
-AI_ERROR_NOTICE = (
-    'AI 응답을 완료하지 못해 자료 검색 안내로 전환했습니다. 관리자 AI 설정과 연결을 확인해 주세요.'
-)
+AI_ERROR_NOTICE = 'AI로 답하지 못해, 찾은 자료를 바탕으로 안내해 드렸어요.'
 ELIGIBILITY_MODE = '자료 기반 · 현재 자격 확인 필요'
-ELIGIBILITY_NOTICE = (
-    '현재 자격이 미확인인 사업의 신청 가능·불가 단정은 자료 기반 확인 안내로 바꿨어요.'
-)
+ELIGIBILITY_NOTICE = '이용 조건이 아직 확인되지 않아, 신청 가능 여부 대신 확인 방법을 안내했어요.'
 ELIGIBILITY_DECISIONS = (
     '신청할수없',
     '신청하실수없',

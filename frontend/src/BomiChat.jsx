@@ -627,8 +627,8 @@ export default function BomiChat({
                       <span className={`bomi-badge ${usedAi(m.mode) ? 'ai' : 'data'}`}>
                         {usedAi(m.mode) ? 'AI 답변' : '자료 기반'}
                       </span>
-                      {/* 내부 자료 이름은 접어 두고, 펼치면 담당자가 알아볼 수 있는 말로 보여 줍니다. */}
-                      {m.source && (
+                      {/* 기본값인 '저장된 분석 자료'는 구체적인 근거를 알려 주지 않으므로 숨깁니다. */}
+                      {m.source && sourceLabel(m.source) !== '저장된 분석 자료' && (
                         <details className="bomi-basis">
                           <summary>근거 보기</summary>
                           {sourceLabel(m.source)}

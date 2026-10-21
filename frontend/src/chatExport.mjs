@@ -7,11 +7,15 @@ export const usedAi = (mode) => /AI (대화|해석|문장 다듬기|의도 판�
 // 분석 근거 이름을 담당자가 알아볼 수 있는 말로 표시합니다.
 const SOURCE_NAMES = [
   [/a2_feature/i, '통신·이동 지표'],
-  [/a2_|analysis2|sequential|탐지/i, '통신·이동 변화 탐지 결과'],
-  [/a1_|analysis1|지역유형|elder/i, '지역 배경(지역 유형) 자료'],
-  [/analysis3/i, '소비·생활 보조 자료'],
+  [
+    /a2_|analysis2|sequential|탐지|지역 변화 신호|연령별 변화 신호|신호 이후 변화 추적/i,
+    '통신·이동 변화 탐지 결과',
+  ],
+  [/a1_|analysis1|지역유형|지역 구조|elder/i, '지역 배경(지역 유형) 자료'],
+  [/analysis3|소비 보조자료/i, '소비·생활 보조 자료'],
   [/유동인구|_pop\b/i, '집단별 유동인구 집계'],
   [/서울서베이/, '서울서베이'],
+  [/DB1 처리 이력/, 'DB1 분석 처리 이력'],
   [/DB2|복지서비스/i, '지자체 복지서비스 자료'],
 ];
 export const sourceLabel = (source) =>

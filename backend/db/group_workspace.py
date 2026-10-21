@@ -156,6 +156,80 @@ def services(context, need):
     )
 
 
+def _metric_definition_answer(question):
+    """Explain each metric label visible on the group dashboard in plain language."""
+    q = str(question).replace(' ', '')
+    if not any(word in q for word in ('뜻', '의미', '무엇', '뭐', '설명', '무슨', '비율')):
+        return None
+    answers = []
+    if any(term in q for term in ('전화연락', '통화')):
+        answers.append(
+            '«전화 연락»은 선택한 동네·연령대에서 전화로 연락한 상대 수가 지난달보다 어떻게 달라졌는지 보여주는 숫자입니다. 여러 사람의 자료를 모아 계산한 값이라 특정 개인의 연락 여부를 뜻하지 않습니다.'
+        )
+    if any(term in q for term in ('문자연락', '문자')):
+        answers.append(
+            '«문자 연락»은 선택한 동네·연령대에서 문자로 연락한 상대 수가 지난달보다 어떻게 달라졌는지 보여주는 숫자입니다. 값이 줄어도 특정 개인이 연락을 끊었다는 뜻은 아닙니다.'
+        )
+    if '평일이동' in q:
+        answers.append(
+            '«평일 이동»은 월요일부터 금요일까지의 이동 활동이 지난달보다 어떻게 달라졌는지 보여주는 숫자입니다. 모든 사람의 이동을 하나씩 센 값이 아니라, 지역에서 모은 활동 자료입니다.'
+        )
+    if '휴일이동' in q or '주말이동' in q:
+        answers.append(
+            '«휴일 이동»은 토요일·일요일과 공휴일의 이동 활동이 지난달보다 어떻게 달라졌는지 보여주는 숫자입니다. 이 숫자만으로 특정 개인이 외출했는지는 알 수 없습니다.'
+        )
+    if any(term in q for term in ('유동량변화', '전체유동량변화', '월별추이', '유동량추이')):
+        answers.append(
+            '«유동량 변화»는 같은 동네의 이동 활동이 지난달보다 얼마나 달라졌는지 보여줍니다. 실제로 사는 사람 수나 고유 인원 수는 아닙니다.'
+        )
+    if any(
+        term in q
+        for term in (
+            '전체유동량중',
+            '유동량중',
+            '연령비율',
+            '30대비율',
+            '40대비율',
+            '20대비율',
+            '50대비율',
+            '60대비율',
+        )
+    ):
+        answers.append(
+            '«전체 유동량 중 연령 비율»은 그 동네에서 관찰된 이동 활동 중 선택한 연령대의 활동이 차지하는 몫입니다. 그 연령대 주민 수의 비율이나 실제 인구 비율은 아닙니다.'
+        )
+    if any(
+        term in q
+        for term in ('가구구성비율', '가구구성', '1인가구', '2인가구', '3인가구', '4인이상')
+    ):
+        answers.append(
+            '«가구 구성 비율»은 그 동네의 집을 1인·2인·3인·4인 이상 가구로 나눠 각각 얼마나 되는지 보여주는 자료입니다. 선택한 연령대만의 가구 비율은 아닙니다.'
+        )
+    if any(term in q for term in ('독거노인비율', '65세이상등록인구중독거노인')):
+        answers.append(
+            '«65세 이상 등록인구 중 독거노인 비율»은 그 지역의 65세 이상 어르신 중 혼자 사는 분이 얼마나 되는지 보여주는 1년 단위 자료입니다. 선택한 30대 같은 특정 연령대의 수치나 개인의 고립 판정은 아닙니다.'
+        )
+    if any(
+        term in q
+        for term in (
+            '힘들때이야기할사람없는비율',
+            '힘들때이야기할사람이없는비율',
+            '이야기할사람없는비율',
+            '이야기할사람이없는비율',
+            '도움받을사람',
+        )
+    ):
+        answers.append(
+            '«힘들 때 이야기할 사람이 없는 비율»은 어려운 일이 있을 때 이야기하거나 도움을 구할 사람이 없다고 답한 설문 응답자의 비율입니다. 강남구·연령대별 1년 단위 자료이며, 특정 주민을 확인하는 자료가 아닙니다.'
+        )
+    if not answers:
+        return None
+    answers.append(
+        '화면의 수치는 지역·연령대 집계와 설문 통계를 함께 보여주는 참고 자료입니다. 이 값만으로 개인의 고립 여부나 복지 필요를 확정하지 않습니다.'
+    )
+    return '\n\n'.join(answers)
+
+
 def explain(context, question, detail=None):
     """외부 LLM 없이 서버가 조회한 집단의 숫자와 제한을 명시해 답한다."""
     question = str(question).strip()
@@ -164,18 +238,21 @@ def explain(context, question, detail=None):
     detail = group_detail(context) if detail is None else detail
     row = detail['current']
     label = f"{row['district']} · {row['age']} · {row['sex']}"
-    if _is_provenance_question(question):
+    metric_answer = _metric_definition_answer(question)
+    if metric_answer:
+        answer = metric_answer
+    elif _is_provenance_question(question):
         answer = _provenance_answer(detail)
     elif any(word in question for word in ['독거', '지역 배경', '장애인']):
         from backend.db.region_workspace import elderly_background
 
         answer = elderly_background(detail.get('regional', {}).get('structure'))
     elif any(word in question for word in ['뜻', '지표', '의미']):
-        answer = '유동량은 해당 지역에서 관측된 활동 규모이며 실제 사람 수가 아닙니다. 변화율은 지난달과 이번 달 모두 자료가 있는 작은 구역끼리 비교한 값이고, 비중은 동 전체 유동량에서 선택 집단이 차지하는 몫입니다. 가구 구성과 연락·이동 비교는 동 전체 자료이므로 선택한 연령·성별만의 특성으로 해석하지 마세요.'
+        answer = '유동량은 그 지역에서 관찰된 이동 활동의 크기이며 실제 사람 수가 아닙니다. 변화율은 지난달과 이번 달을 비교한 숫자이고, 비중은 동네 전체 활동 중 선택한 집단의 몫입니다. 가구 구성과 연락·이동 숫자는 서로 다른 자료이므로 선택한 연령·성별의 모든 생활을 그대로 보여주는 값은 아닙니다.'
     elif any(word in question for word in ['다음', '무엇을 확인']):
-        answer = '먼저 월별 추이에서 변화가 이어지는지 확인하세요. 이어 가구 구성과 동 전체 변화를 함께 살펴보세요. 실제 지원 필요를 확인한 뒤 «지원 필요 확인하기»에서 메모를 남기고 지원 목적을 선택하면 관련 복지사업의 조건을 검토할 수 있습니다.'
+        answer = '먼저 월별 흐름에서 변화가 계속되는지 보세요. 그다음 가구 구성과 동 전체의 변화도 함께 확인하세요. 실제 도움이 필요한지 확인한 뒤 «지원 필요 확인하기»에 메모를 남기면 관련 복지사업을 살펴볼 수 있어요.'
     elif any(word in question for word in ['서비스', '사업', '지원', '복지']):
-        answer = f'{label}의 유동량만으로 필요한 서비스나 이용 자격을 확정할 수 없습니다. 아래 사업 검토에서 지원 목적을 선택하면 실제 복지사업 설명과 관련어를 비교합니다. 추천 이유·대상 조건·신청 방법을 확인하세요.'
+        answer = f'{label}의 유동량만으로 필요한 도움이나 이용 가능 여부를 정할 수는 없어요. 아래 사업 검토에서 필요한 도움을 고른 뒤, 사업 내용·이용 조건·신청 방법을 확인해 주세요.'
     elif any(word in question for word in ['통화', '문자', '연락', '위험', '신호', '고립']):
         detection = detail.get('ageDetection')
         if detection:
@@ -190,7 +267,7 @@ def explain(context, question, detail=None):
         else:
             answer = '이 집단의 통화·문자·이동 탐지 결과는 아직 없습니다. 유동량이나 동 전체 판정을 해당 연령·성별의 고립 신호로 해석하지 않습니다.'
     elif any(word in question for word in ['요일', '시간', '주말', '평일']):
-        answer = '요일·시간대 그래프는 같은 지역 전체의 별도 집계입니다. 선택한 연령·성별이 그 요일이나 시간에 활동했다는 뜻은 아닙니다. 요일은 7개 요일 평균=100, 시간은 가장 큰 시간대=100 지수로 표시합니다.'
+        answer = '요일·시간대 그래프는 그 지역 전체의 활동을 요일과 시간별로 나눠 본 자료입니다. 선택한 연령·성별 사람만의 활동을 뜻하지는 않습니다. 요일 그래프의 100은 일주일 평균이고, 시간 그래프의 100은 가장 활동이 많은 시간대입니다.'
     elif any(word in question for word in ['변화', '감소', '증가', '추이', '요약', '왜', '근거']):
         change = row['change_pct']
         if change is None:
@@ -223,7 +300,7 @@ def ai_explain(context, question, detail, history):
     evidence['age_detection'] = detail.get('ageDetection')
     prompt = (
         '독거노인 통계는 65세 이상 연간 자료이며 선택 집단이나 월별 변화의 수치가 아닙니다. '
-        '당신은 복지탐정의 집단별 분석 도우미입니다. 한국어로 간결하게 답하세요. '
+        '당신은 복지탐정의 집단별 분석 도우미입니다. 처음 보는 사람도 이해할 수 있는 쉬운 한국어로 답하세요. 첫 문장에서 질문에 바로 답하고, 한 문장에는 한 가지 내용만 담으세요. 어려운 말은 바로 뜻을 풀어 쓰고, 추가 확인이 필요하면 마지막에 할 일을 한 가지 알려 주세요. '
         '사용자가 출처를 직접 묻지 않으면 원본 자료를 무엇으로 참고했는지 설명하지 말고 분석 결과부터 말하세요. '
         'JSON 키·변수명·테이블명·파일명과 내부 상태 코드(age_detection, no_detected_joint_behavior_change 등)를 답변에 노출하지 마세요. '
         '내부 상태는 사용자 언어로 풀어 쓰세요. 예: 결합 신호는 탐지되지 않았어요. '

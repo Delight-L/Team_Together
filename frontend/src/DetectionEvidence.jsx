@@ -38,6 +38,7 @@ function ScorePlot({ row, path, state }) {
   const x = (v) => 35 + ((v - min) / (max - min)) * 430,
     color = state === 'both' ? '#c53d55' : path === 'local' ? '#0f766e' : '#946200',
     distance = z - threshold;
+  const markerX = x(threshold) + (x(z) - x(threshold)) * progress;
   return (
     <>
       <div
@@ -60,12 +61,12 @@ function ScorePlot({ row, path, state }) {
         <i
           className="ev-shape-distance"
           style={{
-            left: `${Math.min(x(threshold) + (x(z) - x(threshold)) * progress, x(threshold)) / 5}%`,
-            width: `${(Math.abs(x(z) - x(threshold)) * progress) / 5}%`,
+            left: `${Math.min(markerX, x(threshold)) / 5}%`,
+            width: `${Math.abs(markerX - x(threshold)) / 5}%`,
           }}
         />
         <i className="ev-shape-zero" style={{ left: `${x(0) / 5}%` }} />
-        <i className="ev-shape-observation" style={{ left: `${x(z) / 5}%`, opacity: progress }} />
+        <i className="ev-shape-observation" style={{ left: `${markerX / 5}%` }} />
       </div>
       <p className="ev-score-detail">
         기준과의 차이 <b style={{ color }}>{fmt(distance)}</b> ·{' '}

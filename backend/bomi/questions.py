@@ -114,13 +114,66 @@ TAB_WORDS = (
     '두 비교 모두',
     '탐지 이후',
     '탐지월',
+    '통신 탐지',
+    '통신탐지',
+    '탐지 직전 기준월',
+    '탐지직전 기준월',
     '통신 지표 흐름',
     '이동 지표 흐름',
+    '전화 연락',
+    '문자 연락',
+    '평일 이동',
+    '휴일 이동',
+    '유동량 변화',
+    '유동량 추이',
+    '전체 유동량',
+    '가구 구성',
+    '가구 구성 비율',
+    '독거노인',
+    '이야기할 사람이 없는 비율',
+    '가구·관계망 함께 보기',
+    '가구 관계망 함께 보기',
+    '탐지 현황',
+    '탐지현황',
+    '조사 파일',
+    '조사파일',
+    '자료 확인',
+    '자료확인',
+    '최초 탐지월',
+    '탐지 사례',
+    '연령대',
+    '어느 지역을 살펴볼까요',
+    '지도에서 지역',
     '실제 활동량',
+    '실제활동량',
+    '실제 활동',
+    '원값',
+    '원값 변화',
     '계절성 고려',
+    '계절성',
+    '같은 달 비교',
+    '과거 같은 달',
     '강남구 흐름 고려',
+    '강남구흐름',
+    '강남구 전체 흐름',
+    '구 전체 흐름',
+    '공통 흐름',
 )
 # 대시보드 화면의 판정·수치 용어. 지역 변화 신호 분석은 이 용어를 모르므로 화면 기준을 아는 동 분석이 설명합니다.
+TAB_DETAIL_WORDS = (
+    '지역별 변화 한눈에 살펴보기',
+    '지역별 변화',
+    '유효 비율',
+    '판정 기준',
+    '총 추정 인구',
+    '미추정 인구',
+    '확인 대상',
+    '영향 기준월',
+    '전월 자료 제외',
+    '변화량 계산 불가',
+    '판정 가능',
+    '미탐지',
+)
 SCREEN_TERMS = (
     '판정',
     '신규 후보',
@@ -185,7 +238,15 @@ def is_survey_metric_question(question: str) -> bool:
 
 def is_tab_question(question: str) -> bool:
     """Questions about labels and comparison methods shown in a dashboard tab."""
-    return any(word in question for word in TAB_WORDS)
+    compact = question.replace(' ', '')
+    if not any(
+        word in question or word.replace(' ', '') in compact
+        for word in (*TAB_WORDS, *TAB_DETAIL_WORDS)
+    ):
+        return False
+    # '독거노인'·'연령대'·'계절성'처럼 흔한 말은 복지사업 찾기에도 쓰입니다.
+    # 탭을 직접 묻지 않으면서 사업·지원을 찾는 질문(예: "독거노인 돌봄 사업 찾아줘")은 복지사업 담당이 답합니다.
+    return '탭' in question or not any(word in question for word in WELFARE_WORDS)
 
 
 def program_name_hit(question: str, city: str = '') -> bool:
