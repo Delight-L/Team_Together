@@ -1,12 +1,13 @@
 """보미 채팅 파이프라인: 요청 한 번을 이벤트 스트림으로 바꿉니다.
 
-    regularization.prepare(길이·대화 길이·개인정보 가림)
-      → [notice: 개인정보 가림]
-      → 담당 선택(고정 규칙 → AI → 키워드 규칙)
-      → route 이벤트
-      → 담당 에이전트 respond  ← 입력 규제(단어 규칙 + moderate API)와 출력 규제는 에이전트가 합니다
-      → done (events.seal이 보장)
+regularization.prepare(길이·대화 길이·개인정보 가림)
+  → [notice: 개인정보 가림]
+  → 담당 선택(고정 규칙 → AI → 키워드 규칙)
+  → route 이벤트
+  → 담당 에이전트 respond  ← 입력 규제(단어 규칙 + moderate API)와 출력 규제는 에이전트가 합니다
+  → done (events.seal이 보장)
 """
+
 import logging
 from typing import Iterator
 
@@ -32,15 +33,19 @@ class ChatPipeline:
         stream = self._run(prepared)
         if session_token:
             from backend.bomi.conversation import events_with_state
-            stream = events_with_state(stream, prepared.request.welfare_state,
-                                       prepared.request.context, session_token)
+
+            stream = events_with_state(
+                stream, prepared.request.welfare_state, prepared.request.context, session_token
+            )
         return events.seal(stream)
 
     # ── 내부 단계 ────────────────────────────────────────────────
     def _run(self, prepared: regularization.Prepared) -> Iterator[Event]:
         request = prepared.request
         if prepared.pii_kinds:
-            yield events.notice(PII_NOTICE.format(kinds='·'.join(prepared.pii_kinds)), question=request.question)
+            yield events.notice(
+                PII_NOTICE.format(kinds='·'.join(prepared.pii_kinds)), question=request.question
+            )
         # Deterministic injection rules run before the AI router. Agent-specific
         # moderation still runs in RegulatedAgent with that agent's own policy.
         if regularization.history_rule_flagged(request):

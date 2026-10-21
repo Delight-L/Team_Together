@@ -14,6 +14,7 @@
 - 파이프라인 산출물에는 없는 `pipeline_state`·`ctx_weather`는 **원본을 고치지 않고** 게시 때 만들어 줍니다(data_pipeline/db1_compat.py):
   pipeline_state는 run 상태(v16_run)에서 뷰로, ctx_weather는 ctx_weather_month·ctx_weather_window에서 변환해 적재합니다.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -29,11 +30,30 @@ PREFIX = 'v16_'
 LOCK_KEY = 67834016  # 동시 공개를 직렬화하는 advisory lock 번호
 
 # 챗봇이 읽는 테이블. REQUIRED는 없으면 공개를 거부하고, OPTIONAL은 있으면 함께 올립니다.
-REQUIRED = ('a1_context', 'a1_input', 'db1_run', 'a2_detection', 'a2_evidence', 'a2_feature',
-            'a2_age_detection', 'a3a_feature', 'a3a_comparison', 'a3a_quarter_summary', 'a3b_feature',
-            'a3b_month_summary')
+REQUIRED = (
+    'a1_context',
+    'a1_input',
+    'db1_run',
+    'a2_detection',
+    'a2_evidence',
+    'a2_feature',
+    'a2_age_detection',
+    'a3a_feature',
+    'a3a_comparison',
+    'a3a_quarter_summary',
+    'a3b_feature',
+    'a3b_month_summary',
+)
 # 없어도 게시할 수 있는 테이블(pipeline_state·ctx_weather는 없으면 변환해서 만듭니다)
-OPTIONAL = ('pipeline_state', 'ctx_weather', 'ctx_survey_annual', 'ctx_elder_annual', 'ctx_youth_reference', 'ctx_sns_index', 'a2_activity_followup')
+OPTIONAL = (
+    'pipeline_state',
+    'ctx_weather',
+    'ctx_survey_annual',
+    'ctx_elder_annual',
+    'ctx_youth_reference',
+    'ctx_sns_index',
+    'a2_activity_followup',
+)
 INDEXED = ('date', 'adm_cd', 'period', 'age_band', 'age', 'district', 'year')
 BATCH = 5000
 
@@ -80,9 +100,13 @@ def _ensure_table(conn, table: str, columns: list[tuple[str, str]]) -> None:
     target = f'{SCHEMA}.{PREFIX}{table}'
     body = ', '.join(f'{_quote(name)} {kind}' for name, kind in columns)
     conn.exec_driver_sql(f'CREATE TABLE IF NOT EXISTS {target}(run_id TEXT NOT NULL, {body})')
-    existing = {row[0] for row in conn.exec_driver_sql(
-        'SELECT column_name FROM information_schema.columns WHERE table_schema=%s AND table_name=%s',
-        (SCHEMA, PREFIX + table))}
+    existing = {
+        row[0]
+        for row in conn.exec_driver_sql(
+            'SELECT column_name FROM information_schema.columns WHERE table_schema=%s AND table_name=%s',
+            (SCHEMA, PREFIX + table),
+        )
+    }
     for name, kind in columns:  # 새 공개본에 열이 늘었으면 추가
         if name not in existing:
             conn.exec_driver_sql(f'ALTER TABLE {target} ADD COLUMN {_quote(name)} {kind}')
@@ -90,19 +114,25 @@ def _ensure_table(conn, table: str, columns: list[tuple[str, str]]) -> None:
     for name, _ in columns:
         if name in INDEXED:
             conn.exec_driver_sql(
-                f'CREATE INDEX IF NOT EXISTS ix_{PREFIX}{table}_{name} ON {target}(run_id, {_quote(name)})')
+                f'CREATE INDEX IF NOT EXISTS ix_{PREFIX}{table}_{name} ON {target}(run_id, {_quote(name)})'
+            )
     # 읽기 창구 뷰: 고정된 run의 행만, 원래 분석 테이블과 같은 이름·열로 보입니다.
     names = ', '.join(_quote(name) for name, _ in columns)
     conn.exec_driver_sql(f'DROP VIEW IF EXISTS {VIEW_SCHEMA}.{_quote(table)}')
     conn.exec_driver_sql(
         f"CREATE VIEW {VIEW_SCHEMA}.{_quote(table)} AS SELECT {names} FROM {target} "
-        f"WHERE run_id = current_setting('db1.v16_run_id', true)")
+        f"WHERE run_id = current_setting('db1.v16_run_id', true)"
+    )
 
 
-def _copy(conn, source: database.Connection, table: str, columns: list[tuple[str, str]], run_id: str) -> int:
+def _copy(
+    conn, source: database.Connection, table: str, columns: list[tuple[str, str]], run_id: str
+) -> int:
     names = [name for name, _ in columns]
-    insert = (f'INSERT INTO {SCHEMA}.{PREFIX}{table}(run_id, {", ".join(_quote(n) for n in names)}) '
-              'VALUES %s')
+    insert = (
+        f'INSERT INTO {SCHEMA}.{PREFIX}{table}(run_id, {", ".join(_quote(n) for n in names)}) '
+        'VALUES %s'
+    )
     cursor = source.execute(f'SELECT {", ".join(_quote(n) for n in names)} FROM {_quote(table)}')
     total = 0
     while True:
@@ -114,7 +144,9 @@ def _copy(conn, source: database.Connection, table: str, columns: list[tuple[str
         total += len(rows)
 
 
-def publish(workspace_schema, engine, *, run_id: str | None = None, keep: int = 3, force: bool = False) -> dict:
+def publish(
+    workspace_schema, engine, *, run_id: str | None = None, keep: int = 3, force: bool = False
+) -> dict:
     """PostgreSQL 분석 결과를 새 run으로 올리고 활성 run으로 지정합니다. 결과 요약(dict)을 돌려줍니다."""
     with database.connect(workspace_schema, readonly=True) as source:
         present = db1_compat.table_names(source)
@@ -131,7 +163,10 @@ def publish(workspace_schema, engine, *, run_id: str | None = None, keep: int = 
         coverage = source.execute('SELECT MAX(date) FROM a2_feature').fetchone()[0]
         run_id = run_id or f"db1-{str(coverage)[:7].replace('-', '')}-{digest[:12]}"
         schema = {name: _columns(source, name) for name in tables}
-        expected = {name: source.execute(f'SELECT COUNT(*) FROM {_quote(name)}').fetchone()[0] for name in tables}
+        expected = {
+            name: source.execute(f'SELECT COUNT(*) FROM {_quote(name)}').fetchone()[0]
+            for name in tables
+        }
 
         # 산출물에 없는 테이블 변환
         compat, synthesized = {}, {}
@@ -139,28 +174,43 @@ def publish(workspace_schema, engine, *, run_id: str | None = None, keep: int = 
             rows = db1_compat.weather_rows(source)
             synthesized['ctx_weather'] = rows or []
             expected['ctx_weather'] = len(rows or [])
-            compat['ctx_weather'] = ('ctx_weather_month·ctx_weather_window에서 변환' if rows is not None
-                                     else '원천 없음(빈 표: 날씨 보조 자료 없이 답함)')
+            compat['ctx_weather'] = (
+                'ctx_weather_month·ctx_weather_window에서 변환'
+                if rows is not None
+                else '원천 없음(빈 표: 날씨 보조 자료 없이 답함)'
+            )
         if not readiness_known:
-            compat['pipeline_state'] = 'v16_run 상태에서 만든 뷰(산출물에 갱신 완료 표지가 없어 준비 상태는 확인하지 못함)'
+            compat['pipeline_state'] = (
+                'v16_run 상태에서 만든 뷰(산출물에 갱신 완료 표지가 없어 준비 상태는 확인하지 못함)'
+            )
 
         with engine.begin() as conn:
             conn.exec_driver_sql('SELECT pg_advisory_xact_lock(%s)', (LOCK_KEY,))
             _ensure_schema(conn)
-            found = conn.exec_driver_sql(f'SELECT status, source_sha256 FROM {SCHEMA}.{PREFIX}run WHERE run_id=%s',
-                                         (run_id,)).fetchone()
+            found = conn.exec_driver_sql(
+                f'SELECT status, source_sha256 FROM {SCHEMA}.{PREFIX}run WHERE run_id=%s', (run_id,)
+            ).fetchone()
             if found and found[0] == 'ready' and found[1] == digest and not force:
                 _activate(conn, run_id)
-                return {'run_id': run_id, 'status': 'already_published', 'tables': expected, 'compat': compat}
+                return {
+                    'run_id': run_id,
+                    'status': 'already_published',
+                    'tables': expected,
+                    'compat': compat,
+                }
             if found:  # 같은 run_id를 다시 적재(강제): 자료 행만 지우고 처음부터(활성 run이 참조하는 run 행은 유지)
                 _clear_rows(conn, run_id)
                 conn.exec_driver_sql(
                     f'UPDATE {SCHEMA}.{PREFIX}run SET status=%s, coverage_end=%s, source_sha256=%s, tables=%s, '
-                    f'published_at=now() WHERE run_id=%s', ('loading', str(coverage), digest, json.dumps(expected), run_id))
+                    f'published_at=now() WHERE run_id=%s',
+                    ('loading', str(coverage), digest, json.dumps(expected), run_id),
+                )
             else:
                 conn.exec_driver_sql(
                     f'INSERT INTO {SCHEMA}.{PREFIX}run(run_id,status,coverage_end,source_sha256,tables) '
-                    f'VALUES(%s,%s,%s,%s,%s)', (run_id, 'loading', str(coverage), digest, json.dumps(expected)))
+                    f'VALUES(%s,%s,%s,%s,%s)',
+                    (run_id, 'loading', str(coverage), digest, json.dumps(expected)),
+                )
             copied = {}
             for name in tables:
                 _ensure_table(conn, name, schema[name])
@@ -169,18 +219,32 @@ def publish(workspace_schema, engine, *, run_id: str | None = None, keep: int = 
                 columns = [('date', 'TEXT'), ('payload_json', 'TEXT')]
                 _ensure_table(conn, name, columns)
                 if rows:
-                    conn.exec_driver_sql(f'INSERT INTO {SCHEMA}.{PREFIX}{name}(run_id, date, payload_json) VALUES (%s,%s,%s)',
-                                         [(run_id, date, payload) for date, payload in rows])
+                    conn.exec_driver_sql(
+                        f'INSERT INTO {SCHEMA}.{PREFIX}{name}(run_id, date, payload_json) VALUES (%s,%s,%s)',
+                        [(run_id, date, payload) for date, payload in rows],
+                    )
                 copied[name] = len(rows)
             if not readiness_known:
                 _status_view(conn)
-            wrong = {name: (expected[name], count) for name, count in copied.items() if expected[name] != count}
+            wrong = {
+                name: (expected[name], count)
+                for name, count in copied.items()
+                if expected[name] != count
+            }
             if wrong:  # 트랜잭션이 되돌려져 활성 run은 그대로입니다.
                 raise ValueError(f'적재 행 수가 원본과 다릅니다: {wrong}')
-            conn.exec_driver_sql(f'UPDATE {SCHEMA}.{PREFIX}run SET status=%s WHERE run_id=%s', ('ready', run_id))
+            conn.exec_driver_sql(
+                f'UPDATE {SCHEMA}.{PREFIX}run SET status=%s WHERE run_id=%s', ('ready', run_id)
+            )
             _activate(conn, run_id)
             pruned = _prune(conn, keep)
-    return {'run_id': run_id, 'status': 'published', 'tables': copied, 'pruned_runs': pruned, 'compat': compat}
+    return {
+        'run_id': run_id,
+        'status': 'published',
+        'tables': copied,
+        'pruned_runs': pruned,
+        'compat': compat,
+    }
 
 
 def _status_view(conn) -> None:
@@ -189,14 +253,17 @@ def _status_view(conn) -> None:
     conn.exec_driver_sql(
         f"CREATE VIEW {VIEW_SCHEMA}.pipeline_state AS "
         f"SELECT 1::bigint AS id, json_build_object('status', status, 'source', 'v16_run')::text AS payload_json "
-        f"FROM {SCHEMA}.{PREFIX}run WHERE run_id = current_setting('db1.v16_run_id', true)")
+        f"FROM {SCHEMA}.{PREFIX}run WHERE run_id = current_setting('db1.v16_run_id', true)"
+    )
 
 
 def activate(engine, run_id: str) -> dict:
     """이미 적재된 run을 활성으로 바꿉니다(롤백·재전환). 갱신이 끝난(ready) run만 가능합니다."""
     with engine.begin() as conn:
         conn.exec_driver_sql('SELECT pg_advisory_xact_lock(%s)', (LOCK_KEY,))
-        status = conn.exec_driver_sql(f'SELECT status FROM {SCHEMA}.{PREFIX}run WHERE run_id=%s', (run_id,)).scalar()
+        status = conn.exec_driver_sql(
+            f'SELECT status FROM {SCHEMA}.{PREFIX}run WHERE run_id=%s', (run_id,)
+        ).scalar()
         if status != 'ready':
             raise ValueError(f'활성으로 바꿀 수 없는 run입니다: {run_id} ({status or "없음"})')
         _activate(conn, run_id)
@@ -206,14 +273,17 @@ def activate(engine, run_id: str) -> dict:
 def _activate(conn, run_id: str) -> None:
     conn.exec_driver_sql(
         f'INSERT INTO {SCHEMA}.{PREFIX}active_run(id, run_id) VALUES(1,%s) '
-        f'ON CONFLICT (id) DO UPDATE SET run_id=EXCLUDED.run_id', (run_id,))
+        f'ON CONFLICT (id) DO UPDATE SET run_id=EXCLUDED.run_id',
+        (run_id,),
+    )
 
 
 def _data_tables(conn) -> list[str]:
     rows = conn.exec_driver_sql(
         'SELECT table_name FROM information_schema.columns WHERE table_schema=%s AND column_name=%s '
         'AND table_name LIKE %s AND table_name NOT IN (%s,%s)',
-        (SCHEMA, 'run_id', PREFIX + '%', PREFIX + 'run', PREFIX + 'active_run'))
+        (SCHEMA, 'run_id', PREFIX + '%', PREFIX + 'run', PREFIX + 'active_run'),
+    )
     return sorted({row[0] for row in rows})
 
 
@@ -231,10 +301,15 @@ def _prune(conn, keep: int) -> list[str]:
     """최근 keep개 run과 활성 run만 남깁니다. 요청 중인 챗봇이 읽는 이전 run을 곧바로 지우지 않도록 keep ≥ 2를 권장합니다."""
     if keep < 1:
         return []
-    old = [row[0] for row in conn.exec_driver_sql(
-        f'SELECT run_id FROM {SCHEMA}.{PREFIX}run WHERE status=%s '
-        f'AND run_id <> (SELECT run_id FROM {SCHEMA}.{PREFIX}active_run WHERE id=1) '
-        f'ORDER BY published_at DESC OFFSET %s', ('ready', max(keep - 1, 0)))]
+    old = [
+        row[0]
+        for row in conn.exec_driver_sql(
+            f'SELECT run_id FROM {SCHEMA}.{PREFIX}run WHERE status=%s '
+            f'AND run_id <> (SELECT run_id FROM {SCHEMA}.{PREFIX}active_run WHERE id=1) '
+            f'ORDER BY published_at DESC OFFSET %s',
+            ('ready', max(keep - 1, 0)),
+        )
+    ]
     for run in old:
         _delete_run(conn, run)
     return old

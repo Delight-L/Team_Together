@@ -1,19 +1,29 @@
 """Compare analysis content, independently of file location, timestamps or row order."""
+
 import hashlib
 import json
 import math
 from decimal import Decimal
 
 # Labels and file paths do not change values, methods, thresholds or model versions.
-PRESENTATION_FIELDS = frozenset({
-    'source_file', 'source_path', 'source_district', 'explanation', 'context_note',
-    'metric_label', 'detection_path',
-})
+PRESENTATION_FIELDS = frozenset(
+    {
+        'source_file',
+        'source_path',
+        'source_district',
+        'explanation',
+        'context_note',
+        'metric_label',
+        'detection_path',
+    }
+)
 
 
 def _canonical(value):
     if isinstance(value, dict):
-        return {key: _canonical(item) for key, item in value.items() if key not in PRESENTATION_FIELDS}
+        return {
+            key: _canonical(item) for key, item in value.items() if key not in PRESENTATION_FIELDS
+        }
     if isinstance(value, (list, tuple)):
         return [_canonical(item) for item in value]
     if isinstance(value, bool) or value is None:
@@ -27,17 +37,36 @@ def _canonical(value):
 
 def evidence_fingerprint(rows):
     """Hash every stored evidence value; preserve missing/null/boolean distinctions."""
-    normalized = sorted(json.dumps(_canonical(row), ensure_ascii=False, sort_keys=True,
-                                   separators=(',', ':'), allow_nan=False) for row in rows)
-    return hashlib.sha256(json.dumps(normalized, ensure_ascii=False, separators=(',', ':')).encode('utf-8')).hexdigest()
+    normalized = sorted(
+        json.dumps(
+            _canonical(row),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(',', ':'),
+            allow_nan=False,
+        )
+        for row in rows
+    )
+    return hashlib.sha256(
+        json.dumps(normalized, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+    ).hexdigest()
 
 
 # Only measurements accept arithmetic noise. Identifiers, counts, flags and
 # model versions remain exact; the original values and run fingerprint stay intact.
-MEASUREMENT_FIELDS = frozenset({
-    'metric_value', 'change_pct', 'relative_change_pp', 'risk_robust_z',
-    'threshold', 'absolute_rz', 'local_rz', 'absolute_threshold', 'local_threshold',
-})
+MEASUREMENT_FIELDS = frozenset(
+    {
+        'metric_value',
+        'change_pct',
+        'relative_change_pp',
+        'risk_robust_z',
+        'threshold',
+        'absolute_rz',
+        'local_rz',
+        'absolute_threshold',
+        'local_threshold',
+    }
+)
 MEASUREMENT_TOLERANCE = Decimal('0.00000001')
 COMPARISON_IGNORED_FIELDS = PRESENTATION_FIELDS - {'detection_path'}
 
@@ -49,7 +78,9 @@ def _same_value(left, right, field=None):
             return False
         return all(_same_value(left[key], right[key], key) for key in keys)
     if isinstance(left, (list, tuple)) and isinstance(right, (list, tuple)):
-        return len(left) == len(right) and all(_same_value(a, b, field) for a, b in zip(left, right))
+        return len(left) == len(right) and all(
+            _same_value(a, b, field) for a, b in zip(left, right)
+        )
     if isinstance(left, bool) or isinstance(right, bool):
         return type(left) is type(right) and left == right
     if isinstance(left, (int, float)) and isinstance(right, (int, float)):

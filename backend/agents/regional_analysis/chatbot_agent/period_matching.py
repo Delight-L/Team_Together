@@ -1,4 +1,5 @@
 """Choose the nearest available contextual period without changing core facts."""
+
 from __future__ import annotations
 
 
@@ -22,4 +23,11 @@ def nearest_period(periods, requested: str) -> str | None:
     if not candidates:
         return None
     target = period_index(requested)
-    return min(candidates, key=lambda period: (abs(period_index(period) - target), period_index(period) > target, period))
+    return min(
+        candidates,
+        key=lambda period: (
+            abs(period_index(period) - target),
+            period_index(period) > target,
+            period,
+        ),
+    )

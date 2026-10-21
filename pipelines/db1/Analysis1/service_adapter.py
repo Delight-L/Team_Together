@@ -1,4 +1,5 @@
 """Service uploads use the approved elder v2 model in an isolated process."""
+
 from pathlib import Path
 import argparse
 import json
@@ -27,7 +28,8 @@ def prepare(folder):
     skt = canonical if canonical.is_file() else one(folder, '*gangnam_db1_features*.csv')
     base = build_analysis1_pca_input(
         skt_feature=skt,
-        resident_file=resident, household_file=one(folder, '*세대원수별*.csv'),
+        resident_file=resident,
+        household_file=one(folder, '*세대원수별*.csv'),
         welfare_file=one(folder, '*국민기초생활 수급자 동별 현황*.xlsx'),
     )
     base['adm_cd'] = base.adm_cd.astype(str)
@@ -42,16 +44,27 @@ def prepare(folder):
     if len(elder_files) != 1:
         raise ValueError('독거노인 원본 CSV 한 개와 등록인구·세대수·SKT·수급자 자료를 선택하세요.')
     cells, source = read_source(elder_files[0], mapping, allow_terminal_error=True)
-    counts = {r['adm_cd']: r['value'] for r in cells
-              if r['year'] == 2025 and r['category'] == '합계' and r['sex'] == '계'}
+    counts = {
+        r['adm_cd']: r['value']
+        for r in cells
+        if r['year'] == 2025 and r['category'] == '합계' and r['sex'] == '계'
+    }
     population = preprocess_resident(resident, year=2025, quarters=(4,))
     denominators = population.set_index('dong_name').eval('resident_total * resident_ratio_65_plus')
-    base['elderly_living_alone_rate_65plus'] = base.adm_cd.map(counts) / base.dong_name.map(denominators)
+    base['elderly_living_alone_rate_65plus'] = base.adm_cd.map(counts) / base.dong_name.map(
+        denominators
+    )
     if not base.elderly_living_alone_rate_65plus.between(0, 1).all():
         raise ValueError('2025년 독거노인 수와 2025Q4의 65세 이상 인구를 확인하세요.')
     features, _, changes = detect_changes(
-        base, ROOT / 'Analysis1/models/2025H2_elder_v2/analysis1_baseline_2025H2.joblib', '2025H2')
-    context = base.merge(features.drop(columns=['dong_name']), on='adm_cd', validate='one_to_one', suffixes=('_raw', ''))
+        base, ROOT / 'Analysis1/models/2025H2_elder_v2/analysis1_baseline_2025H2.joblib', '2025H2'
+    )
+    context = base.merge(
+        features.drop(columns=['dong_name']),
+        on='adm_cd',
+        validate='one_to_one',
+        suffixes=('_raw', ''),
+    )
     labels = changes.set_index('adm_cd')
     context['cluster'] = context.adm_cd.map(labels.current_cluster)
     context['cluster_type'] = context.adm_cd.map(labels.current_cluster_type)
@@ -61,11 +74,19 @@ def prepare(folder):
     context['denominator_reference'] = '2025Q4'
     context['elder_available_from'] = None
     context['elder_time_alignment'] = 'retrospective_annual_to_Q4'
-    context['context_note'] = '2025년 독거노인 수와 2025년 4분기 65세 이상 등록인구를 비교한 연간 지역 배경자료입니다. 공개 시점 미확인으로 과거 월 당시 정보나 개인 고립 판정에 사용하지 않습니다.'
-    report = dict(status='PASS', rows=len(base), period='2025H2 구조자료',
-                  rule_version=MODEL_VERSION, elderly_source=source,
-                  denominator_reference='2025Q4', available_from=None,
-                  note=context.context_note.iloc[0])
+    context['context_note'] = (
+        '2025년 독거노인 수와 2025년 4분기 65세 이상 등록인구를 비교한 연간 지역 배경자료입니다. 공개 시점 미확인으로 과거 월 당시 정보나 개인 고립 판정에 사용하지 않습니다.'
+    )
+    report = dict(
+        status='PASS',
+        rows=len(base),
+        period='2025H2 구조자료',
+        rule_version=MODEL_VERSION,
+        elderly_source=source,
+        denominator_reference='2025Q4',
+        available_from=None,
+        note=context.context_note.iloc[0],
+    )
     return base, context, report
 
 

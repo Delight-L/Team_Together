@@ -1,4 +1,5 @@
 """지역 분석 단독 확인 API. 일반 화면 질문은 /api/chat의 보미 파이프라인(bomi/)을 거칩니다."""
+
 import logging
 
 from backend.api import limits
@@ -23,22 +24,42 @@ def chat(request):
 
     def events():
         if pii:
-            yield 'notice', {'message': '개인정보로 보이는 내용을 가리고 처리했어요.', 'question': question}
+            yield (
+                'notice',
+                {'message': '개인정보로 보이는 내용을 가리고 처리했어요.', 'question': question},
+            )
         yield 'route', {'agent': 'regional_v16', 'label': '지역 분석 에이전트', 'by': '직접 호출'}
         if not regional_analysis.data_ready():
-            yield 'error', {'message': '지역 분석 근거 자료를 조회하지 못했습니다. 관리자에게 DB 연결과 게시 상태 확인을 요청하세요.'}
+            yield (
+                'error',
+                {
+                    'message': '지역 분석 근거 자료를 조회하지 못했습니다. 관리자에게 DB 연결과 게시 상태 확인을 요청하세요.'
+                },
+            )
             yield 'done', {}
             return
         try:
             result = regional_analysis.reply(question, history, context, use_ai=use_ai)
-            yield 'replace', {'text': result['answer'], 'mode': result.get('mode', ''), 'source': '지역 분석 · DB1'}
+            yield (
+                'replace',
+                {
+                    'text': result['answer'],
+                    'mode': result.get('mode', ''),
+                    'source': '지역 분석 · DB1',
+                },
+            )
             if result.get('followUps'):
                 yield 'follow_ups', {'questions': result['followUps']}
             if result.get('notice'):
                 yield 'notice', {'message': result['notice']}
         except Exception:
             logging.exception('지역 분석 단독 조회 실패')
-            yield 'error', {'message': '지역 분석 답변을 만드는 중 문제가 생겼습니다. 서버 로그를 확인해 주세요.'}
+            yield (
+                'error',
+                {
+                    'message': '지역 분석 답변을 만드는 중 문제가 생겼습니다. 서버 로그를 확인해 주세요.'
+                },
+            )
         yield 'done', {}
 
     return StreamResponse(events())

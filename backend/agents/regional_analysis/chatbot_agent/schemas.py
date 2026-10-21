@@ -1,13 +1,16 @@
 """챗봇 단계 사이에서만 공유하는 데이터 형식."""
+
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
+
 
 @dataclass(frozen=True)
 class GuardResult:
     allowed: bool
     message: str = ""
     needs_clarification: bool = False
+
 
 @dataclass(frozen=True)
 class QueryIntent:
@@ -34,6 +37,7 @@ class QueryIntent:
     include_values: bool = False
     summary_only: bool = False
 
+
 @dataclass
 class Evidence:
     title: str
@@ -42,6 +46,7 @@ class Evidence:
     sources: list[str] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
     supplementary: dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass(frozen=True)
 class AnswerResult:

@@ -68,7 +68,40 @@ Team_Together/
 `yield`는 값을 하나씩 전달하며, `with`는 블록 종료 시 정리 작업도 실행하게 합니다.
 `RLock`과 `contextmanager`는 연결 수명·동시 요청 처리를 위해 필요하므로 역할을 이해한 뒤 수정합니다.
 
-## 앞으로 적용할 가독성 기준
+## 화면 코드를 읽는 순서
+
+| 순서 | 파일 | 확인할 흐름 |
+|---|---|---|
+| 1 | [main.jsx](../frontend/src/main.jsx) | React 화면 시작과 공용 CSS 연결 |
+| 2 | [App.jsx](../frontend/src/App.jsx) | 로그인·메뉴·지역 선택 상태, 사업 검토·보고서 화면 연결 |
+| 3 | [api.js](../frontend/src/api.js) | 서버 조회·저장, 보미 답변 스트림 받기 |
+| 4 | [linkedSelection.mjs](../frontend/src/linkedSelection.mjs) | 지역·연령 선택 유지, 선택한 그룹의 탐지 시점 찾기 |
+| 5 | [useDraft.js](../frontend/src/useDraft.js) · [draftStore.mjs](../frontend/src/draftStore.mjs) | 메뉴를 옮겨도 입력 중인 초안 보관 |
+| 6 | [experienceLogic.mjs](../frontend/src/experienceLogic.mjs) | 보고서 수치·출처·검토 전 문구 점검 |
+
+`props`는 부모가 전달하는 값·함수입니다. `useState`는 화면에서 바뀌는 값을 관리하고,
+`useEffect`는 조회·이벤트 등록 같은 작업을 실행합니다. 이벤트를 등록한 effect는 반환한 함수에서 해제합니다.
+`.mjs`는 화면을 직접 그리지 않는 JavaScript 계산·선택 함수, `.jsx`는 JSX 화면 코드를 포함하는 파일입니다.
+`map`은 각 값을 바꿔 새 목록을 만들고, `filter`는 조건에 맞는 값만 남기며,
+`find`는 처음 맞는 값 하나를 찾습니다. `?.`는 앞의 값이 없으면 조회를 멈춥니다.
+
+## 분석 코드를 읽는 순서
+
+분석 실행은 웹 요청과 분리되어 있습니다. 먼저 [DB1 실행기](../pipelines/db1/run_db1.py)에서
+어느 분석을 부르는지 확인하고, 해당 분석의 전처리 → 계산 → 저장 순서로 읽습니다.
+지역 유형의 기준 모델은 [baseline.py](../pipelines/db1/Analysis1/analysis/baseline.py),
+새 기간의 비교는 [change_detector.py](../pipelines/db1/Analysis1/analysis/change_detector.py)입니다.
+
+- `feature_frame`: 분석에 넣을 특성을 열로 정리한 표입니다.
+- `balanced_frame` / `balanced_features`: 영역별 가중치를 적용한 표입니다.
+- `clusters`: 각 동의 지역 유형 결과입니다.
+- `bundle`: 표준화·PCA·군집 모델과 기준 자료를 함께 보관한 묶음입니다.
+
+PCA는 여러 관련 열을 적은 수의 축으로 요약합니다. 새 기간을 비교할 때는 저장된 기준 모델로
+변환하고 분류합니다. 기준 모델을 다시 학습하는 작업과 새 기간에 같은 모델을 적용하는 작업을 구분합니다.
+`df`는 pandas 표를 뜻하는 관례이고, `row`는 그중 한 행입니다. 정렬·열 순서·결측값 처리는 계산 결과에 영향을 줍니다.
+
+## 가독성 기준
 
 - 한 줄에 여러 문장을 `;`로 연결하지 않습니다.
 - 조건문·예외 처리의 실행문은 다음 줄에 씁니다.
@@ -118,6 +151,7 @@ Git 제외인 로컬 테스트는 별도로 보관한 환경에서만 사용할 
 
 과거 폴더 이동·가독성 비교·로컬 압축본 위치는 [코드 정리 기록](history/repository-cleanup-2026-10-19.md),
 지역 분석 엔진의 이름 변경은 [2026-10-20 기록](history/repository-cleanup-2026-10-20.md)을 참고하세요.
+전체 소스의 문장 배치·변수명 정리와 최종 비교 결과는 [2026-10-21 기록](history/repository-cleanup-2026-10-21.md)에 있습니다.
 
 ## 문서 관리
 

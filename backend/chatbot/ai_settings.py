@@ -5,6 +5,7 @@
 - 키를 화면에서 넣지 않았으면 .env의 키(OPENAI_API_KEY 등)를 씁니다.
 - 키 원문은 화면으로 돌려보내지 않고 끝 4자리만 보여 줍니다.
 """
+
 from dataclasses import dataclass
 import copy
 import json
@@ -23,8 +24,16 @@ CACHE_SECONDS = 30
 _cache = {"at": 0.0, "value": None}
 PROVIDERS = {
     "openai": {"label": "OpenAI", "default_model": "gpt-4o-mini", "env_keys": ["OPENAI_API_KEY"]},
-    "anthropic": {"label": "Anthropic (Claude)", "default_model": "claude-opus-5-5", "env_keys": ["ANTHROPIC_API_KEY"]},
-    "gemini": {"label": "Google Gemini", "default_model": "gemini-2.5-flash", "env_keys": ["GEMINI_API_KEY", "GOOGLE_API_KEY"]},
+    "anthropic": {
+        "label": "Anthropic (Claude)",
+        "default_model": "claude-opus-5-5",
+        "env_keys": ["ANTHROPIC_API_KEY"],
+    },
+    "gemini": {
+        "label": "Google Gemini",
+        "default_model": "gemini-2.5-flash",
+        "env_keys": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+    },
 }
 _lock = threading.Lock()
 
@@ -48,7 +57,9 @@ def _read(fresh=False):
     if not fresh and _cache["value"] is not None and now - _cache["at"] < CACHE_SECONDS:
         return copy.deepcopy(_cache["value"])
     with work_store.transaction() as db:
-        row = db.execute(text("SELECT value FROM work.app_settings WHERE key=:key"), {"key": SETTING_KEY}).fetchone()
+        row = db.execute(
+            text("SELECT value FROM work.app_settings WHERE key=:key"), {"key": SETTING_KEY}
+        ).fetchone()
     try:
         saved = json.loads(row[0]) if row else {}
     except json.JSONDecodeError:
@@ -59,9 +70,11 @@ def _read(fresh=False):
 
 def _write(saved):
     with work_store.transaction() as db:
-        db.execute(text("""INSERT INTO work.app_settings (key,value) VALUES (:key,:value)
+        db.execute(
+            text("""INSERT INTO work.app_settings (key,value) VALUES (:key,:value)
             ON CONFLICT (key) DO UPDATE SET value=excluded.value"""),
-                   {"key": SETTING_KEY, "value": json.dumps(saved, ensure_ascii=False)})
+            {"key": SETTING_KEY, "value": json.dumps(saved, ensure_ascii=False)},
+        )
     _cache.update(at=0.0, value=None)
 
 
@@ -80,7 +93,11 @@ def current():
     provider = saved.get("provider") if saved.get("provider") in PROVIDERS else "openai"
     model = (saved.get("models") or {}).get(provider) or ""
     if not model:
-        model = env_settings.openai_model if provider == "openai" else PROVIDERS[provider]["default_model"]
+        model = (
+            env_settings.openai_model
+            if provider == "openai"
+            else PROVIDERS[provider]["default_model"]
+        )
     stored_key = (saved.get("keys") or {}).get(provider) or ""
     if stored_key:
         key, source = stored_key, "설정 화면"
@@ -104,14 +121,25 @@ def public_view():
     for provider, info in PROVIDERS.items():
         stored_key = (saved.get("keys") or {}).get(provider) or ""
         key = stored_key or _env_key(provider)
-        providers.append({
-            "id": provider, "label": info["label"], "defaultModel": info["default_model"],
-            "model": (saved.get("models") or {}).get(provider) or "",
-            "hasKey": bool(key), "keyHint": ("…" + key[-4:]) if key else "",
-            "keySource": "설정 화면" if stored_key else (".env" if key else ""),
-        })
-    return {"enabled": config.enabled, "provider": config.provider, "model": config.model,
-            "ready": config.ready, "moderation": bool(openai_key()), "providers": providers}
+        providers.append(
+            {
+                "id": provider,
+                "label": info["label"],
+                "defaultModel": info["default_model"],
+                "model": (saved.get("models") or {}).get(provider) or "",
+                "hasKey": bool(key),
+                "keyHint": ("…" + key[-4:]) if key else "",
+                "keySource": "설정 화면" if stored_key else (".env" if key else ""),
+            }
+        )
+    return {
+        "enabled": config.enabled,
+        "provider": config.provider,
+        "model": config.model,
+        "ready": config.ready,
+        "moderation": bool(openai_key()),
+        "providers": providers,
+    }
 
 
 def save(changes):

@@ -1,1 +1,1 @@
-from .pipeline import build_analysis1_pca_input
+from .pipeline import build_analysis1_pca_input as build_analysis1_pca_input

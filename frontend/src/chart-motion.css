@@ -1,22 +1,39 @@
 /* Data transitions never animate labels or alter chart geometry. */
-@keyframes data-content-reveal { from {opacity:.4} to {opacity:1} }
+@keyframes data-content-reveal {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
 .app-shell.group-shell .gd-file-list > button,
 .app-shell.group-shell .dq-card,
-.app-shell.region-insights-shell .ri-topic { animation:data-content-reveal 200ms ease-out; }
+.app-shell.region-insights-shell .ri-topic {
+  animation: data-content-reveal 200ms ease-out;
+}
 .app-shell.followup-shell .rf-age-buttons button,
 .app-shell.region-insights-shell .ri-age-tabs button,
 .app-shell.region-insights-shell .ri-map-label,
 .app-shell.group-shell .dq-pagination button,
 .app-shell.group-shell .dq-card {
- transition:background-color 150ms ease-out,border-color 150ms ease-out,color 150ms ease-out,box-shadow 150ms ease-out;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out,
+    color 150ms ease-out,
+    box-shadow 150ms ease-out;
 }
-@media(prefers-reduced-motion:reduce) {
- .app-shell.group-shell .gd-file-list > button,
- .app-shell.group-shell .dq-card,
- .app-shell.region-insights-shell .ri-topic {animation:none;}
- .app-shell.followup-shell .rf-age-buttons button,
- .app-shell.region-insights-shell .ri-age-tabs button,
- .app-shell.region-insights-shell .ri-map-label,
- .app-shell.group-shell .dq-pagination button,
- .app-shell.group-shell .dq-card {transition:none;}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.group-shell .gd-file-list > button,
+  .app-shell.group-shell .dq-card,
+  .app-shell.region-insights-shell .ri-topic {
+    animation: none;
+  }
+  .app-shell.followup-shell .rf-age-buttons button,
+  .app-shell.region-insights-shell .ri-age-tabs button,
+  .app-shell.region-insights-shell .ri-map-label,
+  .app-shell.group-shell .dq-pagination button,
+  .app-shell.group-shell .dq-card {
+    transition: none;
+  }
 }

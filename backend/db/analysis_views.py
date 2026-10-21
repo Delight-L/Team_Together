@@ -1,4 +1,5 @@
 """버전 관리된 분석 조회 뷰 설치. API 요청에서는 DDL을 실행하지 않습니다."""
+
 from pathlib import Path
 from sqlalchemy import text
 

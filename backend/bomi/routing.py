@@ -7,6 +7,7 @@
 
 자료 유무(v16 DB 파일 등)에 따른 대체는 여기서 하지 않습니다. 각 에이전트가 안에서 처리합니다.
 """
+
 import json
 import logging
 import asyncio
@@ -43,7 +44,8 @@ class Router:
         if not questions.is_period_expansion(request.question):
             return False
         return any(
-            item.get('role') == 'user' and (
+            item.get('role') == 'user'
+            and (
                 any(word in item.get('content', '') for word in questions.ANALYSIS_WORDS)
                 or questions.mentions_district(item.get('content', ''))
             )
@@ -94,12 +96,23 @@ class Router:
         recent = [{'role': m['role'], 'content': m['content'][:800]} for m in request.history[-6:]]
         screen = {key: request.context.get(key, '') for key in ('city', 'district', 'month')}
         if request.group:
-            screen['group'] = {key: request.group.context.get(key, '') for key in ('district', 'month', 'age', 'sex')}
-        messages = [{'role': 'system', 'content': ROUTER_PROMPT},
-                    {'role': 'user', 'content': '선택된 화면 맥락(JSON 자료): ' + json.dumps(screen, ensure_ascii=False)},
-                    *recent, {'role': 'user', 'content': request.question}]
+            screen['group'] = {
+                key: request.group.context.get(key, '')
+                for key in ('district', 'month', 'age', 'sex')
+            }
+        messages = [
+            {'role': 'system', 'content': ROUTER_PROMPT},
+            {
+                'role': 'user',
+                'content': '선택된 화면 맥락(JSON 자료): ' + json.dumps(screen, ensure_ascii=False),
+            },
+            *recent,
+            {'role': 'user', 'content': request.question},
+        ]
         try:
-            answer = await asyncio.wait_for(llm.complete(messages, json_mode=True, max_tokens=1000), 20)
+            answer = await asyncio.wait_for(
+                llm.complete(messages, json_mode=True, max_tokens=1000), 20
+            )
             agent = json.loads(answer).get('agent')
         except (*LLM_ERRORS, ValueError, AttributeError, TimeoutError) as exc:
             LOGGER.warning('AI 담당 선택 실패, 규칙으로 대체: %s', type(exc).__name__)
@@ -116,8 +129,11 @@ class Router:
             return Route('welfare', '대화 조건')
         selected = Route(ai_agent, BY_AI) if ai_agent else Route(self.by_rules(request), BY_RULE)
         if request.use_ai and selected.agent == 'guide':
-            found = aio.run(retrieval.retrieve(request.question, city=request.city,
-                                              district=request.district, use_ai=True))
+            found = aio.run(
+                retrieval.retrieve(
+                    request.question, city=request.city, district=request.district, use_ai=True
+                )
+            )
             if found['records'] and found['mode'].startswith('hybrid_reranked'):
                 request.retrieval.update(found)
                 return Route('welfare', '의미 검색 확인')

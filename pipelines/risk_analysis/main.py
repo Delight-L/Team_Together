@@ -1,4 +1,5 @@
 """위험변화 탐지 에이전트 실행 파일 (Windows/macOS 공통)."""
+
 from __future__ import annotations
 import argparse
 from pathlib import Path
@@ -40,7 +41,9 @@ def main() -> None:
     parser.add_argument("--output-dir", default="outputs")
     parser.add_argument("--metrics", help="선택: 분석할 숫자 열. 쉼표로 구분")
     parser.add_argument("--min-relative-change", type=float, default=MIN_RELATIVE_CHANGE_PP)
-    parser.add_argument("--z-threshold", type=float, default=ROBUST_Z_THRESHOLD, choices=[1.5, 2.5, 3.5])
+    parser.add_argument(
+        "--z-threshold", type=float, default=ROBUST_Z_THRESHOLD, choices=[1.5, 2.5, 3.5]
+    )
     args = parser.parse_args()
 
     output_dir = Path(args.output_dir)
@@ -50,9 +53,13 @@ def main() -> None:
         metrics = [name.strip() for name in args.metrics.split(",") if name.strip()]
     context = load_preprocessed_csv(args.context) if args.context else None
 
-    result = run_risk_analysis(load_preprocessed_csv(args.input), context=context,
-                               min_relative_change_pp=args.min_relative_change, z_threshold=args.z_threshold,
-                               metric_columns=metrics)
+    result = run_risk_analysis(
+        load_preprocessed_csv(args.input),
+        context=context,
+        min_relative_change_pp=args.min_relative_change,
+        z_threshold=args.z_threshold,
+        metric_columns=metrics,
+    )
 
     outputs = [
         ("전체 지표 판정", result.assessment, "risk_metric_assessment.csv"),

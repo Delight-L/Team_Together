@@ -12,6 +12,7 @@
 
 외부 AI를 쓰지 않는 응답(자료 조회·고정 문구)에는 출력 moderate를 걸지 않습니다. 사람이 만든 자료이고, 호출만 늘기 때문입니다.
 """
+
 import logging
 from dataclasses import dataclass
 
@@ -28,10 +29,11 @@ HISTORY_SIZE = 6  # 기억하는 이전 대화: 질문·답 3쌍
 @dataclass(frozen=True)
 class Policy:
     """에이전트 하나가 적용하는 규제."""
-    blocked_words: bool = True         # 입력: 욕설·위험한 요청·지시 무력화 단어 규칙
-    moderate_input: bool = True        # 입력: moderate API (AI 모드에서만 호출)
-    redact_unverified: bool = False    # 출력: 근거 자료에 없는 연락처·URL·금액 가리기
-    moderate_output: bool = False      # 출력: moderate API (AI가 만든 글에만 호출)
+
+    blocked_words: bool = True  # 입력: 욕설·위험한 요청·지시 무력화 단어 규칙
+    moderate_input: bool = True  # 입력: moderate API (AI 모드에서만 호출)
+    redact_unverified: bool = False  # 출력: 근거 자료에 없는 연락처·URL·금액 가리기
+    moderate_output: bool = False  # 출력: moderate API (AI가 만든 글에만 호출)
 
 
 @dataclass(frozen=True)
@@ -44,7 +46,7 @@ def prepare(request: ChatRequest) -> Prepared:
     """요청 직후 검사. 길이 초과는 ValueError라서 스트림 시작 전에 400이 됩니다."""
     if len(request.question) > MAX_QUESTION_CHARS:
         raise ValueError('질문은 1~2,000자로 입력하세요.')
-    recent = list(request.messages[-(HISTORY_SIZE + 1):])
+    recent = list(request.messages[-(HISTORY_SIZE + 1) :])
     masked, kinds = guardrails.mask_messages(recent)
     # 외부 AI는 관리자 설정이 켜져 있을 때만 씁니다. 사용자가 켜도 설정이 꺼져 있으면 자료 기반으로 답합니다.
     use_ai = request.use_ai and ai_ready()
@@ -102,7 +104,9 @@ class Regulator:
             return guardrails.StreamRedactor(material)
         return _PassThrough()
 
-    async def output_flagged_async(self, text: str, policy: Policy, generated_by_ai: bool) -> list[str]:
+    async def output_flagged_async(
+        self, text: str, policy: Policy, generated_by_ai: bool
+    ) -> list[str]:
         """AI가 만든 글이 moderate API에 걸렸는지. 사람이 만든 자료·고정 문구에는 호출하지 않습니다."""
         if policy.moderate_output and generated_by_ai and text.strip():
             return await moderate_async(text)
@@ -114,6 +118,7 @@ class Regulator:
 
 class _PassThrough:
     """StreamRedactor와 같은 인터페이스. 가리지 않습니다."""
+
     hidden: list = []
 
     def feed(self, text: str) -> str:

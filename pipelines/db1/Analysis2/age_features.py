@@ -1,11 +1,19 @@
 from pathlib import Path as _DatabasePath
 import sys as _database_sys
-_database_sys.path.insert(0, str(next(p for p in _DatabasePath(__file__).resolve().parents if (p/'pipelines/db1').is_dir())))
+
+_database_sys.path.insert(
+    0,
+    str(
+        next(p for p in _DatabasePath(__file__).resolve().parents if (p / 'pipelines/db1').is_dir())
+    ),
+)
 from pipelines.db1 import database
 import sys as _settings_sys
 from pathlib import Path as _SettingsPath
+
 _settings_sys.path.insert(0, str(_SettingsPath(__file__).resolve().parents[1]))
 from db1_settings import load_settings
+
 """Age-preserving Analysis2 preprocessing; does not produce isolation detections."""
 from pathlib import Path
 import argparse
@@ -35,7 +43,7 @@ INTEREST = ['커뮤니케이션이 적은 집단', '평일 외출이 적은 집�
 
 
 def band(age):
-    return f'{int(age)//10*10}s' if int(age) < 60 else '60plus'
+    return f'{int(age) // 10 * 10}s' if int(age) < 60 else '60plus'
 
 
 def raw_check(frame, kind, expected_codes=None):
@@ -53,7 +61,9 @@ def raw_check(frame, kind, expected_codes=None):
     grid = pd.MultiIndex.from_product([codes, [1, 2], AGES], names=RAW_KEY)
     actual = pd.MultiIndex.from_frame(frame[RAW_KEY])
     if set(grid) != set(actual):
-        raise ValueError(f'{kind}: incomplete/unexpected sex-age grid: missing={list(grid.difference(actual))[:5]}')
+        raise ValueError(
+            f'{kind}: incomplete/unexpected sex-age grid: missing={list(grid.difference(actual))[:5]}'
+        )
     name_col = '행정동' if kind == 'telecom' else '행정동명'
     if frame.groupby('행정동코드')[name_col].nunique().ne(1).any():
         raise ValueError(f'{kind}: inconsistent dong names')
@@ -89,8 +99,16 @@ def build_age_frames(telecom, interest, rain, diary, year, month, expected_codes
         raise ValueError('telecom/interest dong names differ')
     frames = []
     for scheme, age_labels in [('five_year', AGES), ('service', BANDS)]:
-        ta = telecom.assign(age_band=telecom['연령대'].map(band) if scheme == 'service' else telecom['연령대'].astype(str))
-        ia = interest.assign(age_band=interest['연령대'].map(band) if scheme == 'service' else interest['연령대'].astype(str))
+        ta = telecom.assign(
+            age_band=telecom['연령대'].map(band)
+            if scheme == 'service'
+            else telecom['연령대'].astype(str)
+        )
+        ia = interest.assign(
+            age_band=interest['연령대'].map(band)
+            if scheme == 'service'
+            else interest['연령대'].astype(str)
+        )
         for label in age_labels:
             label = str(label)
             tg, ig = ta.loc[ta.age_band.eq(label)], ia.loc[ia.age_band.eq(label)]
@@ -98,23 +116,40 @@ def build_age_frames(telecom, interest, rain, diary, year, month, expected_codes
             features['age_scheme'] = scheme
             features['age_band'] = label
             features['model_version'] = VERSION
-            features['phase'] = 'baseline' if pd.Timestamp(year, month, 1) <= pd.Timestamp('2025-06-01') else 'update'
-            pops = tg.groupby('행정동코드').agg(total_population=('총인구수', 'sum'), telecom_one_person_population=('1인가구수', 'sum'), source_cells=('연령대', 'size'))
+            features['phase'] = (
+                'baseline'
+                if pd.Timestamp(year, month, 1) <= pd.Timestamp('2025-06-01')
+                else 'update'
+            )
+            pops = tg.groupby('행정동코드').agg(
+                total_population=('총인구수', 'sum'),
+                telecom_one_person_population=('1인가구수', 'sum'),
+                source_cells=('연령대', 'size'),
+            )
             pops['interest_one_person_population'] = ig.groupby('행정동코드')['1인가구수'].sum()
             for out, value, missing in MOVE:
                 valid = pd.to_numeric(tg[value], errors='coerce').notna()
                 weights = (tg['총인구수'] - tg[missing]).where(valid, 0)
                 pops[out + '_valid_population'] = weights.groupby(tg['행정동코드']).sum()
-            for out, value in [('call_contacts', '평균 통화대상자 수'), ('text_contacts', '평균 문자대상자 수')]:
+            for out, value in [
+                ('call_contacts', '평균 통화대상자 수'),
+                ('text_contacts', '평균 문자대상자 수'),
+            ]:
                 valid = pd.to_numeric(tg[value], errors='coerce').notna()
-                pops[out + '_valid_population'] = tg['총인구수'].where(valid, 0).groupby(tg['행정동코드']).sum()
+                pops[out + '_valid_population'] = (
+                    tg['총인구수'].where(valid, 0).groupby(tg['행정동코드']).sum()
+                )
             features = features.merge(pops.reset_index(), on='행정동코드', validate='one_to_one')
             features['quality_status'] = np.where(
                 features[CORE].apply(pd.to_numeric, errors='coerce').gt(0).all(axis=1)
                 & features['interest_one_person_population'].gt(0)
                 & ~features['interest_structural_issue'],
-                'available', 'review_required')
-            features['quality_note'] = 'available is preprocessing completeness, not validated detection readiness; no population cutoff calibrated'
+                'available',
+                'review_required',
+            )
+            features['quality_note'] = (
+                'available is preprocessing completeness, not validated detection readiness; no population cutoff calibrated'
+            )
             frames.append(features)
     return pd.concat(frames, ignore_index=True), telecom, interest
 
@@ -127,7 +162,10 @@ def find_file(directory, period, keyword):
 
 
 def sources(settings, period):
-    return (find_file(settings['telecom_dir'], period, '29개'), find_file(settings['interest_dir'], period, '10개'))
+    return (
+        find_file(settings['telecom_dir'], period, '29개'),
+        find_file(settings['interest_dir'], period, '10개'),
+    )
 
 
 def reconcile(age, legacy):
@@ -138,13 +176,33 @@ def reconcile(age, legacy):
             w = group[col + '_valid_population']
             mask = group[col].notna() & w.gt(0)
             value = np.average(group.loc[mask, col], weights=w[mask]) if mask.any() else np.nan
-            result.append({'date': str(old['date'].date()), '행정동코드': int(code), 'metric': col, 'rebuilt': value, 'existing_method': old[col], 'difference': value-old[col]})
+            result.append(
+                {
+                    'date': str(old['date'].date()),
+                    '행정동코드': int(code),
+                    'metric': col,
+                    'rebuilt': value,
+                    'existing_method': old[col],
+                    'difference': value - old[col],
+                }
+            )
         for col in ['comm_low_rate', 'weekday_outing_low_rate', 'weekend_outing_low_rate']:
             w = group.interest_one_person_population
             value = np.average(group[col], weights=w) if w.sum() > 0 else np.nan
-            result.append({'date': str(old['date'].date()), '행정동코드': int(code), 'metric': col, 'rebuilt': value, 'existing_method': old[col], 'difference': value-old[col]})
+            result.append(
+                {
+                    'date': str(old['date'].date()),
+                    '행정동코드': int(code),
+                    'metric': col,
+                    'rebuilt': value,
+                    'existing_method': old[col],
+                    'difference': value - old[col],
+                }
+            )
     result = pd.DataFrame(result)
-    if not np.allclose(result.rebuilt, result.existing_method, rtol=1e-10, atol=1e-10, equal_nan=True):
+    if not np.allclose(
+        result.rebuilt, result.existing_method, rtol=1e-10, atol=1e-10, equal_nan=True
+    ):
         raise ValueError('age-to-dong weighted reconciliation failed')
     return result
 
@@ -163,37 +221,85 @@ CREATE TABLE IF NOT EXISTS a2_age_raw (
 
 
 def serial(frame):
-    return json.loads(frame.to_json(orient='records', date_format='iso', force_ascii=False, double_precision=15))
+    return json.loads(
+        frame.to_json(orient='records', date_format='iso', force_ascii=False, double_precision=15)
+    )
 
 
 def persist(db, monthly, raw_t, raw_i, metadata):
     date = pd.Timestamp(monthly.date.iloc[0]).strftime('%Y-%m-%d')
-    raw_payload = {'telecom': serial(raw_t.sort_values(RAW_KEY)), 'interest': serial(raw_i.sort_values(RAW_KEY)), 'version': VERSION}
-    digest = hashlib.sha256(json.dumps(raw_payload, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+    raw_payload = {
+        'telecom': serial(raw_t.sort_values(RAW_KEY)),
+        'interest': serial(raw_i.sort_values(RAW_KEY)),
+        'version': VERSION,
+    }
+    digest = hashlib.sha256(
+        json.dumps(raw_payload, ensure_ascii=False, sort_keys=True).encode()
+    ).hexdigest()
     database.ensure_workspace(db)
     with database.connect(db) as con, con:
         con.executescript(SCHEMA)
-        existing = con.execute('SELECT fingerprint FROM a2_age_source WHERE date=%s', (date,)).fetchone()
+        existing = con.execute(
+            'SELECT fingerprint FROM a2_age_source WHERE date=%s', (date,)
+        ).fetchone()
         if existing:
             if existing[0] != digest:
-                raise ValueError(f'{date}: stored age data differ; explicit source revision required')
-            stored = [json.loads(row[0]) for row in con.execute('SELECT feature_json FROM a2_age_feature WHERE date=%s', (date,))]
+                raise ValueError(
+                    f'{date}: stored age data differ; explicit source revision required'
+                )
+            stored = [
+                json.loads(row[0])
+                for row in con.execute(
+                    'SELECT feature_json FROM a2_age_feature WHERE date=%s', (date,)
+                )
+            ]
             order = lambda row: (row['행정동코드'], row['age_scheme'], row['age_band'])
             if sorted(stored, key=order) != sorted(serial(monthly), key=order):
-                raise ValueError(f'{date}: derived features/weather differ; explicit revision required')
+                raise ValueError(
+                    f'{date}: derived features/weather differ; explicit revision required'
+                )
             return False
         latest = con.execute('SELECT MAX(date) FROM a2_age_source').fetchone()[0]
-        expected = (pd.Period(latest, freq='M') + 1).to_timestamp().strftime('%Y-%m-%d') if latest else '2022-01-01'
+        expected = (
+            (pd.Period(latest, freq='M') + 1).to_timestamp().strftime('%Y-%m-%d')
+            if latest
+            else '2022-01-01'
+        )
         if date != expected:
             raise ValueError(f'nonconsecutive age update: expected {expected}, got {date}')
         for row in serial(monthly):
-            con.execute('INSERT INTO a2_age_feature VALUES (%s,%s,%s,%s,%s,%s,%s,%s)', (str(row['행정동코드']), date, row['age_scheme'], row['age_band'], VERSION, row['phase'], row['quality_status'], json.dumps(row, ensure_ascii=False, allow_nan=False)))
+            con.execute(
+                'INSERT INTO a2_age_feature VALUES (%s,%s,%s,%s,%s,%s,%s,%s)',
+                (
+                    str(row['행정동코드']),
+                    date,
+                    row['age_scheme'],
+                    row['age_band'],
+                    VERSION,
+                    row['phase'],
+                    row['quality_status'],
+                    json.dumps(row, ensure_ascii=False, allow_nan=False),
+                ),
+            )
         for kind, records in raw_payload.items():
             if kind == 'version':
                 continue
             for row in records:
-                con.execute('INSERT INTO a2_age_raw VALUES (%s,%s,%s,%s,%s,%s)', (date, kind, str(row['행정동코드']), int(row['성별']), int(row['연령대']), json.dumps(row, ensure_ascii=False, allow_nan=False)))
-        con.execute('INSERT INTO a2_age_source VALUES (%s,%s,%s)', (date, digest, json.dumps(metadata, ensure_ascii=False)))
+                con.execute(
+                    'INSERT INTO a2_age_raw VALUES (%s,%s,%s,%s,%s,%s)',
+                    (
+                        date,
+                        kind,
+                        str(row['행정동코드']),
+                        int(row['성별']),
+                        int(row['연령대']),
+                        json.dumps(row, ensure_ascii=False, allow_nan=False),
+                    ),
+                )
+        con.execute(
+            'INSERT INTO a2_age_source VALUES (%s,%s,%s)',
+            (date, digest, json.dumps(metadata, ensure_ascii=False)),
+        )
     return True
 
 
@@ -201,32 +307,60 @@ def export(db, output):
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     with database.connect(db) as con:
-        frame = pd.DataFrame([json.loads(r[0]) for r in con.execute('SELECT feature_json FROM a2_age_feature ORDER BY date,adm_cd,age_scheme,age_band')])
+        frame = pd.DataFrame(
+            [
+                json.loads(r[0])
+                for r in con.execute(
+                    'SELECT feature_json FROM a2_age_feature ORDER BY date,adm_cd,age_scheme,age_band'
+                )
+            ]
+        )
     for scheme in ['service', 'five_year']:
         selected = frame.loc[frame.age_scheme.eq(scheme)].copy()
-        selected.to_csv(output/f'analysis2_age_{scheme}_history.csv', index=False, encoding='utf-8-sig')
+        selected.to_csv(
+            output / f'analysis2_age_{scheme}_history.csv', index=False, encoding='utf-8-sig'
+        )
         if scheme == 'service':
             for phase in ['baseline', 'update']:
-                selected.loc[selected.phase.eq(phase)].to_csv(output/f'analysis2_age_service_{phase}.csv', index=False, encoding='utf-8-sig')
+                selected.loc[selected.phase.eq(phase)].to_csv(
+                    output / f'analysis2_age_service_{phase}.csv', index=False, encoding='utf-8-sig'
+                )
 
 
 def run(config, db, output, start='2022-01', end='2025-12', month=None):
     settings = (config if isinstance(config, dict) else load_settings(config))['analysis2']
     rain = pd.read_csv(settings['rain'], encoding='utf-8-sig')
     diary = pd.read_csv(settings['diary'], encoding='utf-8-sig')
-    periods = [pd.Period(month, freq='M').to_timestamp()] if month else pd.date_range(start, end, freq='MS')
-    inventory = [{'month': p.strftime('%Y-%m'), 'telecom': str(sources(settings, p)[0]), 'interest': str(sources(settings, p)[1])} for p in periods]
+    periods = (
+        [pd.Period(month, freq='M').to_timestamp()]
+        if month
+        else pd.date_range(start, end, freq='MS')
+    )
+    inventory = [
+        {
+            'month': p.strftime('%Y-%m'),
+            'telecom': str(sources(settings, p)[0]),
+            'interest': str(sources(settings, p)[1]),
+        }
+        for p in periods
+    ]
     # Validate inventory before any new monthly data are stored.
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(inventory).to_csv(output/'source_inventory.csv', index=False, encoding='utf-8-sig')
+    pd.DataFrame(inventory).to_csv(
+        output / 'source_inventory.csv', index=False, encoding='utf-8-sig'
+    )
     reports = []
     checks = []
     expected_codes = None
     if database.exists(db):
         with database.connect(db) as con:
-            if con.execute("SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_feature'").fetchone():
-                expected_codes = [int(row[0]) for row in con.execute('SELECT DISTINCT adm_cd FROM a2_age_feature')]
+            if con.execute(
+                "SELECT 1 FROM information_schema.tables WHERE table_schema=current_schema() AND table_name='a2_age_feature'"
+            ).fetchone():
+                expected_codes = [
+                    int(row[0]) for row in con.execute('SELECT DISTINCT adm_cd FROM a2_age_feature')
+                ]
                 if not expected_codes:
                     expected_codes = None
     for period, source in zip(periods, inventory):
@@ -237,15 +371,37 @@ def run(config, db, output, start='2022-01', end='2025-12', month=None):
         old = build_month_feature_frames(t, i, rain, diary, period.year, period.month)
         check = reconcile(age, old)
         checks.append(check)
-        metadata = {**source, 'telecom_columns': list(t.columns), 'interest_columns': list(i.columns)}
+        metadata = {
+            **source,
+            'telecom_columns': list(t.columns),
+            'interest_columns': list(i.columns),
+        }
         saved = persist(db, age, t, i, metadata)
-        reports.append({'month': source['month'], 'raw_telecom_rows': len(t), 'raw_interest_rows': len(i), 'service_rows': int(age.age_scheme.eq('service').sum()), 'five_year_rows': int(age.age_scheme.eq('five_year').sum()), 'review_required': int(age.quality_status.eq('review_required').sum()), 'max_reconciliation_error': float(check.difference.abs().max()), 'saved': saved})
+        reports.append(
+            {
+                'month': source['month'],
+                'raw_telecom_rows': len(t),
+                'raw_interest_rows': len(i),
+                'service_rows': int(age.age_scheme.eq('service').sum()),
+                'five_year_rows': int(age.age_scheme.eq('five_year').sum()),
+                'review_required': int(age.quality_status.eq('review_required').sum()),
+                'max_reconciliation_error': float(check.difference.abs().max()),
+                'saved': saved,
+            }
+        )
         print(json.dumps(reports[-1], ensure_ascii=False), flush=True)
-    merge_report(pd.DataFrame(reports), output/'monthly_quality_report.csv', ['month'])
-    merge_report(pd.concat(checks), output/'weighted_reconciliation.csv', ['date', '행정동코드', 'metric'])
+    merge_report(pd.DataFrame(reports), output / 'monthly_quality_report.csv', ['month'])
+    merge_report(
+        pd.concat(checks), output / 'weighted_reconciliation.csv', ['date', '행정동코드', 'metric']
+    )
     with database.connect(db) as con:
-        all_sources = [json.loads(row[0]) for row in con.execute('SELECT metadata_json FROM a2_age_source ORDER BY date')]
-    pd.DataFrame([{k: row[k] for k in ['month','telecom','interest']} for row in all_sources]).to_csv(output/'source_inventory.csv', index=False, encoding='utf-8-sig')
+        all_sources = [
+            json.loads(row[0])
+            for row in con.execute('SELECT metadata_json FROM a2_age_source ORDER BY date')
+        ]
+    pd.DataFrame(
+        [{k: row[k] for k in ['month', 'telecom', 'interest']} for row in all_sources]
+    ).to_csv(output / 'source_inventory.csv', index=False, encoding='utf-8-sig')
     export(db, output)
     return reports
 
@@ -262,7 +418,9 @@ def sync_age_history(settings, db, through, output):
     with database.connect(db) as con:
         con.executescript(SCHEMA)
         latest = con.execute('SELECT MAX(date) FROM a2_age_source').fetchone()[0]
-    start = (pd.Period(latest, freq='M') + 1).to_timestamp() if latest else pd.Timestamp('2022-01-01')
+    start = (
+        (pd.Period(latest, freq='M') + 1).to_timestamp() if latest else pd.Timestamp('2022-01-01')
+    )
     through = pd.Timestamp(through)
     if start <= through:
         run(settings, db, output, start.strftime('%Y-%m'), through.strftime('%Y-%m'))
@@ -273,9 +431,9 @@ def sync_age_history(settings, db, through, output):
 def main():
     root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config', default=str(root/'config/db1_config.json'))
+    parser.add_argument('--config', default=str(root / 'config/db1_config.json'))
     parser.add_argument('--db', default=str('db1_pipeline'))
-    parser.add_argument('--output', default=str(root/'Analysis2/outputs/age'))
+    parser.add_argument('--output', default=str(root / 'Analysis2/outputs/age'))
     parser.add_argument('--start', default='2022-01')
     parser.add_argument('--end', default='2025-12')
     parser.add_argument('--month')

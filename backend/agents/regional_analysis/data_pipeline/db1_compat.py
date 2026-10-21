@@ -7,12 +7,15 @@ v16 월별 작업기가 만드는 DB에는 있고, 파이프라인 산출물에�
 
 이 모듈은 산출물을 고치지 않고, 서비스 게시 때 작업기가 만드는 모양으로 **변환한 값**을 만듭니다.
 """
+
 from __future__ import annotations
 
 import json
 from pipelines.db1.database import Connection
 
-SNOW_NOTE = 'Legacy feature reproduction uses zero; user-facing context preserves the missing symbol.'
+SNOW_NOTE = (
+    'Legacy feature reproduction uses zero; user-facing context preserves the missing symbol.'
+)
 
 
 def table_names(source: Connection) -> set[str]:
@@ -29,25 +32,44 @@ def weather_rows(source: Connection) -> list[tuple[str, str]] | None:
     """
     if not {'ctx_weather_month', 'ctx_weather_window'} <= table_names(source):
         return None
-    monthly = {period: json.loads(payload)
-               for period, payload in source.execute('SELECT period, payload_json FROM ctx_weather_month')}
+    monthly = {
+        period: json.loads(payload)
+        for period, payload in source.execute('SELECT period, payload_json FROM ctx_weather_month')
+    }
 
     def month_values(month: str) -> dict:
         value = monthly.get(month)
         if value is None:
-            return {'month': month, 'rainfall_mm': None, 'rain_days': None, 'snow_days': None, 'status': 'missing'}
-        return {'month': month, 'rainfall_mm': value.get('rainfall_mm'), 'rain_days': value.get('rain_days'),
-                'snow_days': value.get('snow_days'), 'snow_status': 'observed'}
+            return {
+                'month': month,
+                'rainfall_mm': None,
+                'rain_days': None,
+                'snow_days': None,
+                'status': 'missing',
+            }
+        return {
+            'month': month,
+            'rainfall_mm': value.get('rainfall_mm'),
+            'rain_days': value.get('rain_days'),
+            'snow_days': value.get('snow_days'),
+            'snow_status': 'observed',
+        }
 
     rows = []
-    for date, payload in source.execute('SELECT date, payload_json FROM ctx_weather_window ORDER BY date'):
+    for date, payload in source.execute(
+        'SELECT date, payload_json FROM ctx_weather_window ORDER BY date'
+    ):
         window = json.loads(payload)
         label = window.get('label_month') or date[:7]
         converted = {
             'label_weather': month_values(label),
-            'observation_month_weather': [month_values(month) for month in window.get('observation_months', [])],
-            'scope': 'Seoul_city_shared_context', 'legacy_snow_dash_to_zero': True,
-            'snow_dash_explanation': SNOW_NOTE, 'signal_rule_uses_weather': False,
+            'observation_month_weather': [
+                month_values(month) for month in window.get('observation_months', [])
+            ],
+            'scope': 'Seoul_city_shared_context',
+            'legacy_snow_dash_to_zero': True,
+            'snow_dash_explanation': SNOW_NOTE,
+            'signal_rule_uses_weather': False,
             'converted_from': 'ctx_weather_month + ctx_weather_window',
         }
         rows.append((date, json.dumps(converted, ensure_ascii=False)))

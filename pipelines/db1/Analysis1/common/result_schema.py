@@ -6,6 +6,7 @@ from typing import Any
 @dataclass
 class AnalysisResult:
     """Common machine-readable contract for AI Agent / Orchestrator."""
+
     analysis_id: str
     status: str
     data_period: str | None = None

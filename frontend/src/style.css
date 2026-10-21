@@ -670,9 +670,6 @@ svg {
   overflow: auto;
 }
 
-
-
-
 .detail-note {
   padding: 12px 20px;
   font-size: 11px;
@@ -1497,7 +1494,6 @@ tr:last-child td {
     font-size: 32px;
   }
 
-
   .map-legend small {
     display: inline;
   }
@@ -1744,7 +1740,6 @@ tr:last-child td {
     grid-template-columns: minmax(0, 1fr) minmax(230px, 1fr);
   }
 
-
   .kpi-icon {
     display: none;
   }
@@ -1899,7 +1894,6 @@ tr:last-child td {
     font-size: 11px;
   }
 
-
   .detail-placeholder {
     padding: 10px;
   }
@@ -1913,7 +1907,6 @@ tr:last-child td {
   .detail-status {
     padding: 0 12px 5px;
   }
-
 
   .detail-note {
     display: none;
@@ -2043,19 +2036,52 @@ tr:last-child td {
   margin-block: auto;
   padding-block: 20px;
 }
-.chat-start { flex-shrink: 0; }
-.chat-welcome { text-align: center; margin-bottom: 20px; }
-.chat-welcome h3 { margin: 0 0 8px; font-size: 18px; color: var(--text); }
-.chat-welcome p { margin: 0; font-size: 11px; line-height: 1.7; color: var(--text-muted); }
-.chat-footer .chat-topics { margin: 0 0 10px; }
-.chat-panel .chat-intro { margin: 14px 0 12px; padding: 8px; }
-.chat-panel .chat-intro .bomi { width: 68px; height: 82px; }
-.context-region { min-width: 0; overflow-wrap: anywhere; }
-.context-chip > span:last-child { flex-shrink: 0; }
+.chat-start {
+  flex-shrink: 0;
+}
+.chat-welcome {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.chat-welcome h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--text);
+}
+.chat-welcome p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+.chat-footer .chat-topics {
+  margin: 0 0 10px;
+}
+.chat-panel .chat-intro {
+  margin: 14px 0 12px;
+  padding: 8px;
+}
+.chat-panel .chat-intro .bomi {
+  width: 68px;
+  height: 82px;
+}
+.context-region {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.context-chip > span:last-child {
+  flex-shrink: 0;
+}
 
 @keyframes chat-rise-in {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .chat-footer .chat-topics {
   animation: chat-rise-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -2065,20 +2091,62 @@ tr:last-child td {
 }
 @media (prefers-reduced-motion: reduce) {
   .chat-footer .chat-topics,
-  .chat-footer .topic-buttons { animation: none; }
+  .chat-footer .topic-buttons {
+    animation: none;
+  }
 }
 /* 보미의 복지사업 답변과 참고 자료 표시 스타일입니다. */
-.welfare-status { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; color:var(--text-sub); font-size: 11px; }
-.welfare-status small { font-size: 11px; }
-.welfare-chat .chat-messages { padding-top:12px; }
-.welfare-chat .welcome h3 { font-size:20px; color:var(--text-strong); }
-.welfare-chat .welfare-notice { border-left:3px solid #f59e0b; padding-left:10px; margin-top:18px; }
-.welfare-sources { margin-top:12px; padding:10px; border:1px solid var(--line); border-radius:8px; overflow-wrap:anywhere; }
-.welfare-sources summary { cursor:pointer; color:#2563eb; }
-.welfare-sources > div { border-top:1px solid var(--line); padding-top:10px; margin-top:10px; }
-.welfare-sources p { margin:5px 0; color:var(--text-sub); }
-.welfare-sources small { color:#956100; }
-.welfare-chat .chat-input button { white-space:nowrap; min-width:38px; }
+.welfare-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  color: var(--text-sub);
+  font-size: 11px;
+}
+.welfare-status small {
+  font-size: 11px;
+}
+.welfare-chat .chat-messages {
+  padding-top: 12px;
+}
+.welfare-chat .welcome h3 {
+  font-size: 20px;
+  color: var(--text-strong);
+}
+.welfare-chat .welfare-notice {
+  border-left: 3px solid #f59e0b;
+  padding-left: 10px;
+  margin-top: 18px;
+}
+.welfare-sources {
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+.welfare-sources summary {
+  cursor: pointer;
+  color: #2563eb;
+}
+.welfare-sources > div {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+.welfare-sources p {
+  margin: 5px 0;
+  color: var(--text-sub);
+}
+.welfare-sources small {
+  color: #956100;
+}
+.welfare-chat .chat-input button {
+  white-space: nowrap;
+  min-width: 38px;
+}
 
 /* 노트북처럼 세로가 짧은 창: 스크롤 없이 하단 안내까지 보이도록 여백과 크기를 줄입니다. */
 @media (max-height: 820px) and (min-width: 601px) {
@@ -2110,26 +2178,63 @@ tr:last-child td {
 }
 
 /* 관리자 «AI 설정» 화면 */
-.ai-settings { max-width: 760px; }
-.ai-settings .ai-state { padding: 10px 12px; border-radius: 10px; font-weight: 600; background: var(--surface-tint); color: var(--text-sub); }
-.ai-settings .ai-state.on { background: #f5f3ff; color: #5b21b6; }
-.ai-settings .ai-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 14px 0 6px; }
-.ai-settings .ai-fields label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-strong); }
-.ai-settings .ai-fields input, .ai-settings .ai-fields select { font-weight: 400; min-width: 0; }
-.ai-settings .ai-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.ai-settings .success { color: #15803d; }
+.ai-settings {
+  max-width: 760px;
+}
+.ai-settings .ai-state {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  background: var(--surface-tint);
+  color: var(--text-sub);
+}
+.ai-settings .ai-state.on {
+  background: #f5f3ff;
+  color: #5b21b6;
+}
+.ai-settings .ai-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 14px 0 6px;
+}
+.ai-settings .ai-fields label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.ai-settings .ai-fields input,
+.ai-settings .ai-fields select {
+  font-weight: 400;
+  min-width: 0;
+}
+.ai-settings .ai-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.ai-settings .success {
+  color: #15803d;
+}
 
 /* 종합 현황은 이번 디자인 규칙 적용에서 제외했습니다(docs/design-rules.md «적용 범위»).
    공용 규칙(eyebrow·표)이 바뀌어도 종합 현황 화면은 이전 값을 유지합니다. */
-.group-shell .eyebrow { font-size: 9px; color: #8795ad; }
-.group-shell th { font-size: 10px; color: #8b9ab0; background: #f9fbfe; }
-.group-shell td { color: #596f90; }
+.group-shell .eyebrow {
+  font-size: 9px;
+  color: #8795ad;
+}
+.group-shell th {
+  font-size: 10px;
+  color: #8b9ab0;
+  background: #f9fbfe;
+}
+.group-shell td {
+  color: #596f90;
+}
 
-/* 저장 성공 알림(toast.jsx): 화면 아래 가운데에 잠시 보였다가 사라집니다. */
-.toast-stack { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; width: max-content; max-width: calc(100vw - 32px); }
-.toast { margin: 0; padding: 12px 20px; border-radius: var(--radius-pill); background: var(--text-strong); color: var(--surface); font-size: 14px; font-weight: 500; line-height: 1.5; box-shadow: 0 8px 24px #12213e33; animation: toast-in .2s ease-out; }
-@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
-@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
 /* 사업 카드 요약: 원문을 짧게 자른 대상·지원·신청 3줄. 전체 원문은 .service-full에서 펼칩니다. */
 .service-card .service-intro {
   color: var(--text-muted);

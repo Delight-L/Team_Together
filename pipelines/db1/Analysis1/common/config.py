@@ -34,9 +34,7 @@ class Analysis1Config:
     # 승인된 4개 Domain / 13 Features
     domains: dict[str, tuple[str, ...]] = field(
         default_factory=lambda: {
-            "activity": (
-                "activity_intensity",
-            ),
+            "activity": ("activity_intensity",),
             "life_activity": (
                 "active_pop_pc1",
                 "active_pop_pc2",

@@ -2,6 +2,7 @@
 
 키 원문은 저장만 하고 화면으로 돌려보내지 않습니다(끝 4자리만 표시).
 """
+
 import logging
 
 from backend.bomi import aio
@@ -28,7 +29,12 @@ def ai_save(request):
     if not isinstance(request.params, dict):
         raise ValueError('AI 설정 형식이 올바르지 않습니다.')
     view = ai_settings.save(request.params)
-    LOGGER.info('관리자 %s가 AI 설정 변경: 사용=%s 제공사=%s', request.user.get('id'), view['enabled'], view['provider'])
+    LOGGER.info(
+        '관리자 %s가 AI 설정 변경: 사용=%s 제공사=%s',
+        request.user.get('id'),
+        view['enabled'],
+        view['provider'],
+    )
     return view
 
 
@@ -38,9 +44,16 @@ def ai_test(request):
     if not ai_settings.current().ready:
         return {'ok': False, 'message': 'AI 사용을 켜고 API 키를 저장한 뒤 확인하세요.'}
     try:
-        answer = aio.run(llm.complete([{'role': 'user', 'content': '연결 확인입니다. "확인"이라고만 답하세요.'}],
-                                          max_tokens=20))
+        answer = aio.run(
+            llm.complete(
+                [{'role': 'user', 'content': '연결 확인입니다. "확인"이라고만 답하세요.'}],
+                max_tokens=20,
+            )
+        )
     except LLM_ERRORS as exc:
         LOGGER.warning('AI 연결 확인 실패: %s', type(exc).__name__)
-        return {'ok': False, 'message': f'연결하지 못했습니다({type(exc).__name__}). 키·모델 이름을 확인하세요.'}
+        return {
+            'ok': False,
+            'message': f'연결하지 못했습니다({type(exc).__name__}). 키·모델 이름을 확인하세요.',
+        }
     return {'ok': True, 'message': '연결되었습니다. 응답: ' + answer.strip()[:40]}

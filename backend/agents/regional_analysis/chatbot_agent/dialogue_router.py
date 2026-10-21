@@ -1,4 +1,5 @@
 """주제 밖 대화 응답과 LLM 장애 시 보수적인 목적 분류."""
+
 import re
 from .schemas import QueryIntent
 
@@ -10,8 +11,10 @@ DIALOGUE_REPLIES = {
     "thanks": "도움이 되었다니 다행이에요. 더 확인할 내용이 있으면 말씀해 주세요.",
 }
 
+
 def dialogue_intent(kind):
     return QueryIntent("dialogue", kind)
+
 
 def fallback_dialogue(question, districts, memory):
     """LLM을 사용할 수 없을 때만 사용. 알 수 없는 입력을 조회로 강제하지 않는다."""
@@ -24,7 +27,9 @@ def fallback_dialogue(question, districts, memory):
         return dialogue_intent("thanks")
     # 정상 업무 질문에 부정적 표현이 섞인 경우 업무 조회를 유지한다.
     if any(name in q for name in districts) or re.search(
-        r"지역|행정동|통신|통화|문자|이동|고립|복지|예방|신호|탐지|지표|robust|분석|계산|변화|추이|근거|전월|하반기|상반기|기간|소비|상권|카드|데이터|연령|나이|비교|[2-6]0\s*대|60\s*세|초기.?이력|처리.?상태|\d+.*동", q, re.I
+        r"지역|행정동|통신|통화|문자|이동|고립|복지|예방|신호|탐지|지표|robust|분석|계산|변화|추이|근거|전월|하반기|상반기|기간|소비|상권|카드|데이터|연령|나이|비교|[2-6]0\s*대|60\s*세|초기.?이력|처리.?상태|\d+.*동",
+        q,
+        re.I,
     ):
         return None
     if re.search(r"못된|멍청|바보|쓸모없|닥쳐|씨발", q):

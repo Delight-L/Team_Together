@@ -19,7 +19,11 @@ export function summarizeRegions(assessment, geometry, city, month, months, stru
       ? '자료 없음'
       : count > 0
         ? comparable
-          ? earlier.some((r) => r.is_risk_signal && rows.some(c => c.is_risk_signal && (!c.age_band || c.age_band === r.age_band)))
+          ? earlier.some(
+              (r) =>
+                r.is_risk_signal &&
+                rows.some((c) => c.is_risk_signal && (!c.age_band || c.age_band === r.age_band)),
+            )
             ? '연속 후보'
             : '신규 후보'
           : '변화 후보'
@@ -28,7 +32,7 @@ export function summarizeRegions(assessment, geometry, city, month, months, stru
           : '기준 미해당';
     const zValues = relevantScores(rows);
     return {
-      structure: city === '강남구' ? structures.find(r => r.dong_name === unit.n) : null,
+      structure: city === '강남구' ? structures.find((r) => r.dong_name === unit.n) : null,
       name: unit.n,
       unit,
       rows,
@@ -52,5 +56,5 @@ export function exampleQuestion(region) {
 }
 
 export function RegionalOverview(props) {
-  return <RegionalFollowup {...props} summarize={summarizeRegions}/>;
+  return <RegionalFollowup {...props} summarize={summarizeRegions} />;
 }

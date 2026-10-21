@@ -1,4 +1,5 @@
 """종합 현황의 연령·성별 그룹 API. 그룹에 대한 보미 질문은 /api/chat(group 포함)으로 처리합니다."""
+
 from backend.db import group_repository, group_workspace
 from backend.api.common import check_city_access, group_context
 

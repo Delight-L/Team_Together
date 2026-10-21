@@ -1,4 +1,5 @@
 """Convert internal source-label months into user-facing observation periods."""
+
 from __future__ import annotations
 
 from datetime import date, timedelta

@@ -4,6 +4,7 @@
 2. 근거 자료를 담은 지시문(prompt)과 대화를 AI에게 보내 답을 받습니다.
 3. 답에 근거 자료에 없는 연락처·URL·금액이 있으면 가립니다(chatbot/guardrails.py).
 """
+
 from backend.bomi import aio
 from backend.chatbot.guardrails import redact_unverified
 from backend.chatbot.welfare.app.llm.client import AIUnavailable, EmptyAnswer, ai_ready, llm
@@ -35,8 +36,11 @@ def ask_with_evidence(prompt, question, history):
     """(답변, 가린 정보 종류 목록)을 돌려줍니다. AI를 쓸 수 없거나 실패하면 LLM_ERRORS 중 하나가 납니다."""
     if not ai_ready():
         raise AIUnavailable('관리자 AI 설정이 꺼져 있거나 API 키가 없습니다.')
-    messages = [{'role': 'system', 'content': prompt}, *clean_history(history),
-                {'role': 'user', 'content': str(question).strip()}]
+    messages = [
+        {'role': 'system', 'content': prompt},
+        *clean_history(history),
+        {'role': 'user', 'content': str(question).strip()},
+    ]
     answer = aio.run(_collect(messages))
     if not answer.strip():
         raise EmptyAnswer('AI 답변이 비어 있습니다.')

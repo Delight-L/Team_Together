@@ -1,4 +1,5 @@
 """행정동 표기 변경과 자주 발생하는 오타를 조회 전 표준 이름으로 바꾼다."""
+
 from __future__ import annotations
 
 import re

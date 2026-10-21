@@ -21,14 +21,11 @@ def compute_log_changes(df: pd.DataFrame) -> pd.DataFrame:
 
     result[DATE_COLUMN] = pd.to_datetime(result[DATE_COLUMN])
 
-    result = result.sort_values(
-        [AREA_CODE_COLUMN, DATE_COLUMN]
-    ).reset_index(drop=True)
+    result = result.sort_values([AREA_CODE_COLUMN, DATE_COLUMN]).reset_index(drop=True)
 
     for col in DETECTION_CORE_COLUMNS:
-        result[f"{col}_log_change"] = (
-            np.log(result[col])
-            - np.log(result.groupby(AREA_CODE_COLUMN)[col].shift(1))
+        result[f"{col}_log_change"] = np.log(result[col]) - np.log(
+            result.groupby(AREA_CODE_COLUMN)[col].shift(1)
         )
 
     return result
@@ -51,15 +48,9 @@ def compute_common_adjusted_residuals(df: pd.DataFrame) -> pd.DataFrame:
         common_change_col = f"{col}_common_change"
         residual_col = f"{col}_residual"
 
-        result[common_change_col] = (
-            result.groupby(DATE_COLUMN)[log_change_col]
-            .transform("median")
-        )
+        result[common_change_col] = result.groupby(DATE_COLUMN)[log_change_col].transform("median")
 
-        result[residual_col] = (
-            result[log_change_col]
-            - result[common_change_col]
-        )
+        result[residual_col] = result[log_change_col] - result[common_change_col]
 
     return result
 
@@ -95,10 +86,7 @@ def expanding_robust_z(
                 current_value = result.at[idx, residual_col]
 
                 # 현재 시점 이전의 residual만 사용
-                history = (
-                    group.iloc[:pos][residual_col]
-                    .dropna()
-                )
+                history = group.iloc[:pos][residual_col].dropna()
 
                 result.at[idx, baseline_n_col] = len(history)
 
@@ -107,19 +95,13 @@ def expanding_robust_z(
 
                 historical_median = history.median()
 
-                mad = np.median(
-                    np.abs(history - historical_median)
-                )
+                mad = np.median(np.abs(history - historical_median))
 
                 # 과거 변동성이 전혀 없는 경우 계산하지 않음
                 if mad == 0 or pd.isna(mad):
                     continue
 
-                result.at[idx, rz_col] = (
-                    scale
-                    * (current_value - historical_median)
-                    / mad
-                )
+                result.at[idx, rz_col] = scale * (current_value - historical_median) / mad
 
     return result
 
@@ -170,15 +152,9 @@ def detect_signals(
         & (result["weekend_move_count_rz"] <= threshold)
     )
 
-    result["combined_signal"] = (
-        result["communication_signal"]
-        & result["mobility_signal"]
-    )
+    result["combined_signal"] = result["communication_signal"] & result["mobility_signal"]
 
-    result["any_signal"] = (
-        result["communication_signal"]
-        | result["mobility_signal"]
-    )
+    result["any_signal"] = result["communication_signal"] | result["mobility_signal"]
 
     return result
 
@@ -203,22 +179,13 @@ def compute_mobility_distance_evidence(df: pd.DataFrame) -> pd.DataFrame:
         common_change_col = f"{col}_common_change"
         residual_col = f"{col}_residual"
 
-        result[log_change_col] = (
-            np.log(result[col])
-            - np.log(
-                result.groupby(AREA_CODE_COLUMN)[col].shift(1)
-            )
+        result[log_change_col] = np.log(result[col]) - np.log(
+            result.groupby(AREA_CODE_COLUMN)[col].shift(1)
         )
 
-        result[common_change_col] = (
-            result.groupby(DATE_COLUMN)[log_change_col]
-            .transform("median")
-        )
+        result[common_change_col] = result.groupby(DATE_COLUMN)[log_change_col].transform("median")
 
-        result[residual_col] = (
-            result[log_change_col]
-            - result[common_change_col]
-        )
+        result[residual_col] = result[log_change_col] - result[common_change_col]
 
     return result
 
@@ -233,22 +200,16 @@ def attach_mobility_evidence(df: pd.DataFrame) -> pd.DataFrame:
     """
     result = df.copy()
 
-    result["weekday_distance_down"] = (
-        result["weekday_move_distance_residual"] < 0
-    )
+    result["weekday_distance_down"] = result["weekday_move_distance_residual"] < 0
 
-    result["weekend_distance_down"] = (
-        result["weekend_move_distance_residual"] < 0
-    )
+    result["weekend_distance_down"] = result["weekend_move_distance_residual"] < 0
 
     result["mobility_distance_both_down"] = (
-        result["weekday_distance_down"]
-        & result["weekend_distance_down"]
+        result["weekday_distance_down"] & result["weekend_distance_down"]
     )
 
     result["mobility_distance_support"] = (
-        result["weekday_distance_down"]
-        | result["weekend_distance_down"]
+        result["weekday_distance_down"] | result["weekend_distance_down"]
     )
 
     return result
@@ -265,15 +226,9 @@ def attach_communication_validation(df: pd.DataFrame) -> pd.DataFrame:
     """
     result = df.copy()
 
-    result["comm_low_rate_change"] = (
-        result
-        .groupby(AREA_CODE_COLUMN)["comm_low_rate"]
-        .diff()
-    )
+    result["comm_low_rate_change"] = result.groupby(AREA_CODE_COLUMN)["comm_low_rate"].diff()
 
-    result["comm_validation_support"] = (
-        result["comm_low_rate_change"] > 0
-    )
+    result["comm_validation_support"] = result["comm_low_rate_change"] > 0
 
     return result
 
@@ -294,29 +249,17 @@ def attach_signal_status(df: pd.DataFrame) -> pd.DataFrame:
     """
     result = df.copy()
 
-    result = result.sort_values(
-        [AREA_CODE_COLUMN, DATE_COLUMN]
-    ).reset_index(drop=True)
+    result = result.sort_values([AREA_CODE_COLUMN, DATE_COLUMN]).reset_index(drop=True)
 
-    previous_signal = (
-    result.groupby(AREA_CODE_COLUMN)["any_signal"]
-    .shift(1)
-    .eq(True)
-    )
+    previous_signal = result.groupby(AREA_CODE_COLUMN)["any_signal"].shift(1).eq(True)
 
     result["signal_status"] = pd.NA
 
     signal_mask = result["any_signal"]
 
-    result.loc[
-        signal_mask & ~previous_signal,
-        "signal_status"
-    ] = "New"
+    result.loc[signal_mask & ~previous_signal, "signal_status"] = "New"
 
-    result.loc[
-        signal_mask & previous_signal,
-        "signal_status"
-    ] = "Continuing"
+    result.loc[signal_mask & previous_signal, "signal_status"] = "Continuing"
 
     return result
 
@@ -337,26 +280,16 @@ def attach_analysis1_context(
     """
     result = df.copy()
 
-    context = context_df[
-        ["adm_cd", "dong_name", "cluster", "cluster_type"]
-    ].copy()
+    context = context_df[["adm_cd", "dong_name", "cluster", "cluster_type"]].copy()
 
     # 결합키 자료형 통일
-    result[AREA_CODE_COLUMN] = (
-        pd.to_numeric(result[AREA_CODE_COLUMN], errors="raise")
-        .astype(int)
-    )
+    result[AREA_CODE_COLUMN] = pd.to_numeric(result[AREA_CODE_COLUMN], errors="raise").astype(int)
 
-    context["adm_cd"] = (
-        pd.to_numeric(context["adm_cd"], errors="raise")
-        .astype(int)
-    )
+    context["adm_cd"] = pd.to_numeric(context["adm_cd"], errors="raise").astype(int)
 
     # Analysis1은 행정동당 1행이어야 한다.
     if context["adm_cd"].duplicated().any():
-        raise ValueError(
-            "Analysis1 Context에 중복된 adm_cd가 존재합니다."
-        )
+        raise ValueError("Analysis1 Context에 중복된 adm_cd가 존재합니다.")
 
     result = result.merge(
         context,
@@ -365,7 +298,7 @@ def attach_analysis1_context(
         right_on="adm_cd",
         validate="many_to_one",
     )
-    if result[["cluster","cluster_type"]].isna().any().any():
+    if result[["cluster", "cluster_type"]].isna().any().any():
         raise ValueError("Analysis1 Context is incomplete for Analysis2 area codes")
 
     return result

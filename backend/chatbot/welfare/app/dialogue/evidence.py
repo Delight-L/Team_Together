@@ -1,10 +1,13 @@
 """사업별 핵심 사실 검사. 검사 전 AI 원문은 사용자에게 보내지 않습니다."""
+
 import json
 import re
 from backend.chatbot.guardrails import redact_unverified, UNVERIFIED
 
 # 날짜·나이·비율도 다른 사업에서 가져오지 못하도록 검사합니다.
-DETAIL = re.compile(r"20\d{2}(?:[-./]\d{1,2}(?:[-./]\d{1,2})?|년(?:\s*\d{1,2}월(?:\s*\d{1,2}일)?)?)|\d+(?:\.\d+)?\s*(?:세|%|개월)")
+DETAIL = re.compile(
+    r"20\d{2}(?:[-./]\d{1,2}(?:[-./]\d{1,2})?|년(?:\s*\d{1,2}월(?:\s*\d{1,2}일)?)?)|\d+(?:\.\d+)?\s*(?:세|%|개월)"
+)
 
 
 def validate_answer(answer, records):
@@ -18,9 +21,15 @@ def validate_answer(answer, records):
             ids = list(dict.fromkeys(int(i) - 1 for i in markers))
             active = records[ids[0]] if len(ids) == 1 and 0 <= ids[0] < len(records) else None
             # 자료 표기는 서버가 실제 사업명으로 치환합니다.
-            line = re.sub(r"\[자료 (\d+)\]", lambda m: (
-                "[" + records[int(m[1]) - 1]["name"] + "]" if 0 < int(m[1]) <= len(records)
-                else "[근거 미확인]"), line)
+            line = re.sub(
+                r"\[자료 (\d+)\]",
+                lambda m: (
+                    "[" + records[int(m[1]) - 1]["name"] + "]"
+                    if 0 < int(m[1]) <= len(records)
+                    else "[근거 미확인]"
+                ),
+                line,
+            )
             if named and (len(named) != 1 or active is None or named[0]["id"] != active["id"]):
                 active = None
         elif named:

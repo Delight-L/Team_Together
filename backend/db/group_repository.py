@@ -3,6 +3,7 @@
 python -m db.group_repository --build --publish
 공개 집계 CSV만 읽으며 원본/기존 분석 테이블은 변경하지 않는다.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -17,6 +18,7 @@ import pandas as pd
 from sqlalchemy import text
 
 from backend.common import ROOT
+
 SNAPSHOT = ROOT / 'data/processed/group_dashboard.json'
 VERSION = 'flow-groups-v2'
 CITY_PREFIXES = {'강남구': '11230', '춘천시': '32010'}
@@ -25,14 +27,18 @@ CITY_PREFIXES = {'강남구': '11230', '춘천시': '32010'}
 def belongs_to_city(code, city):
     prefix = CITY_PREFIXES.get(city)
     return bool(prefix and re.fullmatch(prefix + r'\d{2}', str(code)))
+
+
 AGES = ['10대', '20대', '30대', '40대', '50대', '60대 이상']
 SEXES = ['남성', '여성']
 DAYS = ['월', '화', '수', '목', '금', '토', '일']
 DAY_COLS = ['FLOW_POP_CNT_' + d for d in ['MON', 'TUS', 'WED', 'THU', 'FRI', 'SAT', 'SUN']]
 HOUR_COLS = [f'TMST_{h:02}' for h in range(24)]
-AGE_COLS = {f'{prefix}_FLOW_POP_CNT_{age}': (label, sex)
-            for prefix, sex in [('MAN', '남성'), ('WMAN', '여성')]
-            for age, label in zip(['10G', '20G', '30G', '40G', '50G', '60GU'], AGES)}
+AGE_COLS = {
+    f'{prefix}_FLOW_POP_CNT_{age}': (label, sex)
+    for prefix, sex in [('MAN', '남성'), ('WMAN', '여성')]
+    for age, label in zip(['10G', '20G', '30G', '40G', '50G', '60GU'], AGES)
+}
 
 
 def digest(path):
@@ -61,7 +67,9 @@ def clean_frame(frame, columns, codes):
     if not np.isfinite(frame[['X_COORD', 'Y_COORD']].to_numpy(dtype=float)).all():
         raise ValueError('좌표 누락')
     frame[list(columns)] = values
-    frame['month'] = pd.to_datetime(frame.STD_YM.astype(str), format='%Y%m', errors='raise').dt.strftime('%Y-%m')
+    frame['month'] = pd.to_datetime(
+        frame.STD_YM.astype(str), format='%Y%m', errors='raise'
+    ).dt.strftime('%Y-%m')
     return frame
 
 
@@ -79,23 +87,42 @@ def aggregate_age(frame, names):
             before = float(matched[col + '_old'].mean()) if len(matched) else None
             after = float(matched[col + '_new'].mean()) if len(matched) else None
             change = (after / before - 1) * 100 if before is not None and before > 0 else None
-            records.append(dict(month=month, code=code, district=names[code], age=age, sex=sex,
-                                value=float(totals[col]), mean=float(totals[col] / len(part)),
-                                share=float(totals[col] / total * 100) if total else None,
-                                points=len(part), matched_points=len(matched), previous_points=len(old),
-                                matched_before=before, matched_after=after, change_pct=change))
+            records.append(
+                dict(
+                    month=month,
+                    code=code,
+                    district=names[code],
+                    age=age,
+                    sex=sex,
+                    value=float(totals[col]),
+                    mean=float(totals[col] / len(part)),
+                    share=float(totals[col] / total * 100) if total else None,
+                    points=len(part),
+                    matched_points=len(matched),
+                    previous_points=len(old),
+                    matched_before=before,
+                    matched_after=after,
+                    change_pct=change,
+                )
+            )
     return records
 
 
 def build_snapshot(source_dir=ROOT / 'data/processed'):
     mapping = ROOT / 'backend/resources/data/flow_region_codes.csv'
     regions = pd.read_csv(mapping, dtype=str)
-    names = dict(regions[regions.city.isin(CITY_PREFIXES)][['region_code', 'region_name']].itertuples(index=False, name=None))
+    names = dict(
+        regions[regions.city.isin(CITY_PREFIXES)][['region_code', 'region_name']].itertuples(
+            index=False, name=None
+        )
+    )
     sources = {name: source_dir / (name + '.csv') for name in ['age_pop', 'wkdy_pop', 'time_pop']}
     hashes = {name: digest(path) for name, path in sources.items()}
     hashes['region_codes'] = digest(mapping)
     identity = hashlib.sha256(json.dumps([VERSION, hashes], sort_keys=True).encode()).hexdigest()
-    age = clean_frame(pd.read_csv(sources['age_pop'], dtype={'BLOCK_CD': str}), list(AGE_COLS), names)
+    age = clean_frame(
+        pd.read_csv(sources['age_pop'], dtype={'BLOCK_CD': str}), list(AGE_COLS), names
+    )
     groups = aggregate_age(age, names)
     activity = {}
     for kind, columns in [('wkdy_pop', DAY_COLS), ('time_pop', HOUR_COLS)]:
@@ -113,11 +140,27 @@ def build_snapshot(source_dir=ROOT / 'data/processed'):
                 labels = [f'{hour}시' for hour in range(len(values))]
                 entry['hours'] = activity_values(labels, values, denominator)
                 entry['hour_points'] = len(part)
-    result = dict(version=VERSION, run_id=identity, source_files=hashes, months=sorted(age.month.unique()),
-                  districts=[dict(code=k, name=v, city=next(city for city in CITY_PREFIXES if belongs_to_city(k, city))) for k, v in names.items()], ages=AGES, sexes=SEXES,
-                  groups=groups, activity=list(activity.values()),
-                  mapping='BLOCK_CD 앞 7자리 → backend/resources/data/flow_region_codes.csv (강남구 22동 · 춘천시 25개 읍·면·동)',
-                  unit='원자료 유동량', note='추정 유동량의 공간 집계이며 고유 인원·거주 인구·고립 인구가 아닙니다.')
+    result = dict(
+        version=VERSION,
+        run_id=identity,
+        source_files=hashes,
+        months=sorted(age.month.unique()),
+        districts=[
+            dict(
+                code=k,
+                name=v,
+                city=next(city for city in CITY_PREFIXES if belongs_to_city(k, city)),
+            )
+            for k, v in names.items()
+        ],
+        ages=AGES,
+        sexes=SEXES,
+        groups=groups,
+        activity=list(activity.values()),
+        mapping='BLOCK_CD 앞 7자리 → backend/resources/data/flow_region_codes.csv (강남구 22동 · 춘천시 25개 읍·면·동)',
+        unit='원자료 유동량',
+        note='추정 유동량의 공간 집계이며 고유 인원·거주 인구·고립 인구가 아닙니다.',
+    )
     return result
 
 
@@ -134,30 +177,49 @@ def activity_values(labels, values, denominator):
 
 def publish(snapshot):
     from backend.db.analysis_repository import get_engine
+
     with get_engine().begin() as conn:
-        conn.execute(text('''CREATE TABLE IF NOT EXISTS db1.group_flow_snapshots (
+        conn.execute(
+            text('''CREATE TABLE IF NOT EXISTS db1.group_flow_snapshots (
             run_id text PRIMARY KEY, version text NOT NULL, payload jsonb NOT NULL,
-            created_at timestamptz NOT NULL DEFAULT now())'''))
-        conn.execute(text('''INSERT INTO db1.group_flow_snapshots(run_id,version,payload)
+            created_at timestamptz NOT NULL DEFAULT now())''')
+        )
+        conn.execute(
+            text('''INSERT INTO db1.group_flow_snapshots(run_id,version,payload)
             VALUES (:id,:version,CAST(:payload AS jsonb)) ON CONFLICT (run_id) DO NOTHING'''),
-            dict(id=snapshot['run_id'], version=VERSION, payload=json.dumps(snapshot, ensure_ascii=False, allow_nan=False)))
+            dict(
+                id=snapshot['run_id'],
+                version=VERSION,
+                payload=json.dumps(snapshot, ensure_ascii=False, allow_nan=False),
+            ),
+        )
     _database_payload.cache_clear()
 
 
 @lru_cache(maxsize=3)
 def _database_payload(run_id):
     from backend.db.analysis_repository import get_engine
+
     with get_engine().connect() as conn:
-        return conn.execute(text('SELECT payload FROM db1.group_flow_snapshots WHERE run_id=:id'), {'id': run_id}).scalar_one()
+        return conn.execute(
+            text('SELECT payload FROM db1.group_flow_snapshots WHERE run_id=:id'), {'id': run_id}
+        ).scalar_one()
 
 
 def load_snapshot():
     """실제 DB1을 읽는다. 연결 실패 시 조용히 CSV/예시로 대체하지 않는다."""
     from backend.db.analysis_repository import get_engine
+
     with get_engine().connect() as conn:
-        run_id = conn.execute(text('SELECT run_id FROM db1.group_flow_snapshots ORDER BY created_at DESC, run_id LIMIT 1')).scalar()
+        run_id = conn.execute(
+            text(
+                'SELECT run_id FROM db1.group_flow_snapshots ORDER BY created_at DESC, run_id LIMIT 1'
+            )
+        ).scalar()
     if not run_id:
-        raise ValueError('집단별 유동인구를 먼저 적재하세요: python -m db.group_repository --build --publish')
+        raise ValueError(
+            '집단별 유동인구를 먼저 적재하세요: python -m db.group_repository --build --publish'
+        )
     return _database_payload(run_id)
 
 
@@ -166,10 +228,19 @@ def catalogue(city, month, snapshot=None):
     data = snapshot if snapshot is not None else load_snapshot()
     city_groups = [row for row in data['groups'] if belongs_to_city(row['code'], city)]
     districts = [row for row in data['districts'] if belongs_to_city(row['code'], city)]
-    return dict(source='DB1 · 집단별 유동인구', runId=data['run_id'],
-                months=sorted({row['month'] for row in city_groups}), ages=AGES, sexes=SEXES,
-                groups=deepcopy([row for row in city_groups if row['month'] == month]),
-                districts=deepcopy(districts), note=data['note'], mapping=data['mapping'], telecomAvailable=False, ageTelecomAvailable=city=='강남구')
+    return dict(
+        source='DB1 · 집단별 유동인구',
+        runId=data['run_id'],
+        months=sorted({row['month'] for row in city_groups}),
+        ages=AGES,
+        sexes=SEXES,
+        groups=deepcopy([row for row in city_groups if row['month'] == month]),
+        districts=deepcopy(districts),
+        note=data['note'],
+        mapping=data['mapping'],
+        telecomAvailable=False,
+        ageTelecomAvailable=city == '강남구',
+    )
 
 
 def pool_sexes(rows):
@@ -189,9 +260,15 @@ def pool_sexes(rows):
         row = deepcopy(a)
         row['sex'] = '통합'
         for key in ['value', 'mean', 'share', 'matched_before', 'matched_after']:
-            row[key] = a[key] + b[key] if a.get(key) is not None and b.get(key) is not None else None
+            row[key] = (
+                a[key] + b[key] if a.get(key) is not None and b.get(key) is not None else None
+            )
         before, after = row['matched_before'], row['matched_after']
-        row['change_pct'] = (after / before - 1) * 100 if before is not None and before > 0 and after is not None else None
+        row['change_pct'] = (
+            (after / before - 1) * 100
+            if before is not None and before > 0 and after is not None
+            else None
+        )
         result.append(row)
     return result
 
@@ -199,7 +276,11 @@ def pool_sexes(rows):
 def group_detail(context, snapshot=None):
     """같은 연령·성별의 월별 추이, 다른 동 비교, 선택 동의 구성비를 나눠 조회합니다."""
     data = snapshot if snapshot is not None else load_snapshot()
-    if context.get('city') not in CITY_PREFIXES or context.get('age') not in AGES or context.get('sex') not in SEXES + ['통합']:
+    if (
+        context.get('city') not in CITY_PREFIXES
+        or context.get('age') not in AGES
+        or context.get('sex') not in SEXES + ['통합']
+    ):
         raise ValueError('유효한 지역·연령대·성별을 선택하세요.')
     code = str(context.get('code', ''))
     if not belongs_to_city(code, context['city']):
@@ -208,7 +289,7 @@ def group_detail(context, snapshot=None):
     peers = []
     composition = []
     current = None
-    for row in (pool_sexes(data['groups']) if context['sex'] == '통합' else data['groups']):
+    for row in pool_sexes(data['groups']) if context['sex'] == '통합' else data['groups']:
         if not belongs_to_city(row['code'], context['city']):
             continue
         same_group = row['age'] == context['age'] and row['sex'] == context['sex']
@@ -223,7 +304,9 @@ def group_detail(context, snapshot=None):
             composition.append(row)
     if current is None:
         raise ValueError('선택한 집단·월의 자료가 없습니다.')
-    regional = next((r for r in data['activity'] if r['month'] == context['month'] and r['code'] == code), {})
+    regional = next(
+        (r for r in data['activity'] if r['month'] == context['month'] and r['code'] == code), {}
+    )
     by_month = {r['month']: r for r in series}
     # 자료가 없는 중간 월도 남겨 그래프가 누락 구간을 건너 이어지지 않게 합니다.
     timeline = []
@@ -231,10 +314,20 @@ def group_detail(context, snapshot=None):
         month = period.strftime('%Y-%m')
         row = by_month.get(month, {'month': month, 'mean': None})
         timeline.append(deepcopy(row))
-    return dict(current=deepcopy(current), series=timeline,
-                peers=deepcopy(peers), composition=deepcopy(composition), activity=deepcopy(regional),
-                source='DB1 · age_pop / wkdy_pop / time_pop', runId=data['run_id'],
-                note=data['note'], mapping=data['mapping'], sourceFiles=data['source_files'], telecomAvailable=False, ageTelecomAvailable=context['city']=='강남구' and context['age']!='10대')
+    return dict(
+        current=deepcopy(current),
+        series=timeline,
+        peers=deepcopy(peers),
+        composition=deepcopy(composition),
+        activity=deepcopy(regional),
+        source='DB1 · age_pop / wkdy_pop / time_pop',
+        runId=data['run_id'],
+        note=data['note'],
+        mapping=data['mapping'],
+        sourceFiles=data['source_files'],
+        telecomAvailable=False,
+        ageTelecomAvailable=context['city'] == '강남구' and context['age'] != '10대',
+    )
 
 
 def regional_context(context):
@@ -242,18 +335,39 @@ def regional_context(context):
     if context['city'] != '강남구':
         return dict(scope='district', structure=None, detection=None)
     from backend.db.analysis_repository import get_engine
+
     with get_engine().connect() as conn:
-        structure = conn.execute(text('''SELECT cluster_type, payload, source_file FROM db1.latest_region_typology
-            WHERE adm_cd=:code'''), {'code': context['code']}).mappings().first()
-        detection = conn.execute(text('''SELECT communication_signal, mobility_signal, payload, source_file
+        structure = (
+            conn.execute(
+                text('''SELECT cluster_type, payload, source_file FROM db1.latest_region_typology
+            WHERE adm_cd=:code'''),
+                {'code': context['code']},
+            )
+            .mappings()
+            .first()
+        )
+        detection = (
+            conn.execute(
+                text('''SELECT communication_signal, mobility_signal, payload, source_file
             FROM db1.analysis2_detections WHERE admin_dong_code=:code
             AND CAST(reference_month AS text) LIKE :month ORDER BY created_at DESC LIMIT 1'''),
-            {'code': context['code'], 'month': context['month'] + '%'}).mappings().first()
+                {'code': context['code'], 'month': context['month'] + '%'},
+            )
+            .mappings()
+            .first()
+        )
     from backend.db.age_analysis_repository import detection_for
+
     age_detection = detection_for(context)
     from backend.db.survey_context import survey_for
-    return dict(scope='dong_age', structure=dict(structure) if structure else None,
-                detection=age_detection, survey=survey_for(context), districtDetection=dict(detection) if detection else None)
+
+    return dict(
+        scope='dong_age',
+        structure=dict(structure) if structure else None,
+        detection=age_detection,
+        survey=survey_for(context),
+        districtDetection=dict(detection) if detection else None,
+    )
 
 
 def main():
@@ -268,7 +382,16 @@ def main():
         data = json.loads(SNAPSHOT.read_text(encoding='utf-8'))
     if args.publish:
         publish(data)
-    print(json.dumps(dict(run_id=data['run_id'], groups=len(data['groups']), months=data['months'], published=args.publish)))
+    print(
+        json.dumps(
+            dict(
+                run_id=data['run_id'],
+                groups=len(data['groups']),
+                months=data['months'],
+                published=args.publish,
+            )
+        )
+    )
 
 
 if __name__ == '__main__':

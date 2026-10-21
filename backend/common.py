@@ -2,6 +2,7 @@
 
 API 요청·응답 도구는 backend/api/common.py에 있습니다. pipelines는 따로 실행되므로 이 파일을 쓰지 않습니다.
 """
+
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -31,4 +32,5 @@ def get_engine():
     테스트는 각 모듈의 get_engine을 임시 DB로 바꿔 끼웁니다(patch.object(모듈, 'get_engine')).
     """
     from backend.db.connection import engine
+
     return engine

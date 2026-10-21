@@ -32,10 +32,27 @@ def is_methodology_question(question: str) -> bool:
     """Return true for a request to explain the rule, not to run a new lookup."""
     q = question.lower().replace(" ", "")
     exact_terms = (
-        "robustz", "robust-z", "robustzscore", "이상신호기준",
-        "이상신호탐지공식", "이상신호공식", "탐지공식", "신호공식",
-        "판정기준", "판정원리", "탐지기준", "탐지원리", "계산원리",
-        "임계값", "왜-2", "왜2", "mad가", "mad는", "계산기준", "연령별기준", "연령기준",
+        "robustz",
+        "robust-z",
+        "robustzscore",
+        "이상신호기준",
+        "이상신호탐지공식",
+        "이상신호공식",
+        "탐지공식",
+        "신호공식",
+        "판정기준",
+        "판정원리",
+        "탐지기준",
+        "탐지원리",
+        "계산원리",
+        "임계값",
+        "왜-2",
+        "왜2",
+        "mad가",
+        "mad는",
+        "계산기준",
+        "연령별기준",
+        "연령기준",
     )
     if any(term in q for term in exact_terms):
         return True

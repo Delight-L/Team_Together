@@ -1,4 +1,5 @@
 """월별 원본 확인, 다운로드, 증분 전처리, Analysis2 실행."""
+
 from __future__ import annotations
 
 import csv
@@ -32,11 +33,17 @@ def _links(page_url: str) -> list[tuple[str, str]]:
     req = Request(page_url, headers={"User-Agent": "preprocessing-agent2/1.0"})
     html = urlopen(req, timeout=30).read().decode("utf-8", "ignore")
     found = []
-    for href, text in re.findall(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', html, re.I | re.S):
+    for href, text in re.findall(
+        r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', html, re.I | re.S
+    ):
         label = re.sub(r"<[^>]+>", " ", text)
         label = re.sub(r"\s+", " ", label).strip()
         target = urljoin(page_url, href)
-        if _month(label) or _month(target) or re.search(r"(?:download|filedown|attach|xlsx|zip)", target, re.I):
+        if (
+            _month(label)
+            or _month(target)
+            or re.search(r"(?:download|filedown|attach|xlsx|zip)", target, re.I)
+        ):
             found.append((target, label or target))
     return list(dict.fromkeys(found))
 
@@ -110,15 +117,25 @@ def run_incremental(base: Path, config: dict, no_download: bool = False) -> dict
         if not detection.exists() or not evidence.exists():
             _run_analysis2(base, config, feature, out)
             analysis_status = "BASELINE_ANALYSIS_CREATED"
-        return {"status": "NO_NEW_DATA", "baseline_month": baseline,
-                "downloaded": [str(p) for p in new_files],
-                "analysis": analysis_status}
+        return {
+            "status": "NO_NEW_DATA",
+            "baseline_month": baseline,
+            "downloaded": [str(p) for p in new_files],
+            "analysis": analysis_status,
+        }
     manifest = {"status": "RUNNING", "files": [], "name_normalizations": set()}
     weather = load_weather(base / config["weather"])
     data = {}
     for p in candidates:
         try:
-            month, kind, groups, digest, count = read_workbook(p, p.name, areas, manifest, config["demographics"], config["archive_limits"]["max_file_bytes"])
+            month, kind, groups, digest, count = read_workbook(
+                p,
+                p.name,
+                areas,
+                manifest,
+                config["demographics"],
+                config["archive_limits"]["max_file_bytes"],
+            )
         except Exception:
             continue
         if month and month > (baseline or ""):
@@ -132,9 +149,17 @@ def run_incremental(base: Path, config: dict, no_download: bool = False) -> dict
     existing_keys = {(r["date"], r["area_code"]) for r in old_rows}
     rows = [r for r in rows if (r["date"], r["area_code"]) not in existing_keys]
     _write_csv(feature, columns, old_rows + rows)
-    result = {"status": "PASS", "baseline_month": baseline, "processed_month": target, "new_rows": len(rows), "downloaded": [str(p) for p in new_files]}
+    result = {
+        "status": "PASS",
+        "baseline_month": baseline,
+        "processed_month": target,
+        "new_rows": len(rows),
+        "downloaded": [str(p) for p in new_files],
+    }
     _run_analysis2(base, config, feature, out)
-    (out / "auto_update_manifest.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    (out / "auto_update_manifest.json").write_text(
+        json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return result
 
 
@@ -146,5 +171,15 @@ def _run_analysis2(base: Path, config: dict, feature: Path, out: Path) -> None:
     if not runner.exists():
         raise FileNotFoundError(f"Analysis2 실행 파일을 찾을 수 없습니다: {runner}")
     # 입력 feature table과 결과 폴더를 직접 넘겨, Analysis2 폴더에 파일을 복사하지 않습니다.
-    subprocess.run([sys.executable, str(runner), "--input", str(feature.resolve()), "--output-dir", str(out.resolve())],
-                   cwd=analysis_dir, check=True)
+    subprocess.run(
+        [
+            sys.executable,
+            str(runner),
+            "--input",
+            str(feature.resolve()),
+            "--output-dir",
+            str(out.resolve()),
+        ],
+        cwd=analysis_dir,
+        check=True,
+    )

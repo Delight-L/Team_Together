@@ -1,11 +1,15 @@
 """1단계 입력필터링. 권한과 지원 범위는 LLM 전에 코드로 제한한다."""
+
 from __future__ import annotations
 import re
 from .schemas import GuardResult
 
 MAX_CHARS = 1000
 OUT_OF_SCOPE = "지역 변화 신호와 관련된 질문을 해주세요. 예: ‘2025년 신호가 나온 동은?’"
-PERSONAL_REQUEST = "이 자료는 동 단위 집계입니다. 개인의 고립 여부나 대상자 명단은 확인할 수 없습니다."
+PERSONAL_REQUEST = (
+    "이 자료는 동 단위 집계입니다. 개인의 고립 여부나 대상자 명단은 확인할 수 없습니다."
+)
+
 
 def validate_input(question: str) -> GuardResult:
     q = question.strip()

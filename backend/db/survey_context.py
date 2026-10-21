@@ -1,10 +1,13 @@
 """Read-only annual district/age context exported from DB1; never a dong isolation rate."""
+
 import json
 import csv
 from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parents[2] / 'data/processed/survey_dashboard.json'
-FULL_SOURCE = Path(__file__).resolve().parents[2] / 'pipelines/db1/outputs/integrated/v_survey_annual.csv'
+FULL_SOURCE = (
+    Path(__file__).resolve().parents[2] / 'pipelines/db1/outputs/integrated/v_survey_annual.csv'
+)
 AGES = {'20대': '20s', '30대': '30s', '40대': '40s', '50대': '50s', '60대 이상': '60plus'}
 
 
@@ -16,15 +19,25 @@ def survey_for(context, snapshot=None):
             return None
         snapshot = json.loads(SOURCE.read_text(encoding='utf-8'))
     year = int(context['month'][:4])
-    rows = [r for r in snapshot['rows'] if r['district'] == 'gangnam'
-            and r['age_band'] == AGES[context['age']] and r['year'] <= year
-            and r['metric'] == 'no_support_emotion' and r['unit'] == 'proportion']
+    rows = [
+        r
+        for r in snapshot['rows']
+        if r['district'] == 'gangnam'
+        and r['age_band'] == AGES[context['age']]
+        and r['year'] <= year
+        and r['metric'] == 'no_support_emotion'
+        and r['unit'] == 'proportion'
+    ]
     if not rows:
         return None
     row = max(rows, key=lambda r: r['year'])
-    return {**row, 'scope': 'district_age', 'mode': 'annual_retrospective_context',
-            'source': 'DB1 · 서울서베이',
-            'note': '강남구 연령별 연간 조사 참고값이며 동별 고립률이나 탐지 입력이 아닙니다. 공표 시점 기준의 당시 가용값을 뜻하지 않습니다.'}
+    return {
+        **row,
+        'scope': 'district_age',
+        'mode': 'annual_retrospective_context',
+        'source': 'DB1 · 서울서베이',
+        'note': '강남구 연령별 연간 조사 참고값이며 동별 고립률이나 탐지 입력이 아닙니다. 공표 시점 기준의 당시 가용값을 뜻하지 않습니다.',
+    }
 
 
 def _annual_rows(snapshot=None):
@@ -79,20 +92,43 @@ def survey_metrics_for(context, snapshot=None):
         except (TypeError, ValueError):
             continue
         if year <= selected_year and row.get('district') in {'gangnam', 'seoul'}:
-            normalized.append({**row, 'year': year, 'value': _number(row.get('value')),
-                               'n_valid': _number(row.get('n_valid')),
-                               'effective_n': _number(row.get('effective_n'))})
+            normalized.append(
+                {
+                    **row,
+                    'year': year,
+                    'value': _number(row.get('value')),
+                    'n_valid': _number(row.get('n_valid')),
+                    'effective_n': _number(row.get('effective_n')),
+                }
+            )
     gangnam = [row for row in normalized if row['district'] == 'gangnam']
     if not gangnam:
         return None
     survey_year = max(row['year'] for row in gangnam)
     values = {}
     for metric in sorted({row.get('metric') for row in gangnam if row['year'] == survey_year}):
-        district_row = next((row for row in gangnam if row['year'] == survey_year and row.get('metric') == metric), None)
-        seoul_row = next((row for row in normalized if row['district'] == 'seoul' and row['year'] == survey_year and row.get('metric') == metric), None)
+        district_row = next(
+            (row for row in gangnam if row['year'] == survey_year and row.get('metric') == metric),
+            None,
+        )
+        seoul_row = next(
+            (
+                row
+                for row in normalized
+                if row['district'] == 'seoul'
+                and row['year'] == survey_year
+                and row.get('metric') == metric
+            ),
+            None,
+        )
         if district_row:
             values[metric] = {'gangnam': district_row, 'seoul': seoul_row}
-    return {'year': survey_year, 'age': age_label, 'metrics': values,
-            'scope': 'district_age', 'mode': 'annual_retrospective_context',
-            'source': 'DB1 · 서울서베이',
-            'note': '강남구 연령별 연간 조사 참고값이며 동별 고립률이나 탐지 입력이 아닙니다. 공표 시점 기준의 당시 가용값을 뜻하지 않습니다.'}
+    return {
+        'year': survey_year,
+        'age': age_label,
+        'metrics': values,
+        'scope': 'district_age',
+        'mode': 'annual_retrospective_context',
+        'source': 'DB1 · 서울서베이',
+        'note': '강남구 연령별 연간 조사 참고값이며 동별 고립률이나 탐지 입력이 아닙니다. 공표 시점 기준의 당시 가용값을 뜻하지 않습니다.',
+    }

@@ -1,4 +1,5 @@
 """담당 에이전트 4종. 새 에이전트는 Agent 인터페이스(base.py)를 구현하고 여기에 등록합니다."""
+
 from backend.bomi.agents.guide import GuideAgent
 from backend.bomi.agents.region_analysis import RegionAnalysisAgent
 from backend.bomi.agents.report import ReportAgent

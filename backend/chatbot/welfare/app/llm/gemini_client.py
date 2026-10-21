@@ -2,6 +2,7 @@
 
 Gemini는 대화 역할 이름이 user/model이고, 지시문(system)은 설정의 system_instruction으로 보냅니다.
 """
+
 from collections.abc import AsyncIterator
 import ssl
 import truststore
@@ -38,12 +39,18 @@ def _request(config, messages, max_tokens, json_mode=False):
         options['system_instruction'] = system
     if json_mode:
         options['response_mime_type'] = 'application/json'
-    return {'model': config.model, 'contents': contents, 'config': types.GenerateContentConfig(**options)}
+    return {
+        'model': config.model,
+        'contents': contents,
+        'config': types.GenerateContentConfig(**options),
+    }
 
 
 async def stream(config, messages: list[dict], max_tokens: int) -> AsyncIterator[str]:
     async with _client(config).aio as client:
-        response = await client.models.generate_content_stream(**_request(config, messages, max_tokens))
+        response = await client.models.generate_content_stream(
+            **_request(config, messages, max_tokens)
+        )
         try:
             async for chunk in response:
                 if chunk.text:
@@ -57,5 +64,7 @@ async def stream(config, messages: list[dict], max_tokens: int) -> AsyncIterator
 
 async def complete(config, messages: list[dict], json_mode: bool, max_tokens: int) -> str:
     async with _client(config).aio as client:
-        response = await client.models.generate_content(**_request(config, messages, max_tokens, json_mode))
+        response = await client.models.generate_content(
+            **_request(config, messages, max_tokens, json_mode)
+        )
         return response.text or ''

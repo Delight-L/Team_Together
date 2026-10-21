@@ -1,4 +1,5 @@
 """담당자·지역·기준월별 미션 및 업무 기록 (공유 PostgreSQL work 스키마에 저장)."""
+
 import hashlib
 import json
 
@@ -9,6 +10,7 @@ from backend.db.work_store import lock, transaction
 
 STEPS = ["분석 확인", "근거 검토·질의", "사업 매칭 검토", "보고서 완료"]
 WORKFLOW_VERSION = 3
+
 
 def normalize(item):
     """이전 업무 단계 번호를 현재 네 단계로 맞추고 기존 기록을 보존합니다."""
@@ -24,13 +26,21 @@ def normalize(item):
         item["workflow_complete"] = 3 in item["done"]
         item["card_earned"] = item["workflow_complete"]
     elif item.get("workflow_version") != WORKFLOW_VERSION:
-        return {"workflow_version": WORKFLOW_VERSION, "done": [], "reviews": [], "questions": [], "legacy": item}
+        return {
+            "workflow_version": WORKFLOW_VERSION,
+            "done": [],
+            "reviews": [],
+            "questions": [],
+            "legacy": item,
+        }
     return item
+
 
 def review_revision(item):
     """검토 내용의 지문으로 보고서 초안 이후 검토가 바뀌었는지 확인합니다."""
     reviews = json.dumps(item.get("reviews", []), sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(reviews.encode()).hexdigest()
+
 
 def identity(request):
     """분석 DB 시절의 키 형식을 유지하여 옮겨 온 업무를 계속 찾습니다."""
@@ -42,11 +52,15 @@ def identity(request):
         fields.append(request["age"])
     return json.dumps(fields, ensure_ascii=False, separators=(",", ":"))
 
+
 def load(request):
     """이 담당자·지역·기준월의 업무 기록 하나만 읽습니다. 없으면 빈 dict입니다."""
     with transaction() as db:
-        row = db.execute(text("SELECT value FROM work.missions WHERE key=:key"), {"key": identity(request)}).fetchone()
+        row = db.execute(
+            text("SELECT value FROM work.missions WHERE key=:key"), {"key": identity(request)}
+        ).fetchone()
         return normalize(json.loads(row[0])) if row else {}
+
 
 def save_event(request, step, record=None, start=None):
     """단계 순서를 검사하고 기록·Word 파일·보고서 이력을 함께 저장합니다.
@@ -64,7 +78,9 @@ def save_event(request, step, record=None, start=None):
     key = identity(request)
     with transaction() as db:
         lock(db, key)
-        row = db.execute(text("SELECT value FROM work.missions WHERE key=:key"), {"key": key}).fetchone()
+        row = db.execute(
+            text("SELECT value FROM work.missions WHERE key=:key"), {"key": key}
+        ).fetchone()
         item = normalize(json.loads(row[0]) if row else {})
         done = set(item["done"])
         record = dict(record or {})
@@ -112,41 +128,74 @@ def save_event(request, step, record=None, start=None):
                 # 저장한 보고서에는 이 검토가 없습니다. 다시 저장하면 다음 차수 보고서가 됩니다.
                 item["reviews_after_report"] = True
         elif step == 3:
-            if record.get('analysis_run_id') and record['analysis_run_id'] != item.get('analysis_run_id'):
-                raise ValueError('확인한 보고서의 분석 근거가 변경되었습니다. 초안을 다시 만들어 주세요.')
-            if not all(record.get(field) for field in ["sha256", "filename", "author", "department", "opinion", "confirmed"]):
+            if record.get('analysis_run_id') and record['analysis_run_id'] != item.get(
+                'analysis_run_id'
+            ):
+                raise ValueError(
+                    '확인한 보고서의 분석 근거가 변경되었습니다. 초안을 다시 만들어 주세요.'
+                )
+            if not all(
+                record.get(field)
+                for field in ["sha256", "filename", "author", "department", "opinion", "confirmed"]
+            ):
                 raise ValueError("보고서 파일과 필수 항목, 최종 확인이 필요합니다.")
             if record.get("review_id") != review_revision(item):
                 raise ValueError("현재 사업 검토 내역과 일치하는 보고서가 필요합니다.")
             document = record.pop("_document", b"")
             if not document or hashlib.sha256(document).hexdigest() != record["sha256"]:
                 raise ValueError("실제 보고서 파일을 생성한 후 저장하세요.")
-            revision = db.execute(text("SELECT COALESCE(MAX(revision),0) FROM work.report_versions WHERE key=:key"),
-                                  {"key": key}).scalar_one()
-            previous = db.execute(text("SELECT document FROM work.report_files WHERE key=:key"), {"key": key}).fetchone()
-            insert_version = text("INSERT INTO work.report_versions (key,revision,document,record) "
-                                  "VALUES (:key,:revision,:document,:record)")
+            revision = db.execute(
+                text("SELECT COALESCE(MAX(revision),0) FROM work.report_versions WHERE key=:key"),
+                {"key": key},
+            ).scalar_one()
+            previous = db.execute(
+                text("SELECT document FROM work.report_files WHERE key=:key"), {"key": key}
+            ).fetchone()
+            insert_version = text(
+                "INSERT INTO work.report_versions (key,revision,document,record) "
+                "VALUES (:key,:revision,:document,:record)"
+            )
             # 이 기능 도입 전에 저장된 보고서도 첫 재작성 시 이력에 남깁니다.
             if previous and revision == 0:
                 revision = 1
-                db.execute(insert_version, dict(key=key, revision=revision, document=bytes(previous[0]),
-                                                record=json.dumps(item.get('report', {}), ensure_ascii=False)))
+                db.execute(
+                    insert_version,
+                    dict(
+                        key=key,
+                        revision=revision,
+                        document=bytes(previous[0]),
+                        record=json.dumps(item.get('report', {}), ensure_ascii=False),
+                    ),
+                )
             record['revision'] = revision + 1
             record['analysis_run_id'] = item.get('analysis_run_id')
             # 사업 검토 없이 대화·구상으로 만든 보고서는 구상 보고서로 구분합니다.
             record['kind'] = 'service_review' if item.get('reviews') else 'planning'
             item["reviews_after_report"] = False
-            db.execute(insert_version, dict(key=key, revision=record['revision'], document=document,
-                                            record=json.dumps(record, ensure_ascii=False)))
-            db.execute(text("""INSERT INTO work.report_files (key,document) VALUES (:key,:document)
-                ON CONFLICT (key) DO UPDATE SET document=excluded.document"""), {"key": key, "document": document})
+            db.execute(
+                insert_version,
+                dict(
+                    key=key,
+                    revision=record['revision'],
+                    document=document,
+                    record=json.dumps(record, ensure_ascii=False),
+                ),
+            )
+            db.execute(
+                text("""INSERT INTO work.report_files (key,document) VALUES (:key,:document)
+                ON CONFLICT (key) DO UPDATE SET document=excluded.document"""),
+                {"key": key, "document": document},
+            )
             item["report"] = record
         done.add(step)
         item["done"] = sorted(done)
         item["card_earned"] = 3 in done
         item["workflow_complete"] = 3 in done
-        db.execute(text("""INSERT INTO work.missions (key,value) VALUES (:key,:value)
-            ON CONFLICT (key) DO UPDATE SET value=excluded.value"""), {"key": key, "value": json.dumps(item, ensure_ascii=False)})
+        db.execute(
+            text("""INSERT INTO work.missions (key,value) VALUES (:key,:value)
+            ON CONFLICT (key) DO UPDATE SET value=excluded.value"""),
+            {"key": key, "value": json.dumps(item, ensure_ascii=False)},
+        )
     return item
 
 
@@ -163,7 +212,9 @@ def restart(request, record):
     key = identity(request)
     with transaction() as db:
         lock(db, key)
-        row = db.execute(text("SELECT value FROM work.missions WHERE key=:key"), {"key": key}).fetchone()
+        row = db.execute(
+            text("SELECT value FROM work.missions WHERE key=:key"), {"key": key}
+        ).fetchone()
         item = normalize(json.loads(row[0]) if row else {})
         if 0 not in item.get("done", []):
             raise ValueError("아직 시작하지 않은 업무입니다. 상세 분석·업무 시작을 누르세요.")
@@ -172,28 +223,35 @@ def restart(request, record):
         previous = item.pop("previous_rounds", [])
         item["ended_at"] = timestamp()
         restarted = {
-            "workflow_version": WORKFLOW_VERSION, "done": [0], "reviews": [], "questions": [],
+            "workflow_version": WORKFLOW_VERSION,
+            "done": [0],
+            "reviews": [],
+            "questions": [],
             "is_demo": request.get("workflow_mode") == "demo",
-            "card_earned": False, "workflow_complete": False,
-            "analysis_run_id": record["run_id"], "analysis_evidence": record["evidence"],
+            "card_earned": False,
+            "workflow_complete": False,
+            "analysis_run_id": record["run_id"],
+            "analysis_evidence": record["evidence"],
             "analysis_source": record.get("source_note", "저장된 DB1 분석"),
             "previous_rounds": previous + [item],
         }
-        db.execute(text("""INSERT INTO work.missions (key,value) VALUES (:key,:value)
+        db.execute(
+            text("""INSERT INTO work.missions (key,value) VALUES (:key,:value)
             ON CONFLICT (key) DO UPDATE SET value=excluded.value"""),
-                   {"key": key, "value": json.dumps(restarted, ensure_ascii=False)})
+            {"key": key, "value": json.dumps(restarted, ensure_ascii=False)},
+        )
     return restarted
 
 
 # 시·군·구 → (시·도, 옛 시·도 표기). 연계 후보는 이 시·도 자료에서만 고릅니다.
-LOCAL_PROVINCES = {"강남구": ("서울특별시", "서울특별시"),
-                   "춘천시": ("강원특별자치도", "강원도")}
+LOCAL_PROVINCES = {"강남구": ("서울특별시", "서울특별시"), "춘천시": ("강원특별자치도", "강원도")}
 
 
 def service_candidates(city):
     """주기 수집된 지자체 사업을 검토 후보로 조회합니다. 게시 지역은 자격이 아닙니다."""
     from sqlalchemy import text
     from backend.db.analysis_repository import get_engine
+
     provinces = LOCAL_PROVINCES.get(city)
     if not provinces:
         return []
@@ -211,9 +269,18 @@ def service_candidates(city):
           AND (s.effective_end IS NULL OR s.effective_end >= :today)
         ORDER BY s.name, s.service_id""")
     with get_engine().connect() as db:
-        return [dict(row) for row in db.execute(query, {
-            "province": provinces[0], "province_alias": provinces[1], "city": city,
-            "today": seoul_now().date()}).mappings()]
+        return [
+            dict(row)
+            for row in db.execute(
+                query,
+                {
+                    "province": provinces[0],
+                    "province_alias": provinces[1],
+                    "city": city,
+                    "today": seoul_now().date(),
+                },
+            ).mappings()
+        ]
 
 
 REFERENCE_FIELDS = ["name", "summary", "benefit_text"]
@@ -227,6 +294,7 @@ def reference_services(city, terms, limit=20):
     """
     from sqlalchemy import text
     from backend.db.analysis_repository import get_engine
+
     terms = list(dict.fromkeys(term for term in terms if term))
     if not terms:
         return []
@@ -267,33 +335,53 @@ def service_key(service):
     if service.get('source_id') == 'local_welfare_api':
         # 명칭·지역 표기가 갱신되어도 API 서비스 ID로 같은 사업을 식별합니다.
         return json.dumps(['local_welfare_api', service['service_id']], ensure_ascii=False)
-    return json.dumps([service["source_id"], service["region_id"], service["external_id"]], ensure_ascii=False)
+    return json.dumps(
+        [service["source_id"], service["region_id"], service["external_id"]], ensure_ascii=False
+    )
 
 
 def load_report(request, revision=None):
     """저장한 보고서 파일입니다. revision이 없으면 최신본, 있으면 그 저장본입니다."""
     with transaction() as db:
         if revision is None:
-            row = db.execute(text("SELECT document FROM work.report_files WHERE key=:key"), {"key": identity(request)}).fetchone()
+            row = db.execute(
+                text("SELECT document FROM work.report_files WHERE key=:key"),
+                {"key": identity(request)},
+            ).fetchone()
         else:
-            row = db.execute(text("SELECT document FROM work.report_versions WHERE key=:key AND revision=:revision"),
-                             {"key": identity(request), "revision": revision}).fetchone()
+            row = db.execute(
+                text(
+                    "SELECT document FROM work.report_versions WHERE key=:key AND revision=:revision"
+                ),
+                {"key": identity(request), "revision": revision},
+            ).fetchone()
         return bytes(row[0]) if row else None
 
 
 def report_versions(request):
     """이 업무에서 최종 저장한 보고서 목록(최신순). 파일 본문은 넣지 않습니다."""
     with transaction() as db:
-        rows = db.execute(text("SELECT revision, record FROM work.report_versions WHERE key=:key ORDER BY revision DESC"),
-                          {"key": identity(request)}).fetchall()
+        rows = db.execute(
+            text(
+                "SELECT revision, record FROM work.report_versions WHERE key=:key ORDER BY revision DESC"
+            ),
+            {"key": identity(request)},
+        ).fetchall()
     items = []
     for revision, record in rows:
         record = json.loads(record or "{}")
-        items.append({"revision": revision, "created_at": record.get("created_at", ""),
-                      "author": record.get("author", ""), "department": record.get("department", ""),
-                      "contact": record.get("contact", ""), "content": record.get("content"),
-                      "title": (record.get("content") or {}).get("title", ""),
-                      "analysis_run_id": record.get("analysis_run_id", ""),
-                      # kind가 없는 예전 저장본은 사업 검토 보고서입니다.
-                      "kind": record.get("kind", "service_review")})
+        items.append(
+            {
+                "revision": revision,
+                "created_at": record.get("created_at", ""),
+                "author": record.get("author", ""),
+                "department": record.get("department", ""),
+                "contact": record.get("contact", ""),
+                "content": record.get("content"),
+                "title": (record.get("content") or {}).get("title", ""),
+                "analysis_run_id": record.get("analysis_run_id", ""),
+                # kind가 없는 예전 저장본은 사업 검토 보고서입니다.
+                "kind": record.get("kind", "service_review"),
+            }
+        )
     return items

@@ -1,4 +1,5 @@
 """대화 문맥을 읽는 LLM 목적체크. 결과값은 코드 허용목록으로 다시 검증한다."""
+
 from __future__ import annotations
 import json
 import os
@@ -12,32 +13,79 @@ from .schemas import QueryIntent
 from .district_normalizer import explicit_districts
 from .dialogue_router import DIALOGUE_REPLIES, fallback_dialogue, dialogue_intent
 
-PURPOSES={"find_region","track_change","plan_review","dialogue"}
-KINDS={"signals","rank_regions","anomaly","activity","age_activity","age_data_coverage","capabilities","reason","previous","context","support","consumption","consumption_criteria","data_status","methodology","provenance"}
-SIGNALS={"any","communication","mobility","combined"}
-METRICS={None,"call_contacts","text_contacts","weekday_move_count","weekend_move_count"}
-LOGGER=logging.getLogger(__name__)
-AGE_BANDS=['20s','30s','40s','50s','60plus']
-INTENT_SCHEMA={
-    'type':'object',
-    'properties':{
-        'purpose':{'type':'string','enum':sorted(PURPOSES)},
-        'question_type':{'type':'string','enum':sorted(KINDS|set(DIALOGUE_REPLIES))},
-        'districts':{'type':'array','items':{'type':'string'}},
-        'start_month':{'type':['string','null']},'end_month':{'type':['string','null']},
-        'signal':{'type':'string','enum':sorted(SIGNALS)},
-        'metric':{'type':['string','null'],'enum':[None,'call_contacts','text_contacts','weekday_move_count','weekend_move_count']},
-        'limit':{'type':['integer','null']},
-        'needs':{'type':'array','items':{'type':'string','enum':['행정동','기간','지표','조회 목적','연령']}},
-        'use_previous_scope':{'type':'boolean'},'all_available_period':{'type':'boolean'},
-        'clarifying_question':{'type':['string','null']},
-        'age_band':{'type':['string','null'],'enum':[None,*AGE_BANDS]},
-        'age_bands':{'type':'array','items':{'type':'string','enum':AGE_BANDS}},
-        'age_scope_explicit':{'type':'boolean'},
-        'include_values':{'type':'boolean'},
+PURPOSES = {"find_region", "track_change", "plan_review", "dialogue"}
+KINDS = {
+    "signals",
+    "rank_regions",
+    "anomaly",
+    "activity",
+    "age_activity",
+    "age_data_coverage",
+    "capabilities",
+    "reason",
+    "previous",
+    "context",
+    "support",
+    "consumption",
+    "consumption_criteria",
+    "data_status",
+    "methodology",
+    "provenance",
+}
+SIGNALS = {"any", "communication", "mobility", "combined"}
+METRICS = {None, "call_contacts", "text_contacts", "weekday_move_count", "weekend_move_count"}
+LOGGER = logging.getLogger(__name__)
+AGE_BANDS = ['20s', '30s', '40s', '50s', '60plus']
+INTENT_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'purpose': {'type': 'string', 'enum': sorted(PURPOSES)},
+        'question_type': {'type': 'string', 'enum': sorted(KINDS | set(DIALOGUE_REPLIES))},
+        'districts': {'type': 'array', 'items': {'type': 'string'}},
+        'start_month': {'type': ['string', 'null']},
+        'end_month': {'type': ['string', 'null']},
+        'signal': {'type': 'string', 'enum': sorted(SIGNALS)},
+        'metric': {
+            'type': ['string', 'null'],
+            'enum': [
+                None,
+                'call_contacts',
+                'text_contacts',
+                'weekday_move_count',
+                'weekend_move_count',
+            ],
+        },
+        'limit': {'type': ['integer', 'null']},
+        'needs': {
+            'type': 'array',
+            'items': {'type': 'string', 'enum': ['행정동', '기간', '지표', '조회 목적', '연령']},
+        },
+        'use_previous_scope': {'type': 'boolean'},
+        'all_available_period': {'type': 'boolean'},
+        'clarifying_question': {'type': ['string', 'null']},
+        'age_band': {'type': ['string', 'null'], 'enum': [None, *AGE_BANDS]},
+        'age_bands': {'type': 'array', 'items': {'type': 'string', 'enum': AGE_BANDS}},
+        'age_scope_explicit': {'type': 'boolean'},
+        'include_values': {'type': 'boolean'},
     },
-    'required':['purpose','question_type','districts','start_month','end_month','signal','metric','limit','needs',
-                'use_previous_scope','all_available_period','clarifying_question','age_band','age_bands','age_scope_explicit','include_values'],
+    'required': [
+        'purpose',
+        'question_type',
+        'districts',
+        'start_month',
+        'end_month',
+        'signal',
+        'metric',
+        'limit',
+        'needs',
+        'use_previous_scope',
+        'all_available_period',
+        'clarifying_question',
+        'age_band',
+        'age_bands',
+        'age_scope_explicit',
+        'include_values',
+    ],
 }
 
 
@@ -50,8 +98,9 @@ def _explicit_districts(question: str, districts: set[str]) -> tuple[str, ...]:
     """
     return explicit_districts(question, districts)
 
+
 def _api_key(project_root: Path) -> str | None:
-    value=os.getenv("GEMINI_API_KEY","").strip()
+    value = os.getenv("GEMINI_API_KEY", "").strip()
     if value:
         return value
     # The API server loads .env through backend.common, but the resolver is
@@ -59,47 +108,57 @@ def _api_key(project_root: Path) -> str | None:
     # instead of silently falling back to rule parsing.
     try:
         from dotenv import dotenv_values
-        value=(dotenv_values(project_root / ".env").get("GEMINI_API_KEY") or "").strip()
+
+        value = (dotenv_values(project_root / ".env").get("GEMINI_API_KEY") or "").strip()
         if value:
             return value
     except Exception:
         pass
-    path=project_root/"chatbot_agent"/"api_key.txt"
+    path = project_root / "chatbot_agent" / "api_key.txt"
     if path.is_file():
-        value=path.read_text(encoding="utf-8-sig").strip()
+        value = path.read_text(encoding="utf-8-sig").strip()
         if value and not value.startswith("여기에_"):
             return value
     return None
 
+
 def _json_object(text: str) -> dict:
-    match=re.search(r"\{.*\}",text,re.S)
+    match = re.search(r"\{.*\}", text, re.S)
     if not match:
         raise ValueError("LLM 목적분류 결과에 JSON 객체가 없습니다.")
-    value=json.loads(match.group(0))
-    if not isinstance(value,dict):
+    value = json.loads(match.group(0))
+    if not isinstance(value, dict):
         raise ValueError("목적분류 결과가 객체가 아닙니다.")
     return value
 
-class IntentResolver:
-    def __init__(self, project_root: Path, model: str, available_period: tuple[str, str] | None = None):
-        self.project_root=project_root
-        self.model=model
-        self.available_period=available_period
-        self.last_source=None
 
-    def resolve(self, question: str, districts: set[str], memory: ConversationMemory) -> QueryIntent:
+class IntentResolver:
+    def __init__(
+        self, project_root: Path, model: str, available_period: tuple[str, str] | None = None
+    ):
+        self.project_root = project_root
+        self.model = model
+        self.available_period = available_period
+        self.last_source = None
+
+    def resolve(
+        self, question: str, districts: set[str], memory: ConversationMemory
+    ) -> QueryIntent:
         # The LLM owns intent classification.  Local parsing below only extracts
         # hard facts (an explicitly named dong or calendar range) that are used
         # to validate the LLM result afterwards or when the model is unavailable.
         explicit_names = _explicit_districts(question, districts)
-        rule_intent = self._apply_explicit_districts(parse_intent(question, districts), explicit_names)
-        key=_api_key(self.project_root)
+        rule_intent = self._apply_explicit_districts(
+            parse_intent(question, districts), explicit_names
+        )
+        key = _api_key(self.project_root)
         if not key:
-            self.last_source='local_no_key'
-            return self._fallback(question,districts,memory,explicit_names)
+            self.last_source = 'local_no_key'
+            return self._fallback(question, districts, memory, explicit_names)
         try:
             from google import genai
-            prompt=f'''당신은 강남구 지역 변화 신호 챗봇의 자연어 조회 계획자입니다.
+
+            prompt = f'''당신은 강남구 지역 변화 신호 챗봇의 자연어 조회 계획자입니다.
 분류 우선순위: 먼저 **현재 질문만으로 완결되는 지식·판정기준 질문**인지 판단하세요.
 이런 질문에는 이전 대화의 지역, 소비 보조자료, 후속 버튼 문맥을 절대로 이어붙이지 마세요.
 특히 현재 질문이 "이상신호 기준은 무엇인가요?", "이상신호 탐지 기준 알려줘",
@@ -184,7 +243,7 @@ age_band는 null(전체 연령), 20s, 30s, 40s, 50s, 60plus 중 하나입니다.
 허용 metric: call_contacts, text_contacts, weekday_move_count, weekend_move_count 또는 null
 사용 가능한 행정동: {sorted(districts)}
 실제 탐지 데이터 기간: {self.available_period or '알 수 없음'}
-이전 대화: {json.dumps(memory.as_prompt_data(),ensure_ascii=False)}
+이전 대화: {json.dumps(memory.as_prompt_data(), ensure_ascii=False)}
 현재 질문: {normalize_year_shorthand(question)}
 
 JSON만 반환하세요:
@@ -193,105 +252,175 @@ JSON만 반환하세요:
 "all_available_period":false,"clarifying_question":null,"age_band":null,"age_bands":[],"age_scope_explicit":false,"include_values":false}}'''
             # Keep the owning Client alive while its Models service sends the
             # request. A temporary Client can be finalized and close HTTP first.
-            client=genai.Client(api_key=key)
+            client = genai.Client(api_key=key)
             try:
-                response=client.models.generate_content(model=self.model,contents=prompt,
-                    config={'temperature':0,'response_mime_type':'application/json','response_json_schema':INTENT_SCHEMA})
+                response = client.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config={
+                        'temperature': 0,
+                        'response_mime_type': 'application/json',
+                        'response_json_schema': INTENT_SCHEMA,
+                    },
+                )
             finally:
                 client.close()
-            raw=_json_object(getattr(response,"text","") or "")
-            intent=self._apply_local_constraints(self._validate(raw,districts), rule_intent, explicit_names, question)
-            if (re.search(r"이상\s*신호", question)
-                    and re.search(r"발생한\s*지역|탐지된\s*지역", question)
-                    and re.search(r"요약|상태", question)):
-                intent = replace(intent, purpose="find_region", question_type="signals",
-                                 start_month=rule_intent.start_month or intent.start_month,
-                                 end_month=rule_intent.end_month or intent.end_month,
-                                 needs=tuple(x for x in intent.needs if x not in {"행정동", "지표", "조회 목적"}),
-                                 summary_only=True)
-            self.last_source='gemini'
-            if intent.question_type=='age_activity':
-                bands,unsupported=comparison_ages(question)
+            raw = _json_object(getattr(response, "text", "") or "")
+            intent = self._apply_local_constraints(
+                self._validate(raw, districts), rule_intent, explicit_names, question
+            )
+            if (
+                re.search(r"이상\s*신호", question)
+                and re.search(r"발생한\s*지역|탐지된\s*지역", question)
+                and re.search(r"요약|상태", question)
+            ):
+                intent = replace(
+                    intent,
+                    purpose="find_region",
+                    question_type="signals",
+                    start_month=rule_intent.start_month or intent.start_month,
+                    end_month=rule_intent.end_month or intent.end_month,
+                    needs=tuple(
+                        x for x in intent.needs if x not in {"행정동", "지표", "조회 목적"}
+                    ),
+                    summary_only=True,
+                )
+            self.last_source = 'gemini'
+            if intent.question_type == 'age_activity':
+                bands, unsupported = comparison_ages(question)
                 if unsupported:
-                    return replace(intent,needs=(*intent.needs,'연령'))
+                    return replace(intent, needs=(*intent.needs, '연령'))
                 if bands:
-                    return replace(intent,age_band=bands[0] if len(bands)==1 else None,
-                                        age_bands=bands,age_scope_explicit=True)
-                return replace(intent,age_scope_explicit=True)
-            age,ambiguous=age_condition(question)
+                    return replace(
+                        intent,
+                        age_band=bands[0] if len(bands) == 1 else None,
+                        age_bands=bands,
+                        age_scope_explicit=True,
+                    )
+                return replace(intent, age_scope_explicit=True)
+            age, ambiguous = age_condition(question)
             if ambiguous:
-                return replace(intent,needs=(*intent.needs,'연령'))
+                return replace(intent, needs=(*intent.needs, '연령'))
             if age:
-                return replace(intent,age_band=age,age_scope_explicit=True)
-            if re.search(r'전\s*연령|전체\s*연령',question):
-                return replace(intent,age_band=None,age_scope_explicit=True)
-            if (intent.question_type in {"signals", "rank_regions"}
-                    and re.search(r"신호", question)
-                    and re.search(r"요약|상태", question)
-                    and re.search(r"지역|동", question)):
+                return replace(intent, age_band=age, age_scope_explicit=True)
+            if re.search(r'전\s*연령|전체\s*연령', question):
+                return replace(intent, age_band=None, age_scope_explicit=True)
+            if (
+                intent.question_type in {"signals", "rank_regions"}
+                and re.search(r"신호", question)
+                and re.search(r"요약|상태", question)
+                and re.search(r"지역|동", question)
+            ):
                 intent = replace(intent, summary_only=True)
             return intent
         except Exception as exc:
-            self.last_source='local_model_error'
+            self.last_source = 'local_model_error'
             # Do not log API messages or credentials; make silent fallback diagnosable.
-            LOGGER.warning('Gemini intent classification failed (%s, status=%s); using local fallback',
-                           type(exc).__name__,getattr(exc,'code',None))
-        intent = self._fallback(question,districts,memory,explicit_names)
-        if (re.search(r"이상\s*신호", question)
-                and re.search(r"발생한\s*지역|탐지된\s*지역", question)
-                and re.search(r"요약|상태", question)):
-            intent = replace(intent, purpose="find_region", question_type="signals",
-                             start_month=rule_intent.start_month or intent.start_month,
-                             end_month=rule_intent.end_month or intent.end_month,
-                             needs=tuple(x for x in intent.needs if x not in {"행정동", "지표", "조회 목적"}),
-                             summary_only=True)
-        if (intent.question_type in {"signals", "rank_regions"}
-                and re.search(r"신호", question)
-                and re.search(r"요약|상태", question)
-                and re.search(r"지역|동", question)):
+            LOGGER.warning(
+                'Gemini intent classification failed (%s, status=%s); using local fallback',
+                type(exc).__name__,
+                getattr(exc, 'code', None),
+            )
+        intent = self._fallback(question, districts, memory, explicit_names)
+        if (
+            re.search(r"이상\s*신호", question)
+            and re.search(r"발생한\s*지역|탐지된\s*지역", question)
+            and re.search(r"요약|상태", question)
+        ):
+            intent = replace(
+                intent,
+                purpose="find_region",
+                question_type="signals",
+                start_month=rule_intent.start_month or intent.start_month,
+                end_month=rule_intent.end_month or intent.end_month,
+                needs=tuple(x for x in intent.needs if x not in {"행정동", "지표", "조회 목적"}),
+                summary_only=True,
+            )
+        if (
+            intent.question_type in {"signals", "rank_regions"}
+            and re.search(r"신호", question)
+            and re.search(r"요약|상태", question)
+            and re.search(r"지역|동", question)
+        ):
             intent = replace(intent, summary_only=True)
         return intent
 
-    def _fallback(self,question,districts,memory,names):
-        parsed=self._apply_explicit_districts(parse_intent(question,districts),names)
-        pending=memory.pending_intent
-        compact=re.sub(r'\s+','',normalize_year_shorthand(question))
-        date_only=bool((parsed.start_month and parsed.end_month or parsed.all_available_period) and
-                       not re.sub(r'20\d{2}|\d+|상반기|하반기|분기|기간|전체|년|월|부터|까지|로|[~～∼–.,!?-]','',compact))
-        age_only=bool(re.fullmatch(r'(?:그럼)?(?:[2-6]0대(?:이상)?|60(?:세|살)이상)(?:는)?[.!?]?',compact))
-        dong_only=compact in districts
-        previous=memory.last_scope()
-        if previous and age_only and previous.question_type in {"activity","age_activity"}:
-            age,unsupported=age_condition(question)
-            return QueryIntent(previous.purpose,previous.question_type,
-                               previous.districts[0] if len(previous.districts)==1 else None,
-                               previous.start_month,previous.end_month,previous.signal,previous.metric,
-                               ("연령",) if unsupported else (),None,previous.districts,True,False,None,
-                               age or previous.age_band,True,(age,) if age and previous.question_type=="age_activity" else previous.age_bands)
+    def _fallback(self, question, districts, memory, names):
+        parsed = self._apply_explicit_districts(parse_intent(question, districts), names)
+        pending = memory.pending_intent
+        compact = re.sub(r'\s+', '', normalize_year_shorthand(question))
+        date_only = bool(
+            (parsed.start_month and parsed.end_month or parsed.all_available_period)
+            and not re.sub(
+                r'20\d{2}|\d+|상반기|하반기|분기|기간|전체|년|월|부터|까지|로|[~～∼–.,!?-]',
+                '',
+                compact,
+            )
+        )
+        age_only = bool(
+            re.fullmatch(r'(?:그럼)?(?:[2-6]0대(?:이상)?|60(?:세|살)이상)(?:는)?[.!?]?', compact)
+        )
+        dong_only = compact in districts
+        previous = memory.last_scope()
+        if previous and age_only and previous.question_type in {"activity", "age_activity"}:
+            age, unsupported = age_condition(question)
+            return QueryIntent(
+                previous.purpose,
+                previous.question_type,
+                previous.districts[0] if len(previous.districts) == 1 else None,
+                previous.start_month,
+                previous.end_month,
+                previous.signal,
+                previous.metric,
+                ("연령",) if unsupported else (),
+                None,
+                previous.districts,
+                True,
+                False,
+                None,
+                age or previous.age_band,
+                True,
+                (age,) if age and previous.question_type == "age_activity" else previous.age_bands,
+            )
         if pending and (date_only or age_only or dong_only):
-            age,unsupported=age_condition(question)
-            bands,_=comparison_ages(question)
-            needs=tuple(item for item in pending.needs if not (age_only and age and item=='연령'))
+            age, unsupported = age_condition(question)
+            bands, _ = comparison_ages(question)
+            needs = tuple(
+                item for item in pending.needs if not (age_only and age and item == '연령')
+            )
             if unsupported:
-                needs=(*needs,'연령')
-            return replace(pending,dong=parsed.dong or pending.dong,dongs=names or pending.dongs,
-                           start_month=parsed.start_month or pending.start_month,
-                           end_month=parsed.end_month or pending.end_month,
-                           age_band=age or pending.age_band,
-                           age_bands=bands if age_only and pending.question_type=='age_activity' else pending.age_bands,
-                           age_scope_explicit=age_only or pending.age_scope_explicit,
-                           all_available_period=parsed.all_available_period,
-                           needs=needs,use_previous_scope=True,clarifying_question=None)
+                needs = (*needs, '연령')
+            return replace(
+                pending,
+                dong=parsed.dong or pending.dong,
+                dongs=names or pending.dongs,
+                start_month=parsed.start_month or pending.start_month,
+                end_month=parsed.end_month or pending.end_month,
+                age_band=age or pending.age_band,
+                age_bands=bands
+                if age_only and pending.question_type == 'age_activity'
+                else pending.age_bands,
+                age_scope_explicit=age_only or pending.age_scope_explicit,
+                all_available_period=parsed.all_available_period,
+                needs=needs,
+                use_previous_scope=True,
+                clarifying_question=None,
+            )
         # Regional information is a data-backed typology request even when it
         # starts with a short dashboard pronoun such as "이 동".
         if parsed.question_type in {"context", "support"}:
             return parsed
-        dialogue=fallback_dialogue(question,districts,memory)
+        dialogue = fallback_dialogue(question, districts, memory)
         return dialogue if dialogue is not None else parsed
 
     @classmethod
-    def _apply_local_constraints(cls, intent: QueryIntent, rule_intent: QueryIntent,
-                                 names: tuple[str, ...], question: str = "") -> QueryIntent:
+    def _apply_local_constraints(
+        cls,
+        intent: QueryIntent,
+        rule_intent: QueryIntent,
+        names: tuple[str, ...],
+        question: str = "",
+    ) -> QueryIntent:
         """Keep explicit facts from the question without replacing LLM intent.
 
         For example, the model decides whether a question asks for methodology
@@ -304,34 +433,59 @@ JSON만 반환하세요:
         # "강남구 전체", "모든 동", and "변화 신호가 나온 동" explicitly
         # ask for the whole DB1 result set; use the age-level case table so the
         # answer can report month, age band, and signal type.
-        global_signal = (
-            rule_intent.question_type in {"signals", "rank_regions"}
-            and (
-                re.search(r"강남구\s*전체|전체\s*지역|모든\s*동|변화\s*신호가\s*나온\s*동|신호가\s*나온\s*동", question)
-                # “모든 이상신호/탐지된 케이스”는 지역 순위가 아니라
-                # 공개된 모든 사례(연령별 사례 포함)를 요청한 것이다.
-                or re.search(r"(?:모든|전체|전부)\s*(?:이상\s*)?신호.*(?:케이스|사례|기록)?|(?:이상\s*)?신호\s*(?:모든|전체|전부)|(?:모든|전체|전부)\s*(?:탐지된\s*)?(?:이상\s*)?신호", question)
-                # The bomi adapter calls this shared resolver without passing
-                # the source text. parse_intent already marks this exact
-                # global-list shape as explicit age scope, so retain the same
-                # safeguard in that call path too.
-                or (rule_intent.age_scope_explicit and rule_intent.age_band is None
-                    and rule_intent.dong is None and not names)
+        global_signal = rule_intent.question_type in {"signals", "rank_regions"} and (
+            re.search(
+                r"강남구\s*전체|전체\s*지역|모든\s*동|변화\s*신호가\s*나온\s*동|신호가\s*나온\s*동",
+                question,
+            )
+            # “모든 이상신호/탐지된 케이스”는 지역 순위가 아니라
+            # 공개된 모든 사례(연령별 사례 포함)를 요청한 것이다.
+            or re.search(
+                r"(?:모든|전체|전부)\s*(?:이상\s*)?신호.*(?:케이스|사례|기록)?|(?:이상\s*)?신호\s*(?:모든|전체|전부)|(?:모든|전체|전부)\s*(?:탐지된\s*)?(?:이상\s*)?신호",
+                question,
+            )
+            # The bomi adapter calls this shared resolver without passing
+            # the source text. parse_intent already marks this exact
+            # global-list shape as explicit age scope, so retain the same
+            # safeguard in that call path too.
+            or (
+                rule_intent.age_scope_explicit
+                and rule_intent.age_band is None
+                and rule_intent.dong is None
+                and not names
             )
         )
         if global_signal:
-            all_cases = bool(re.search(r"(?:모든|전체|전부)\s*(?:이상\s*)?신호.*(?:케이스|사례|기록)?|(?:이상\s*)?신호\s*(?:모든|전체|전부)|(?:모든|전체|전부)\s*(?:탐지된\s*)?(?:이상\s*)?신호", question))
-            intent = replace(intent, question_type="signals" if all_cases else intent.question_type,
-                             dong=None, dongs=(), age_band=None,
-                             age_scope_explicit=True, use_previous_scope=False,
-                             start_month=rule_intent.start_month or intent.start_month,
-                             end_month=rule_intent.end_month or intent.end_month)
+            all_cases = bool(
+                re.search(
+                    r"(?:모든|전체|전부)\s*(?:이상\s*)?신호.*(?:케이스|사례|기록)?|(?:이상\s*)?신호\s*(?:모든|전체|전부)|(?:모든|전체|전부)\s*(?:탐지된\s*)?(?:이상\s*)?신호",
+                    question,
+                )
+            )
+            intent = replace(
+                intent,
+                question_type="signals" if all_cases else intent.question_type,
+                dong=None,
+                dongs=(),
+                age_band=None,
+                age_scope_explicit=True,
+                use_previous_scope=False,
+                start_month=rule_intent.start_month or intent.start_month,
+                end_month=rule_intent.end_month or intent.end_month,
+            )
         # ``연령별`` 비교는 단일 연령의 activity 조회와 결과 모양이
         # 다르다. 질문에 명시된 비교 범위와 지표는 사실이므로, 모델이
         # 화면의 현재 연령에 끌려 단일 값 조회로 바꾸지 못하게 한다.
         if rule_intent.question_type == "age_data_coverage":
-            intent = replace(intent, purpose="track_change", question_type="age_data_coverage",
-                             dong=None, dongs=(), use_previous_scope=True, needs=())
+            intent = replace(
+                intent,
+                purpose="track_change",
+                question_type="age_data_coverage",
+                dong=None,
+                dongs=(),
+                use_previous_scope=True,
+                needs=(),
+            )
         elif rule_intent.question_type == "age_activity":
             intent = replace(
                 intent,
@@ -342,14 +496,24 @@ JSON만 반환하세요:
                 age_bands=rule_intent.age_bands,
                 age_scope_explicit=rule_intent.age_scope_explicit,
                 include_values=rule_intent.include_values or intent.include_values,
-                needs=tuple(item for item in intent.needs if item not in {"지표", "조회 목적", "연령"}),
+                needs=tuple(
+                    item for item in intent.needs if item not in {"지표", "조회 목적", "연령"}
+                ),
             )
         elif rule_intent.question_type == "provenance":
             # The local parser only recognizes direct source/provenance words;
             # keep that contract even if a model mistakes it for a data lookup.
-            intent = replace(intent, purpose="track_change", question_type="provenance",
-                             dong=None, dongs=(), start_month=None, end_month=None,
-                             needs=(), use_previous_scope=False)
+            intent = replace(
+                intent,
+                purpose="track_change",
+                question_type="provenance",
+                dong=None,
+                dongs=(),
+                start_month=None,
+                end_month=None,
+                needs=(),
+                use_previous_scope=False,
+            )
         # These are explicit response contracts in the current question, not
         # a best-effort semantic guess.  Preserve them even when Gemini calls
         # the same short Korean phrasing a generic signal query.
@@ -362,14 +526,27 @@ JSON만 반환하세요:
         # it does not reclassify ordinary 지역 특성·유형 questions.
         if intent.question_type == "context" and rule_intent.question_type == "support":
             intent = replace(intent, purpose="plan_review", question_type="support")
-        if intent.question_type in {"signals", "rank_regions", "anomaly", "activity", "age_activity", "age_data_coverage", "reason",
-                                    "previous", "context", "support", "consumption", "data_status"}:
+        if intent.question_type in {
+            "signals",
+            "rank_regions",
+            "anomaly",
+            "activity",
+            "age_activity",
+            "age_data_coverage",
+            "reason",
+            "previous",
+            "context",
+            "support",
+            "consumption",
+            "data_status",
+        }:
             # A YYYY-MM/year/half-year directly written in the current
             # question is a fact, not a dashboard default. Never let an LLM
             # or previous screen month silently replace it.
             if rule_intent.start_month and rule_intent.end_month:
-                return replace(intent, start_month=rule_intent.start_month,
-                               end_month=rule_intent.end_month)
+                return replace(
+                    intent, start_month=rule_intent.start_month, end_month=rule_intent.end_month
+                )
         return intent
 
     @staticmethod
@@ -377,9 +554,8 @@ JSON만 반환하세요:
         """명시 지역은 대화 메모리를 대신하는 조회 범위다."""
         if intent.purpose == "dialogue" or not names:
             return intent
-        needs=tuple(item for item in intent.needs if item != "행정동")
-        return replace(intent, dong=names[0] if len(names)==1 else None,
-                       dongs=names, needs=needs)
+        needs = tuple(item for item in intent.needs if item != "행정동")
+        return replace(intent, dong=names[0] if len(names) == 1 else None, dongs=names, needs=needs)
 
     def _validate(self, raw: dict, allowed_districts: set[str]) -> QueryIntent:
         if raw.get("purpose") == "dialogue" or raw.get("question_type") in DIALOGUE_REPLIES:
@@ -387,37 +563,60 @@ JSON만 반환하세요:
             return dialogue_intent(kind if kind in DIALOGUE_REPLIES else "off_topic")
         if raw.get("purpose") not in PURPOSES or raw.get("question_type") not in KINDS:
             raise ValueError("Unknown intent classification")
-        purpose=raw.get("purpose") if raw.get("purpose") in PURPOSES else "find_region"
-        kind=raw.get("question_type") if raw.get("question_type") in KINDS else "signals"
-        names=tuple(dict.fromkeys(str(x) for x in raw.get("districts",[]) if str(x) in allowed_districts))
-        signal=raw.get("signal") if raw.get("signal") in SIGNALS else "any"
-        metric=raw.get("metric") if raw.get("metric") in METRICS else None
-        limit=raw.get("limit")
-        limit=max(1,min(int(limit),22)) if isinstance(limit,(int,float)) else None
+        purpose = raw.get("purpose") if raw.get("purpose") in PURPOSES else "find_region"
+        kind = raw.get("question_type") if raw.get("question_type") in KINDS else "signals"
+        names = tuple(
+            dict.fromkeys(str(x) for x in raw.get("districts", []) if str(x) in allowed_districts)
+        )
+        signal = raw.get("signal") if raw.get("signal") in SIGNALS else "any"
+        metric = raw.get("metric") if raw.get("metric") in METRICS else None
+        limit = raw.get("limit")
+        limit = max(1, min(int(limit), 22)) if isinstance(limit, (int, float)) else None
         # 조회 목적은 분류 결과이지 사용자에게 되물을 입력 슬롯이 아니다.
         # Gemini가 이를 needs에 섞어 보내도 실제 조회를 막지 않도록 버린다.
-        needs=tuple(str(x) for x in raw.get("needs",[]) if str(x) in {"행정동","기간","지표","연령"})
+        needs = tuple(
+            str(x) for x in raw.get("needs", []) if str(x) in {"행정동", "기간", "지표", "연령"}
+        )
         # This is a response-contract check, not keyword intent routing: a
         # signal list is a region-finding query and its district is the result.
         # Never let an inconsistent model field turn it into a district prompt.
         if kind in {"signals", "rank_regions"}:
-            needs=tuple(item for item in needs if item != "행정동")
-        age=raw.get('age_band')
-        if age not in {None,'20s','30s','40s','50s','60plus'}:
-            needs=(*needs,'연령')
-            age=None
-        bands=raw.get('age_bands',[])
-        if not isinstance(bands,list):
+            needs = tuple(item for item in needs if item != "행정동")
+        age = raw.get('age_band')
+        if age not in {None, '20s', '30s', '40s', '50s', '60plus'}:
+            needs = (*needs, '연령')
+            age = None
+        bands = raw.get('age_bands', [])
+        if not isinstance(bands, list):
             raise ValueError('Age comparison groups must be a list')
-        if any(b not in {'20s','30s','40s','50s','60plus'} for b in bands):
-            needs=(*needs,'연령')
-            bands=[]
-        bands=tuple(dict.fromkeys(bands)) if kind=='age_activity' else ()
-        clarification=raw.get("clarifying_question")
-        clarification=clarification.strip()[:300] if isinstance(clarification,str) else None
-        if kind in {"activity","age_activity","reason","previous","context","support"} and not names and "행정동" not in needs:
-            needs=(*needs,"행정동")
-        return QueryIntent(purpose,kind,names[0] if len(names)==1 else None,
-                           raw.get("start_month"),raw.get("end_month"),signal,metric,needs,limit,names,
-                           bool(raw.get("use_previous_scope")), bool(raw.get("all_available_period")), clarification,age,
-                           bool(raw.get('age_scope_explicit')),bands,bool(raw.get('include_values')))
+        if any(b not in {'20s', '30s', '40s', '50s', '60plus'} for b in bands):
+            needs = (*needs, '연령')
+            bands = []
+        bands = tuple(dict.fromkeys(bands)) if kind == 'age_activity' else ()
+        clarification = raw.get("clarifying_question")
+        clarification = clarification.strip()[:300] if isinstance(clarification, str) else None
+        if (
+            kind in {"activity", "age_activity", "reason", "previous", "context", "support"}
+            and not names
+            and "행정동" not in needs
+        ):
+            needs = (*needs, "행정동")
+        return QueryIntent(
+            purpose,
+            kind,
+            names[0] if len(names) == 1 else None,
+            raw.get("start_month"),
+            raw.get("end_month"),
+            signal,
+            metric,
+            needs,
+            limit,
+            names,
+            bool(raw.get("use_previous_scope")),
+            bool(raw.get("all_available_period")),
+            clarification,
+            age,
+            bool(raw.get('age_scope_explicit')),
+            bands,
+            bool(raw.get('include_values')),
+        )

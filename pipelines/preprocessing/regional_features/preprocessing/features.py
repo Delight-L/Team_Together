@@ -22,12 +22,21 @@ def load_weather(path):
             key = row['date']
             if key in weather:
                 raise ValueError(f'날씨 월 중복: {key}')
-            weather[key] = {col: number(row[col], f'weather/{key}/{col}') for col in ['rain_days', 'rainfall_mm', 'snow_days']}
+            weather[key] = {
+                col: number(row[col], f'weather/{key}/{col}')
+                for col in ['rain_days', 'rainfall_mm', 'snow_days']
+            }
     return weather
 
 
 def assemble(data, dates, areas, weather):
-    missing = [f'{m}/{kind}/{c}' for m in dates for kind in ['telecom', 'interest'] for c in areas if c not in data.get((m, kind), {})]
+    missing = [
+        f'{m}/{kind}/{c}'
+        for m in dates
+        for kind in ['telecom', 'interest']
+        for c in areas
+        if c not in data.get((m, kind), {})
+    ]
     missing += [f'{m}/weather' for m in dates if m not in weather]
     if missing:
         raise ValueError('필수 월·동·날씨 누락: ' + ', '.join(missing))
@@ -50,7 +59,11 @@ def assemble(data, dates, areas, weather):
             for out in INTEREST:
                 row[out] = i[out] / i['households']
             row.update(weather[month])
-            row.update(days_in_month=days, weekday_days=weekdays, weekend_days=days-weekdays,
-                       interest_structural_issue=code == '1123074' and month >= '2024-01-01')
+            row.update(
+                days_in_month=days,
+                weekday_days=weekdays,
+                weekend_days=days - weekdays,
+                interest_structural_issue=code == '1123074' and month >= '2024-01-01',
+            )
             result.append(row)
     return result

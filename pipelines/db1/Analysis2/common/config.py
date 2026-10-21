@@ -45,10 +45,7 @@ MOBILITY_COLUMNS = [
     "weekend_move_count",
 ]
 
-DETECTION_CORE_COLUMNS = (
-    COMMUNICATION_COLUMNS
-    + MOBILITY_COLUMNS
-)
+DETECTION_CORE_COLUMNS = COMMUNICATION_COLUMNS + MOBILITY_COLUMNS
 
 
 # --------------------------------------------------

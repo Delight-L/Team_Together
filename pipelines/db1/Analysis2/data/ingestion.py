@@ -38,9 +38,7 @@ def load_analysis2_input(file_path: str | Path) -> pd.DataFrame:
     file_path = Path(file_path)
 
     if not file_path.exists():
-        raise FileNotFoundError(
-            f"Analysis2 입력 파일을 찾을 수 없습니다: {file_path}"
-        )
+        raise FileNotFoundError(f"Analysis2 입력 파일을 찾을 수 없습니다: {file_path}")
 
     suffix = file_path.suffix.lower()
 
@@ -54,8 +52,6 @@ def load_analysis2_input(file_path: str | Path) -> pd.DataFrame:
         df = pd.read_parquet(file_path)
 
     else:
-        raise ValueError(
-            f"지원하지 않는 파일 형식입니다: {suffix}"
-        )
+        raise ValueError(f"지원하지 않는 파일 형식입니다: {suffix}")
 
     return df

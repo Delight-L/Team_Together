@@ -8,6 +8,7 @@
 계약을 지키면 챗봇 로직은 저장소가 바뀌어도 바뀌지 않습니다. SQL은 구현 안에만 둡니다.
 탐지·근거 조회는 pandas DataFrame, 소비·배경 조회는 dict 목록을 돌려줍니다(기존 동작 유지).
 """
+
 from __future__ import annotations
 
 from typing import Any, Protocol
@@ -43,17 +44,33 @@ class Db1Repository(Protocol):
         """그 클러스터에 속한 행정동 이름(가나다순)."""
 
     # ── 탐지·근거 (DataFrame) ───────────────────────────────────
-    def activity(self, dong: str | None, start: str | None = None, end: str | None = None,
-                 age_band: str | None = None) -> pd.DataFrame:
+    def activity(
+        self,
+        dong: str | None,
+        start: str | None = None,
+        end: str | None = None,
+        age_band: str | None = None,
+    ) -> pd.DataFrame:
         """동(없으면 전체)·기간·연령대의 월별 탐지 결과."""
 
-    def signals(self, start: str | None = None, end: str | None = None, dong: str | None = None,
-                signal: str = 'any', age_band: str | None = None) -> pd.DataFrame:
+    def signals(
+        self,
+        start: str | None = None,
+        end: str | None = None,
+        dong: str | None = None,
+        signal: str = 'any',
+        age_band: str | None = None,
+    ) -> pd.DataFrame:
         """신호가 잡힌 행. signal: any | communication | mobility | combined."""
 
-    def age_signal_cases(self, start: str | None = None, end: str | None = None,
-                         dong: str | None = None, signal: str = 'any',
-                         age_band: str | None = None) -> pd.DataFrame:
+    def age_signal_cases(
+        self,
+        start: str | None = None,
+        end: str | None = None,
+        dong: str | None = None,
+        signal: str = 'any',
+        age_band: str | None = None,
+    ) -> pd.DataFrame:
         """연령별 이상신호 사례를 조회한다.
 
         ``signals(age_band=None)``은 동 단위 ``a2_detection``을 뜻하므로,
@@ -63,12 +80,23 @@ class Db1Repository(Protocol):
         ``NULL`` 플래그는 평가 보류이므로 False로 바꾸지 않는다.
         """
 
-    def anomalies(self, start: str | None = None, end: str | None = None, metric: str | None = None,
-                  age_band: str | None = None, dongs: tuple = ()) -> tuple[pd.DataFrame, str]:
+    def anomalies(
+        self,
+        start: str | None = None,
+        end: str | None = None,
+        metric: str | None = None,
+        age_band: str | None = None,
+        dongs: tuple = (),
+    ) -> tuple[pd.DataFrame, str]:
         """지표 Robust Z가 낮은 순 상위 10행과 사용한 컬럼 이름."""
 
-    def evidence(self, dong: str, start: str | None = None, end: str | None = None,
-                 age_band: str | None = None) -> pd.DataFrame:
+    def evidence(
+        self,
+        dong: str,
+        start: str | None = None,
+        end: str | None = None,
+        age_band: str | None = None,
+    ) -> pd.DataFrame:
         """신호 근거 카드."""
 
     def context(self, dong: str, as_of: str | None = None) -> pd.DataFrame:
@@ -78,11 +106,20 @@ class Db1Repository(Protocol):
     def supplements(self, names: list, dates: list, age_band: str | None = None) -> dict[str, Any]:
         """관측기간에 맞춘 상권·날씨·지역 배경·서베이 보조 자료."""
 
-    def consumption_evidence(self, names: tuple, start: str, end: str, age: str | None) -> tuple[list, dict]:
+    def consumption_evidence(
+        self, names: tuple, start: str, end: str, age: str | None
+    ) -> tuple[list, dict]:
         """요청한 달력 기간의 (동 상권 자료 행 목록, 강남구 공통 소비 자료 dict)."""
 
-    def consumption_payloads(self, table: str, *, periods: list | None = None, adm_cds: list | None = None,
-                             ages: list | None = None, districts: list | None = None) -> list[dict]:
+    def consumption_payloads(
+        self,
+        table: str,
+        *,
+        periods: list | None = None,
+        adm_cds: list | None = None,
+        ages: list | None = None,
+        districts: list | None = None,
+    ) -> list[dict]:
         """소비 증감 계산용 원자료. table: a3a_feature | a3a_comparison | a3b_feature.
 
         목록 조건은 해당 값의 행만 읽도록 저장소에 내려 보냅니다(None=조건 없음, 빈 목록=해당 행 없음).

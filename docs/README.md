@@ -34,6 +34,7 @@
 - [PostgreSQL 이관·DB1 초기 통합 기록](history/postgresql-migration-2026-10-19.md)
 - [2026-10-19 코드·파일 정리](history/repository-cleanup-2026-10-19.md)
 - [2026-10-20 코드·이름 정리](history/repository-cleanup-2026-10-20.md)
+- [2026-10-21 미사용 코드 재점검·가독성 정리](history/repository-cleanup-2026-10-21.md)
 - [팀원 챗봇 병합 후속 기록](history/shinwon-integration-followups.md)
 - [신호 질문 해석 수정 명세](history/spec-fix-signal-query-interpretation.md)
 - [자동 연령 변화 패널 제거 명세](history/spec-remove-automatic-age-change-panel.md)

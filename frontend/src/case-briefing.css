@@ -1,70 +1,234 @@
 /* 이번 달 브리핑: 지리적 위치 대신 분석 근거를 조사 파일로 보여줍니다. */
 /* 본문 13px, 지역 목록 14px, 배지와 보조 정보 11px을 사용합니다. */
 /* 좁은 화면에서 메뉴가 고정 패널로 바뀌어도 본문은 두 번째 열에 유지합니다. */
-.briefing-shell > .main-wrap { grid-column: 2; grid-row: 1; }
-.briefing-shell .main-content { overflow-y: auto; background: radial-gradient(ellipse at 12% 5%, #fff9ef85, transparent 55%), #f6f8fc; padding-top: 27px; gap: 25px; }
-.briefing-shell .page-heading { align-items: center; flex-wrap: wrap; gap: 16px 22px; }
-.briefing-shell .page-heading > div:first-child { flex: 1 1 350px; }
-.briefing-shell .page-heading h1 { font-size: clamp(26px, 1.9vw, 36px); line-height: 1.35; letter-spacing: -1px; }
-.briefing-shell .page-heading p { display: block; font-size: 13px; line-height: 1.7; color: #7e8fa9; }
-.heading-tools { display: flex; align-items: center; gap: 14px; }
-.case-heading-tools { flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
-.case-heading-tools .filters { gap: 10px; }
-.case-heading-tools .filters select { min-width: 105px; height: 42px; font-size: 13px; border-radius: 10px; padding: 9px 12px; color: #183154; }
-.case-heading-tools .filters label { font-size: 11px; }
+.briefing-shell > .main-wrap {
+  grid-column: 2;
+  grid-row: 1;
+}
+.briefing-shell .main-content {
+  overflow-y: auto;
+  background: radial-gradient(ellipse at 12% 5%, #fff9ef85, transparent 55%), #f6f8fc;
+  padding-top: 27px;
+  gap: 25px;
+}
+.briefing-shell .page-heading {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px 22px;
+}
+.briefing-shell .page-heading > div:first-child {
+  flex: 1 1 350px;
+}
+.briefing-shell .page-heading h1 {
+  font-size: clamp(26px, 1.9vw, 36px);
+  line-height: 1.35;
+  letter-spacing: -1px;
+}
+.briefing-shell .page-heading p {
+  display: block;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #7e8fa9;
+}
+.heading-tools {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.case-heading-tools {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.case-heading-tools .filters {
+  gap: 10px;
+}
+.case-heading-tools .filters select {
+  min-width: 105px;
+  height: 42px;
+  font-size: 13px;
+  border-radius: 10px;
+  padding: 9px 12px;
+  color: #183154;
+}
+.case-heading-tools .filters label {
+  font-size: 11px;
+}
 /* 같은 상태에는 상단 요약·폴더·배지 모두 같은 색상을 사용합니다. */
-.briefing-shell .new-candidate { --case-status-fill: #f5cf63; --case-status-tab: #e9b944; --case-status-ink: #80621c; --case-status-soft: #fff2c2; }
-.briefing-shell .continuing-candidate { --case-status-fill: #9ed5c2; --case-status-tab: #79bba5; --case-status-ink: #276451; --case-status-soft: #e1f1eb; }
-.briefing-shell .pending-region { --case-status-fill: #c8bde8; --case-status-tab: #b1a0d5; --case-status-ink: #66508e; --case-status-soft: #ece6f7; }
-.case-help { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; color: #8a9ebd; line-height: 0; flex-shrink: 0; vertical-align: middle; cursor: help; }
-.case-help svg { display: block; width: 14px; height: 14px; }
-.case-question-icon { display: grid; place-items: center; width: 44px; height: 50px; border-radius: 12px; color: #246bff; background: #e0ecff; flex-shrink: 0; }
+.briefing-shell .new-candidate {
+  --case-status-fill: #f5cf63;
+  --case-status-tab: #e9b944;
+  --case-status-ink: #80621c;
+  --case-status-soft: #fff2c2;
+}
+.briefing-shell .continuing-candidate {
+  --case-status-fill: #9ed5c2;
+  --case-status-tab: #79bba5;
+  --case-status-ink: #276451;
+  --case-status-soft: #e1f1eb;
+}
+.briefing-shell .pending-region {
+  --case-status-fill: #c8bde8;
+  --case-status-tab: #b1a0d5;
+  --case-status-ink: #66508e;
+  --case-status-soft: #ece6f7;
+}
+.case-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  color: #8a9ebd;
+  line-height: 0;
+  flex-shrink: 0;
+  vertical-align: middle;
+  cursor: help;
+}
+.case-help svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+.case-question-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 50px;
+  border-radius: 12px;
+  color: #246bff;
+  background: #e0ecff;
+  flex-shrink: 0;
+}
 /* 파일 색은 후보 상태를 표시하고, 선택 여부는 카드의 파란 테두리로 표시합니다. */
 @container (max-width: 430px) {
-  .case-question-icon { width: 34px; height: 40px; }
+  .case-question-icon {
+    width: 34px;
+    height: 40px;
+  }
 }
 @media (min-width: 1600px) {
-  .briefing-shell { --assistant-width: 360px; }
-  .briefing-shell .main-content { padding: 25px 32px 15px; gap: 14px; }
+  .briefing-shell {
+    --assistant-width: 360px;
+  }
+  .briefing-shell .main-content {
+    padding: 25px 32px 15px;
+    gap: 14px;
+  }
 }
 @media (max-width: 1100px) {
-  .briefing-shell .page-heading > div:first-child { flex-basis: 100%; }
-  .case-heading-tools { width: 100%; justify-content: space-between; }
+  .briefing-shell .page-heading > div:first-child {
+    flex-basis: 100%;
+  }
+  .case-heading-tools {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 @media (max-width: 850px) {
-  .briefing-shell .main-content { padding-top: 18px; gap: 18px; }
-  .case-heading-tools .filters { margin-left: 0; }
+  .briefing-shell .main-content {
+    padding-top: 18px;
+    gap: 18px;
+  }
+  .case-heading-tools .filters {
+    margin-left: 0;
+  }
 }
 
 /* PC에서는 남는 화면 높이를 문서/그래프에 배분합니다. 목록은 7개씩 페이지로 넘깁니다. */
 @media (min-width: 1201px) {
-  .briefing-shell .main-content { overflow: hidden; padding-top: 18px; padding-bottom: 8px; gap: 12px; }
-  .case-question-icon { width: 36px; height: 40px; }
+  .briefing-shell .main-content {
+    overflow: hidden;
+    padding-top: 18px;
+    padding-bottom: 8px;
+    gap: 12px;
+  }
+  .case-question-icon {
+    width: 36px;
+    height: 40px;
+  }
 }
 @media (min-width: 1201px) and (max-height: 850px) {
-  .briefing-shell .main-content { padding-top: 12px; gap: 9px; }
-  .briefing-shell .page-heading { gap: 10px 18px; }
-  .briefing-shell .page-heading h1 { font-size: 28px; line-height: 1.3; }
-  .briefing-shell .page-heading p { font-size: 11px; }
-  .case-directory-label .case-help { display: none; }
+  .briefing-shell .main-content {
+    padding-top: 12px;
+    gap: 9px;
+  }
+  .briefing-shell .page-heading {
+    gap: 10px 18px;
+  }
+  .briefing-shell .page-heading h1 {
+    font-size: 28px;
+    line-height: 1.3;
+  }
+  .briefing-shell .page-heading p {
+    font-size: 11px;
+  }
+  .case-directory-label .case-help {
+    display: none;
+  }
 }
 
 /* 메뉴와 챗봇도 본문과 같은 가독성 기준을 사용합니다. */
-.app-shell .workspace-tag, .app-shell .sidebar-bottom { font-size: 11px; }
-.app-shell .nav-label, .app-shell .sidebar-bottom small, .app-shell .new-tag { font-size: 11px; }
-.app-shell .sidebar > button { font-size: 13px; }
-.app-shell .topbar { font-size: 13px; }
-.app-shell .connected, .app-shell .app-footer { font-size: 11px; }
-.app-shell .chat-heading h2 { font-size: 18px; }
-.app-shell .chat-heading .eyebrow { font-size: 11px; }
-.app-shell .chat-intro b { font-size: 14px; }
-.app-shell .chat-intro b, .app-shell .chat-intro p, .app-shell .suggestions button { word-break: keep-all; overflow-wrap: anywhere; }
-.app-shell .chat-intro p, .app-shell .welcome p, .app-shell .message,
-.app-shell .suggestions button { font-size: 13px; line-height: 1.7; }
-.app-shell .context-chip, .app-shell .context-chip > span:last-child,
-.app-shell .assistant-label, .app-shell .message small, .app-shell .typing,
-.app-shell .chat-footer > small, .app-shell .free-chat-note,
-.app-shell .welfare-status, .app-shell .welfare-status small { font-size: 11px; }
-.app-shell .chat-input textarea { font-size: 13px; height: 38px; }
-.app-shell .chat-topics button, .app-shell .chat-topics small { font-size: 11px; }
-.app-shell .chat-topics b { font-size: 13px; }
+.app-shell .workspace-tag,
+.app-shell .sidebar-bottom {
+  font-size: 11px;
+}
+.app-shell .nav-label,
+.app-shell .sidebar-bottom small,
+.app-shell .new-tag {
+  font-size: 11px;
+}
+.app-shell .sidebar > button {
+  font-size: 13px;
+}
+.app-shell .topbar {
+  font-size: 13px;
+}
+.app-shell .connected,
+.app-shell .app-footer {
+  font-size: 11px;
+}
+.app-shell .chat-heading h2 {
+  font-size: 18px;
+}
+.app-shell .chat-heading .eyebrow {
+  font-size: 11px;
+}
+.app-shell .chat-intro b {
+  font-size: 14px;
+}
+.app-shell .chat-intro b,
+.app-shell .chat-intro p,
+.app-shell .suggestions button {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.app-shell .chat-intro p,
+.app-shell .welcome p,
+.app-shell .message,
+.app-shell .suggestions button {
+  font-size: 13px;
+  line-height: 1.7;
+}
+.app-shell .context-chip,
+.app-shell .context-chip > span:last-child,
+.app-shell .assistant-label,
+.app-shell .message small,
+.app-shell .typing,
+.app-shell .chat-footer > small,
+.app-shell .free-chat-note,
+.app-shell .welfare-status,
+.app-shell .welfare-status small {
+  font-size: 11px;
+}
+.app-shell .chat-input textarea {
+  font-size: 13px;
+  height: 38px;
+}
+.app-shell .chat-topics button,
+.app-shell .chat-topics small {
+  font-size: 11px;
+}
+.app-shell .chat-topics b {
+  font-size: 13px;
+}

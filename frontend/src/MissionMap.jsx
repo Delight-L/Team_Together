@@ -5,9 +5,17 @@ import React, { lazy, Suspense } from 'react';
 const VectorMap = lazy(() => import('./VectorMap'));
 
 export function MissionMap(props) {
-  return <div className="mission-map-switchable">
-    <Suspense fallback={<div className="empty" role="status">지역 지도를 준비하고 있습니다…</div>}>
-      <VectorMap {...props} />
-    </Suspense>
-  </div>;
+  return (
+    <div className="mission-map-switchable">
+      <Suspense
+        fallback={
+          <div className="empty" role="status">
+            지역 지도를 준비하고 있습니다…
+          </div>
+        }
+      >
+        <VectorMap {...props} />
+      </Suspense>
+    </div>
+  );
 }

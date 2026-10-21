@@ -6,6 +6,7 @@
 - llm.moderate(text)        유해 콘텐츠 검사(OpenAI 키가 있을 때만, 없으면 검사 생략)
 호출이 실패하면 LLM_ERRORS 중 하나가 나므로, 호출한 쪽은 이것을 잡아 AI 없는 안내로 대체합니다.
 """
+
 from collections.abc import AsyncIterator
 import re
 
@@ -28,12 +29,21 @@ class EmptyAnswer(Exception):
 
 
 # 제공사마다 오류 종류가 달라 한데 모아 둡니다. except LLM_ERRORS: 로 잡으세요.
-LLM_ERRORS = (OpenAIError, anthropic.AnthropicError, gemini_errors.APIError, httpx.HTTPError, AIUnavailable, EmptyAnswer)
+LLM_ERRORS = (
+    OpenAIError,
+    anthropic.AnthropicError,
+    gemini_errors.APIError,
+    httpx.HTTPError,
+    AIUnavailable,
+    EmptyAnswer,
+)
 
 
 def ai_ready():
     """관리자 설정상 외부 AI를 쓸 수 있는지(사용 켜짐 + 키 있음)."""
     return ai_settings.current().ready
+
+
 PROVIDER_MODULES = {'openai': openai_client, 'anthropic': anthropic_client, 'gemini': gemini_client}
 
 
@@ -57,10 +67,14 @@ class LLMClient:
         async for text in module.stream(config, messages, settings.openai_max_tokens):
             yield text
 
-    async def complete(self, messages: list[dict], json_mode: bool = False, max_tokens: int | None = None) -> str:
+    async def complete(
+        self, messages: list[dict], json_mode: bool = False, max_tokens: int | None = None
+    ) -> str:
         config = _ready_config()
         module = PROVIDER_MODULES[config.provider]
-        answer = await module.complete(config, messages, json_mode, max_tokens or settings.openai_max_tokens)
+        answer = await module.complete(
+            config, messages, json_mode, max_tokens or settings.openai_max_tokens
+        )
         return _strip_code_fence(answer) if json_mode else answer
 
     async def moderate(self, text: str) -> list[str]:

@@ -20,7 +20,10 @@ database_url = URL.create(
 
 # 원격(오라클 클라우드) DB는 DB_SSLMODE=require 이상을 권장합니다.
 # verify-full을 쓰면 DB_SSLROOTCERT에 서버 CA 인증서 경로를 지정하세요. 로컬 DB는 비워 둡니다.
-connect_args = {"connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT") or "10"), "application_name": "welfind"}
+connect_args = {
+    "connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT") or "10"),
+    "application_name": "welfind",
+}
 if os.getenv("DB_SSLMODE"):
     connect_args["sslmode"] = os.environ["DB_SSLMODE"]
 if os.getenv("DB_SSLROOTCERT"):

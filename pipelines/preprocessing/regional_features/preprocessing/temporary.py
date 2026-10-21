@@ -1,4 +1,5 @@
 """Temporary workspace with inherited Windows ACLs (no owner-only mkdir)."""
+
 from contextlib import contextmanager
 from pathlib import Path
 import shutil

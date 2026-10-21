@@ -25,7 +25,9 @@ export const number = (value, digits = 1) => (Number.isFinite(value) ? value.toF
 // body: 지역 맥락(city·district·month), messages, mode('ai'|'data'), 열어 둔 그룹(group)
 export async function streamChat(body, onEvent, signal, endpoint = '/api/chat') {
   const response = await fetch(endpoint, {
-    method: 'POST', credentials: 'same-origin', signal,
+    method: 'POST',
+    credentials: 'same-origin',
+    signal,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...body, stream: true }),
   });
@@ -37,7 +39,8 @@ export async function streamChat(body, onEvent, signal, endpoint = '/api/chat') 
   if (!response.body) throw new Error('스트리밍 응답을 받을 수 없습니다.');
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
-  let buffer = '', completed = false;
+  let buffer = '',
+    completed = false;
   function dispatch(raw) {
     let event = 'message';
     const data = [];

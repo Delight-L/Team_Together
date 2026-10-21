@@ -1,4 +1,5 @@
 """지자체복지서비스 목록·상세를 PostgreSQL DB2에 정기 수집한다."""
+
 from __future__ import annotations
 
 import argparse
@@ -119,8 +120,11 @@ class WelfareApi:
                 time.sleep(max(0, self.interval - (time.monotonic() - self.last_request)))
             self.last_request = time.monotonic()
             try:
-                response = self.session.get(f"{ENDPOINT}/{operation}",
-                    params={"serviceKey": self.key, **params}, timeout=(10, 45))
+                response = self.session.get(
+                    f"{ENDPOINT}/{operation}",
+                    params={"serviceKey": self.key, **params},
+                    timeout=(10, 45),
+                )
                 if response.status_code == 429 or response.status_code >= 500:
                     raise ApiError(f"HTTP_{response.status_code}")
                 if response.status_code != 200:
@@ -129,7 +133,9 @@ class WelfareApi:
                 root = parse_xml(response.content)
                 return root, response.content.decode("utf-8-sig")
             except ApiError as exc:
-                retryable = exc.code in {"01", "04", "05", "23", "HTTP_429"} or exc.code.startswith("HTTP_5")
+                retryable = exc.code in {"01", "04", "05", "23", "HTTP_429"} or exc.code.startswith(
+                    "HTTP_5"
+                )
                 if not retryable or attempt == self.retries:
                     raise
             except (requests.Timeout, requests.ConnectionError):
@@ -138,12 +144,21 @@ class WelfareApi:
             except requests.RequestException:
                 raise CollectionError("API 요청 실패") from None
             if attempt < self.retries:
-                time.sleep(2 ** attempt)
+                time.sleep(2**attempt)
         raise CollectionError("API 요청 실패")
 
 
-def collect(store, api, run_id, province="", district="", rows=100,
-            refresh_days=7, max_details=900, max_pages=None):
+def collect(
+    store,
+    api,
+    run_id,
+    province="",
+    district="",
+    rows=100,
+    refresh_days=7,
+    max_details=900,
+    max_pages=None,
+):
     lists = details = errors = 0
     total = None
     status = "failed"
@@ -160,7 +175,9 @@ def collect(store, api, run_id, province="", district="", rows=100,
             root, raw = api.get("LcgvWelfarelist", **params)
             page_total, items = parse_list(root)
             if total is not None and page_total != total:
-                raise CollectionError("수집 중 전체 건수가 변경되었습니다. 다음 실행에서 다시 확인합니다")
+                raise CollectionError(
+                    "수집 중 전체 건수가 변경되었습니다. 다음 실행에서 다시 확인합니다"
+                )
             total = page_total
             for item in items:
                 if province and item.get("ctpvNm") != province:
@@ -182,7 +199,10 @@ def collect(store, api, run_id, province="", district="", rows=100,
             try:
                 root, raw = api.get("LcgvWelfaredetailed", servId=service_id)
                 payload = parse_detail(root, service_id)
-                dates = (parse_date(payload.get("enfcBgngYmd")), parse_date(payload.get("enfcEndYmd")))
+                dates = (
+                    parse_date(payload.get("enfcBgngYmd")),
+                    parse_date(payload.get("enfcEndYmd")),
+                )
                 if dates[0] and dates[1] and dates[0] > dates[1]:
                     raise CollectionError("사업 시행 시작일이 종료일보다 늦습니다")
                 store.save_detail(run_id, service_id, payload, raw, dates)
@@ -194,7 +214,16 @@ def collect(store, api, run_id, province="", district="", rows=100,
                 store.detail_failed(service_id, str(exc))
                 LOG.warning("상세 실패 %s: %s", service_id, exc)
                 # 인증·호출한도 오류는 나머지 서비스에 반복하지 않는다.
-                if isinstance(exc, ApiError) and exc.code in {"20", "22", "29", "30", "31", "12", "HTTP_401", "HTTP_403"}:
+                if isinstance(exc, ApiError) and exc.code in {
+                    "20",
+                    "22",
+                    "29",
+                    "30",
+                    "31",
+                    "12",
+                    "HTTP_401",
+                    "HTTP_403",
+                }:
                     raise
         status = "partial" if errors else "completed"
     except BudgetExhausted as exc:
@@ -227,7 +256,9 @@ def main():
     parser.add_argument("--province", default=os.getenv("DB2_WELFARE_PROVINCE", ""))
     parser.add_argument("--district", default=os.getenv("DB2_WELFARE_DISTRICT", ""))
     parser.add_argument("--rows", type=positive, default=100)
-    parser.add_argument("--daily-budget", type=positive, default=int(os.getenv("DB2_WELFARE_DAILY_BUDGET", "900")))
+    parser.add_argument(
+        "--daily-budget", type=positive, default=int(os.getenv("DB2_WELFARE_DAILY_BUDGET", "900"))
+    )
     parser.add_argument("--refresh-days", type=positive, default=7)
     parser.add_argument("--max-details", type=positive, default=900)
     parser.add_argument("--max-pages", type=positive, help="검증용 목록 페이지 제한")
@@ -239,10 +270,13 @@ def main():
         parser.error(".env에 DB2_WELFARE_API_KEY 또는 DATA_API_KEY를 설정하세요")
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     from backend.db.connection import engine
+
     try:
         # 세션 advisory lock: 별도 프로세스와 스케줄의 중복 실행을 방지한다.
         with engine.connect() as lock:
-            acquired = lock.execute(text("SELECT pg_try_advisory_lock(:id)"), {"id": LOCK_ID}).scalar_one()
+            acquired = lock.execute(
+                text("SELECT pg_try_advisory_lock(:id)"), {"id": LOCK_ID}
+            ).scalar_one()
             lock.commit()
             if not acquired:
                 LOG.info("다른 DB2 수집기가 실행 중이므로 종료합니다")
@@ -256,9 +290,20 @@ def main():
                 scope = f"{args.province}/{args.district}" if args.province else "nationwide"
                 run_id = store.start_run(scope, args.daily_budget)
                 with requests.Session() as session:
-                    api = WelfareApi(key, lambda: store.reserve_call(run_id, args.daily_budget), session=session)
-                    status = collect(store, api, run_id, args.province, args.district,
-                        args.rows, args.refresh_days, args.max_details, args.max_pages)
+                    api = WelfareApi(
+                        key, lambda: store.reserve_call(run_id, args.daily_budget), session=session
+                    )
+                    status = collect(
+                        store,
+                        api,
+                        run_id,
+                        args.province,
+                        args.district,
+                        args.rows,
+                        args.refresh_days,
+                        args.max_details,
+                        args.max_pages,
+                    )
                 return 0 if status in {"completed", "budget_exhausted"} else 1
             finally:
                 lock.execute(text("SELECT pg_advisory_unlock(:id)"), {"id": LOCK_ID})

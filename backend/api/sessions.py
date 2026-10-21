@@ -4,6 +4,7 @@
 - 임시 초안: 업로드 검사 결과와 보고서 미리보기를 30분 동안 보관합니다.
 서버를 다시 시작하면 모두 사라지므로 다시 로그인해야 합니다.
 """
+
 import secrets
 import threading
 import time
@@ -57,14 +58,23 @@ def store_preview(user, kind, value):
     token = secrets.token_urlsafe(24)
     with write_lock:
         remove_expired(previews)
-        previews[token] = {'user': user['id'], 'kind': kind, 'value': value,
-                           'expires': time.time() + PREVIEW_SECONDS}
+        previews[token] = {
+            'user': user['id'],
+            'kind': kind,
+            'value': value,
+            'expires': time.time() + PREVIEW_SECONDS,
+        }
     return token
 
 
 def get_preview(token, user, kind):
     item = previews.get(token)
-    if item is None or item['user'] != user['id'] or item['kind'] != kind or item['expires'] < time.time():
+    if (
+        item is None
+        or item['user'] != user['id']
+        or item['kind'] != kind
+        or item['expires'] < time.time()
+    ):
         raise ValueError('초안이 만료되었거나 유효하지 않습니다. 다시 생성하세요.')
     return item['value']
 

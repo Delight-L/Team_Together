@@ -5,6 +5,7 @@
 
     python run_analysis2.py --input <feature table CSV> --output-dir <결과 폴더>
 """
+
 import argparse
 from pathlib import Path
 
@@ -23,9 +24,19 @@ EVIDENCE_NAME = "gangnam_analysis2_evidence_card_2022_2025.csv"
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--input", type=Path, default=REFERENCE_DIR / "gangnam_analysis2_feature_table_2022_2025.csv")
-    parser.add_argument("--context", type=Path, default=REFERENCE_DIR / "gangnam_analysis1_final_region_typology_2025H2.csv")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=REFERENCE_DIR / "gangnam_analysis2_feature_table_2022_2025.csv",
+    )
+    parser.add_argument(
+        "--context",
+        type=Path,
+        default=REFERENCE_DIR / "gangnam_analysis1_final_region_typology_2025H2.csv",
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
 
@@ -33,7 +44,9 @@ def main():
     validation = validate_analysis2_input(df)
     if validation["status"] != "PASS":
         raise ValueError(f"Analysis2 input validation failed: {validation}")
-    analysis_result = run_analysis2_pipeline(df, pd.read_csv(args.context), MIN_HISTORY, ROBUST_Z_SCALE, ROBUST_Z_THRESHOLD)
+    analysis_result = run_analysis2_pipeline(
+        df, pd.read_csv(args.context), MIN_HISTORY, ROBUST_Z_SCALE, ROBUST_Z_THRESHOLD
+    )
     detection_table = build_detection_table(analysis_result)
     evidence_card = build_evidence_card(analysis_result)
 
@@ -42,7 +55,14 @@ def main():
     evidence_card.to_csv(args.output_dir / EVIDENCE_NAME, index=False, encoding="utf-8-sig")
     print("===== ANALYSIS 2 =====")
     print("Input validation:", validation["status"])
-    print("Feature Table:", df.shape, "/ Detection Table:", detection_table.shape, "/ Evidence Card:", evidence_card.shape)
+    print(
+        "Feature Table:",
+        df.shape,
+        "/ Detection Table:",
+        detection_table.shape,
+        "/ Evidence Card:",
+        evidence_card.shape,
+    )
     print("Signals:", int(detection_table["any_signal"].sum()))
     print("Saved:", args.output_dir)
 

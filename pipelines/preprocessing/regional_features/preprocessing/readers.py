@@ -8,12 +8,32 @@ import openpyxl
 TELECOM = {
     'call_contacts': ('평균 통화대상자 수', None, None),
     'text_contacts': ('평균 문자대상자 수', None, None),
-    'weekday_move_count': ('평일 총 이동 횟수', '평일 총 이동 횟수 미추정 인구수', 'weekday_count_est_ratio'),
-    'weekend_move_count': ('휴일 총 이동 횟수 평균', '휴일 이동 미추정 인구수', 'weekend_count_est_ratio'),
-    'weekday_move_distance': ('평일 총 이동 거리 합계', '평일 총 이동 거리 미추정 인구수', 'weekday_distance_est_ratio'),
-    'weekend_move_distance': ('휴일 총 이동 거리 합계', '휴일 총 이동 거리 미추정 인구수', 'weekend_distance_est_ratio'),
+    'weekday_move_count': (
+        '평일 총 이동 횟수',
+        '평일 총 이동 횟수 미추정 인구수',
+        'weekday_count_est_ratio',
+    ),
+    'weekend_move_count': (
+        '휴일 총 이동 횟수 평균',
+        '휴일 이동 미추정 인구수',
+        'weekend_count_est_ratio',
+    ),
+    'weekday_move_distance': (
+        '평일 총 이동 거리 합계',
+        '평일 총 이동 거리 미추정 인구수',
+        'weekday_distance_est_ratio',
+    ),
+    'weekend_move_distance': (
+        '휴일 총 이동 거리 합계',
+        '휴일 총 이동 거리 미추정 인구수',
+        'weekend_distance_est_ratio',
+    ),
 }
-INTEREST = {'comm_low_rate': '커뮤니케이션이 적은 집단', 'weekday_outing_low_rate': '평일 외출이 적은 집단', 'weekend_outing_low_rate': '휴일 외출이 적은 집단'}
+INTEREST = {
+    'comm_low_rate': '커뮤니케이션이 적은 집단',
+    'weekday_outing_low_rate': '평일 외출이 적은 집단',
+    'weekend_outing_low_rate': '휴일 외출이 적은 집단',
+}
 
 
 def number(value, context):
@@ -41,7 +61,10 @@ def month_from_name(name):
 def read_workbook(path, name, areas, manifest, demographics=None, xlsx_limit=2147483648):
     month = month_from_name(name)
     with zipfile.ZipFile(path) as container:
-        if sum(i.file_size for i in container.infolist()) > xlsx_limit or len(container.infolist()) > 10000:
+        if (
+            sum(i.file_size for i in container.infolist()) > xlsx_limit
+            or len(container.infolist()) > 10000
+        ):
             raise ValueError(f'XLSX 내부 압축 해제 크기/파일 수 제한 초과: {name}')
     book = openpyxl.load_workbook(path, read_only=True, data_only=True)
     groups, fingerprints, demographic_keys = {}, [], set()
@@ -54,7 +77,13 @@ def read_workbook(path, name, areas, manifest, demographics=None, xlsx_limit=214
             headers = [{'행정동': '행정동명', '총인구수': '총인구'}.get(x, x) for x in headers]
             if not any(headers):
                 continue
-            detected = 'telecom' if '평균 통화대상자 수' in headers else 'interest' if '커뮤니케이션이 적은 집단' in headers else None
+            detected = (
+                'telecom'
+                if '평균 통화대상자 수' in headers
+                else 'interest'
+                if '커뮤니케이션이 적은 집단' in headers
+                else None
+            )
             if detected is None:
                 raise ValueError(f'알 수 없는 시트/필수 열 누락: {name}/{sheet.title}')
             if kind and kind != detected:
@@ -93,12 +122,20 @@ def read_workbook(path, name, areas, manifest, demographics=None, xlsx_limit=214
                 if demographic in demographic_keys:
                     raise ValueError(f'인구 셀 중복: {demographic} ({context})')
                 demographic_keys.add(demographic)
-                normalized = {k: number(row[k], f'{context}/{k}') for k in required if k not in ['행정동코드', '자치구', '행정동명']}
+                normalized = {
+                    k: number(row[k], f'{context}/{k}')
+                    for k in required
+                    if k not in ['행정동코드', '자치구', '행정동명']
+                }
                 fingerprint = [code, *sorted(normalized.items())]
-                fingerprints.append(json.dumps(fingerprint, ensure_ascii=False, separators=(',', ':')))
+                fingerprints.append(
+                    json.dumps(fingerprint, ensure_ascii=False, separators=(',', ':'))
+                )
                 g = groups.setdefault(code, {})
+
                 def add(key, value):
                     g[key] = g.get(key, 0.0) + value
+
                 if kind == 'telecom':
                     population = normalized['총인구']
                     add('population', population)
@@ -117,8 +154,15 @@ def read_workbook(path, name, areas, manifest, demographics=None, xlsx_limit=214
     if not groups:
         raise ValueError(f'강남구 자료 없음: {name}')
     demographics = demographics or {'sex': [1, 2], 'age': list(range(20, 80, 5))}
-    expected = {(code, float(sex), float(age)) for code in groups for sex in demographics['sex'] for age in demographics['age']}
+    expected = {
+        (code, float(sex), float(age))
+        for code in groups
+        for sex in demographics['sex']
+        for age in demographics['age']
+    }
     if demographic_keys != expected:
-        raise ValueError(f'인구 셀 누락/초과: {name}; 누락={sorted(expected-demographic_keys)}; 초과={sorted(demographic_keys-expected)}')
+        raise ValueError(
+            f'인구 셀 누락/초과: {name}; 누락={sorted(expected - demographic_keys)}; 초과={sorted(demographic_keys - expected)}'
+        )
     digest = hashlib.sha256('\n'.join(sorted(fingerprints)).encode()).hexdigest()
     return month, kind, groups, digest, len(fingerprints)

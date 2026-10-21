@@ -3,6 +3,7 @@
 The --db argument identifies a schema, never a local database file. Connections
 use the project's DB_* environment and close/commit at the context boundary.
 """
+
 from __future__ import annotations
 
 import os
@@ -12,7 +13,11 @@ import re
 
 from dotenv import load_dotenv
 import psycopg2
-from psycopg2 import DatabaseError, IntegrityError, OperationalError
+
+# 기존 분석 실행 도구가 이 모듈에서 예외를 가져오므로 공개 이름을 유지합니다.
+from psycopg2 import DatabaseError as DatabaseError
+from psycopg2 import IntegrityError as IntegrityError
+from psycopg2 import OperationalError as OperationalError
 from psycopg2.extras import DictCursor
 from psycopg2 import sql
 
@@ -23,16 +28,25 @@ SERVICE_SCHEMAS = {"public", "db1", "db1_v16", "db2", "work", "information_schem
 
 def workspace(value=None):
     name = str(value or os.getenv("DB1_PIPELINE_SCHEMA") or "db1_pipeline")
-    if not re.fullmatch(r"[a-z][a-z0-9_]{0,62}", name) or name in SERVICE_SCHEMAS or name.startswith("pg_"):
+    if (
+        not re.fullmatch(r"[a-z][a-z0-9_]{0,62}", name)
+        or name in SERVICE_SCHEMAS
+        or name.startswith("pg_")
+    ):
         raise ValueError("DB1 workspace must be a dedicated PostgreSQL schema name.")
     return name
 
 
 def _open():
-    options = {"host": os.environ["DB_HOST"], "port": int(os.getenv("DB_PORT") or 5432),
-               "dbname": os.environ["DB_NAME"], "user": os.environ["DB_USER"],
-               "password": os.environ["DB_PASSWORD"], "application_name": "welfind-analysis",
-               "connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT") or 10)}
+    options = {
+        "host": os.environ["DB_HOST"],
+        "port": int(os.getenv("DB_PORT") or 5432),
+        "dbname": os.environ["DB_NAME"],
+        "user": os.environ["DB_USER"],
+        "password": os.environ["DB_PASSWORD"],
+        "application_name": "welfind-analysis",
+        "connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT") or 10),
+    }
     for key in ("sslmode", "sslrootcert"):
         if os.getenv("DB_" + key.upper()):
             options[key] = os.environ["DB_" + key.upper()]
@@ -72,7 +86,9 @@ def locked(name=None):
             try:
                 yield
             finally:
-                cursor.execute("SELECT pg_advisory_unlock(hashtext(%s))", ("welfind-analysis:" + name,))
+                cursor.execute(
+                    "SELECT pg_advisory_unlock(hashtext(%s))", ("welfind-analysis:" + name,)
+                )
     finally:
         raw.close()
 
@@ -123,10 +139,17 @@ class Connection:
             with self.raw.cursor() as cursor:
                 cursor.execute("SELECT to_regnamespace(%s)", (self.schema,))
                 if cursor.fetchone()[0] is None:
-                    raise FileNotFoundError(f"PostgreSQL workspace {self.schema!r} is not initialized.")
-                cursor.execute(sql.SQL("SET search_path TO {}, pg_catalog").format(sql.Identifier(self.schema)))
+                    raise FileNotFoundError(
+                        f"PostgreSQL workspace {self.schema!r} is not initialized."
+                    )
+                cursor.execute(
+                    sql.SQL("SET search_path TO {}, pg_catalog").format(sql.Identifier(self.schema))
+                )
             self.raw.commit()
-            self.raw.set_session(readonly=readonly, isolation_level="REPEATABLE READ" if readonly else "READ COMMITTED")
+            self.raw.set_session(
+                readonly=readonly,
+                isolation_level="REPEATABLE READ" if readonly else "READ COMMITTED",
+            )
         except BaseException:
             self.raw.close()
             raise
@@ -146,12 +169,19 @@ class Connection:
         return self.execute(statement)
 
     def table_names(self):
-        return {row[0] for row in self.execute(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema=current_schema()")}
+        return {
+            row[0]
+            for row in self.execute(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema=current_schema()"
+            )
+        }
 
     def columns(self, table):
-        return self.execute("""SELECT column_name, data_type FROM information_schema.columns
-            WHERE table_schema=current_schema() AND table_name=%s ORDER BY ordinal_position""", (table,)).fetchall()
+        return self.execute(
+            """SELECT column_name, data_type FROM information_schema.columns
+            WHERE table_schema=current_schema() AND table_name=%s ORDER BY ordinal_position""",
+            (table,),
+        ).fetchall()
 
     def commit(self):
         self.raw.commit()
@@ -190,8 +220,11 @@ def connect(name=None, *, readonly=False, **options):
 def read_frame(statement, connection, params=None):
     """Build a dataframe directly from the PostgreSQL cursor and its columns."""
     import pandas as pd
+
     cursor = connection.execute(statement, params)
     try:
-        return pd.DataFrame.from_records(cursor.fetchall(), columns=[item[0] for item in cursor.description])
+        return pd.DataFrame.from_records(
+            cursor.fetchall(), columns=[item[0] for item in cursor.description]
+        )
     finally:
         cursor.close()

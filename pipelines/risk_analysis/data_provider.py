@@ -1,4 +1,5 @@
 """CSV 입력 검증과 위험 지표 선택."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -39,7 +40,9 @@ def validate_preprocessed_data(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def resolve_risk_metrics(df: pd.DataFrame, requested_columns: list[str] | None = None) -> list[RiskMetric]:
+def resolve_risk_metrics(
+    df: pd.DataFrame, requested_columns: list[str] | None = None
+) -> list[RiskMetric]:
     """설정된 지표를 우선 사용하고, 없으면 지정/숫자 열을 임시 지표로 사용한다."""
     if requested_columns:
         unknown = [col for col in requested_columns if col not in df.columns]
@@ -50,7 +53,8 @@ def resolve_risk_metrics(df: pd.DataFrame, requested_columns: list[str] | None =
         candidates = [col for col in METRIC_RULES if col in df.columns]
     else:
         candidates = [
-            col for col in df.columns
+            col
+            for col in df.columns
             if col not in NON_METRIC_COLUMNS and pd.api.types.is_numeric_dtype(df[col])
         ]
 
@@ -61,5 +65,7 @@ def resolve_risk_metrics(df: pd.DataFrame, requested_columns: list[str] | None =
         else:
             metrics.append(RiskMetric(col, col, "감소", -1, f"{col}의 변화", "임시 자동 규칙"))
     if not metrics:
-        raise ValueError("분석할 숫자형 지표 열이 없습니다. --metrics 열이름1,열이름2 로 지정하세요.")
+        raise ValueError(
+            "분석할 숫자형 지표 열이 없습니다. --metrics 열이름1,열이름2 로 지정하세요."
+        )
     return metrics

@@ -1,4 +1,5 @@
 """여러 API에서 함께 쓰는 도구: 요청·응답 형태, 분석 자료 읽기, 지역 권한 검사."""
+
 import json
 from datetime import datetime
 
@@ -85,7 +86,11 @@ def evidence_for(data, context):
         return []
     rows = []
     for row in data['assessment']:
-        if row['기준연월'] == context['month'] and row['행정동명'] == context['district'] and (not context.get('age') or row.get('age_label') == context['age']):
+        if (
+            row['기준연월'] == context['month']
+            and row['행정동명'] == context['district']
+            and (not context.get('age') or row.get('age_label') == context['age'])
+        ):
             rows.append(row)
     return rows
 
@@ -133,6 +138,7 @@ def group_context(request):
     check_city_access(request.user, context['city'])
     detail = group_repository.group_detail(context)
     from backend.db.age_analysis_repository import detection_for
+
     detail['ageDetection'] = detection_for(context)
     context['district'] = detail['current']['district']
     return context, detail

@@ -1,4 +1,5 @@
 """신호별 설명 기준 문서에서 LLM에게 줄 관련 조각만 찾는다."""
+
 from __future__ import annotations
 
 from pathlib import Path

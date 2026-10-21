@@ -7,6 +7,7 @@
   이어 보내는 답변은 StreamRedactor가 줄 단위로 먼저 검사한 뒤 보냅니다.
 - blocked_words: 욕설·위험한 요청·지시 무력화 시도를 단어 규칙으로 막습니다(외부 검사 API가 없어도 동작).
 """
+
 import re
 import unicodedata
 
@@ -20,7 +21,10 @@ PII_PATTERNS = (
     ('카드번호', re.compile(r'(?<!\d)\d{4}[- ]\d{4}[- ]\d{4}[- ]\d{4}(?!\d)')),
     ('전화번호', PHONE),
     ('이메일', re.compile(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+')),
-    ('상세 주소', re.compile(r'[가-힣0-9]+(?:로|길)\s?\d+(?:-\d+)?(?:번길\s?\d+(?:-\d+)?)?|\d+동\s?\d+호')),
+    (
+        '상세 주소',
+        re.compile(r'[가-힣0-9]+(?:로|길)\s?\d+(?:-\d+)?(?:번길\s?\d+(?:-\d+)?)?|\d+동\s?\d+호'),
+    ),
 )
 UNVERIFIED = '[자료에 없는 정보 · 기관 확인 필요]'
 
@@ -93,6 +97,7 @@ class StreamRedactor:
     feed()는 끝난 줄(또는 길어진 문장의 안전한 앞부분)만 redact_unverified로 검사해 돌려주고,
     나머지는 다음 조각과 이어질 수 있으므로 들고 있다가 flush()에서 내보냅니다.
     """
+
     LONG = 120  # 줄바꿈 없이 이만큼 쌓이면 띄어쓰기 위치에서 끊어 먼저 보냅니다.
 
     def __init__(self, material):
@@ -114,8 +119,11 @@ class StreamRedactor:
         if len(self.buffer) < self.LONG:
             return 0
         for index in range(len(self.buffer) - 1, 0, -1):
-            if self.buffer[index].isspace() and not self.buffer[index - 1].isdigit() \
-                    and self.buffer[index + 1:index + 2] not in ('원', ''):
+            if (
+                self.buffer[index].isspace()
+                and not self.buffer[index - 1].isdigit()
+                and self.buffer[index + 1 : index + 2] not in ('원', '')
+            ):
                 return index + 1
         return 0
 
@@ -136,21 +144,43 @@ class StreamRedactor:
 # 자살·학대·폭력 같은 말은 복지 업무에서 정당하게 쓰므로 넣지 않습니다(예: "자살 예방 사업 찾아 줘").
 BLOCKED_WORDS = (
     ('욕설', ('씨발', '씨바', 'ㅅㅂ', '병신', '개새끼', '좆', '지랄', '미친놈', '미친년', '닥쳐')),
-    ('위험한 요청', ('폭탄만드', '폭탄제조', '마약구하', '마약구매', '필로폰', '총기제작', '해킹하는법', '해킹방법')),
+    (
+        '위험한 요청',
+        (
+            '폭탄만드',
+            '폭탄제조',
+            '마약구하',
+            '마약구매',
+            '필로폰',
+            '총기제작',
+            '해킹하는법',
+            '해킹방법',
+        ),
+    ),
 )
 
 # These are intent patterns, not a claim that all prompt injection can be detected.
 # Match after removing Unicode format characters and punctuation so common visual
 # obfuscations (zero-width spaces, separators, full-width forms) do not evade them.
 INJECTION_PATTERNS = (
-    re.compile(r'(?:이전|기존|앞선|지금까지의|모든)(?:시스템|개발자)?(?:지시|규칙|명령)(?:사항)?(?:을|를)?무시(?:하고|한채|한후)?'),
+    re.compile(
+        r'(?:이전|기존|앞선|지금까지의|모든)(?:시스템|개발자)?(?:지시|규칙|명령)(?:사항)?(?:을|를)?무시(?:하고|한채|한후)?'
+    ),
     re.compile(r'(?:지시|규칙|명령)(?:사항)?(?:을|를)?무시(?:하고|해|한다|하세요)'),
-    re.compile(r'(?:시스템|개발자)(?:프롬프트|지침|메시지)(?:을|를)?(?:보여|공개|출력|복사|알려|누설)'),
+    re.compile(
+        r'(?:시스템|개발자)(?:프롬프트|지침|메시지)(?:을|를)?(?:보여|공개|출력|복사|알려|누설)'
+    ),
     re.compile(r'(?:숨겨진|비밀)(?:지시|프롬프트|규칙)(?:을|를)?(?:보여|공개|출력|복사|알려)'),
     re.compile(r'(?:안전|보안)(?:규칙|정책|제약)(?:을|를)?무시(?:하고|한채)?'),
-    re.compile(r'(?:이제부터|지금부터)(?:너는|당신은)?(?:제한|규칙|안전장치)?없는(?:모델|AI|보미|챗봇)'),
-    re.compile(r'(?:ignore|disregard|override)(?:all|any|the|previous|prior|above|earlier|system|developer)*(?:instructions|rules|prompt)'),
-    re.compile(r'(?:reveal|print|show|disclose|repeat)(?:the|your|system|developer|hidden|secret|initial)*(?:prompt|instructions|rules)'),
+    re.compile(
+        r'(?:이제부터|지금부터)(?:너는|당신은)?(?:제한|규칙|안전장치)?없는(?:모델|AI|보미|챗봇)'
+    ),
+    re.compile(
+        r'(?:ignore|disregard|override)(?:all|any|the|previous|prior|above|earlier|system|developer)*(?:instructions|rules|prompt)'
+    ),
+    re.compile(
+        r'(?:reveal|print|show|disclose|repeat)(?:the|your|system|developer|hidden|secret|initial)*(?:prompt|instructions|rules)'
+    ),
     re.compile(r'(?:jailbreak|danmode|bypasssafety|ignoreallsafetyrules)'),
 )
 
@@ -159,9 +189,11 @@ def _injection_compact(text):
     """Normalize common Unicode/punctuation obfuscations for phrase matching."""
     normalized = unicodedata.normalize('NFKC', text).casefold()
     # Drop format chars such as zero-width joiners, then keep only letters/digits.
-    return ''.join(char for char in normalized
-                   if not unicodedata.category(char).startswith('C')
-                   and (char.isalnum()))
+    return ''.join(
+        char
+        for char in normalized
+        if not unicodedata.category(char).startswith('C') and (char.isalnum())
+    )
 
 
 def blocked_words(text):

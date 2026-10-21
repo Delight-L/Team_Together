@@ -49,7 +49,7 @@ def fit_pca_block(
     score_df = pd.DataFrame(
         scores,
         index=df.index,
-        columns=[f"{prefix}_pc{i+1}" for i in range(n_components)],
+        columns=[f"{prefix}_pc{i + 1}" for i in range(n_components)],
     )
     meta = {
         "source_columns": list(columns),
@@ -82,9 +82,7 @@ def build_feature_table(
     not in this statistical core.
     """
 
-    base_df = base_df.rename(
-        columns=config.input_feature_map
-    ).copy()
+    base_df = base_df.rename(columns=config.input_feature_map).copy()
 
     key_cols = [config.area_key]
     if config.area_name in base_df.columns:
@@ -168,13 +166,15 @@ def evaluate_kmeans(
         model = KMeans(n_clusters=k, random_state=config.random_state, n_init=50)
         labels = model.fit_predict(x)
         sizes = pd.Series(labels).value_counts().sort_index().tolist()
-        rows.append({
-            "k": k,
-            "silhouette": float(silhouette_score(x, labels)),
-            "inertia": float(model.inertia_),
-            "cluster_sizes": "/".join(map(str, sizes)),
-            "has_singleton": any(s == 1 for s in sizes),
-        })
+        rows.append(
+            {
+                "k": k,
+                "silhouette": float(silhouette_score(x, labels)),
+                "inertia": float(model.inertia_),
+                "cluster_sizes": "/".join(map(str, sizes)),
+                "has_singleton": any(s == 1 for s in sizes),
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -189,9 +189,7 @@ def perturbation_stability(
     x_arr = x.to_numpy(dtype=float)
 
     for k in k_values:
-        base = KMeans(
-            n_clusters=k, random_state=config.random_state, n_init=50
-        ).fit_predict(x_arr)
+        base = KMeans(n_clusters=k, random_state=config.random_state, n_init=50).fit_predict(x_arr)
 
         for noise_sd in config.perturbation_noise:
             aris = []
@@ -204,14 +202,16 @@ def perturbation_stability(
                 ).fit_predict(noisy)
                 aris.append(adjusted_rand_score(base, labels))
 
-            rows.append({
-                "k": k,
-                "noise_sd": noise_sd,
-                "mean_ari": float(np.mean(aris)),
-                "ari_ge_threshold_rate": float(
-                    np.mean(np.asarray(aris) >= config.ari_threshold)
-                ),
-            })
+            rows.append(
+                {
+                    "k": k,
+                    "noise_sd": noise_sd,
+                    "mean_ari": float(np.mean(aris)),
+                    "ari_ge_threshold_rate": float(
+                        np.mean(np.asarray(aris) >= config.ari_threshold)
+                    ),
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -243,16 +243,17 @@ def build_cluster_profile(
     raw_profile_df should be one row per dong.
     """
     if raw_profile_df is None:
-        numeric = [
-            c for c in cluster_df.select_dtypes(include="number").columns
-            if c != "cluster"
-        ]
+        numeric = [c for c in cluster_df.select_dtypes(include="number").columns if c != "cluster"]
         return cluster_df.groupby("cluster")[numeric].mean()
 
-    cols = list(profile_columns or [
-        c for c in raw_profile_df.select_dtypes(include="number").columns
-        if c != config.area_key
-    ])
+    cols = list(
+        profile_columns
+        or [
+            c
+            for c in raw_profile_df.select_dtypes(include="number").columns
+            if c != config.area_key
+        ]
+    )
     merged = cluster_df[[config.area_key, "cluster"]].merge(
         raw_profile_df[[config.area_key] + cols],
         on=config.area_key,
@@ -308,11 +309,14 @@ def save_outputs(
     clusters.to_csv(paths["clusters"], index=False, encoding="utf-8-sig")
     profile.to_csv(paths["profile"], encoding="utf-8-sig")
 
-    joblib.dump({
-        "pca": pca_artifacts,
-        "feature_scaler": feature_scaler,
-        "kmeans": cluster_model,
-    }, paths["model_bundle"])
+    joblib.dump(
+        {
+            "pca": pca_artifacts,
+            "feature_scaler": feature_scaler,
+            "kmeans": cluster_model,
+        },
+        paths["model_bundle"],
+    )
 
     result.outputs = {k: str(v) for k, v in paths.items()}
     manifest = result.to_dict()
@@ -356,9 +360,7 @@ def run_analysis1(
         data_version=data_version,
     )
     try:
-        feature_df, artifacts = build_feature_table(
-            base_df, pca_columns=pca_columns, config=config
-        )
+        feature_df, artifacts = build_feature_table(base_df, pca_columns=pca_columns, config=config)
         balanced, feature_scaler = balance_domains(feature_df, config)
         k_metrics = evaluate_kmeans(balanced, config)
         stability = perturbation_stability(balanced, config=config)

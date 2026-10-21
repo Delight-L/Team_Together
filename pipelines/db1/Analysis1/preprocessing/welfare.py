@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def preprocess_welfare(path, resident):
     """서울시 동별 기초생활수급자 원본에서 강남구 생계급여 수급자 비율을 생성한다."""
     raw = pd.read_excel(path, header=None)
@@ -18,16 +19,16 @@ def preprocess_welfare(path, resident):
     district_rows = after[after["area"].astype(str).str.endswith("구")][["area"]].copy()
     district_rows = district_rows[district_rows["area"].ne(district_rows["area"].shift())]
     next_start = district_rows[district_rows["area"] != "강남구"].index.min()
-    block = welfare.loc[start:] if pd.isna(next_start) else welfare.loc[start:next_start-1]
+    block = welfare.loc[start:] if pd.isna(next_start) else welfare.loc[start : next_start - 1]
 
     dongs = set(resident["dong_name"])
     livelihood = block[
-        block["area"].isin(dongs)
-        & (block["qualification"] == "기초생계급여")
+        block["area"].isin(dongs) & (block["qualification"] == "기초생계급여")
     ].copy()
 
     counts = (
-        livelihood.groupby("area", as_index=False)["recipient_count"].sum()
+        livelihood.groupby("area", as_index=False)["recipient_count"]
+        .sum()
         .rename(columns={"area": "dong_name", "recipient_count": "livelihood_count"})
     )
     out = resident[["dong_name", "resident_total"]].merge(

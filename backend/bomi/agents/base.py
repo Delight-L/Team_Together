@@ -1,4 +1,5 @@
 """모든 담당 에이전트가 따르는 인터페이스와 공통 응답 타입."""
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Iterator, Protocol
@@ -12,15 +13,16 @@ from backend.bomi.request import ChatRequest
 
 class Agent(Protocol):
     """담당 에이전트. route·done·개인정보 notice는 파이프라인이 보내므로 에이전트는 답변 이벤트만 만듭니다."""
+
     id: str
 
-    def respond(self, request: ChatRequest) -> Iterator[Event]:
-        ...
+    def respond(self, request: ChatRequest) -> Iterator[Event]: ...
 
 
 @dataclass
 class Reply:
     """한 번에 완성되는 답변. `events()`가 계약 순서(error → replace → follow_ups → notice → actions)로 바꿉니다."""
+
     text: str
     mode: str = ''
     source: str = ''
@@ -34,9 +36,15 @@ class Reply:
     def from_legacy(cls, result: dict) -> 'Reply':
         """기존 db/·보고서·v16 모듈이 돌려주는 dict를 Reply로 바꿉니다."""
         sources = result.get('sources') or [{}]
-        return cls(text=result['answer'], mode=result.get('mode', ''), source=sources[0].get('label', ''),
-                   follow_ups=list(result.get('followUps') or []), notice=result.get('notice', ''),
-                   actions=list(result.get('actions') or []), generated_by_ai=bool(result.get('aiGenerated')))
+        return cls(
+            text=result['answer'],
+            mode=result.get('mode', ''),
+            source=sources[0].get('label', ''),
+            follow_ups=list(result.get('followUps') or []),
+            notice=result.get('notice', ''),
+            actions=list(result.get('actions') or []),
+            generated_by_ai=bool(result.get('aiGenerated')),
+        )
 
     def events(self) -> Iterator[Event]:
         if self.error:
@@ -56,6 +64,7 @@ class RegulatedAgent(ABC):
     respond()가 입력 규제 → answer() → (Reply면) 출력 규제를 순서대로 처리하고,
     각 에이전트는 `answer()`에 기존 방식 그대로 답변 로직만 둡니다.
     """
+
     id: str
     policy: Policy
     regulator = Regulator()

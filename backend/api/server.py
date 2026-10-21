@@ -10,6 +10,7 @@
 로컬 시연용 서버이므로 127.0.0.1에서만 접속을 받습니다. 공용 서버로 배포하려면
 인증, HTTPS, 세션 저장소 같은 운영 설정을 따로 갖춰야 합니다.
 """
+
 import argparse
 import json
 import logging
@@ -21,10 +22,19 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
-from backend.api import (routes_account, routes_admin, routes_analysis, routes_chat, routes_groups, routes_regional_analysis,
-                         routes_work, sessions)
+from backend.api import (
+    routes_account,
+    routes_admin,
+    routes_analysis,
+    routes_chat,
+    routes_groups,
+    routes_regional_analysis,
+    routes_work,
+    sessions,
+)
 from backend.api import routes_region_insights
 from backend.api.common import ROOT, ApiError, Request, Response, StreamResponse
+
 # 테스트와 다른 모듈이 backend.api.server.dashboard_data로 불러 씁니다.
 from backend.api.common import dashboard_data  # noqa: F401
 
@@ -33,6 +43,7 @@ BRAND_FILES = {'welfind_logo.png', 'welfind_character.png', 'bomi-face.png', 'bo
 DEV_ORIGINS = {'http://127.0.0.1:5173', 'http://localhost:5173'}  # Vite 개발 서버(npm run dev)
 MAX_BODY_BYTES = 30_000_000
 DOCX_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
 
 def health(request):
     """GET /api/health: 서버가 켜져 있고 화면이 빌드되어 있는지 알려 줍니다."""
@@ -45,27 +56,22 @@ ROUTES = {
     ('POST', '/api/login'): routes_account.login,
     ('POST', '/api/logout'): routes_account.logout,
     ('GET', '/api/session'): routes_account.current_user,
-
     ('GET', '/api/dashboard'): routes_analysis.dashboard,
     ('GET', '/api/region-insights'): routes_region_insights.detail,
     ('GET', '/api/activity'): routes_analysis.activity,
     ('POST', '/api/upload/validate'): routes_analysis.upload_validate,
     ('POST', '/api/upload/publish'): routes_analysis.upload_publish,
-
     ('GET', '/api/groups'): routes_groups.catalogue,
     ('GET', '/api/groups/detail'): routes_groups.detail,
     ('GET', '/api/groups/review'): routes_groups.review_load,
     ('GET', '/api/groups/services'): routes_groups.services,
     ('POST', '/api/groups/review'): routes_groups.review_save,
-
     ('GET', '/api/admin/ai'): routes_admin.ai_view,
     ('POST', '/api/admin/ai'): routes_admin.ai_save,
     ('POST', '/api/admin/ai/test'): routes_admin.ai_test,
-
     ('GET', '/api/chat/config'): routes_chat.config,
     ('POST', '/api/chat'): routes_chat.chat,
     ('POST', '/api/chat/v16'): routes_regional_analysis.chat,
-
     ('GET', '/api/workflow'): routes_work.workflow,
     ('GET', '/api/services'): routes_work.services,
     ('GET', '/api/report'): routes_work.saved_report,
@@ -92,7 +98,6 @@ SERVER_ERROR = {
 
 
 class Handler(BaseHTTPRequestHandler):
-
     # ── 요청 받기 ─────────────────────────────────────────
 
     def do_GET(self):
@@ -120,7 +125,11 @@ class Handler(BaseHTTPRequestHandler):
     def read_json_body(self):
         """POST로 보낸 JSON을 읽습니다. 다른 사이트에서 보낸 요청은 막습니다."""
         origin = self.headers.get('Origin')
-        if origin and urlsplit(origin).netloc != self.headers.get('Host') and origin not in DEV_ORIGINS:
+        if (
+            origin
+            and urlsplit(origin).netloc != self.headers.get('Host')
+            and origin not in DEV_ORIGINS
+        ):
             raise PermissionError('허용되지 않은 요청 출처입니다.')
         if not self.headers.get('Content-Type', '').startswith('application/json'):
             raise ValueError('JSON 요청이 필요합니다.')
@@ -149,7 +158,12 @@ class Handler(BaseHTTPRequestHandler):
                 user = sessions.find_user(token)
             if (method, path) not in ROUTES:
                 # 화면은 최신인데 서버를 다시 켜지 않았을 때 주로 생깁니다.
-                self.send_json(404, {'error': 'API를 찾을 수 없습니다. 서버를 최신 코드로 다시 실행했는지 확인하세요.'})
+                self.send_json(
+                    404,
+                    {
+                        'error': 'API를 찾을 수 없습니다. 서버를 최신 코드로 다시 실행했는지 확인하세요.'
+                    },
+                )
                 return
             handler = ROUTES[(method, path)]
             result = handler(Request(params, user, token))
@@ -179,7 +193,9 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(200, result)
 
     def send_json(self, status, payload, cookie=None):
-        content = json.dumps(payload, ensure_ascii=False, allow_nan=False, default=str).encode('utf-8')
+        content = json.dumps(payload, ensure_ascii=False, allow_nan=False, default=str).encode(
+            'utf-8'
+        )
         self.send_response(status)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Cache-Control', 'no-store')
@@ -243,11 +259,15 @@ class Handler(BaseHTTPRequestHandler):
                     # /map 같은 화면 주소는 모두 React 첫 화면(index.html)이 처리합니다.
                     file = DIST / 'index.html'
             if not file.is_file():
-                self.send_json(503, {'error': 'frontend 폴더에서 npm ci 후 npm run build를 실행하세요.'})
+                self.send_json(
+                    503, {'error': 'frontend 폴더에서 npm ci 후 npm run build를 실행하세요.'}
+                )
                 return
             content = file.read_bytes()
             self.send_response(200)
-            self.send_header('Content-Type', mimetypes.guess_type(file)[0] or 'application/octet-stream')
+            self.send_header(
+                'Content-Type', mimetypes.guess_type(file)[0] or 'application/octet-stream'
+            )
             self.send_header('Content-Length', str(len(content)))
             self.send_header('X-Content-Type-Options', 'nosniff')
             self.end_headers()
@@ -276,8 +296,13 @@ def main(argv=None):
     try:
         server = DashboardHTTPServer((args.host, args.port), Handler)
     except OSError as error:
-        if error.errno in {48, 98, 10013, 10048} or getattr(error, 'winerror', None) in {10013, 10048}:
-            raise SystemExit(f'{args.port} 포트를 사용하는 서버가 이미 실행 중입니다. 기존 서버를 종료한 뒤 실행하세요.') from error
+        if error.errno in {48, 98, 10013, 10048} or getattr(error, 'winerror', None) in {
+            10013,
+            10048,
+        }:
+            raise SystemExit(
+                f'{args.port} 포트를 사용하는 서버가 이미 실행 중입니다. 기존 서버를 종료한 뒤 실행하세요.'
+            ) from error
         raise
     print(f'WELFIND React: http://{args.host}:{args.port}', flush=True)
     try:

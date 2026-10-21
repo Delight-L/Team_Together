@@ -3,8 +3,15 @@
 화면의 채팅은 모두 /api/chat으로 보냅니다. 이 파일은 요청을 검사해 ChatRequest로 바꾸고,
 답변 이벤트 스트림은 bomi 파이프라인이 만듭니다(담당 선택·안전 검사·에이전트 호출은 bomi/ 안에 있습니다).
 """
+
 from backend.api import limits
-from backend.api.common import Request, StreamResponse, dashboard_data, group_context, region_context
+from backend.api.common import (
+    Request,
+    StreamResponse,
+    dashboard_data,
+    group_context,
+    region_context,
+)
 from backend.bomi.adapters import regional_analysis
 from backend.bomi.pipeline import default_pipeline
 from backend.bomi.request import ChatRequest, GroupSelection, validate_messages, validate_source_ids
@@ -18,10 +25,14 @@ def config(request):
     ai = ai_settings.current()
     provider = ai_settings.PROVIDERS[ai.provider]['label'] if ai.ready else ''
     counts = resource_counts()
-    return {'aiAvailable': ai.ready, 'aiProvider': provider, 'resourceCount': sum(counts.values()),
-            'resourceCounts': counts,
-            'resourceSource': resource_source(),
-            'v16Available': regional_analysis.data_ready()}
+    return {
+        'aiAvailable': ai.ready,
+        'aiProvider': provider,
+        'resourceCount': sum(counts.values()),
+        'resourceCounts': counts,
+        'resourceSource': resource_source(),
+        'v16Available': regional_analysis.data_ready(),
+    }
 
 
 def _group_selection(request):
@@ -49,9 +60,15 @@ def chat(request):
     state = unpack(request.params.get('conversation'), request.session_token, context)
     source_ids = validate_source_ids(request.params.get('sources'))
     chat_request = ChatRequest(
-        messages=tuple(messages), context=context, data=data,
+        messages=tuple(messages),
+        context=context,
+        data=data,
         group=group,
         # 화면의 «AI 사용» 스위치가 켜져 있을 때(mode='ai')만 외부 AI를 씁니다. 기본은 자료 기반 답변입니다.
         use_ai=request.params.get('mode') == 'ai',
-        source_ids=tuple(state.get('selected_ids', source_ids)), welfare_state=state)
-    return StreamResponse(default_pipeline().stream(chat_request, session_token=request.session_token))
+        source_ids=tuple(state.get('selected_ids', source_ids)),
+        welfare_state=state,
+    )
+    return StreamResponse(
+        default_pipeline().stream(chat_request, session_token=request.session_token)
+    )

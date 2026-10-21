@@ -5,6 +5,7 @@ data/processed에 저장합니다. 종합 현황의 그룹 자료(db/group_repos
 
 실행: python pipelines/preprocessing/cleaning.py
 """
+
 from pathlib import Path
 
 import pandas as pd
@@ -18,7 +19,9 @@ CARD_FILE = "신한카드_빅콘테스트2026_데이터2.txt"
 
 def load_flow(month, kind, dedup=False):
     """한 달치 유동인구 원본을 읽습니다. kind는 age·time·wkdy 중 하나입니다."""
-    frame = pd.read_csv(RAW_DIR / f"flow_{kind}_pop_2025{month}.csv", sep="|", dtype={"BLOCK_CD": str})
+    frame = pd.read_csv(
+        RAW_DIR / f"flow_{kind}_pop_2025{month}.csv", sep="|", dtype={"BLOCK_CD": str}
+    )
     if dedup:
         return frame.drop_duplicates()
     return frame

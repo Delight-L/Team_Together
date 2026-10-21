@@ -1,4 +1,5 @@
 """Read-only, descriptive changes in merchant-area transaction activity."""
+
 from __future__ import annotations
 
 import math
@@ -36,18 +37,28 @@ def _quarter_for(month):
 def _complete_quarters(months):
     selected = set(months)
     periods = sorted({f"{month[:4]}Q{(int(month[5:]) - 1) // 3 + 1}" for month in months})
-    return [period for period in periods if all(
-        f"{period[:4]}-{number:02d}" in selected
-        for number in range((int(period[-1]) - 1) * 3 + 1, int(period[-1]) * 3 + 1)
-    )]
+    return [
+        period
+        for period in periods
+        if all(
+            f"{period[:4]}-{number:02d}" in selected
+            for number in range((int(period[-1]) - 1) * 3 + 1, int(period[-1]) * 3 + 1)
+        )
+    ]
 
 
 def _base(scope, period, domain=None, age=None, name=None):
     row = {
-        "scope": scope, "period": period, "domain": domain, "age": age,
-        "current_daily_count": None, "previous_daily_count": None,
-        "change_pct": None, "comparison_period": None,
-        "comparison_basis": None, "matched_industries": None,
+        "scope": scope,
+        "period": period,
+        "domain": domain,
+        "age": age,
+        "current_daily_count": None,
+        "previous_daily_count": None,
+        "change_pct": None,
+        "comparison_period": None,
+        "comparison_basis": None,
+        "matched_industries": None,
         "status": "baseline_unavailable",
     }
     if scope == "merchant_dong":
@@ -61,8 +72,9 @@ def _counts(row, current, previous, matched, *, monthly=False):
     """Expose totals only when the stored matched rate covers both full cells."""
     if not current or not previous or not _finite(matched) or matched <= 0:
         return
-    full_match = (matched == current.get("observed_industries")
-                  and matched == previous.get("observed_industries"))
+    full_match = matched == current.get("observed_industries") and matched == previous.get(
+        "observed_industries"
+    )
     if monthly:
         full_match = full_match and all(
             _finite(cell.get("observed_industry_days_min"))
@@ -77,12 +89,20 @@ def _counts(row, current, previous, matched, *, monthly=False):
 
 def _rank(rows, limit):
     """Rank increases; when none increase, keep the largest actual changes."""
-    comparable = [row for row in rows if _finite(row["change_pct"])
-                  and row["status"] in {"ready", "ready_matched_change_only"}]
+    comparable = [
+        row
+        for row in rows
+        if _finite(row["change_pct"]) and row["status"] in {"ready", "ready_matched_change_only"}
+    ]
     increases = [row for row in comparable if row["change_pct"] > 0]
-    chosen = sorted(increases or comparable, key=lambda row: (
-        -row["change_pct"], str(row.get("age") or ""), str(row.get("domain") or "")
-    ))[:limit]
+    chosen = sorted(
+        increases or comparable,
+        key=lambda row: (
+            -row["change_pct"],
+            str(row.get("age") or ""),
+            str(row.get("domain") or ""),
+        ),
+    )[:limit]
     if chosen:
         return chosen
     partial = [row for row in rows if _finite(row["change_pct"])]
@@ -120,14 +140,23 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
     # reference can be shown instead of an empty answer.
     wanted_codes = [codes[name] for name in names if name in codes]
     ages = [age_label] if age_label else None
-    features = {(row["adm_cd"], row["period"], row["age"], row["domain"]): row
-                for row in repo.consumption_payloads("a3a_feature", adm_cds=wanted_codes, ages=ages)}
-    comparisons = {(row["adm_cd"], row["period"], row["age"], row["domain"]): row
-                   for row in repo.consumption_payloads("a3a_comparison", adm_cds=wanted_codes, ages=ages)}
-    monthly = ({(row["period"], row["age"], row["domain"]): row
-                for row in repo.consumption_payloads("a3b_feature", districts=["11680"], ages=ages)
-                if row.get("district", "11680") == "11680"}
-               if include_district else {})
+    features = {
+        (row["adm_cd"], row["period"], row["age"], row["domain"]): row
+        for row in repo.consumption_payloads("a3a_feature", adm_cds=wanted_codes, ages=ages)
+    }
+    comparisons = {
+        (row["adm_cd"], row["period"], row["age"], row["domain"]): row
+        for row in repo.consumption_payloads("a3a_comparison", adm_cds=wanted_codes, ages=ages)
+    }
+    monthly = (
+        {
+            (row["period"], row["age"], row["domain"]): row
+            for row in repo.consumption_payloads("a3b_feature", districts=["11680"], ages=ages)
+            if row.get("district", "11680") == "11680"
+        }
+        if include_district
+        else {}
+    )
 
     def merchant_ready(code, quarter):
         for (adm_cd, period, age, domain), current in features.items():
@@ -135,8 +164,16 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
                 continue
             previous = features.get((code, _previous_quarter(quarter), age, domain))
             comparison = comparisons.get((code, quarter, age, domain), {})
-            if previous and not current.get("missing_domain") and not previous.get("missing_domain"):
-                if _finite(comparison.get("qoq_daily_change_pct")) and _finite(comparison.get("qoq_matched_industry_count")) and comparison["qoq_matched_industry_count"] > 0:
+            if (
+                previous
+                and not current.get("missing_domain")
+                and not previous.get("missing_domain")
+            ):
+                if (
+                    _finite(comparison.get("qoq_daily_change_pct"))
+                    and _finite(comparison.get("qoq_matched_industry_count"))
+                    and comparison["qoq_matched_industry_count"] > 0
+                ):
                     return True
         return False
 
@@ -145,8 +182,16 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
             if period != month or age_label and age != age_label:
                 continue
             previous = monthly.get((_previous_month(month), age, domain))
-            if previous and not current.get("missing_domain") and not previous.get("missing_domain"):
-                if _finite(current.get("matched_mom_daily_change_pct")) and _finite(current.get("matched_industry_count")) and current["matched_industry_count"] > 0:
+            if (
+                previous
+                and not current.get("missing_domain")
+                and not previous.get("missing_domain")
+            ):
+                if (
+                    _finite(current.get("matched_mom_daily_change_pct"))
+                    and _finite(current.get("matched_industry_count"))
+                    and current["matched_industry_count"] > 0
+                ):
                     return True
         return False
 
@@ -155,8 +200,13 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
         requested = quarters or [_quarter_for(end)]
         selected_quarters = [quarter for quarter in requested if merchant_ready(code, quarter)]
         if not selected_quarters:
-            available = {period for adm_cd, period, age, _ in features
-                         if adm_cd == code and (not age_label or age == age_label) and merchant_ready(code, period)}
+            available = {
+                period
+                for adm_cd, period, age, _ in features
+                if adm_cd == code
+                and (not age_label or age == age_label)
+                and merchant_ready(code, period)
+            }
             closest = nearest_period(available, _quarter_for(end))
             selected_quarters = [closest] if closest else []
         if not selected_quarters:
@@ -174,11 +224,16 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
                 previous = features.get((code, previous_period, age, domain))
                 comparison = comparisons.get(key, {})
                 row = _base("merchant_dong", quarter, domain, age, name)
-                row.update(comparison_period=previous_period,
-                           comparison_basis="previous_quarter_matched_industry_daily_count",
-                           matched_industries=comparison.get("qoq_matched_industry_count"))
+                row.update(
+                    comparison_period=previous_period,
+                    comparison_basis="previous_quarter_matched_industry_daily_count",
+                    matched_industries=comparison.get("qoq_matched_industry_count"),
+                )
                 if quarter not in quarters:
-                    row.update(selection_alignment="nearest_comparable_period", requested_period=f"{start}~{end}")
+                    row.update(
+                        selection_alignment="nearest_comparable_period",
+                        requested_period=f"{start}~{end}",
+                    )
                 rate = comparison.get("qoq_daily_change_pct")
                 matched = row["matched_industries"]
                 if current.get("missing_domain"):
@@ -188,7 +243,10 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
                 elif _finite(rate) and _finite(matched) and matched > 0:
                     row.update(change_pct=float(rate), status="ready_matched_change_only")
                     _counts(row, current, previous, matched)
-                    if row["current_daily_count"] is not None and row["previous_daily_count"] is not None:
+                    if (
+                        row["current_daily_count"] is not None
+                        and row["previous_daily_count"] is not None
+                    ):
                         row["status"] = "ready"
                 rows.append(row)
             if not rows:
@@ -198,7 +256,9 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
             result.extend(_rank(rows, limit))
     selected_months = list(months)
     if include_district and not any(district_ready(month) for month in selected_months):
-        closest = nearest_period((period for period, _, _ in monthly if district_ready(period)), end)
+        closest = nearest_period(
+            (period for period, _, _ in monthly if district_ready(period)), end
+        )
         selected_months = [closest] if closest else selected_months
     for month in selected_months if include_district else ():
         rows = []
@@ -208,11 +268,16 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
             previous_period = _previous_month(month)
             previous = monthly.get((previous_period, age, domain))
             row = _base("merchant_district_shared", month, domain, age)
-            row.update(comparison_period=previous_period,
-                       comparison_basis="previous_month_matched_industry_daily_count",
-                       matched_industries=current.get("matched_industry_count"))
+            row.update(
+                comparison_period=previous_period,
+                comparison_basis="previous_month_matched_industry_daily_count",
+                matched_industries=current.get("matched_industry_count"),
+            )
             if month not in months:
-                row.update(selection_alignment="nearest_comparable_period", requested_period=f"{start}~{end}")
+                row.update(
+                    selection_alignment="nearest_comparable_period",
+                    requested_period=f"{start}~{end}",
+                )
             rate = current.get("matched_mom_daily_change_pct")
             matched = row["matched_industries"]
             if current.get("missing_domain"):
@@ -222,11 +287,16 @@ def consumption_trends(repo, names, start, end, age_band=None, limit=3, include_
             elif _finite(rate) and _finite(matched) and matched > 0:
                 row.update(change_pct=float(rate), status="ready_matched_change_only")
                 _counts(row, current, previous, matched, monthly=True)
-                if row["current_daily_count"] is not None and row["previous_daily_count"] is not None:
+                if (
+                    row["current_daily_count"] is not None
+                    and row["previous_daily_count"] is not None
+                ):
                     row["status"] = "ready"
-                if any(not _finite(cell.get("observed_industry_days_min"))
-                       or cell["observed_industry_days_min"] < cell.get("days", float("inf"))
-                       for cell in (current, previous)):
+                if any(
+                    not _finite(cell.get("observed_industry_days_min"))
+                    or cell["observed_industry_days_min"] < cell.get("days", float("inf"))
+                    for cell in (current, previous)
+                ):
                     row["status"] = "ready_partial_day_coverage"
             rows.append(row)
         if not rows:

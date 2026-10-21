@@ -5,6 +5,7 @@ district tables with the delivered age-detection CSV.  This adapter gives the
 regional agent exactly that same read model when the newer ``db1_v16`` serving
 views have not been provisioned yet.  It is intentionally read-only.
 """
+
 from __future__ import annotations
 
 import json
@@ -17,14 +18,24 @@ from .period_matching import nearest_period
 
 
 ROOT = Path(__file__).resolve().parents[4]
-AGE_CSV = ROOT / "pipelines" / "db1" / "Analysis2" / "outputs" / "age_detection" / "analysis2_age_detection.csv"
+AGE_CSV = (
+    ROOT
+    / "pipelines"
+    / "db1"
+    / "Analysis2"
+    / "outputs"
+    / "age_detection"
+    / "analysis2_age_detection.csv"
+)
 ANALYSIS3_OUTPUT = ROOT / "pipelines" / "db1" / "Analysis3" / "outputs"
 CONSUMPTION_CSV = {
     "a3a_feature": ANALYSIS3_OUTPUT / "a3a_feature.csv",
     "a3a_comparison": ANALYSIS3_OUTPUT / "a3a_comparison.csv",
     "a3b_feature": ANALYSIS3_OUTPUT / "a3b_feature.csv",
 }
-WEATHER_CSV = ROOT / "pipelines" / "db1" / "Context" / "outputs" / "evidence" / "ctx_weather_window.csv"
+WEATHER_CSV = (
+    ROOT / "pipelines" / "db1" / "Context" / "outputs" / "evidence" / "ctx_weather_window.csv"
+)
 
 
 def _json(value: Any) -> dict:
@@ -90,37 +101,47 @@ class DashboardDb1Repository:
             self._district = pd.DataFrame()
             return self._district.copy()
         with self.engine.connect() as connection:
-            rows = connection.exec_driver_sql(
-                """SELECT reference_month, admin_dong_code, dong_name,
+            rows = (
+                connection.exec_driver_sql(
+                    """SELECT reference_month, admin_dong_code, dong_name,
                           communication_signal, mobility_signal, combined_signal,
                           any_signal, signal_type, payload
                    FROM db1.analysis2_detections
                    WHERE run_id=%s ORDER BY reference_month, admin_dong_code""",
-                (run_id,),
-            ).mappings().all()
+                    (run_id,),
+                )
+                .mappings()
+                .all()
+            )
         records = []
         for source in rows:
             row = _json(source["payload"])
-            row.update({
-                "date": str(source["reference_month"])[:10],
-                "행정동": source["dong_name"],
-                "adm_cd": str(source["admin_dong_code"] or row.get("adm_cd") or ""),
-                "communication_signal": _flag(source["communication_signal"]),
-                "mobility_signal": _flag(source["mobility_signal"]),
-                "combined_signal": _flag(source["combined_signal"]),
-                "any_signal": _flag(source["any_signal"]),
-                # Some published rows contain lifecycle values such as ``New``
-                # here. Detection flags are the source of truth for the domain.
-                "signal_type": (str(source["signal_type"]).lower()
-                                if str(source["signal_type"] or "").lower() in
-                                {"communication", "mobility", "combined"}
-                                else _signal_type({
-                                    "communication_signal": source["communication_signal"],
-                                    "mobility_signal": source["mobility_signal"],
-                                    "combined_signal": source["combined_signal"],
-                                })),
-                "assessment_status": row.get("assessment_status", "assessed"),
-            })
+            row.update(
+                {
+                    "date": str(source["reference_month"])[:10],
+                    "행정동": source["dong_name"],
+                    "adm_cd": str(source["admin_dong_code"] or row.get("adm_cd") or ""),
+                    "communication_signal": _flag(source["communication_signal"]),
+                    "mobility_signal": _flag(source["mobility_signal"]),
+                    "combined_signal": _flag(source["combined_signal"]),
+                    "any_signal": _flag(source["any_signal"]),
+                    # Some published rows contain lifecycle values such as ``New``
+                    # here. Detection flags are the source of truth for the domain.
+                    "signal_type": (
+                        str(source["signal_type"]).lower()
+                        if str(source["signal_type"] or "").lower()
+                        in {"communication", "mobility", "combined"}
+                        else _signal_type(
+                            {
+                                "communication_signal": source["communication_signal"],
+                                "mobility_signal": source["mobility_signal"],
+                                "combined_signal": source["combined_signal"],
+                            }
+                        )
+                    ),
+                    "assessment_status": row.get("assessment_status", "assessed"),
+                }
+            )
             records.append(row)
         self._district = pd.DataFrame(records)
         return self._district.copy()
@@ -141,14 +162,18 @@ class DashboardDb1Repository:
             if name in frame:
                 frame[name] = frame[name].map(_flag)
         if "any_signal" not in frame:
-            frame["any_signal"] = frame["communication_signal"].eq(True) | frame["mobility_signal"].eq(True)
+            frame["any_signal"] = frame["communication_signal"].eq(True) | frame[
+                "mobility_signal"
+            ].eq(True)
         frame["signal_type"] = frame.apply(lambda row: _signal_type(row.to_dict()), axis=1)
         frame["assessment_status"] = frame.get("assessment_status", "assessed")
         self._age = frame
         return frame.copy()
 
     @staticmethod
-    def _filter(frame: pd.DataFrame, dong=None, start=None, end=None, age_band=None) -> pd.DataFrame:
+    def _filter(
+        frame: pd.DataFrame, dong=None, start=None, end=None, age_band=None
+    ) -> pd.DataFrame:
         if frame.empty:
             return frame.copy()
         result = frame.copy()
@@ -163,21 +188,34 @@ class DashboardDb1Repository:
             result = result.loc[months.le(end)]
         if age_band and "age_band" in result:
             result = result.loc[result["age_band"].eq(age_band)]
-        return result.sort_values(["date", "행정동"] + (["age_band"] if "age_band" in result else []))
+        return result.sort_values(
+            ["date", "행정동"] + (["age_band"] if "age_band" in result else [])
+        )
 
     def districts(self) -> set[str]:
         frames = [self._district_frame(), self._age_frame()]
-        return {str(name) for frame in frames if "행정동" in frame for name in frame["행정동"].dropna()}
+        return {
+            str(name) for frame in frames if "행정동" in frame for name in frame["행정동"].dropna()
+        }
 
     def cluster_types(self):
         with self.engine.connect() as connection:
-            return [str(row[0]) for row in connection.exec_driver_sql(
-                "SELECT DISTINCT cluster_type FROM db1.latest_region_typology WHERE cluster_type IS NOT NULL ORDER BY cluster_type")]
+            return [
+                str(row[0])
+                for row in connection.exec_driver_sql(
+                    "SELECT DISTINCT cluster_type FROM db1.latest_region_typology WHERE cluster_type IS NOT NULL ORDER BY cluster_type"
+                )
+            ]
 
     def cluster_districts(self, cluster):
         with self.engine.connect() as connection:
-            return [str(row[0]) for row in connection.exec_driver_sql(
-                "SELECT DISTINCT dong_name FROM db1.latest_region_typology WHERE cluster_type=%s ORDER BY dong_name", (cluster,))]
+            return [
+                str(row[0])
+                for row in connection.exec_driver_sql(
+                    "SELECT DISTINCT dong_name FROM db1.latest_region_typology WHERE cluster_type=%s ORDER BY dong_name",
+                    (cluster,),
+                )
+            ]
 
     def available_period(self) -> tuple[str, str]:
         frame = self._district_frame()
@@ -194,10 +232,12 @@ class DashboardDb1Repository:
     def pipeline_status(self) -> dict:
         start, end = self.available_period()
         return {
-            "history_end": "2025-06", "history_rows": None,
+            "history_end": "2025-06",
+            "history_rows": None,
             "detection_rows": len(self._district_frame()),
             "age_detection_rows": len(self._age_frame()),
-            "waiting_for": {"month": end}, "source": "dashboard-compatible",
+            "waiting_for": {"month": end},
+            "source": "dashboard-compatible",
         }
 
     def district_codes(self) -> dict[str, str]:
@@ -212,14 +252,24 @@ class DashboardDb1Repository:
 
     def signals(self, start=None, end=None, dong=None, signal="any", age_band=None) -> pd.DataFrame:
         frame = self.activity(dong, start, end, age_band)
-        column = {"any": "any_signal", "communication": "communication_signal",
-                  "mobility": "mobility_signal", "combined": "combined_signal"}[signal]
+        column = {
+            "any": "any_signal",
+            "communication": "communication_signal",
+            "mobility": "mobility_signal",
+            "combined": "combined_signal",
+        }[signal]
         return frame.loc[frame.get(column, pd.Series(False, index=frame.index)).eq(True)].copy()
 
-    def age_signal_cases(self, start=None, end=None, dong=None, signal="any", age_band=None) -> pd.DataFrame:
+    def age_signal_cases(
+        self, start=None, end=None, dong=None, signal="any", age_band=None
+    ) -> pd.DataFrame:
         frame = self._filter(self._age_frame(), dong, start, end, age_band)
-        column = {"any": "any_signal", "communication": "communication_signal",
-                  "mobility": "mobility_signal", "combined": "combined_signal"}[signal]
+        column = {
+            "any": "any_signal",
+            "communication": "communication_signal",
+            "mobility": "mobility_signal",
+            "combined": "combined_signal",
+        }[signal]
         return frame.loc[frame.get(column, pd.Series(False, index=frame.index)).eq(True)].copy()
 
     def anomalies(self, start=None, end=None, metric=None, age_band=None, dongs=()):
@@ -237,10 +287,14 @@ class DashboardDb1Repository:
 
     def context(self, dong, as_of=None) -> pd.DataFrame:
         with self.engine.connect() as connection:
-            rows = connection.exec_driver_sql(
-                "SELECT dong_name, cluster_type, payload FROM db1.latest_region_typology WHERE dong_name=%s",
-                (dong,),
-            ).mappings().all()
+            rows = (
+                connection.exec_driver_sql(
+                    "SELECT dong_name, cluster_type, payload FROM db1.latest_region_typology WHERE dong_name=%s",
+                    (dong,),
+                )
+                .mappings()
+                .all()
+            )
         records = []
         for source in rows:
             row = _json(source["payload"])
@@ -260,7 +314,11 @@ class DashboardDb1Repository:
             raise ValueError(f"지원하지 않는 소비 자료: {table}")
         if table not in self._consumption:
             path = CONSUMPTION_CSV[table]
-            self._consumption[table] = pd.read_csv(path, dtype={"adm_cd": str, "district": str}) if path.is_file() else pd.DataFrame()
+            self._consumption[table] = (
+                pd.read_csv(path, dtype={"adm_cd": str, "district": str})
+                if path.is_file()
+                else pd.DataFrame()
+            )
         return self._consumption[table].copy()
 
     def _weather_rows(self) -> dict[str, dict]:
@@ -275,8 +333,12 @@ class DashboardDb1Repository:
                     if label and payload:
                         # The answer renderer uses this stable field name.
                         payload["observation_month_weather"] = [
-                            {"month": item.get("period"), "rain_days": item.get("rain_days"),
-                             "rainfall_mm": item.get("rainfall_mm"), "snow_days": item.get("snow_days")}
+                            {
+                                "month": item.get("period"),
+                                "rain_days": item.get("rain_days"),
+                                "rainfall_mm": item.get("rainfall_mm"),
+                                "snow_days": item.get("snow_days"),
+                            }
                             for item in payload.get("monthly_values", [])
                         ]
                         rows[label] = payload
@@ -294,13 +356,23 @@ class DashboardDb1Repository:
                 continue
             item = dict(weather_source[matched])
             if matched != date:
-                item.update(selection_alignment="nearest_available_period",
-                            requested_period=date, reference_period=matched)
+                item.update(
+                    selection_alignment="nearest_available_period",
+                    requested_period=date,
+                    reference_period=matched,
+                )
             weather[f"{date}-01"] = item
-        return {"analysis1": [], "analysis3_dong": [], "analysis3_district_shared": [],
-                "weather": weather, "regional_context": [], "shown_context_dongs": len(names),
-                "scope_note": "행정동 상권 자료와 강남구 상점 소비 자료는 보조 맥락이며 해당 동 주민의 소비나 신호 원인을 뜻하지 않습니다.",
-                "district_rows_shared_once": True, "retrospective_only": True}
+        return {
+            "analysis1": [],
+            "analysis3_dong": [],
+            "analysis3_district_shared": [],
+            "weather": weather,
+            "regional_context": [],
+            "shown_context_dongs": len(names),
+            "scope_note": "행정동 상권 자료와 강남구 상점 소비 자료는 보조 맥락이며 해당 동 주민의 소비나 신호 원인을 뜻하지 않습니다.",
+            "district_rows_shared_once": True,
+            "retrospective_only": True,
+        }
 
     def consumption_evidence(self, names, start, end, age):
         return [], {}
@@ -321,8 +393,12 @@ class DashboardDb1Repository:
             if not values:
                 return []
             if len(values) <= 500:
-                frame = frame.loc[frame[allowed[name]].astype(str).isin({str(value) for value in values})]
+                frame = frame.loc[
+                    frame[allowed[name]].astype(str).isin({str(value) for value in values})
+                ]
         # Pandas NaN must not leak into response data: it otherwise becomes a
         # non-standard JSON NaN in LLM prompts and can break a whole answer.
-        return [{key: (None if pd.isna(value) else value) for key, value in row.items()}
-                for row in frame.to_dict("records")]
+        return [
+            {key: (None if pd.isna(value) else value) for key, value in row.items()}
+            for row in frame.to_dict("records")
+        ]

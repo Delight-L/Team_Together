@@ -1,4 +1,5 @@
 """복지 검색 조건과 검색 결과. 담당 선택과 답변에서 같은 검색을 재사용합니다."""
+
 import re
 from backend.common import seoul_now
 from backend.chatbot.welfare.app.dialogue import resources, semantic
@@ -6,9 +7,12 @@ from backend.chatbot.welfare.app.dialogue.query_rules import excludes_past, othe
 
 FOLLOWUP = re.compile(
     r'^(?:(?:그|이)(?:사업|지원|프로그램)(?:의|은|는)?|그러면|그럼)?'
-    r'(?:대상|자격|조건|신청|서류|문의|연락처|담당기관|운영|기간|비용|지원금|어디로)')
+    r'(?:대상|자격|조건|신청|서류|문의|연락처|담당기관|운영|기간|비용|지원금|어디로)'
+)
 REFERENCE = re.compile(r'전국|다른\s*지역|타\s*지역|참고|비교\s*사례')
-BROWSE_FOLLOWUP = re.compile(r'^(?:참고하려고하니까|참고하고싶으니까|그러면|그럼)?(?:보여줘|보여주세요|찾아줘|찾아주세요)$')
+BROWSE_FOLLOWUP = re.compile(
+    r'^(?:참고하려고하니까|참고하고싶으니까|그러면|그럼)?(?:보여줘|보여주세요|찾아줘|찾아주세요)$'
+)
 
 
 def is_followup(question):
@@ -23,13 +27,17 @@ def is_browse_followup(question):
 def filters(query, planning=False):
     reference = planning or bool(REFERENCE.search(query))
     past_year = any(int(year) < seoul_now().year for year in re.findall(r'(20\d{2})\s*년', query))
-    historical = (planning or past_year or bool(re.search(r'과거|지난|종료된|이전\s*공고', query))) and not excludes_past(query)
+    historical = (
+        planning or past_year or bool(re.search(r'과거|지난|종료된|이전\s*공고', query))
+    ) and not excludes_past(query)
     return {'include_reference': reference, 'include_past': historical}
 
 
 async def retrieve(query, *, city='', district='', use_ai=False, planning=False):
     constraints = filters(query, planning)
-    records = resources.search(query, limit=20 if use_ai else 5, city=city, district=district, **constraints)
+    records = resources.search(
+        query, limit=20 if use_ai else 5, city=city, district=district, **constraints
+    )
     if city and constraints['include_reference'] and other_region_examples(query):
         records = [r for r in records if r.get('reference_only')]
     mode = 'keyword'
@@ -37,6 +45,10 @@ async def retrieve(query, *, city='', district='', use_ai=False, planning=False)
         supplementary = [r for r in records if r.get('support_role') == 'living']
         records, mode = await semantic.hybrid_search(query, records, city=city, **constraints)
         # AI 재정렬에서도 확인된 보완 지원 한 건은 별도 안내 후보로 유지합니다.
-        if not planning and supplementary and not any(r.get('support_role') == 'living' for r in records):
+        if (
+            not planning
+            and supplementary
+            and not any(r.get('support_role') == 'living' for r in records)
+        ):
             records = [*records, supplementary[0]]
     return {'query': query, 'records': records, 'mode': mode}

@@ -4,6 +4,7 @@
   0 분석 확인 저장 / 1 근거 검토 완료 / 2 사업 검토 저장 / 3 보고서 최종 저장
 단계 순서는 mission_store.save_event가 서버에서 다시 검사합니다.
 """
+
 import hashlib
 import logging
 from datetime import date, datetime
@@ -17,10 +18,23 @@ from backend.api.common import ApiError, Response, dashboard_data, evidence_for,
 
 # 사업 검토를 저장할 때 함께 남기는 사업 정보 항목
 SERVICE_FIELDS = (
-    'source_id', 'service_id', 'name', 'province', 'district', 'summary',
-    'target_text', 'eligibility_text', 'benefit_text', 'application_text',
-    'effective_start', 'effective_end', 'source_url', 'detail_pending',
-    'detail_checked_at', 'source_modified', 'residency_text',
+    'source_id',
+    'service_id',
+    'name',
+    'province',
+    'district',
+    'summary',
+    'target_text',
+    'eligibility_text',
+    'benefit_text',
+    'application_text',
+    'effective_start',
+    'effective_end',
+    'source_url',
+    'detail_pending',
+    'detail_checked_at',
+    'source_modified',
+    'residency_text',
 )
 
 
@@ -46,6 +60,7 @@ def work_context(request):
 
 
 # ── 조회(GET) ─────────────────────────────────────────────
+
 
 def with_analysis_note(current, data, context):
     """Compare the case's saved evidence, including snapshots with legacy timestamp IDs."""
@@ -105,11 +120,16 @@ def report_material(request):
     context, data, evidence = work_context(request)
     current, _ = report_workflow(context, data, evidence)
     from backend.agents.report_material import latest_reviews
-    return {'metrics': list(dict.fromkeys(row['metric_label'] for row in current['analysis_evidence'])),
-            'services': [{'key': key, 'name': value.get('name'), 'decision': value.get('decision')}
-                         for key, value in latest_reviews(current.get('reviews', [])).items()],
-            'analysis_run_id': current.get('analysis_run_id'),
-            'analysis_source': current.get('analysis_source')}
+
+    return {
+        'metrics': list(dict.fromkeys(row['metric_label'] for row in current['analysis_evidence'])),
+        'services': [
+            {'key': key, 'name': value.get('name'), 'decision': value.get('decision')}
+            for key, value in latest_reviews(current.get('reviews', [])).items()
+        ],
+        'analysis_run_id': current.get('analysis_run_id'),
+        'analysis_source': current.get('analysis_source'),
+    }
 
 
 def report_draft_file(request):
@@ -122,6 +142,7 @@ def report_draft_file(request):
 
 
 # ── 저장(POST) ────────────────────────────────────────────
+
 
 def analysis_start(data, evidence):
     """업무를 처음 저장할 때 근거로 기록할 지금 분석 결과(mission_store.save_event의 start)."""
@@ -138,8 +159,12 @@ def report_workflow(context, data, evidence):
     if 0 in current.get('done', []):
         return current, None
     start = analysis_start(data, evidence)
-    return dict(current, analysis_run_id=start['run_id'], analysis_evidence=evidence,
-                analysis_source=start['source_note']), start
+    return dict(
+        current,
+        analysis_run_id=start['run_id'],
+        analysis_evidence=evidence,
+        analysis_source=start['source_note'],
+    ), start
 
 
 def report_content(request):
@@ -155,8 +180,12 @@ def report_content(request):
     current, _ = report_workflow(context, data, evidence)
     draft = report_writer.write_draft(context, current, use_ai=use_ai, selection=selection)
     # 업무를 아직 저장하지 않았어도 보고서 탭의 검토 도움말이 수치를 대조할 수 있게 쓴 근거를 함께 돌려줍니다.
-    return dict(draft, analysis_evidence=current['analysis_evidence'], analysis_source=current['analysis_source'],
-                analysis_run_id=current.get('analysis_run_id'))
+    return dict(
+        draft,
+        analysis_evidence=current['analysis_evidence'],
+        analysis_source=current['analysis_source'],
+        analysis_run_id=current.get('analysis_run_id'),
+    )
 
 
 def report_proposal(request):
@@ -172,12 +201,18 @@ def report_proposal(request):
         if not isinstance(selection.get('services', []), list):
             raise ValueError('보고서 포함 항목이 올바르지 않습니다.')
         from backend.agents.report_material import latest_reviews
+
         available = latest_reviews(current.get('reviews', []))
-        selection = dict(selection, services=[key for key in selection.get('services', []) if key in available])
+        selection = dict(
+            selection, services=[key for key in selection.get('services', []) if key in available]
+        )
     elif selection is not None:
         raise ValueError('보고서 포함 항목이 올바르지 않습니다.')
     draft = report_writer.generate_draft(context, current, selection)
-    return {key: draft.get(key) for key in ('proposal', 'review_id', 'review_snapshot', 'kind', 'selection')}
+    return {
+        key: draft.get(key)
+        for key in ('proposal', 'review_id', 'review_snapshot', 'kind', 'selection')
+    }
 
 
 def report_preview(request):
@@ -190,8 +225,14 @@ def report_preview(request):
     current, start = report_workflow(context, data, evidence)
 
     submitted = request.params.get('content')
-    if isinstance(submitted, dict) and submitted.get('analysis_run_id') and submitted['analysis_run_id'] != current.get('analysis_run_id'):
-        raise ValueError('초안의 분석 근거가 현재 업무와 다릅니다. 최신 근거로 초안을 다시 만들어 주세요.')
+    if (
+        isinstance(submitted, dict)
+        and submitted.get('analysis_run_id')
+        and submitted['analysis_run_id'] != current.get('analysis_run_id')
+    ):
+        raise ValueError(
+            '초안의 분석 근거가 현재 업무와 다릅니다. 최신 근거로 초안을 다시 만들어 주세요.'
+        )
 
     fields = {
         'author': request.text('author'),
@@ -201,6 +242,7 @@ def report_preview(request):
     # 이전 화면이나 임시 초안이 계정 ID를 보내도 보고서에는 담당자 이름을 씁니다.
     if fields['author'] == request.user['id']:
         from backend.services.accounts import DEMO_ACCOUNTS
+
         fields['author'] = DEMO_ACCOUNTS[request.user['id']]['name']
     content = None
     if 'content' in request.params:
@@ -211,11 +253,13 @@ def report_preview(request):
         evidence_token = request.params['content'].get('evidence_token')
         if evidence_token:
             from backend.bomi.conversation import unpack
+
             saved_evidence = unpack(evidence_token, request.session_token, context)
             content['conversation_sources'] = saved_evidence.get('records', [])[:4]
         fields['opinion'] = content['next_steps']
         selection = request.params['content'].get('selection')
         from backend.agents.report_material import select_material
+
         select_material(current, selection)
         if selection is not None:
             content['selection'] = selection
@@ -234,8 +278,15 @@ def report_preview(request):
         raise ValueError('사업 검토 내역이 변경되었습니다. 보고서 초안을 다시 생성하세요.')
 
     document = report.build_report(
-        context, current['analysis_evidence'], fields['author'], fields['department'], fields['opinion'],
-        current['analysis_source'], workflow=current, content=content, contact=contact,
+        context,
+        current['analysis_evidence'],
+        fields['author'],
+        fields['department'],
+        fields['opinion'],
+        current['analysis_source'],
+        workflow=current,
+        content=content,
+        contact=contact,
     )
     record = dict(fields)
     record['content'] = content
@@ -247,7 +298,12 @@ def report_preview(request):
     record['analysis_run_id'] = current.get('analysis_run_id')
     record['_document'] = document
 
-    preview = {'identity': mission_store.identity(context), 'document': document, 'record': record, 'start': start}
+    preview = {
+        'identity': mission_store.identity(context),
+        'document': document,
+        'record': record,
+        'start': start,
+    }
     token = sessions.store_preview(request.user, 'report', preview)
     return {'token': token}
 
@@ -267,7 +323,11 @@ def workflow_start(request):
     """POST /api/workflow/start: ① 분석 확인 저장 — 이 동을 내 업무로 등록합니다."""
     context, data, evidence = work_context(request)
     with sessions.write_lock:
-        mission_store.save_event(context, 0, {'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']})
+        mission_store.save_event(
+            context,
+            0,
+            {'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']},
+        )
         return with_analysis_note(load_workflow(context), data, context)
 
 
@@ -280,7 +340,9 @@ def workflow_restart(request):
     if request.params.get('confirmed') is not True:
         raise ValueError('다시 시작을 확인하세요.')
     with sessions.write_lock:
-        mission_store.restart(context, {'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']})
+        mission_store.restart(
+            context, {'run_id': data['runId'], 'evidence': evidence, 'source_note': data['source']}
+        )
         return with_analysis_note(load_workflow(context), data, context)
 
 
@@ -299,13 +361,17 @@ def workflow_review(request):
     """
     context, data, evidence = work_context(request)
     checks = request.params.get('checks', {})
-    if not isinstance(checks, dict) or any(key not in {'residency', 'eligibility', 'application'} or type(value) is not bool for key, value in checks.items()):
+    if not isinstance(checks, dict) or any(
+        key not in {'residency', 'eligibility', 'application'} or type(value) is not bool
+        for key, value in checks.items()
+    ):
         raise ValueError('사업 이용 조건 확인 항목이 올바르지 않습니다.')
     need = request.params.get('need', '')
     if need not in ['', '관계·사회참여', '안부·돌봄', '생활·경제']:
         raise ValueError('지원 목적을 목록에서 선택하세요.')
     with sessions.write_lock:
-        current = load_workflow(context)
+        # 검토 저장 전에 기존 업무를 조회합니다. 반환값은 쓰지 않습니다.
+        load_workflow(context)
         chosen = None
         # 사업 조회와 저장에 같은 지역·연령 조건을 적용합니다.
         for match in service_eligibility.browse_services(context):
@@ -314,17 +380,22 @@ def workflow_review(request):
                 break
         if chosen is None:
             raise ValueError('조회한 실제 사업을 선택하세요.')
-        mission_store.save_event(context, 2, {
-            'service_key': chosen['key'],
-            'name': chosen['service']['name'],
-            'decision': request.params.get('decision'),
-            'note': request.text('note'),
-            'checks': checks,
-            'need': need,
-            'reasons': chosen['reasons'],
-            'source_url': chosen['service'].get('source_url'),
-            'service_snapshot': service_snapshot(chosen['service']),
-        }, start=analysis_start(data, evidence))
+        mission_store.save_event(
+            context,
+            2,
+            {
+                'service_key': chosen['key'],
+                'name': chosen['service']['name'],
+                'decision': request.params.get('decision'),
+                'note': request.text('note'),
+                'checks': checks,
+                'need': need,
+                'reasons': chosen['reasons'],
+                'source_url': chosen['service'].get('source_url'),
+                'service_snapshot': service_snapshot(chosen['service']),
+            },
+            start=analysis_start(data, evidence),
+        )
         return with_analysis_note(load_workflow(context), data, context)
 
 

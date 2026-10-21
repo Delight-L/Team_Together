@@ -67,15 +67,10 @@ def validate_analysis2_input(df: pd.DataFrame) -> dict:
     # 1. 필수 컬럼
     # --------------------------------------------------
 
-    missing_columns = [
-        col for col in REQUIRED_COLUMNS
-        if col not in df.columns
-    ]
+    missing_columns = [col for col in REQUIRED_COLUMNS if col not in df.columns]
 
     if missing_columns:
-        errors.append(
-            f"필수 컬럼 누락: {missing_columns}"
-        )
+        errors.append(f"필수 컬럼 누락: {missing_columns}")
 
         return {
             "status": "FAIL",
@@ -90,19 +85,12 @@ def validate_analysis2_input(df: pd.DataFrame) -> dict:
     # 2. date 변환
     # --------------------------------------------------
 
-    data[DATE_COLUMN] = pd.to_datetime(
-        data[DATE_COLUMN],
-        errors="coerce"
-    )
+    data[DATE_COLUMN] = pd.to_datetime(data[DATE_COLUMN], errors="coerce")
 
-    invalid_dates = int(
-        data[DATE_COLUMN].isna().sum()
-    )
+    invalid_dates = int(data[DATE_COLUMN].isna().sum())
 
     if invalid_dates > 0:
-        errors.append(
-            f"날짜 변환 실패: {invalid_dates}건"
-        )
+        errors.append(f"날짜 변환 실패: {invalid_dates}건")
 
     # --------------------------------------------------
     # 3. 기본 크기
@@ -113,117 +101,77 @@ def validate_analysis2_input(df: pd.DataFrame) -> dict:
     n_months = data[DATE_COLUMN].nunique()
 
     if n_rows != EXPECTED_ROWS:
-        errors.append(
-            f"행 수 불일치: expected={EXPECTED_ROWS}, actual={n_rows}"
-        )
+        errors.append(f"행 수 불일치: expected={EXPECTED_ROWS}, actual={n_rows}")
 
     if n_areas != EXPECTED_AREAS:
-        errors.append(
-            f"행정동 수 불일치: expected={EXPECTED_AREAS}, actual={n_areas}"
-        )
+        errors.append(f"행정동 수 불일치: expected={EXPECTED_AREAS}, actual={n_areas}")
 
     if n_months != EXPECTED_MONTHS:
-        errors.append(
-            f"월 수 불일치: expected={EXPECTED_MONTHS}, actual={n_months}"
-        )
+        errors.append(f"월 수 불일치: expected={EXPECTED_MONTHS}, actual={n_months}")
 
     # --------------------------------------------------
     # 4. Key 중복
     # --------------------------------------------------
 
-    duplicate_keys = int(
-        data.duplicated(
-            subset=[DATE_COLUMN, AREA_CODE_COLUMN]
-        ).sum()
-    )
+    duplicate_keys = int(data.duplicated(subset=[DATE_COLUMN, AREA_CODE_COLUMN]).sum())
 
     if duplicate_keys > 0:
-        errors.append(
-            f"date × 행정동코드 중복: {duplicate_keys}건"
-        )
+        errors.append(f"date × 행정동코드 중복: {duplicate_keys}건")
 
     # --------------------------------------------------
     # 5. 결측
     # --------------------------------------------------
 
-    missing_total = int(
-        data[REQUIRED_COLUMNS].isna().sum().sum()
-    )
+    missing_total = int(data[REQUIRED_COLUMNS].isna().sum().sum())
 
     if missing_total > 0:
-        errors.append(
-            f"필수 데이터 결측: {missing_total}건"
-        )
+        errors.append(f"필수 데이터 결측: {missing_total}건")
 
     # --------------------------------------------------
     # 6. 숫자형 컬럼
     # --------------------------------------------------
 
     non_numeric_columns = [
-        col for col in NUMERIC_COLUMNS
-        if not pd.api.types.is_numeric_dtype(data[col])
+        col for col in NUMERIC_COLUMNS if not pd.api.types.is_numeric_dtype(data[col])
     ]
 
     if non_numeric_columns:
-        errors.append(
-            f"숫자형이 아닌 분석 컬럼: {non_numeric_columns}"
-        )
+        errors.append(f"숫자형이 아닌 분석 컬럼: {non_numeric_columns}")
 
     # --------------------------------------------------
     # 7. 무한값
     # --------------------------------------------------
 
     if not non_numeric_columns:
-
-        infinite_count = int(
-            np.isinf(
-                data[NUMERIC_COLUMNS].to_numpy(dtype=float)
-            ).sum()
-        )
+        infinite_count = int(np.isinf(data[NUMERIC_COLUMNS].to_numpy(dtype=float)).sum())
 
     else:
         infinite_count = 0
 
     if infinite_count > 0:
-        errors.append(
-            f"무한값 발견: {infinite_count}건"
-        )
+        errors.append(f"무한값 발견: {infinite_count}건")
 
     # --------------------------------------------------
     # 8. 월별 22개 행정동 확인
     # --------------------------------------------------
 
-    rows_per_month = (
-        data.groupby(DATE_COLUMN)[AREA_CODE_COLUMN]
-        .nunique()
-    )
+    rows_per_month = data.groupby(DATE_COLUMN)[AREA_CODE_COLUMN].nunique()
 
-    invalid_months = rows_per_month[
-        rows_per_month != EXPECTED_AREAS
-    ]
+    invalid_months = rows_per_month[rows_per_month != EXPECTED_AREAS]
 
     if len(invalid_months) > 0:
-        errors.append(
-            f"22개 행정동이 아닌 월: {len(invalid_months)}개"
-        )
+        errors.append(f"22개 행정동이 아닌 월: {len(invalid_months)}개")
 
     # --------------------------------------------------
     # 9. 행정동별 48개월 확인
     # --------------------------------------------------
 
-    months_per_area = (
-        data.groupby(AREA_CODE_COLUMN)[DATE_COLUMN]
-        .nunique()
-    )
+    months_per_area = data.groupby(AREA_CODE_COLUMN)[DATE_COLUMN].nunique()
 
-    invalid_areas = months_per_area[
-        months_per_area != EXPECTED_MONTHS
-    ]
+    invalid_areas = months_per_area[months_per_area != EXPECTED_MONTHS]
 
     if len(invalid_areas) > 0:
-        errors.append(
-            f"48개월이 아닌 행정동: {len(invalid_areas)}개"
-        )
+        errors.append(f"48개월이 아닌 행정동: {len(invalid_areas)}개")
 
     # --------------------------------------------------
     # 최종 상태
@@ -231,6 +179,7 @@ def validate_analysis2_input(df: pd.DataFrame) -> dict:
 
     if not errors:
         from data.monthly_validation import validate_history
+
         try:
             validate_history(data)
         except ValueError as exc:

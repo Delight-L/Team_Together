@@ -43,7 +43,9 @@ def discover(inputs, scratch, limits, manifest):
         entry = dict(source=source, name=name, sha256=digest, bytes=path.stat().st_size)
         manifest['files'].append(entry)
         suffix = Path(name).suffix.lower()
-        identity = (suffix, month_from_name(name), digest) if suffix == '.xlsx' else (suffix, digest)
+        identity = (
+            (suffix, month_from_name(name), digest) if suffix == '.xlsx' else (suffix, digest)
+        )
         if suffix in {'.zip', '.xlsx'} and identity in seen:
             entry.update(status='duplicate', duplicate_of=seen[identity])
             return
@@ -75,7 +77,10 @@ def discover(inputs, scratch, limits, manifest):
                         while block := src.read(1024 * 1024):
                             written += len(block)
                             total += len(block)
-                            if written > limits['max_file_bytes'] or total > limits['max_total_bytes']:
+                            if (
+                                written > limits['max_file_bytes']
+                                or total > limits['max_total_bytes']
+                            ):
                                 raise ValueError('ZIP 실제 해제 크기 제한 초과')
                             dst.write(block)
                     visit(target, source + '!' + decoded, decoded, depth + 1)

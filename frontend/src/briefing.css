@@ -337,11 +337,6 @@
   background: #cddbcf;
 }
 
-
-
-
-
-
 .status-tag {
   display: inline-flex;
   border-radius: 6px;
@@ -461,7 +456,7 @@
   flex: 1;
   min-height: 0;
 }
-.directory-map  {
+.directory-map {
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -521,7 +516,6 @@
   .mission-kpi p {
     font-size: 11px;
   }
-
 
   .highlight-grid span {
     font-size: 11px;
@@ -588,12 +582,6 @@
   .mission-kpi p {
     font-size: 11px;
   }
-
-
-
-
-
-
 
   .mission-highlights > header {
     padding: 10px 14px 7px;
@@ -792,12 +780,6 @@
     height: 23px;
   }
 
-
-
-
-
-
-
   .mission-highlights > header {
     padding: 9px 10px 7px;
   }
@@ -827,7 +809,6 @@
   .directory-map > footer {
     font-size: 11px;
   }
-
 
   .nav-collapsed .sidebar > .logo-toggle .bomi-face {
     width: 38px;
@@ -912,107 +893,364 @@
   }
 }
 
-
 /* 지도 높이와 후보 요약 높이를 맞추고, 신호등 세 칸은 같은 크기로 유지합니다. */
 
-.road-map { background: var(--line); isolation: isolate; user-select: none; -webkit-user-select: none; }
-.road-map-canvas { position: absolute; inset: 0 0 34px; z-index: 0; font-family: inherit; }
-.directory-map .road-map-canvas { bottom: 0; }
-.road-map .map-tools { z-index: 2; }
-.road-map .map-tools button { width: 34px; height: 34px; }
+.road-map {
+  background: var(--line);
+  isolation: isolate;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.road-map-canvas {
+  position: absolute;
+  inset: 0 0 34px;
+  z-index: 0;
+  font-family: inherit;
+}
+.directory-map .road-map-canvas {
+  bottom: 0;
+}
+.road-map .map-tools {
+  z-index: 2;
+}
+.road-map .map-tools button {
+  width: 34px;
+  height: 34px;
+}
 
-
-
-.map-tile-error { position: absolute; z-index: 3; top: 12px; left: 56px; right: 12px;
-  padding: 8px 10px; background: #fff7e6; border-radius: 8px; font-size: 11px; color: #805c19; }
-.map-tile-error button { margin-left: 8px; text-decoration: underline; }
+.map-tile-error {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  left: 56px;
+  right: 12px;
+  padding: 8px 10px;
+  background: #fff7e6;
+  border-radius: 8px;
+  font-size: 11px;
+  color: #805c19;
+}
+.map-tile-error button {
+  margin-left: 8px;
+  text-decoration: underline;
+}
 @media (max-width: 850px) {
-  .briefing-shell .main-content { overflow-y: auto; }
+  .briefing-shell .main-content {
+    overflow-y: auto;
+  }
 }
 /* 카드 내부 요소 합계가 카드 높이를 넘지 않도록 명시적인 줄 높이를 사용합니다. */
 /* 도로는 위치 파악을 돕는 배경으로, 행정동 경계와 후보 표시를 우선합니다. */
 /* 행정동을 판 형태로 표현하는 입체 지도. 실제 도로 지도는 별도 모드로 유지합니다. */
-.mission-map-switchable { position: relative; height: 100%; min-height: 0; isolation: isolate; }
-.relief-map { background: radial-gradient(ellipse at 48% 44%, var(--line) 0%, var(--surface-tint) 48%, var(--surface-soft) 90%);
-  user-select: none; -webkit-user-select: none; touch-action: none; }
-.relief-scene { position: absolute; width: 100%; height: calc(100% - 34px); display: block;
-  cursor: grab; touch-action: none; -webkit-user-drag: none; }
-.directory-map .relief-scene { height: 100%; }
-.relief-map.dragging .relief-scene, .relief-map.dragging .relief-district { cursor: grabbing; }
-.relief-district { cursor: pointer; outline: none; }
-.relief-district .relief-top { transition: filter .15s; }
-.relief-district:hover .relief-top { stroke: #ffffff; stroke-width: 3.5; }
-.relief-district.selected .relief-top { stroke: #ffffff; stroke-width: 4; }
-.relief-district:focus-visible .relief-top { stroke: #2563eb; stroke-width: 4; }
-.relief-district text { fill: var(--text); font-size: 12px; font-weight: 600; pointer-events: none;
-  paint-order: stroke; stroke: #ffffff60; stroke-width: 2px; }
-.relief-district.candidate text { fill: #53263f; font-weight: 800; font-size: 14px; }
-.relief-priority { cursor: pointer; outline: none; }
-.relief-priority:focus-visible rect, .relief-priority:hover rect { stroke: #2563eb; stroke-width: 2; }
-
-.relief-map-note { position: absolute; left: 12px; bottom: 42px; font-size: 11px; color: var(--text-muted); pointer-events: none; }
-
-.directory-map .relief-map-note { bottom: 10px; }
-@media (max-width: 600px) {
-  .relief-map-note { font-size: 11px; }
+.mission-map-switchable {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  isolation: isolate;
 }
-@media (prefers-reduced-motion: reduce) { .relief-district .relief-top { transition: none; } }
+.relief-map {
+  background: radial-gradient(
+    ellipse at 48% 44%,
+    var(--line) 0%,
+    var(--surface-tint) 48%,
+    var(--surface-soft) 90%
+  );
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.relief-scene {
+  position: absolute;
+  width: 100%;
+  height: calc(100% - 34px);
+  display: block;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-drag: none;
+}
+.directory-map .relief-scene {
+  height: 100%;
+}
+.relief-map.dragging .relief-scene,
+.relief-map.dragging .relief-district {
+  cursor: grabbing;
+}
+.relief-district {
+  cursor: pointer;
+  outline: none;
+}
+.relief-district .relief-top {
+  transition: filter 0.15s;
+}
+.relief-district:hover .relief-top {
+  stroke: #ffffff;
+  stroke-width: 3.5;
+}
+.relief-district.selected .relief-top {
+  stroke: #ffffff;
+  stroke-width: 4;
+}
+.relief-district:focus-visible .relief-top {
+  stroke: #2563eb;
+  stroke-width: 4;
+}
+.relief-district text {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: #ffffff60;
+  stroke-width: 2px;
+}
+.relief-district.candidate text {
+  fill: #53263f;
+  font-weight: 800;
+  font-size: 14px;
+}
+.relief-priority {
+  cursor: pointer;
+  outline: none;
+}
+.relief-priority:focus-visible rect,
+.relief-priority:hover rect {
+  stroke: #2563eb;
+  stroke-width: 2;
+}
+
+.relief-map-note {
+  position: absolute;
+  left: 12px;
+  bottom: 42px;
+  font-size: 11px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.directory-map .relief-map-note {
+  bottom: 10px;
+}
+@media (max-width: 600px) {
+  .relief-map-note {
+    font-size: 11px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .relief-district .relief-top {
+    transition: none;
+  }
+}
 /* 전체 지도와 선택 동을 하나의 지도 영역에서 전환합니다. */
 
 /* MapLibre: 사이트의 파스텔 팔레트와 카드 형태를 지도에도 공유합니다. */
-.mission-map.vector-map { background: var(--surface-soft); }
-.vector-map .road-map-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.vector-map .maplibregl-map { font-family: inherit; }
-.vector-map .maplibregl-canvas { outline: none; }
-.vector-map .maplibregl-canvas:focus-visible { outline: 3px solid #7da8ea; outline-offset: -3px; }
-.vector-map .map-tools { top: 16px; left: 16px; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 16px #334b6b0c; }
-.vector-map .map-tools button { width: 34px; height: 34px; color: var(--text-sub); }
-.vector-map .map-tools button:focus-visible { outline: 2px solid #3978d6; outline-offset: -3px; }
-.vector-district-marker { padding: 3px 6px; border: 1px solid transparent; border-radius: 7px; background: #ffffffb8;
-  font: inherit; font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; cursor: pointer; }
-.vector-district-marker:hover, .vector-district-marker.selected { color: #2866bf; background: var(--surface-tint); border-color: #9dbbe8; }
-.vector-priority-marker { display: flex; align-items: center; gap: 9px; padding: 9px 12px 9px 9px;
-  border: 1px solid color-mix(in srgb, var(--marker-color) 45%, white); border-radius: 13px;
-  background: #fffffffa; box-shadow: 0 5px 20px #35557514; cursor: pointer; text-align: left; font: inherit; }
-.vector-priority-number { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center;
-  color: white; background: var(--marker-color); font-size: 13px; font-weight: 800; flex-shrink: 0; }
-.vector-priority-marker > span:last-child { display: grid; gap: 3px; white-space: nowrap; }
-.vector-priority-marker b { color: var(--text); font-size: 12px; }
-.vector-priority-marker small { color: var(--marker-color); font-size: 11px; }
-.vector-priority-marker:hover { box-shadow: 0 6px 24px #35557526; }
-.vector-priority-marker.selected { border: 2px solid #3978d6; background: var(--surface-soft); }
-.vector-district-marker:focus-visible, .vector-priority-marker:focus-visible { outline: 3px solid #3978d6; outline-offset: 3px; }
-.vector-district-marker[hidden], .vector-priority-marker[hidden] { display: none; }
-
-
-
-.vector-map .maplibregl-ctrl-attrib { font-family: inherit; font-size: 11px; color: var(--text-muted); background: #fffffff0; }
-.vector-map .maplibregl-ctrl-attrib a { color: inherit; }
-.vector-map .maplibregl-ctrl-bottom-right { bottom: 36px; right: 6px; }
-.directory-map .vector-map .maplibregl-ctrl-bottom-right { bottom: 5px; }
-.mission-legend .rose { background: #f36e91; }
-.mission-legend .orange { background: #eda65d; }
-.mission-legend .sky { background: #78a9ed; }
-.vector-map .map-tile-error { top: 62px; left: 62px; right: 16px; line-height: 1.6; }
-.vector-map-fallback { height: 100%; position: relative; }
-.vector-map-fallback > p { position: absolute; top: 12px; left: 58px; right: 12px; background: #fffffff0; padding: 8px; font-size: 11px; border-radius: 8px; }
-@media (max-width: 850px) {
-  .vector-map .map-tools { top: 10px; left: 10px; }
-
-
-
-  .vector-priority-marker { padding: 7px 9px; gap: 6px; }
+.mission-map.vector-map {
+  background: var(--surface-soft);
+}
+.vector-map .road-map-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.vector-map .maplibregl-map {
+  font-family: inherit;
+}
+.vector-map .maplibregl-canvas {
+  outline: none;
+}
+.vector-map .maplibregl-canvas:focus-visible {
+  outline: 3px solid #7da8ea;
+  outline-offset: -3px;
+}
+.vector-map .map-tools {
+  top: 16px;
+  left: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px #334b6b0c;
+}
+.vector-map .map-tools button {
+  width: 34px;
+  height: 34px;
+  color: var(--text-sub);
+}
+.vector-map .map-tools button:focus-visible {
+  outline: 2px solid #3978d6;
+  outline-offset: -3px;
+}
+.vector-district-marker {
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: #ffffffb8;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.vector-district-marker:hover,
+.vector-district-marker.selected {
+  color: #2866bf;
+  background: var(--surface-tint);
+  border-color: #9dbbe8;
+}
+.vector-priority-marker {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px 9px 9px;
+  border: 1px solid color-mix(in srgb, var(--marker-color) 45%, white);
+  border-radius: 13px;
+  background: #fffffffa;
+  box-shadow: 0 5px 20px #35557514;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.vector-priority-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: var(--marker-color);
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.vector-priority-marker > span:last-child {
+  display: grid;
+  gap: 3px;
+  white-space: nowrap;
+}
+.vector-priority-marker b {
+  color: var(--text);
+  font-size: 12px;
+}
+.vector-priority-marker small {
+  color: var(--marker-color);
+  font-size: 11px;
+}
+.vector-priority-marker:hover {
+  box-shadow: 0 6px 24px #35557526;
+}
+.vector-priority-marker.selected {
+  border: 2px solid #3978d6;
+  background: var(--surface-soft);
+}
+.vector-district-marker:focus-visible,
+.vector-priority-marker:focus-visible {
+  outline: 3px solid #3978d6;
+  outline-offset: 3px;
+}
+.vector-district-marker[hidden],
+.vector-priority-marker[hidden] {
+  display: none;
 }
 
+.vector-map .maplibregl-ctrl-attrib {
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: #fffffff0;
+}
+.vector-map .maplibregl-ctrl-attrib a {
+  color: inherit;
+}
+.vector-map .maplibregl-ctrl-bottom-right {
+  bottom: 36px;
+  right: 6px;
+}
+.directory-map .vector-map .maplibregl-ctrl-bottom-right {
+  bottom: 5px;
+}
+.mission-legend .rose {
+  background: #f36e91;
+}
+.mission-legend .orange {
+  background: #eda65d;
+}
+.mission-legend .sky {
+  background: #78a9ed;
+}
+.vector-map .map-tile-error {
+  top: 62px;
+  left: 62px;
+  right: 16px;
+  line-height: 1.6;
+}
+.vector-map-fallback {
+  height: 100%;
+  position: relative;
+}
+.vector-map-fallback > p {
+  position: absolute;
+  top: 12px;
+  left: 58px;
+  right: 12px;
+  background: #fffffff0;
+  padding: 8px;
+  font-size: 11px;
+  border-radius: 8px;
+}
+@media (max-width: 850px) {
+  .vector-map .map-tools {
+    top: 10px;
+    left: 10px;
+  }
 
+  .vector-priority-marker {
+    padding: 7px 9px;
+    gap: 6px;
+  }
+}
 
-.vector-priority-marker { padding: 5px 9px 5px 5px; gap: 6px; }
-.vector-priority-marker .vector-priority-number { width: 22px; height: 22px; border-radius: 7px; font-size: 12px; }
-.vector-priority-marker b { font-size: 12px; white-space: nowrap; }
-.regional-overview { grid-template-columns: minmax(0, .95fr) minmax(320px, 1.25fr); }
-.directory-map .vector-district-marker { padding: 1px 4px; font-size: 11px; background: #ffffffd9; }
-.map-hover-label { position: absolute; z-index: 5; pointer-events: none; display: flex; gap: 6px; align-items: center; padding: 5px 8px; border-radius: 8px; background: #0f172ae6; color: #fff; font-size: 12px; white-space: nowrap; }
-.map-hover-label span { font-size: 11px; color: var(--line-strong); }
+.vector-priority-marker {
+  padding: 5px 9px 5px 5px;
+  gap: 6px;
+}
+.vector-priority-marker .vector-priority-number {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+.vector-priority-marker b {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.regional-overview {
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.25fr);
+}
+.directory-map .vector-district-marker {
+  padding: 1px 4px;
+  font-size: 11px;
+  background: #ffffffd9;
+}
+.map-hover-label {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: #0f172ae6;
+  color: #fff;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.map-hover-label span {
+  font-size: 11px;
+  color: var(--line-strong);
+}
 
 /* 지도 출처 표기는 이용 조건상 남기되 작고 흐리게 */
-.vector-map .maplibregl-ctrl-attrib { font-size: 11px; opacity: .7; }
+.vector-map .maplibregl-ctrl-attrib {
+  font-size: 11px;
+  opacity: 0.7;
+}

@@ -23,11 +23,22 @@ def validate(rows, dates, areas, columns):
                 errors.append(f'{context}/{col} Analysis2 로그 입력은 양수 필요')
         if any(row[c] > row['days_in_month'] for c in ['rain_days', 'snow_days']):
             errors.append(f'{context} 날씨 일수가 월 일수 초과')
-    return {'status': 'FAIL' if errors else 'PASS', 'rows': len(rows), 'columns': len(columns), 'expected_rows': len(expected), 'errors': errors}
+    return {
+        'status': 'FAIL' if errors else 'PASS',
+        'rows': len(rows),
+        'columns': len(columns),
+        'expected_rows': len(expected),
+        'errors': errors,
+    }
 
 
 def compare(rows, path, columns, tolerance):
-    if not isinstance(tolerance, (int, float)) or isinstance(tolerance, bool) or not math.isfinite(tolerance) or tolerance < 0:
+    if (
+        not isinstance(tolerance, (int, float))
+        or isinstance(tolerance, bool)
+        or not math.isfinite(tolerance)
+        or tolerance < 0
+    ):
         raise ValueError('비교 허용오차는 유한한 비음수 필요')
     with open(path, encoding='utf-8-sig', newline='') as stream:
         reference = list(csv.DictReader(stream))
@@ -47,8 +58,17 @@ def compare(rows, path, columns, tolerance):
             diff = abs(row[col] - value)
             stats[col]['max_absolute_difference'] = max(stats[col]['max_absolute_difference'], diff)
             stats[col]['mismatch_count'] += diff > tolerance
-        if row['행정동'] != other['행정동'] or str(row['interest_structural_issue']).lower() != other['interest_structural_issue'].lower():
+        if (
+            row['행정동'] != other['행정동']
+            or str(row['interest_structural_issue']).lower()
+            != other['interest_structural_issue'].lower()
+        ):
             text_mismatches.append([row['date'], row['행정동코드']])
     mismatch = any(s['mismatch_count'] for s in stats.values()) or bool(text_mismatches)
-    return {'status': 'DIFFERENT' if mismatch else 'MATCH', 'absolute_tolerance': tolerance, 'numeric_columns': stats, 'name_or_flag_mismatches': text_mismatches,
-            'interpretation': '차이가 있으면 원본 버전·집계 규칙·날씨 출처를 확인하세요. 비교표의 행동값은 계산에 사용하지 않았습니다.'}
+    return {
+        'status': 'DIFFERENT' if mismatch else 'MATCH',
+        'absolute_tolerance': tolerance,
+        'numeric_columns': stats,
+        'name_or_flag_mismatches': text_mismatches,
+        'interpretation': '차이가 있으면 원본 버전·집계 규칙·날씨 출처를 확인하세요. 비교표의 행동값은 계산에 사용하지 않았습니다.',
+    }

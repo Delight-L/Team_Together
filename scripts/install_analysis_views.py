@@ -1,4 +1,5 @@
 """분석 조회 뷰 설치: 먼저 점검하고 --apply로 공용 DB에 적용합니다."""
+
 import argparse
 from pathlib import Path
 import sys
@@ -14,9 +15,9 @@ def main():
     parser.add_argument('--apply', action='store_true')
     args = parser.parse_args()
     with engine.begin() as connection:
-        permitted = connection.execute(text(
-            "SELECT has_schema_privilege(current_user, 'db1', 'CREATE')"
-        )).scalar_one()
+        permitted = connection.execute(
+            text("SELECT has_schema_privilege(current_user, 'db1', 'CREATE')")
+        ).scalar_one()
         print('db1 CREATE permission:', permitted)
         for table in ('analysis2_detections', 'analysis1_region_typology'):
             count = connection.execute(text(f'SELECT COUNT(*) FROM db1.{table}')).scalar_one()

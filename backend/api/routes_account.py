@@ -1,4 +1,5 @@
 """로그인·로그아웃·현재 사용자 API."""
+
 import secrets
 
 from backend.services.accounts import DEMO_ACCOUNTS
@@ -21,7 +22,12 @@ def login(request):
         raise PermissionError('아이디 또는 비밀번호가 올바르지 않습니다.')
     limits.login_guard.succeeded(account_id)
 
-    user = {'id': account_id, 'name': account['name'], 'org': account['org'], 'admin': account['admin']}
+    user = {
+        'id': account_id,
+        'name': account['name'],
+        'org': account['org'],
+        'admin': account['admin'],
+    }
     token = sessions.create_session(user)
     cookie = f'welfind_session={token}; {COOKIE_SETTINGS}; Max-Age={sessions.SESSION_SECONDS}'
     return Response({'user': user}, cookie=cookie)

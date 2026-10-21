@@ -1,5 +1,11 @@
 import { useRef, useState } from 'react';
-import { readDraft, writeDraft, removeDraft, draftEpoch, draftStorageFailed } from './draftStore.mjs';
+import {
+  readDraft,
+  writeDraft,
+  removeDraft,
+  draftEpoch,
+  draftStorageFailed,
+} from './draftStore.mjs';
 
 // 입력 이벤트에서 바로 보관하므로 메뉴 이동과 effect 실행 순서에 의존하지 않습니다.
 export function useDraft(key, initial) {

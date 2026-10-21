@@ -1,4 +1,5 @@
 """JSON 평가 결과를 사람이 검토하기 쉬운 CSV와 Markdown으로 변환한다."""
+
 from __future__ import annotations
 
 import argparse
@@ -18,12 +19,32 @@ def main() -> int:
     csv_path = args.output_dir / (args.result.stem + "-review.csv")
     md_path = args.output_dir / (args.result.stem + "-summary.md")
 
-    fields = ["case_id", "path_id", "title", "measurement_goal", "question", "reference_answer", "actual_answer", "bleu1", "rouge1", "rougeL", "human_label", "review_note"]
+    fields = [
+        "case_id",
+        "path_id",
+        "title",
+        "measurement_goal",
+        "question",
+        "reference_answer",
+        "actual_answer",
+        "bleu1",
+        "rouge1",
+        "rougeL",
+        "human_label",
+        "review_note",
+    ]
     with csv_path.open("w", newline="", encoding="utf-8-sig") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         for row in rows:
-            writer.writerow({field: (row.get("title", "") if field == "measurement_goal" else row.get(field, "")) for field in fields})
+            writer.writerow(
+                {
+                    field: (
+                        row.get("title", "") if field == "measurement_goal" else row.get(field, "")
+                    )
+                    for field in fields
+                }
+            )
 
     avg = lambda key: sum(float(row.get(key, 0)) for row in rows) / len(rows) if rows else 0
     low = sorted(rows, key=lambda row: float(row.get("rougeL", 0)))[:10]
@@ -47,7 +68,9 @@ def main() -> int:
     ]
     for row in low:
         question = str(row.get("question", "")).replace("|", " ")
-        lines.append(f"| {row.get('case_id', '')} | {question[:100]} | {float(row.get('rougeL', 0)):.4f} |")
+        lines.append(
+            f"| {row.get('case_id', '')} | {question[:100]} | {float(row.get('rougeL', 0)):.4f} |"
+        )
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(csv_path)
     print(md_path)

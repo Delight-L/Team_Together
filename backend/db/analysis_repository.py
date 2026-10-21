@@ -34,9 +34,7 @@ def monthly_upload(content, filename):
         data = None
         for encoding in ["utf-8-sig", "cp949", "euc-kr"]:
             try:
-                data = pd.read_csv(
-                    BytesIO(content), encoding=encoding, dtype={"행정동코드": str}
-                )
+                data = pd.read_csv(BytesIO(content), encoding=encoding, dtype={"행정동코드": str})
                 break
             except UnicodeError:
                 continue
@@ -49,13 +47,31 @@ def prepare_analysis2(data, source):
     """Convert legacy v11 and sequential DB1 output to the service contract."""
     data = data.copy()
     for metric in ("call_contacts", "text_contacts", "weekday_move_count", "weekend_move_count"):
-        for old, new in [("_residual", "_residual_change"), ("_rz", "_residual_change_expanding_rz")]:
+        for old, new in [
+            ("_residual", "_residual_change"),
+            ("_rz", "_residual_change_expanding_rz"),
+        ]:
             if metric + old in data:
-                data[metric + new] = data[metric + new].combine_first(data[metric + old]) if metric + new in data else data[metric + old]
-    for old, new in [("adm_cd", "행정동코드"), ("dong_name", "행정동"), ("signal_status", "signal_type")]:
+                data[metric + new] = (
+                    data[metric + new].combine_first(data[metric + old])
+                    if metric + new in data
+                    else data[metric + old]
+                )
+    for old, new in [
+        ("adm_cd", "행정동코드"),
+        ("dong_name", "행정동"),
+        ("signal_status", "signal_type"),
+    ]:
         if old in data:
             data[new] = data[new].combine_first(data[old]) if new in data else data[old]
-    required = ["date", "행정동코드", "행정동", "communication_signal", "mobility_signal", "any_signal"]
+    required = [
+        "date",
+        "행정동코드",
+        "행정동",
+        "communication_signal",
+        "mobility_signal",
+        "any_signal",
+    ]
     metrics = {
         "call_contacts": ("전화 연락", "communication_signal"),
         "text_contacts": ("문자 연락", "communication_signal"),
@@ -63,7 +79,13 @@ def prepare_analysis2(data, source):
         "weekend_move_count": ("휴일 이동", "mobility_signal"),
     }
     for metric in metrics:
-        required.extend([metric + "_log_change", metric + "_residual_change", metric + "_residual_change_expanding_rz"])
+        required.extend(
+            [
+                metric + "_log_change",
+                metric + "_residual_change",
+                metric + "_residual_change_expanding_rz",
+            ]
+        )
     missing = []
     for column in required:
         if column not in data.columns:
@@ -88,12 +110,21 @@ def prepare_analysis2(data, source):
         if not values.isin(["true", "false", "1", "0"]).all():
             raise ValueError("combined_signal: True 또는 False가 필요합니다.")
         data["combined_signal"] = values.isin(["true", "1"])
-    if not data.any_signal.eq(data.communication_signal | data.mobility_signal).all() or not data.combined_signal.eq(data.communication_signal & data.mobility_signal).all():
+    if (
+        not data.any_signal.eq(data.communication_signal | data.mobility_signal).all()
+        or not data.combined_signal.eq(data.communication_signal & data.mobility_signal).all()
+    ):
         raise ValueError("통신·이동 신호와 any_signal/combined_signal이 일치하지 않습니다.")
     if "signal_type" not in data:
-        data["signal_type"] = np.select([data.combined_signal, data.communication_signal, data.mobility_signal], ["combined", "communication", "mobility"], default="none")
+        data["signal_type"] = np.select(
+            [data.combined_signal, data.communication_signal, data.mobility_signal],
+            ["combined", "communication", "mobility"],
+            default="none",
+        )
     if 'analysis_model_version' not in data:
-        data['analysis_model_version'] = 'analysis2-sequential-v1' if 'call_contacts_rz' in data else RULE_VERSION
+        data['analysis_model_version'] = (
+            'analysis2-sequential-v1' if 'call_contacts_rz' in data else RULE_VERSION
+        )
     rows = []
     for metric, (label, signal_column) in metrics.items():
         frame = pd.DataFrame()
@@ -113,13 +144,17 @@ def prepare_analysis2(data, source):
         frame["risk_robust_z"] = pd.to_numeric(data[metric + "_residual_change_expanding_rz"])
         frame["has_enough_history"] = frame["risk_robust_z"].notna()
         frame["is_risk_signal"] = data[signal_column]
-        frame["explanation"] = frame["행정동명"] + " " + label + " · 전월 및 과거 흐름과 비교한 분석 결과"
+        frame["explanation"] = (
+            frame["행정동명"] + " " + label + " · 전월 및 과거 흐름과 비교한 분석 결과"
+        )
         frame["context_note"] = "지역 집계자료의 변화이며 개인의 고립 판정이 아닙니다."
         rows.append(frame)
     assessment = pd.concat(rows, ignore_index=True)
     alerts = data.loc[data["any_signal"], ["date", "행정동코드", "행정동"]].copy()
     return {
-        "kind": "monthly", "source": source, "data": data,
+        "kind": "monthly",
+        "source": source,
+        "data": data,
         "assessment": assessment,
         "signals": assessment[assessment["is_risk_signal"]].copy(),
         "alerts": alerts,
@@ -155,15 +190,26 @@ def load_district_analysis2_data():
         raise RuntimeError(".env에 DB_HOST, DB_NAME, DB_USER, DB_PASSWORD를 설정하세요.")
     if not DETECTION_FILE.exists():
         raise FileNotFoundError(
-            "분석 자료가 없습니다. .env에 공용 DB 접속 정보를 넣거나 " + str(DETECTION_FILE.relative_to(ROOT_DIR)) + " 파일을 받으세요."
+            "분석 자료가 없습니다. .env에 공용 DB 접속 정보를 넣거나 "
+            + str(DETECTION_FILE.relative_to(ROOT_DIR))
+            + " 파일을 받으세요."
         )
-    legacy = ROOT_DIR / 'pipelines/db1/Analysis2/data/reference/gangnam_analysis2_detection_2022_2025.csv'
-    return deepcopy(_load_analysis2_data(str(DETECTION_FILE.resolve()), DETECTION_FILE.stat().st_mtime_ns,
-                                        legacy.stat().st_mtime_ns if legacy.exists() else 0))
+    legacy = (
+        ROOT_DIR
+        / 'pipelines/db1/Analysis2/data/reference/gangnam_analysis2_detection_2022_2025.csv'
+    )
+    return deepcopy(
+        _load_analysis2_data(
+            str(DETECTION_FILE.resolve()),
+            DETECTION_FILE.stat().st_mtime_ns,
+            legacy.stat().st_mtime_ns if legacy.exists() else 0,
+        )
+    )
 
 
 def load_analysis2_data():
     from backend.db.age_analysis_repository import load_age_analysis
+
     data = load_age_analysis()
     # Keep Analysis1 regional background; legacy district flags never replace age detections.
     try:
@@ -189,9 +235,9 @@ def _latest_detection_run():
     if _RUN_CHECK["run_id"] and now - _RUN_CHECK["at"] < _RUN_CHECK_SECONDS:
         return _RUN_CHECK["run_id"]
     with get_engine().connect() as connection:
-        run_id = connection.execute(text(
-            f"SELECT run_id FROM {SCHEMA}.latest_detection_run"
-        )).scalar()
+        run_id = connection.execute(
+            text(f"SELECT run_id FROM {SCHEMA}.latest_detection_run")
+        ).scalar()
     _RUN_CHECK.update(at=now, run_id=run_id)
     return run_id
 
@@ -200,16 +246,28 @@ def _latest_detection_run():
 def _load_analysis2_from_db(run_id):
     """DB1에 적재된 Analysis2 결과를 CSV와 같은 열 구조로 되돌려 같은 변환을 거칩니다."""
     with get_engine().connect() as connection:
-        rows = connection.execute(text(
-            f"""SELECT reference_month, admin_dong_code, dong_name, communication_signal, mobility_signal,
+        rows = (
+            connection.execute(
+                text(
+                    f"""SELECT reference_month, admin_dong_code, dong_name, communication_signal, mobility_signal,
                        combined_signal, any_signal, signal_type, payload, source_file, created_at
                 FROM {SCHEMA}.analysis2_detections WHERE run_id = :run_id
                 ORDER BY reference_month, admin_dong_code"""
-        ), {"run_id": run_id}).mappings().all()
-        structures = connection.execute(text(
-            'SELECT * FROM db1.latest_region_typology ORDER BY adm_cd'
-        )).mappings().all()
-    structures = [dict(r, payload=json.loads(r["payload"]) if isinstance(r["payload"], str) else r["payload"]) for r in structures]
+                ),
+                {"run_id": run_id},
+            )
+            .mappings()
+            .all()
+        )
+        structures = (
+            connection.execute(text('SELECT * FROM db1.latest_region_typology ORDER BY adm_cd'))
+            .mappings()
+            .all()
+        )
+    structures = [
+        dict(r, payload=json.loads(r["payload"]) if isinstance(r["payload"], str) else r["payload"])
+        for r in structures
+    ]
     if not rows:
         raise LookupError("run_id " + str(run_id) + "의 분석 결과가 없습니다.")
     records_ = []
@@ -218,17 +276,26 @@ def _load_analysis2_from_db(run_id):
         if isinstance(payload, str):
             payload = json.loads(payload)
         record = dict(payload)
-        record.update({
-            "date": pd.Timestamp(row["reference_month"]).date().isoformat(), "행정동코드": str(row["admin_dong_code"]),
-            "행정동": row["dong_name"], "communication_signal": bool(row["communication_signal"]),
-            "mobility_signal": bool(row["mobility_signal"]), "combined_signal": bool(row["combined_signal"]),
-            "any_signal": bool(row["any_signal"]), "signal_type": row["signal_type"],
-        })
+        record.update(
+            {
+                "date": pd.Timestamp(row["reference_month"]).date().isoformat(),
+                "행정동코드": str(row["admin_dong_code"]),
+                "행정동": row["dong_name"],
+                "communication_signal": bool(row["communication_signal"]),
+                "mobility_signal": bool(row["mobility_signal"]),
+                "combined_signal": bool(row["combined_signal"]),
+                "any_signal": bool(row["any_signal"]),
+                "signal_type": row["signal_type"],
+            }
+        )
         records_.append(record)
     data = pd.DataFrame.from_records(records_)
     # JSON null은 None으로 오므로 숫자 열은 NaN으로 맞춥니다(CSV 경로와 동일한 결과).
     for column in data.columns:
-        if column not in {"date", "행정동코드", "행정동", "signal_type"} and data[column].dtype == object:
+        if (
+            column not in {"date", "행정동코드", "행정동", "signal_type"}
+            and data[column].dtype == object
+        ):
             converted = pd.to_numeric(data[column], errors="coerce")
             if converted.notna().sum() == data[column].notna().sum():
                 data[column] = converted
@@ -237,22 +304,38 @@ def _load_analysis2_from_db(run_id):
     model_versions = sorted(prepared['data'].analysis_model_version.dropna().unique().tolist())
     created = max(pd.Timestamp(row["created_at"]) for row in rows)
     return {
-        "connected": True, "isDemo": False, "source": "동별 통화·문자·이동 분석 자료 (공용 저장 자료)",
+        "connected": True,
+        "isDemo": False,
+        "source": "동별 통화·문자·이동 분석 자료 (공용 저장 자료)",
         "runId": str(run_id),
         "assessment": records(prepared["assessment"]),
-        "signals": records(prepared["signals"]), "alerts": records(prepared["alerts"]),
-        "activity": [], "runs": [{"run_id": str(run_id), "kind": "monthly", "source_name": f"{SCHEMA}.analysis2_detections ({source_file})",
-            "period": prepared["period"], "created_at": created.isoformat(timespec="seconds"), "rule_version": ' / '.join(model_versions)}],
+        "signals": records(prepared["signals"]),
+        "alerts": records(prepared["alerts"]),
+        "activity": [],
+        "runs": [
+            {
+                "run_id": str(run_id),
+                "kind": "monthly",
+                "source_name": f"{SCHEMA}.analysis2_detections ({source_file})",
+                "period": prepared["period"],
+                "created_at": created.isoformat(timespec="seconds"),
+                "rule_version": ' / '.join(model_versions),
+            }
+        ],
         "dataLoadedAt": created.isoformat(timespec="seconds"),
         "regionalStructures": [dict(row) for row in structures],
     }
+
 
 @lru_cache(maxsize=4)
 def _load_analysis2_data(source_path, modified_ns, legacy_modified_ns=0):
     """DB 적재 없이 version11의 저장된 분석 결과를 읽습니다."""
     source = Path(source_path)
     prepared = monthly_upload(source.read_bytes(), source.name)
-    legacy = ROOT_DIR / 'pipelines/db1/Analysis2/data/reference/gangnam_analysis2_detection_2022_2025.csv'
+    legacy = (
+        ROOT_DIR
+        / 'pipelines/db1/Analysis2/data/reference/gangnam_analysis2_detection_2022_2025.csv'
+    )
     if source.resolve() == DETECTION_FILE.resolve() and legacy.exists():
         previous = monthly_upload(legacy.read_bytes(), legacy.name)
         combined = pd.concat([previous['data'], prepared['data']], ignore_index=True)
@@ -260,12 +343,26 @@ def _load_analysis2_data(source_path, modified_ns, legacy_modified_ns=0):
         prepared = prepare_analysis2(combined, source.name)
     run_id = "analysis2-" + str(modified_ns) + '-' + str(legacy_modified_ns)
     return {
-        "connected": True, "isDemo": False, "source": "동별 통화·문자·이동 분석 자료 (저장된 파일)",
+        "connected": True,
+        "isDemo": False,
+        "source": "동별 통화·문자·이동 분석 자료 (저장된 파일)",
         "runId": run_id,
         "assessment": records(prepared["assessment"]),
-        "signals": records(prepared["signals"]), "alerts": records(prepared["alerts"]),
-        "activity": [], "runs": [{"run_id": run_id, "kind": "monthly", "source_name": str(source),
-            "period": prepared["period"], "created_at": "CSV 결과", "rule_version": ' / '.join(sorted(prepared['data'].analysis_model_version.dropna().unique().tolist()))}],
+        "signals": records(prepared["signals"]),
+        "alerts": records(prepared["alerts"]),
+        "activity": [],
+        "runs": [
+            {
+                "run_id": run_id,
+                "kind": "monthly",
+                "source_name": str(source),
+                "period": prepared["period"],
+                "created_at": "CSV 결과",
+                "rule_version": ' / '.join(
+                    sorted(prepared['data'].analysis_model_version.dropna().unique().tolist())
+                ),
+            }
+        ],
     }
 
 
@@ -300,17 +397,21 @@ def publish(prepared, actor="admin"):
                 "row_count": len(prepared["data"]),
                 "created_at": now_text(),
                 "actor": actor,
-                "rule_version": prepared.get("report", {}).get("rule_version", "analysis2-sequential-v1" if "call_contacts_rz" in prepared["data"] else RULE_VERSION),
+                "rule_version": prepared.get("report", {}).get(
+                    "rule_version",
+                    "analysis2-sequential-v1"
+                    if "call_contacts_rz" in prepared["data"]
+                    else RULE_VERSION,
+                ),
             }
         ]
     )
     with get_engine().begin() as connection:
         from backend.db.db1_service import save_results
+
         save_results(connection, prepared, run_id)
         if prepared["kind"] == "monthly":
-            append_frame(
-                connection, "demo_risk_assessment", prepared["assessment"], run_id
-            )
+            append_frame(connection, "demo_risk_assessment", prepared["assessment"], run_id)
             append_frame(connection, "demo_risk_signals", prepared["signals"], run_id)
             append_frame(connection, "demo_risk_alerts", prepared["alerts"], run_id)
         metadata.to_sql(
@@ -331,9 +432,7 @@ def publish(prepared, actor="admin"):
                     "run_id": run_id,
                 }
             ]
-        ).to_sql(
-            "demo_activity", connection, schema=SCHEMA, if_exists="append", index=False
-        )
+        ).to_sql("demo_activity", connection, schema=SCHEMA, if_exists="append", index=False)
     _RUN_CHECK.update(at=0.0, run_id=None)
     _load_analysis2_from_db.cache_clear()
     return run_id
@@ -342,9 +441,7 @@ def publish(prepared, actor="admin"):
 def records(data):
     """NaN을 JSON의 null로 바꿉니다."""
     return json.loads(
-        data.to_json(
-            orient="records", date_format="iso", double_precision=15, force_ascii=False
-        )
+        data.to_json(orient="records", date_format="iso", double_precision=15, force_ascii=False)
     )
 
 
@@ -362,8 +459,23 @@ def load_dashboard_data():
         result["connected"] = True
         tables = inspect(connection).get_table_names(schema=SCHEMA)
         if 'service_imports' in tables:
-            imports = pd.read_sql(text("SELECT run_id, source_name, created_at FROM db1.service_imports ORDER BY created_at DESC LIMIT 100"), connection)
-            result['activity'] = [dict(run_id=row['run_id'], created_at=row['created_at'], actor='DB1 실행기', kind='데이터', detail=row['source_name'], result='성공') for row in records(imports)]
+            imports = pd.read_sql(
+                text(
+                    "SELECT run_id, source_name, created_at FROM db1.service_imports ORDER BY created_at DESC LIMIT 100"
+                ),
+                connection,
+            )
+            result['activity'] = [
+                dict(
+                    run_id=row['run_id'],
+                    created_at=row['created_at'],
+                    actor='DB1 실행기',
+                    kind='데이터',
+                    detail=row['source_name'],
+                    result='성공',
+                )
+                for row in records(imports)
+            ]
         if "demo_ingestions" not in tables:
             return result
         runs = pd.read_sql(
@@ -389,11 +501,11 @@ def load_dashboard_data():
         if "demo_activity" in tables:
             result["activity"] += records(
                 pd.read_sql(
-                    text(
-                        "SELECT * FROM db1.demo_activity ORDER BY created_at DESC LIMIT 100"
-                    ),
+                    text("SELECT * FROM db1.demo_activity ORDER BY created_at DESC LIMIT 100"),
                     connection,
                 )
             )
-            result['activity'] = sorted(result['activity'], key=lambda row: row['created_at'], reverse=True)[:100]
+            result['activity'] = sorted(
+                result['activity'], key=lambda row: row['created_at'], reverse=True
+            )[:100]
     return result

@@ -3,6 +3,7 @@
 질문 전문 이력은 저장하지 않습니다. 개인정보를 가린 검색 문장과 공개 사업 근거 5건만,
 최대 24시간 유지합니다. 서버 재시작 후에도 같은 로그인 세션이면 검증할 수 있습니다.
 """
+
 import base64
 import hashlib
 import hmac
@@ -20,6 +21,7 @@ MAX_TOKEN = 600000
 def server_secret():
     """브라우저가 아는 세션 토큰만으로 서명하지 않습니다. 서버 전용 키는 공유 DB에 보존합니다."""
     from backend.db.welfare_search_store import snapshot_secret
+
     return snapshot_secret()
 
 
@@ -78,16 +80,26 @@ def events_with_state(events, state, context, session):
         for event, payload in events:
             if event == "sources":
                 records = snapshot(payload.get("records") or [])
-                state = {"scope": scope(context), "expires": time.time() + TTL,
-                    "anchor": payload.get("query", "")[:3000], "records": records,
-                    "selected_ids": [r["id"] for r in records]}
+                state = {
+                    "scope": scope(context),
+                    "expires": time.time() + TTL,
+                    "anchor": payload.get("query", "")[:3000],
+                    "records": records,
+                    "selected_ids": [r["id"] for r in records],
+                }
                 payload = {**payload, "records": records}
                 yield contract.conversation(pack(state, session))
             if event == "actions" and state.get("records"):
                 actions = []
                 for action in payload.get("actions", []):
                     if action.get("reportDraft"):
-                        action = {**action, "reportDraft": {**action["reportDraft"], "evidence_token": pack(state, session)}}
+                        action = {
+                            **action,
+                            "reportDraft": {
+                                **action["reportDraft"],
+                                "evidence_token": pack(state, session),
+                            },
+                        }
                     actions.append(action)
                 payload = {**payload, "actions": actions}
             yield event, payload

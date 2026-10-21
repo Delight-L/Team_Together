@@ -4,25 +4,49 @@ from .household import preprocess_household
 from .welfare import preprocess_welfare
 
 SKT_COLS = [
-    "adm_cd","dong_name","flow_per_point","male_ratio",
-    "age_10_ratio","age_20_ratio","age_30_ratio","age_40_ratio",
-    "age_50_ratio","age_60_plus_ratio","night_ratio","morning_ratio",
-    "daytime_ratio","evening_ratio","weekend_weekday_index"
+    "adm_cd",
+    "dong_name",
+    "flow_per_point",
+    "male_ratio",
+    "age_10_ratio",
+    "age_20_ratio",
+    "age_30_ratio",
+    "age_40_ratio",
+    "age_50_ratio",
+    "age_60_plus_ratio",
+    "night_ratio",
+    "morning_ratio",
+    "daytime_ratio",
+    "evening_ratio",
+    "weekend_weekday_index",
 ]
 
-def build_analysis1_pca_input(*, skt_feature, resident_file, household_file,
-                              welfare_file,year=2025,quarters=(3,4),quarter_blocks=None):
+
+def build_analysis1_pca_input(
+    *,
+    skt_feature,
+    resident_file,
+    household_file,
+    welfare_file,
+    year=2025,
+    quarters=(3, 4),
+    quarter_blocks=None,
+):
     skt = read_local(skt_feature)[SKT_COLS].copy()
     skt['adm_cd'] = skt.adm_cd.astype(str).str.replace(r'\.0$', '', regex=True)
     skt.loc[skt.adm_cd.eq('1123074'), 'dong_name'] = '개포3동'
-    resident = preprocess_resident(resident_file,year,quarters,(quarter_blocks or {}).get('resident'))
-    household = preprocess_household(household_file,year,quarters,(quarter_blocks or {}).get('household'))
+    resident = preprocess_resident(
+        resident_file, year, quarters, (quarter_blocks or {}).get('resident')
+    )
+    household = preprocess_household(
+        household_file, year, quarters, (quarter_blocks or {}).get('household')
+    )
     welfare = preprocess_welfare(welfare_file, resident)
 
     out = (
         skt.merge(resident, on="dong_name", validate="one_to_one")
-           .merge(household, on="dong_name", validate="one_to_one")
-           .merge(welfare, on="dong_name", validate="one_to_one")
+        .merge(household, on="dong_name", validate="one_to_one")
+        .merge(welfare, on="dong_name", validate="one_to_one")
     )
     if len(out) != 22 or out["dong_name"].nunique() != 22 or out["dong_name"].duplicated().any():
         raise ValueError("Analysis1 PCA 입력은 강남구 22개 행정동 1행씩이어야 합니다.")
